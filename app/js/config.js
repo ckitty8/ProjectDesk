@@ -1,5 +1,5 @@
 /* ============================================================
-   Configuration de l'application Pilotage Projet
+   Configuration de l'application ProjectDesk
    ------------------------------------------------------------
    - URL publiques des services Neon (pas des secrets : la sécurité
      repose sur le jeton de connexion et les règles RLS en base).
@@ -10,6 +10,9 @@
 'use strict';
 
 const CONFIG = {
+  // Nom de l'application affiché (barre latérale, connexion, espace demandeur, onglet du navigateur)
+  NOM_APPLICATION: 'ProjectDesk',
+
   // Neon Auth (Better Auth) et Neon Data API — projet Neon « ProjectDesk », branche production.
   // Surchargeables pour les tests via window.CONFIG_SURCHARGE (voir tests/serveur-simule.js).
   NEON_AUTH_URL: 'https://ep-lucky-mud-b1gqp3gd.neonauth.c-5.eu-central-1.aws.neon.tech/neondb/auth',

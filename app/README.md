@@ -1,4 +1,4 @@
-# Pilotage Projet — application
+# ProjectDesk — application
 
 Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap, tickets,
 ressources, congés et capacité, timesheet, daily, demandes entrantes.

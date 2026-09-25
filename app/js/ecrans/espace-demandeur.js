@@ -54,7 +54,7 @@ Ecrans.demandeur = {
     return `
     <div style="min-height:100vh;background:var(--fond)">
       <header class="entete" style="background:var(--laterale);color:#fff;border:0">
-        <b>Pilotage Projet · Espace demandeur</b>
+        <b>${esc(CONFIG.NOM_APPLICATION)} · Espace demandeur</b>
         <span style="color:var(--laterale-texte)">${esc(moi.name || moi.email)} &nbsp;
           ${mesEquipes().length ? `<a data-action="aller" data-ecran="${etat.equipeCourante ? 'dashboard' : 'choixEquipe'}" style="color:#9DB6FF">Retour à l’application</a> &nbsp;` : ''}
           <a data-action="deconnexion" style="color:#9DB6FF">Déconnexion</a></span>

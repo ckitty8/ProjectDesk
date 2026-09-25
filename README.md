@@ -1,6 +1,6 @@
 # ProjectDesk
 
-**Pilotage Projet** : application web multi-projets et multi-équipes (OKR, projets et roadmap, ressources,
+**ProjectDesk** : application web multi-projets et multi-équipes (OKR, projets et roadmap, ressources,
 congés et capacité, timesheet, daily, demandes entrantes), sur Neon (Postgres, Auth, Data API) et Vercel.
 
 ## Contenu

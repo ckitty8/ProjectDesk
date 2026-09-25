@@ -54,7 +54,7 @@ const Coquille = (() => {
     <aside class="laterale">
       <div class="marque">
         <div class="logo"><i style="height:8px"></i><i style="height:14px"></i><i style="height:11px;background:#9DB6FF"></i></div>
-        <div><div class="marque-nom">Pilotage Projet</div><div class="marque-sous">Multi-projets · Multi-équipes</div></div>
+        <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div>
       </div>
       <nav>
         <div class="menu-titre"><span>Général</span><span>lecture</span></div>

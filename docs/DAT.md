@@ -1,4 +1,4 @@
-# DAT — Document d'Architecture Technique · Pilotage Projet
+# DAT — Document d'Architecture Technique · ProjectDesk
 
 > Document vivant : à mettre à jour à **chaque** évolution (menus, écrans, tables, règles,
 > droits). Voir la règle n°5 dans `CLAUDE.md`. Sa cohérence avec le code est contrôlée
@@ -17,12 +17,14 @@
 | 1.2     | 2026-09-25 | Connexion Google : échange du vérificateur de session au retour, jeton lu dans `set-auth-jwt`, erreurs de retour affichées (§ 7) |
 | 1.3     | 2026-09-25 | Adresse de production corrigée : `project-desk-sepia.vercel.app` autorisée, `project-desk.vercel.app` (projet tiers) retirée (§ 8) |
 | 1.4     | 2026-09-25 | Administrateurs : lecture de tout sans équipe (migration 003), entrée directe dans l'outil ; ouverture automatique de l'équipe unique ou nouvellement créée (§ 5.2, § 7) |
+| 1.5     | 2026-09-25 | Nom affiché « ProjectDesk » (paramètre `NOM_APPLICATION`), sous-titre « Multi-projets · Multi-équipes » retiré (§ 1, § 2.1) |
 
 ---
 
 ## 1. Objet
 
-Application web **multi-projets, multi-équipes** de pilotage : objectifs (OKR), projets et
+**ProjectDesk** (nom affiché dans l'application, paramètre `NOM_APPLICATION` de `config.js`) :
+application web **multi-projets, multi-équipes** de pilotage : objectifs (OKR), projets et
 roadmap, tickets, ressources, congés et capacité, feuilles de temps, notes de daily, demandes
 entrantes (formulaire administrable). Maquette de référence :
 `docs/maquettes/pilotage-projet/source/Pilotage_Projet.dc.html`.
@@ -67,7 +69,7 @@ Principes :
 
 | Fichier | Rôle |
 |---------|------|
-| `app/js/config.js` | URL Neon, paramètres métier (droit CP, sprints, heures/jour, cible d'occupation), libellés système, statuts techniques |
+| `app/js/config.js` | Nom affiché de l'application, URL Neon, paramètres métier (droit CP, sprints, heures/jour, cible d'occupation), libellés système, statuts techniques |
 | `app/js/api.js` | Appels Neon Auth (session, jeton, organisations, invitations) et Data API (`lire`, `creer` avec upsert, `modifier`, `supprimer`, `executer`) ; conversion camelCase ↔ snake_case |
 | `app/js/calculs.js` | **Seul endroit des règles de calcul** (§ 6) : fonctions pures |
 | `app/js/etat.js` | État global, chargement, navigation, délégation d'événements (`data-action`, `data-action-change`, `data-action-saisie`, `data-action-envoi`), droits d'affichage |

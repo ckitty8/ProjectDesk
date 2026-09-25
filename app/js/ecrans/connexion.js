@@ -12,7 +12,7 @@ Ecrans.connexion = {
     return `
     <div class="plein-ecran"><div class="carte boite">
       <div class="marque"><div class="logo" style="width:32px;height:32px"><i style="height:8px"></i><i style="height:15px"></i><i style="height:11px;background:#9DB6FF"></i></div>
-        <div><div class="marque-nom">Pilotage Projet</div><div class="marque-sous">Multi-projets · Multi-équipes</div></div></div>
+        <div class="marque-nom">${C.esc(CONFIG.NOM_APPLICATION)}</div></div>
       ${C.onglets([{ id: 'connexion', libelle: 'Connexion' }, { id: 'creation', libelle: 'Créer un compte' }], u.onglet, 'ongletConnexion')}
       <form class="pile" style="margin-top:18px" data-action-envoi="${creation ? 'creerCompte' : 'seConnecter'}">
         ${u.erreur ? `<div class="message-erreur">${C.esc(u.erreur)}</div>` : ''}
