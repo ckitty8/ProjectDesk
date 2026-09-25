@@ -14,6 +14,7 @@
 | 0.6     | 2026-09-25 | Nouvelle cible « Pilotage Projet » : maquette de référence + compléments |
 | 1.0     | 2026-09-25 | **Pilotage Projet livré** : migration 002, application `app/`, tests de bout en bout ; Roadmap PM retiré |
 | 1.1     | 2026-09-25 | Domaines Vercel `project-desk.vercel.app` et `…-git-main-…` autorisés ; messages d'erreur de connexion explicites (§ 8) |
+| 1.2     | 2026-09-25 | Connexion Google : échange du vérificateur de session au retour, jeton lu dans `set-auth-jwt`, erreurs de retour affichées (§ 7) |
 
 ---
 
@@ -208,6 +209,13 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 
 1. **Connexion** → `lier_ma_ressource()` → chargement des organisations, invitations et tables
    → rôles par équipe (`get-full-organization`).
+   - Email / mot de passe : `/sign-in/email`, puis `/get-session`.
+   - Google : `/sign-in/social` (retour = page de l'application) → Google → Neon Auth → retour
+     sur l'application avec `?neon_auth_session_verifier=…`, que `/get-session` échange contre la
+     session (même mécanisme que le kit officiel `@neondatabase/neon-js`) ; le paramètre est
+     ensuite retiré de l'adresse. En cas d'échec, `?error=…` est traduit sur l'écran de connexion.
+   - Jeton de la Data API : en-tête `set-auth-jwt` de `/get-session`, sinon `/token` ; renouvelé
+     une minute avant expiration (15 min).
 2. **Sans équipe** : administrateur → Administration (création d'équipe) ; sinon → espace demandeur.
 3. **Création d'équipe** (administrateur) : organisation Neon Auth (le créateur en devient
    `owner`) puis ligne `equipes`. Invitation de membres par email (fenêtre équipe) ; la personne
@@ -241,8 +249,8 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 
 | Outil | Contenu |
 |-------|---------|
-| `tests/serveur-simule.js` | Neon Auth + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (21 contrôles) + captures `docs/maquettes/etat-actuel/` |
+| `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse ; mot de passe `motdepasse`) |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (23 contrôles, dont l'aller-retour Google simulé) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

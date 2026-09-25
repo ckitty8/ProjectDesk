@@ -58,9 +58,15 @@ const Api = (() => {
   const connecter = (email, motDePasse) =>
     appeler(auth('/sign-in/email'), json('POST', { email, password: motDePasse }));
 
-  // Connexion Google : Better Auth renvoie l'URL du fournisseur, on y redirige le navigateur
+  // Adresse de retour après Google : la page de l'application, sans paramètres
+  const adresseRetour = () => location.origin + location.pathname;
+
+  // Connexion Google : Better Auth renvoie l'URL de Google, on y redirige le navigateur.
+  // Au retour, Neon Auth ajoute ?neon_auth_session_verifier=… (succès) ou ?error=… (échec).
   async function connecterGoogle() {
-    const r = await appeler(auth('/sign-in/social'), json('POST', { provider: 'google', callbackURL: location.href }));
+    const retour = adresseRetour();
+    const r = await appeler(auth('/sign-in/social'), json('POST',
+      { provider: 'google', callbackURL: retour, newUserCallbackURL: retour, errorCallbackURL: retour }));
     if (r && r.url) location.href = r.url;
   }
 
@@ -69,19 +75,49 @@ const Api = (() => {
     await appeler(auth('/sign-out'), json('POST', {}));
   }
 
-  // Session courante ({ user, session }) ou null si non connecté
+  /* Session : même mécanisme que le kit officiel @neondatabase/neon-js.
+     - Retour de Google : le « vérificateur de session » présent dans l'adresse est
+       transmis à /get-session, qui ouvre la session ; on le retire ensuite de l'adresse.
+     - La réponse de /get-session porte le jeton JWT dans l'en-tête « set-auth-jwt » :
+       on le garde pour la Data API (évite un appel /token). */
+  const PARAM_VERIFICATEUR = 'neon_auth_session_verifier';
   async function lireSession() {
-    try { return await appeler(auth('/get-session')); } catch (e) { return null; }
+    const verificateur = new URLSearchParams(location.search).get(PARAM_VERIFICATEUR);
+    const url = auth('/get-session') + (verificateur ? `?${PARAM_VERIFICATEUR}=${encodeURIComponent(verificateur)}` : '');
+    try {
+      const reponse = await fetch(url, { credentials: 'include' });
+      const texte = await reponse.text();
+      const session = reponse.ok && texte ? JSON.parse(texte) : null;
+      memoriserJeton(reponse.headers.get('set-auth-jwt'));
+      if (verificateur) {                      // nettoie l'adresse (évite une réutilisation au rechargement)
+        const propre = new URL(location.href); propre.searchParams.delete(PARAM_VERIFICATEUR);
+        history.replaceState(history.state, '', propre.href);
+      }
+      return session;
+    } catch (e) { return null; }
+  }
+
+  // Erreur renvoyée par Neon Auth dans l'adresse après un échec Google (?error=…), puis retirée
+  function lireErreurRetour() {
+    const adresse = new URL(location.href), erreur = adresse.searchParams.get('error');
+    if (!erreur) return null;
+    adresse.searchParams.delete('error'); adresse.searchParams.delete('error_description');
+    history.replaceState(history.state, '', adresse.href);
+    return erreur;
   }
 
   // Jeton JWT pour la Data API : valable 15 min, gardé en mémoire et renouvelé 1 min avant la fin
   let jetonEnCache = null;
+  function memoriserJeton(jeton) {
+    if (!jeton) return;
+    const charge = JSON.parse(atob(jeton.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    jetonEnCache = { valeur: jeton, expiration: charge.exp || Date.now() / 1000 + 600 };
+  }
   async function obtenirJeton() {
     const maintenant = Date.now() / 1000;
     if (jetonEnCache && jetonEnCache.expiration - 60 > maintenant) return jetonEnCache.valeur;
     const r = await appeler(auth('/token'));
-    const charge = JSON.parse(atob(r.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    jetonEnCache = { valeur: r.token, expiration: charge.exp || maintenant + 600 };
+    memoriserJeton(r.token);
     return r.token;
   }
 
@@ -154,7 +190,7 @@ const Api = (() => {
   }
 
   return {
-    inscrire, connecter, connecterGoogle, deconnecter, lireSession, obtenirJeton,
+    inscrire, connecter, connecterGoogle, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
     listerOrganisations, creerOrganisation, activerOrganisation, lireOrganisation, inviterMembre,
     listerMesInvitations, accepterInvitation, refuserInvitation,
     lire, creer, modifier, supprimer, executer

@@ -157,6 +157,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('16-espace-demandeur');
     verifier('Demandeur : demande déposée et suivie', ((await texte()).match(/Demande automatique/g) || []).length >= 1 && (await texte()).includes('Nouvelle'));
 
+    /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
+    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
+    await page.click('[data-action="connexionGoogle"]');
+    await page.waitForSelector('form[data-action-envoi="deposerDemande"]');
+    verifier('Google : session ouverte au retour, vérificateur retiré de l’adresse',
+      (await texte()).includes('Gaëlle Google') && !page.url().includes('neon_auth_session_verifier'));
+    await page.goto(BASE + '/app/?error=access_denied'); await page.waitForTimeout(500);
+    await page.click('[data-action="deconnexion"]').catch(() => {});
+    await page.goto(BASE + '/app/?error=access_denied'); await page.waitForSelector('[data-action="connexionGoogle"]');
+    verifier('Google : erreur de retour affichée en clair', (await texte()).includes('Connexion Google annulée'));
+
     verifier('Aucune erreur JavaScript', erreurs.length === 0, erreurs.join(' | '));
   } catch (e) {
     verifier('Parcours complet sans exception', false, e.message);

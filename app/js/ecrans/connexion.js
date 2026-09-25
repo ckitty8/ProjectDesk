@@ -38,6 +38,8 @@ function messageConnexion(e) {
     + 'l’administrateur doit l’ajouter aux domaines de confiance (Console Neon › Auth).';
   if (/already exists|already registered|déjà/i.test(m)) return 'Un compte existe déjà avec cet email : utilisez l’onglet Connexion.';
   if (/failed to fetch|networkerror/i.test(m)) return 'Service de connexion injoignable. Vérifiez votre réseau puis réessayez.';
+  if (/access_denied/i.test(m)) return 'Connexion Google annulée.';
+  if (/state|oauth|account_not_linked|unable_to_link|email_not_found/i.test(m)) return `La connexion Google a échoué (code : ${m}). Réessayez ou utilisez email et mot de passe.`;
   return m;
 }
 

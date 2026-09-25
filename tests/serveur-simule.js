@@ -27,6 +27,10 @@ const membres = [];           // { id, organizationId, userId, role }
 const organisations = [];     // { id, name, slug }
 const invitations = [];       // { id, organizationId, email, role, status }
 const sessions = {};          // jeton de cookie -> userId
+const verificateurs = {};     // vérificateur de session (retour Google) -> userId
+// Jeton JWT simulé (non signé) : sub, email, expiration à 15 min
+const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+const jetonPour = u => `${b64({ alg: 'none' })}.${b64({ sub: u.id, email: u.email, exp: Math.floor(Date.now() / 1000) + 900 })}.sim`;
 
 function amorcer() {
   const u = (name, email) => { const x = { id: uuid(), name, email, password: 'motdepasse' }; utilisateurs.push(x); return x; };
@@ -184,11 +188,29 @@ async function auth(req, res, chemin, url) {
       return envoyer(res, 200, { user: vueUtilisateur(u) }, ouvrirSession(res, u));
     }
     case '/sign-out': return envoyer(res, 200, { success: true }, { 'Set-Cookie': 'sim_session=; Path=/; Max-Age=0' });
-    case '/get-session': return envoyer(res, 200, moi ? { user: vueUtilisateur(moi), session: { id: 's' } } : null);
+    // Google simulé : /sign-in/social renvoie l'adresse du « fournisseur », qui redirige vers
+    // callbackURL?neon_auth_session_verifier=… ; /get-session échange ce vérificateur contre la session.
+    case '/sign-in/social':
+      return envoyer(res, 200, { url: `/auth/google-simule?retour=${encodeURIComponent(corps.callbackURL)}`, redirect: true });
+    case '/google-simule': {
+      let u = utilisateurs.find(x => x.email === 'google@test.fr');
+      if (!u) { u = { id: uuid(), name: 'Gaëlle Google', email: 'google@test.fr', password: null }; utilisateurs.push(u); }
+      const verificateur = uuid(); verificateurs[verificateur] = u.id;
+      const retour = new URL(url.searchParams.get('retour')); retour.searchParams.set('neon_auth_session_verifier', verificateur);
+      res.writeHead(302, { Location: retour.href }); return res.end();
+    }
+    case '/get-session': {
+      const v = url.searchParams.get('neon_auth_session_verifier');
+      const u = v && verificateurs[v] ? utilisateurs.find(x => x.id === verificateurs[v]) : moi;
+      if (v) delete verificateurs[v];
+      if (!u) return envoyer(res, 200, null);
+      const entetes = { 'set-auth-jwt': jetonPour(u) };
+      if (v) Object.assign(entetes, ouvrirSession(res, u));
+      return envoyer(res, 200, { user: vueUtilisateur(u), session: { id: 's' } }, entetes);
+    }
     case '/token': {
       if (!moi) return envoyer(res, 401, { message: 'Non connecté' });
-      const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
-      return envoyer(res, 200, { token: `${b64({ alg: 'none' })}.${b64({ sub: moi.id, email: moi.email, exp: Math.floor(Date.now() / 1000) + 900 })}.sim` });
+      return envoyer(res, 200, { token: jetonPour(moi) });
     }
   }
   if (!moi) return envoyer(res, 401, { message: 'Non connecté' });

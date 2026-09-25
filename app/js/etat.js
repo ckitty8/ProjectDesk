@@ -102,8 +102,12 @@ function notifier(message, type = 'info') {
 async function demarrer() {
   majEtat({ chargement: true, erreur: null });
   try {
+    const erreurRetour = Api.lireErreurRetour();          // échec de la connexion Google (?error=…)
     const session = await Api.lireSession();
-    if (!session || !session.user) return majEtat({ chargement: false, session: null, ecran: 'connexion' });
+    if (!session || !session.user) {
+      if (erreurRetour) etat.ui.connexion = { ...(etat.ui.connexion || {}), erreur: messageConnexion({ message: erreurRetour }) };
+      return majEtat({ chargement: false, session: null, ecran: 'connexion' });
+    }
     etat.session = session;
     await Api.executer('lier_ma_ressource').catch(() => {});      // lie le compte à sa fiche ressource (même email)
     const [organisations, invitations] = await Promise.all([
