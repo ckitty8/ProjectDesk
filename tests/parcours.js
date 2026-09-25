@@ -144,15 +144,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     await aller('listeRessources'); await capture('12-liste-ressources');
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
-    verifier('Liste des ressources : directions et équipes en arborescence', (await lignesUnites()).some(l => l.startsWith('DSI')) && (await lignesUnites()).some(l => l.startsWith('Plateforme')));
+    verifier('Liste des ressources : directions et équipes en arborescence', !!(await page.$('#table-unites tr[data-parent] >> text=Data')) && (await lignesUnites()).some(l => l.startsWith('Plateforme')));
     await page.fill('#table-unites input, .recherche-champ input', 'data'); await page.waitForTimeout(150);
-    verifier('Liste des ressources : recherche d’une unité', (await lignesUnites()).every(l => /data|dsi/i.test(l)) && (await lignesUnites()).length === 2);
-    verifier('Liste des ressources : suppression impossible d’une équipe non vide', !!(await page.$('button.btn-icone[disabled][title^="Équipe non vide"]')));
+    verifier('Liste des ressources : recherche d’une unité', (await lignesUnites()).every(l => /data|plateforme/i.test(l)) && (await lignesUnites()).length === 2);
+    verifier('Liste des ressources : suppression impossible d’une équipe non vide', !!(await page.$('button.btn-icone[disabled][title$="non vide : passez-la en Inactive"]')));
     await page.click('[data-action="ajouterUnite"]'); await page.click('[data-action="choisirTypeUnite"][data-type="direction"]');
-    await page.fill('form[data-action-envoi="enregistrerDirection"] input[name=nom]', 'Direction Test');
-    await page.click('form[data-action-envoi="enregistrerDirection"] .btn.primaire'); await page.waitForTimeout(300);
-    verifier('Liste des ressources : direction ajoutée', (await lignesUnites()).some(l => l.startsWith('Direction Test')));
-    await page.click('tr:has-text("Direction Test") [data-action="supprimerDirection"]'); await page.waitForTimeout(300);
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Test');
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'DT');
+    await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
+    verifier('Liste des ressources : direction (espace de travail) ajoutée', (await lignesUnites()).some(l => l.startsWith('Direction Test'))
+      && !!(await page.$('#table-unites tr:has-text("Direction Test") b')));
+    await page.click('tr:has-text("Direction Test") [data-action="supprimerEquipe"]'); await page.waitForTimeout(400);
     verifier('Liste des ressources : direction vide supprimée', !(await lignesUnites()).some(l => l.startsWith('Direction Test')));
     await page.click('[data-action="ongletListeRessources"][data-id="postes"]'); await page.waitForTimeout(200);
     await capture('18-postes');

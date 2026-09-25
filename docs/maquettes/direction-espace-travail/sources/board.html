@@ -1,0 +1,29 @@
+<div class="ecran" style="max-width:1300px">
+ <div class="entete-ecran"><div><h1>Liste des ressources</h1><div class="sous-titre">Organisation des équipes, affectations, postes et types de contrat</div></div>
+  <div class="actions-ecran"><button class="btn primaire">+ Ajouter une unité</button></div></div>
+ <div class="onglets"><button class="onglet actif">Équipes <span class="compte">3</span></button><button class="onglet">Affectations <span class="compte">0</span></button><button class="onglet">Postes <span class="compte">11</span></button><button class="onglet">Types de contrat <span class="compte">4</span></button></div>
+ <div class="carte">
+  <div class="carte-titre"><h2>Directions & équipes <span class="pale" title="Toute unité est un espace de travail ; une direction peut en plus regrouper des équipes">ⓘ</span></h2>
+   <input class="champ" style="width:320px" placeholder="🔍  Rechercher une unité"></div>
+  <table class="tableau"><thead><tr><th>Nom</th><th style="text-align:center">Ressources</th><th>Responsable</th><th>Statut</th><th class="num">Actions</th></tr></thead><tbody>
+   <tr><td><span class="ligne-flex">▾ 🏢 <b style="font-weight:500">Applications</b> <span class="code">APP</span></span></td><td style="text-align:center">6 <span class="pale" style="font-size:11px">(dont 2 en direct)</span></td><td>Vous</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Active</span></td><td class="num">✎ &nbsp; 🗑</td></tr>
+   <tr><td><span class="ligne-flex" style="padding-left:44px;border-left:1px solid #E3E7EE;margin-left:6px">👥 Web <span class="code">WEB</span></span></td><td style="text-align:center">3</td><td>—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Active</span></td><td class="num">✎ &nbsp; 🗑</td></tr>
+   <tr><td><span class="ligne-flex" style="padding-left:44px;border-left:1px solid #E3E7EE;margin-left:6px">👥 Mobile <span class="code">MOB</span></span></td><td style="text-align:center">1</td><td>—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Active</span></td><td class="num">✎ &nbsp; 🗑</td></tr>
+  </tbody></table></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;align-items:start">
+  <div class="carte"><div class="carte-titre"><h2>Ajouter une unité</h2><span class="pale">✕</span></div>
+   <div class="pile" style="padding:16px">
+    <div class="carte-choix">🏢 <div><b>Direction</b><div class="discret" style="font-size:12px">Espace de travail (membres, projets, demandes) <b>qui peut regrouper des équipes</b>. Ex. Applications.</div></div></div>
+    <div class="carte-choix">👥 <div><b>Équipe</b><div class="discret" style="font-size:12px">Espace de travail (membres, projets, demandes). Peut être rattachée à une direction.</div></div></div>
+   </div></div>
+  <div class="carte"><div class="carte-titre"><h2>Modifier « Applications »</h2><span class="pale">✕</span></div>
+   <div class="pile" style="padding:16px">
+    <div class="deux-colonnes"><div><label class="libelle">Nom</label><input class="champ" value="Applications"></div><div><label class="libelle">Préfixe des projets</label><input class="champ" value="APP"></div></div>
+    <div class="deux-colonnes"><div><label class="libelle">Type</label><select class="champ"><option>Direction</option></select></div>
+     <div><label class="libelle">Rattachée à</label><select class="champ" disabled><option>— (une direction n’est rattachée à rien)</option></select></div></div>
+    <div class="deux-colonnes"><div><label class="libelle">Statut</label><select class="champ"><option>Active</option></select></div><div><label class="libelle">Couleur</label><input class="champ" value="#003CC8"></div></div>
+    <div class="discret" style="font-size:12px">Une <b>équipe</b> choisit ici sa direction de rattachement. Passer une unité en « Direction » ne change ni ses membres ni ses projets.</div>
+    <div style="text-align:right"><button class="btn primaire">Enregistrer</button></div>
+   </div></div>
+ </div>
+</div>

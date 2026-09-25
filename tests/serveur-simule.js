@@ -57,11 +57,8 @@ function amorcer() {
   bd.ressources = PERS.map(([cle, nom, eq, poste, capacite, userId]) => { const id = uuid(); idP[cle] = id;
     return { id, equipe_id: idEq[eq], nom, poste, capacite, email: cle + '@test.fr', user_id: userId || null }; });
   bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; e.actif = true; });
-  // Directions (migration 005) : DSI (Plateforme, Data), Métier (Mobile, Produit), Finance (vide)
-  const dir = (nom, resp) => ({ id: uuid(), nom, responsable_id: idP[resp] || null, actif: true });
-  const dsi = dir('DSI', 'cl'), metier = dir('Métier', 'nb'), finance = dir('Finance');
-  bd.directions = [dsi, metier, finance];
-  bd.equipes.forEach((e, i) => { e.direction_id = [dsi.id, dsi.id, metier.id, metier.id][i]; });
+  // Unités (migration 006) : Plateforme est une direction (espace de travail) qui regroupe Data
+  bd.equipes.forEach((e, i) => { e.type = i === 0 ? 'direction' : 'equipe'; e.parent_id = i === 1 ? bd.equipes[0].id : null; });
   bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; });
 
   const OBJ = [['pf', 'O1', 'Fiabiliser la plateforme', 'haute', [['KR1.1', 'Disponibilité 99,9 %', 80], ['KR1.2', 'Temps de rétablissement < 30 min', 62], ['KR1.3', 'Onboarding dév. < 1 jour', 20]]],
@@ -281,13 +278,11 @@ async function donnees(req, res, table, url) {
   const partage = autre => membres.some(m1 => m1.userId === moi.id && membres.some(m2 => m2.userId === autre && m2.organizationId === m1.organizationId));
   const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id || partage(n.user_id)) : bd[table];
   if (req.method === 'GET') return envoyer(res, 200, filtrer(visibles(), p));
-  // Contrôles de suppression de la migration 005 (unité ou valeur utilisée : refus)
+  // Contrôles de suppression des migrations 005-006 (unité non vide : refus)
   if (req.method === 'DELETE') {
     const cibles0 = filtrer(bd[table], p);
-    if (table === 'equipes' && cibles0.some(e => bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id)))
-      return envoyer(res, 400, { message: 'Équipe non vide (ressources ou projets) : passez-la plutôt en « Inactive »' });
-    if (table === 'directions' && cibles0.some(d => bd.equipes.some(e => e.direction_id === d.id)))
-      return envoyer(res, 409, { message: 'Direction non vide : rattachez ses équipes ailleurs' });
+    if (table === 'equipes' && cibles0.some(e => bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id) || bd.equipes.some(x => x.parent_id === e.id)))
+      return envoyer(res, 400, { message: 'Unité non vide (ressources, projets ou équipes) : passez-la plutôt en « Inactive »' });
   }
   if (req.method === 'DELETE') { const cibles = new Set(filtrer(bd[table], p)); bd[table] = bd[table].filter(l => !cibles.has(l)); return envoyer(res, 204); }
   const corps = await lireCorps(req);
@@ -304,7 +299,7 @@ async function donnees(req, res, table, url) {
       if (table === 'demandes') { l.numero = Math.max(0, ...bd.demandes.map(x => x.numero)) + 1; l.statut = l.statut || 'nouvelle'; l.demandeur_id = moi.id; l.cree_le = maintenant(); l.valeurs = l.valeurs || {}; }
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
-      if (['equipes', 'directions'].includes(table)) l.actif = l.actif ?? true;
+      if (table === 'equipes') { l.actif = l.actif ?? true; l.type = l.type || 'equipe'; l.parent_id = l.parent_id ?? null; }
       const cle = conflit || CLES[table];
       const existante = conflit && bd[table].find(x => cle.every(c => String(x[c]) === String(l[c])));
       if (existante) { Object.assign(existante, l); return existante; }

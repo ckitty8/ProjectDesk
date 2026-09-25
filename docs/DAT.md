@@ -22,6 +22,7 @@
 | 1.7     | 2026-09-25 | **Section Général strictement en lecture seule** : édition des équipes et référentiels déplacée dans Mon dashboard › Administration ; contrôle automatique (§ 3, § 9, § 10) |
 | 1.8     | 2026-09-25 | **Liste des ressources en « board »** : onglets Équipes (arborescence Directions & équipes, recherche, statut, suppression si vide), Affectations, Postes, Types de contrat ; migration 005 (`directions`, statut des équipes, `type_contrat`, référentiels `poste` / `contrat`) (§ 3.3, § 4, § 5) |
 | 1.9     | 2026-09-25 | Incident « table directions absente du cache de schéma » : rechargement du cache Data API ajouté à la procédure de migration (§ 10) |
+| 1.10    | 2026-09-25 | **Direction = espace de travail** (maquette `direction-espace-travail.png`) : directions et équipes dans la même table `equipes` (`type`, `parent_id`), table `directions` supprimée (migration 006) (§ 3.3, § 4, § 5) |
 
 ---
 
@@ -118,7 +119,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
-| `listeRessources` | `liste-ressources.js` | Onglets (maquette `liste-ressources-board.png`) : **Équipes** — tableau « Directions & équipes » (direction → équipes, nombre de ressources, responsable, statut Active/Inactive, modifier / supprimer, recherche, « + Ajouter une unité ») ; **Affectations** — arborescence équipe → projet → personnes, fiches ressources ; **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Une unité n'est supprimable que vide (sinon la passer en Inactive) ; édition réservée aux administrateurs | `12-liste-ressources.png`, `18-postes.png` |
+| `listeRessources` | `liste-ressources.js` | Onglets (maquette `liste-ressources-board.png`) : **Équipes** — tableau « Directions & équipes » (direction → équipes ; une direction est elle-même un espace de travail, maquette `direction-espace-travail.png`, nombre de ressources, responsable, statut Active/Inactive, modifier / supprimer, recherche, « + Ajouter une unité ») ; **Affectations** — arborescence équipe → projet → personnes, fiches ressources ; **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Une unité n'est supprimable que vide (sinon la passer en Inactive) ; édition réservée aux administrateurs | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
@@ -132,7 +133,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -140,8 +141,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | Table | Contenu | Clé / liens |
 |-------|---------|-------------|
 | `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
-| `directions` | Regroupement d'équipes (sans espace de travail propre) : `nom` (unique), `responsable_id`, `actif` | → `ressources` |
-| `equipes` | Équipe = organisation Neon Auth « reconnue » : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `direction_id`, `actif` (une équipe inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; → `directions` |
+| `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets, demandes) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `ordre` | → `referentiels` |
 | `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
@@ -160,7 +160,9 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `neon_auth.*` | Utilisateurs, sessions, organisations, membres, invitations | gérées par Neon Auth — **ne pas modifier** |
 
 Historique : la migration `001_schema_initial.sql` (Roadmap PM) créait `demandes` (backlog) et
-`capacites` ; toutes deux ont été supprimées par la migration 002 (tables vides).
+`capacites` ; toutes deux ont été supprimées par la migration 002 (tables vides). La migration
+005 créait une table `directions` (regroupement sans espace de travail) ; la migration 006 l'a
+remplacée par `equipes.type` / `equipes.parent_id` (table vide, accord du porteur).
 
 Les **libellés système** (statuts de projet et de ticket, rôles, « Congés payés ») sont
 utilisés par les calculs : en base `valeurs_referentiel.systeme = true` (ni renommage ni
@@ -185,7 +187,7 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 
 | Tables | Lecture | Écriture |
 |--------|---------|----------|
-| `directions`, `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
+| `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
 | `administrateurs` | administrateurs (et sa propre ligne) | administrateurs |
 | `ressources` | membres, administrateurs | équipe concernée, administrateurs |
 | `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
@@ -198,8 +200,9 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 
 Contrôles complémentaires (triggers) : `controler_feuille_temps()` (validation/renvoi réservés
 au responsable ; feuille validée figée), `controler_temps_saisi()` (heures d'une semaine validée
-non modifiables), `controler_suppression_equipe()` (équipe avec ressources ou projets non
-supprimable ; une direction non vide est protégée par sa clé étrangère), `propager_renommage_valeur()`
+non modifiables), `controler_suppression_equipe()` (unité avec ressources, projets ou équipes rattachées non
+supprimable), `controler_rattachement_equipe()` (une équipe ne se rattache qu'à une direction ;
+une direction n'est rattachée à rien et ne redevient « équipe » que sans équipes rattachées), `propager_renommage_valeur()`
 (renommer un poste / type de contrat met à jour les fiches ressources), `controler_suppression_valeur()`
 (poste / type de contrat utilisé non supprimable).
 
