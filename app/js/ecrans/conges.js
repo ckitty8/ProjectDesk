@@ -49,8 +49,10 @@ Ecrans.conges = {
     // Contenu de chaque onglet
     const onglet = this.onglet();
     const grille = `<div class="carte"><div class="carte-titre"><h2>Grille mensuelle</h2><div class="puces">${pinceaux}</div></div>${Calendrier.rendre(true)}</div>`;
-    const recapAnnuel = `<div class="carte"><div class="carte-titre"><h2>Récap annuel ${annee}</h2><span class="discret">en jours · droit CP : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
-      <table class="tableau"><thead><tr><th>Personne</th><th>CP pris</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
+    // Type d'absence décompté du droit annuel (clé « cp ») : son libellé est administrable
+    const typeDecompte = esc(ABSENCES.CP);
+    const recapAnnuel = `<div class="carte"><div class="carte-titre"><h2>Récap annuel ${annee}</h2><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
+      <table class="tableau"><thead><tr><th>Personne</th><th>${typeDecompte}</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
         <th class="num">Total</th><th class="num">Solde</th></tr></thead>
         <tbody>${recap || `<tr><td colspan="8">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
     const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint</h2><span class="discret">jours-homme disponibles / théoriques</span></div>
