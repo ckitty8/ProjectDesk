@@ -32,6 +32,14 @@ const Calendrier = {
       return `<th class="${ferme ? 'ferme' : ''} ${j === aujourd ? 'aujourdhui' : ''}">${Calculs.JOURS_INITIALES[d.getDay()]}<br>${d.getDate()}</th>`;
     }).join('');
 
+    // Jour férié (table jours_feries) : affiché par défaut avec le type « Jours férié » (clé 'ferie',
+    // couleur et abrégé administrables) ; « F » gris si ce type est désactivé. Non cliquable, non décompté.
+    const typeFerie = types.find(x => x.libelle === ABSENCES.FERIE && x.actif);
+    const libelleFerie = j => ((etat.d.joursFeries || []).find(x => x.jour === j) || {}).libelle || 'Jour férié';
+    const caseFeriee = j => typeFerie
+      ? `<span class="case-absence" title="${esc(libelleFerie(j))}" style="color:${typeFerie.couleur};background:${C.teinte(typeFerie.couleur, .16)}">${esc(typeFerie.abrege || 'JF')}</span>`
+      : `<span title="${esc(libelleFerie(j))}">F</span>`;
+
     const lignes = etat.d.equipes.map(e => {
       const personnes = etat.d.ressources.filter(r => r.equipeId === e.id);
       if (!personnes.length) return '';
@@ -40,7 +48,7 @@ const Calendrier = {
           let nb = 0;
           const cases = jours.map(j => {
             const ferme = !Calculs.estJourOuvre(j, fer);
-            if (ferme) return `<td class="ferme">${fer.has(j) ? 'F' : ''}</td>`;
+            if (ferme) return `<td class="ferme">${fer.has(j) ? caseFeriee(j) : ''}</td>`;
             const type = absence[r.id + '|' + j], t = types.find(x => x.libelle === type);
             if (t) nb++;
             const contenu = t ? `<span class="case-absence" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}</span>` : '';

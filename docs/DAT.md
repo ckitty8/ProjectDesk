@@ -34,6 +34,7 @@
 | 1.19    | 2026-09-25 | Types d'absence (données) : Congés validé (vert, décompté du droit annuel, clé `cp`), Congés prévisionnel (orange), Jours férié (marron) ; Formation désactivé ; en-tête du récap annuel = libellé du type décompté (§ 3.3) |
 | 1.20    | 2026-09-25 | Panneau projet : objectif, résultat clé, période, statut, avancement et tickets retirés (§ 3.4) |
 | 1.21    | 2026-09-25 | Calendriers (Congés & capacité, Général › Gestion des ressources) : sélecteur de mois déplacé juste au-dessus du calendrier, à gauche (§ 3.2, § 3.3) |
+| 1.22    | 2026-09-25 | Jours fériés affichés par défaut dans les calendriers avec le type « Jours férié » (clé `ferie`, migration 008) (§ 4) |
 
 ---
 
@@ -151,7 +152,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -161,7 +162,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
 | `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets, demandes) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
-| `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`), `ordre` | → `referentiels` |
+| `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
 | `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
 | `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié) | → `equipes` |
@@ -191,6 +192,9 @@ remplace au chargement les constantes de `config.js` par les libellés actuels
 par `libelle_systeme(referentiel, cle)`, et le trigger `propager_renommage_valeur()` recopie le
 nouveau libellé dans les données (projets, tickets, affectations, absences, demandes, ressources).
 Une valeur système reste non supprimable (trigger `proteger_valeur_systeme()`) ; on peut la désactiver.
+Le type d'absence de clé `ferie` (« Jours férié », migration 008) sert à afficher **par défaut** les
+jours de la table `jours_feries` dans les calendriers (couleur et abrégé du type ; « F » gris s'il est
+désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 
 ## 5. Sécurité
 
@@ -310,7 +314,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (46 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (47 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

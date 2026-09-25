@@ -145,7 +145,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.fermer');
 
     await aller('conges'); await page.click('[data-action="moisSuivant"]');
-    await page.click('[data-action="choisirPinceau"][data-id="RTT"]');
+    await page.click('[data-action="choisirPinceau"][data-id="Congés prévisionnel"]');
     await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);
     await capture('11-conges');
     await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
@@ -153,6 +153,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
     await page.click('[data-action="ongletConges"][data-id="grille"]');
+    verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');

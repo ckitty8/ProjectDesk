@@ -103,10 +103,10 @@ function amorcer() {
   bd.affectations = AFF.map(([code, p, role]) => ({ id: uuid(), projet_id: idPr[code], ressource_id: idP[p], role }));
 
   // Absences d'octobre 2026 (proches de la maquette) et heures de la semaine du 21 septembre
-  const ABS = [['tb', '2026-10-19', 'Maladie'], ['tb', '2026-10-20', 'Maladie'], ['lm', '2026-10-06', 'Congés payés'], ['lm', '2026-10-07', 'Congés payés'], ['lm', '2026-10-08', 'Congés payés'],
-    ['lm', '2026-10-09', 'Congés payés'], ['hm', '2026-10-16', 'Formation'], ['sp', '2026-10-05', 'Congés payés'], ['sp', '2026-10-06', 'Congés payés'], ['ir', '2026-10-14', 'Congés payés'],
-    ['ir', '2026-10-22', 'RTT'], ['cg', '2026-10-20', 'RTT'], ['nb', '2026-10-12', 'RTT'], ['nb', '2026-10-13', 'RTT'], ['nb', '2026-10-14', 'RTT'], ['nb', '2026-10-15', 'RTT'],
-    ['pl', '2026-10-23', 'RTT'], ['tb', '2026-09-23', 'RTT'], ['cl', '2026-09-24', 'RTT'], ['cl', '2026-03-10', 'Congés payés'], ['cl', '2026-08-10', 'Congés payés']];
+  const ABS = [['tb', '2026-10-19', 'Congés prévisionnel'], ['tb', '2026-10-20', 'Congés prévisionnel'], ['lm', '2026-10-06', 'Congés validé'], ['lm', '2026-10-07', 'Congés validé'], ['lm', '2026-10-08', 'Congés validé'],
+    ['lm', '2026-10-09', 'Congés validé'], ['hm', '2026-10-16', 'Congés prévisionnel'], ['sp', '2026-10-05', 'Congés validé'], ['sp', '2026-10-06', 'Congés validé'], ['ir', '2026-10-14', 'Congés validé'],
+    ['ir', '2026-10-22', 'Congés prévisionnel'], ['cg', '2026-10-20', 'Congés prévisionnel'], ['nb', '2026-10-12', 'Congés prévisionnel'], ['nb', '2026-10-13', 'Congés prévisionnel'], ['nb', '2026-10-14', 'Congés prévisionnel'], ['nb', '2026-10-15', 'Congés prévisionnel'],
+    ['pl', '2026-10-23', 'Congés prévisionnel'], ['tb', '2026-09-23', 'Congés prévisionnel'], ['cl', '2026-09-24', 'Congés prévisionnel'], ['cl', '2026-03-10', 'Congés validé'], ['cl', '2026-08-10', 'Congés validé']];
   bd.absences = ABS.map(([p, jour, type]) => ({ ressource_id: idP[p], jour, type }));
   bd.temps_saisis = []; bd.feuilles_temps = [];
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
@@ -129,14 +129,15 @@ function amorcer() {
     stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
     stt: [['À faire', '#4A5363', 1], ['En cours', '#003CC8', 1], ['En revue', '#5E2CA5', 1], ['Terminé', '#0F8A6B', 1]],
     role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],
-    abs: [['Congés payés', '#003CC8', 1, 'CP'], ['RTT', '#0F8A6B', 0, 'RTT'], ['Maladie', '#A32020', 0, 'MA'], ['Formation', '#B25E09', 0, 'FO']],
+    // Types d'absence de la production (données du porteur, DAT 1.19 ; migration 008)
+    abs: [['Congés validé', '#0F8A6B', 1, 'CV'], ['Congés prévisionnel', '#E07B00', 0, 'PR'], ['Jours férié', '#7B4A1E', 1, 'JF']],
     poste: ['Chef de projet', 'Product manager', 'Product designer', 'Dév. back-end', 'Dév. front-end', 'DevOps', 'Lead data', 'Data engineer', 'Data analyst', 'Lead mobile', 'Dév. iOS', 'Dév. Android'].map(l => [l, '#4A5363']),
     contrat: [['CDI', '#0F8A6B'], ['CDD', '#003CC8'], ['Prestataire', '#B25E09'], ['Alternance', '#7A3FC2']] };
   bd.valeurs_referentiel = [];
   // Clés techniques des valeurs système (migration 007)
   const CLES_SYSTEME = { 'stp:Planifié': 'planifie', 'stp:En cours': 'en_cours', 'stp:À risque': 'a_risque', 'stp:En retard': 'en_retard', 'stp:Terminé': 'termine',
     'stt:À faire': 'a_faire', 'stt:En cours': 'en_cours', 'stt:En revue': 'en_revue', 'stt:Terminé': 'termine',
-    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés payés': 'cp' };
+    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie' };
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
       cle: systeme ? CLES_SYSTEME[ref + ':' + libelle] : null })));
