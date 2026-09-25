@@ -150,6 +150,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="choisirPinceau"][data-id="RTT"]');
     await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);
     await capture('11-conges');
+    await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
+    verifier('Congés : onglet Récap annuel (personnes de la grille)', (await texte()).includes('Solde') && !(await texte()).includes('Aucune ressource') && !(await page.$('td[data-action="basculerAbsence"]')));
+    await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
+    verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
+    await page.click('[data-action="ongletConges"][data-id="grille"]');
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');
