@@ -13,6 +13,7 @@
 | 0.5     | 2026-09-25 | Déploiement Vercel, domaines déclarés dans Neon Auth |
 | 0.6     | 2026-09-25 | Nouvelle cible « Pilotage Projet » : maquette de référence + compléments |
 | 1.0     | 2026-09-25 | **Pilotage Projet livré** : migration 002, application `app/`, tests de bout en bout ; Roadmap PM retiré |
+| 1.1     | 2026-09-25 | Domaines Vercel `project-desk.vercel.app` et `…-git-main-…` autorisés ; messages d'erreur de connexion explicites (§ 8) |
 
 ---
 
@@ -220,9 +221,19 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 
 - `vercel.json` redirige `/` vers `/app/` ; site statique, sans build.
 - Vercel publie la branche `main`.
-- Domaines de confiance déclarés dans Neon Auth : `https://project-desk-ckitty8s-projects.vercel.app`
-  (adresse stable), `https://project-desk-jusy2piap-ckitty8s-projects.vercel.app` (déploiement
-  précis), `localhost` (développement). Tout nouveau domaine doit être ajouté (Console Neon → Auth).
+- Domaines de confiance déclarés dans Neon Auth (sinon : « Invalid callbackURL » / « Invalid origin ») :
+
+| Domaine | Nature |
+|---------|--------|
+| `https://project-desk.vercel.app` | Adresse de production (celle à communiquer aux utilisateurs) |
+| `https://project-desk-ckitty8s-projects.vercel.app` | Adresse stable de l'équipe Vercel |
+| `https://project-desk-git-main-ckitty8s-projects.vercel.app` | Adresse de la branche `main` |
+| `https://project-desk-jusy2piap-ckitty8s-projects.vercel.app` | Un déploiement précis (change à chaque déploiement) |
+| `localhost` | Développement |
+
+  Tout nouveau domaine doit être ajouté (Console Neon → Auth → Domains). Les adresses de
+  prévisualisation par déploiement ne sont volontairement pas couvertes par un joker
+  (`*.vercel.app` autoriserait des sites tiers).
 - Premier administrateur : après création de son compte, insérer son identifiant dans
   `administrateurs` (voir `app/README.md`).
 

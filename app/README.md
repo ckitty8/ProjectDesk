@@ -30,7 +30,7 @@ Le plus simple est d'utiliser le parcours automatique : `node tests/parcours.js`
 
 ## Déploiement
 
-Vercel publie la branche `main` ; `vercel.json` redirige `/` vers `/app/`.
+Vercel publie la branche `main` sur **https://project-desk.vercel.app** ; `vercel.json` redirige `/` vers `/app/`.
 Tout nouveau domaine (domaine personnalisé, prévisualisation) doit être ajouté aux domaines de
 confiance de Neon Auth (Console Neon → Auth → Domains).
 

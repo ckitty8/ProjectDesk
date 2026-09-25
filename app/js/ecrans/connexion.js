@@ -30,22 +30,33 @@ Ecrans.connexion = {
   }
 };
 
+// Traduit les erreurs de Neon Auth en messages compréhensibles
+function messageConnexion(e) {
+  const m = e.message || '';
+  if (/invalid email or password|invalid password|user not found/i.test(m)) return 'Email ou mot de passe incorrect.';
+  if (/callbackurl|origin/i.test(m)) return `Cette adresse (${location.origin}) n’est pas autorisée par Neon Auth : `
+    + 'l’administrateur doit l’ajouter aux domaines de confiance (Console Neon › Auth).';
+  if (/already exists|already registered|déjà/i.test(m)) return 'Un compte existe déjà avec cet email : utilisez l’onglet Connexion.';
+  if (/failed to fetch|networkerror/i.test(m)) return 'Service de connexion injoignable. Vérifiez votre réseau puis réessayez.';
+  return m;
+}
+
 Object.assign(Actions, {
   ongletConnexion: d => majUi('connexion', { onglet: d.id, erreur: null }),
 
   async seConnecter(_, form) {
     const f = new FormData(form);
     try { await Api.connecter(f.get('email'), f.get('motDePasse')); majUi('connexion', { erreur: null }, { rendre: false }); await demarrer(); }
-    catch (e) { majUi('connexion', { erreur: 'Email ou mot de passe incorrect.', email: f.get('email') }); }   // on garde l'email saisi
+    catch (e) { majUi('connexion', { erreur: messageConnexion(e), email: f.get('email') }); }   // on garde l'email saisi
   },
 
   async creerCompte(_, form) {
     const f = new FormData(form);
     try { await Api.inscrire(f.get('nom'), f.get('email'), f.get('motDePasse')); await demarrer(); }
-    catch (e) { majUi('connexion', { erreur: e.message, email: f.get('email'), nom: f.get('nom') }); }
+    catch (e) { majUi('connexion', { erreur: messageConnexion(e), email: f.get('email'), nom: f.get('nom') }); }
   },
 
   async connexionGoogle() {
-    try { await Api.connecterGoogle(); } catch (e) { majUi('connexion', { erreur: e.message }); }
+    try { await Api.connecterGoogle(); } catch (e) { majUi('connexion', { erreur: messageConnexion(e) }); }
   }
 });
