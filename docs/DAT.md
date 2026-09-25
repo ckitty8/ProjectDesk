@@ -25,6 +25,7 @@
 | 1.10    | 2026-09-25 | **Direction = espace de travail** (maquette `direction-espace-travail.png`) : directions et équipes dans la même table `equipes` (`type`, `parent_id`), table `directions` supprimée (migration 006) (§ 3.3, § 4, § 5) |
 | 1.11    | 2026-09-25 | **Liste des ressources = arborescence Direction → Équipe → Projet → Membres** (maquette `arborescence-ressources.png`) ; onglet Affectations fusionné ; écran ouvert sans équipe pour un administrateur ; « Nouveau projet » accepte l'équipe choisie (§ 3.3) |
 | 1.12    | 2026-09-25 | Incident « column equipes.direction_id does not exist » (cache Data API après la migration 006) : procédure de migration corrigée, `notify` insuffisant (§ 10) |
+| 1.13    | 2026-09-25 | « Nouveau projet » : champs Résultat clé visé, Début, Fin et Statut retirés (§ 3.4) |
 
 ---
 
@@ -131,7 +132,9 @@ Nécessaires au fonctionnement, dans le style de la maquette (maquettes des comp
 validées : `docs/maquettes/pilotage-projet/complements/`) :
 - écrans connexion, choix d'équipe, espace demandeur, Mon timesheet, bloc utilisateur ;
 - fenêtre **Objectifs de l'équipe** (saisie des OKR et de la progression des résultats clés) ;
-- panneau **Nouveau projet** (aussi ouvert par « Créer le projet » sur une demande acceptée) ;
+- panneau **Nouveau projet** (aussi ouvert par « Créer le projet » sur une demande acceptée) : code, nom,
+  description, chef de projet ; résultat clé, dates et statut ne sont pas demandés à la création
+  (statut « Planifié » par défaut ; un projet sans dates n'apparaît pas dans le Gantt de Mes projets) ;
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
@@ -284,7 +287,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (41 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (42 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

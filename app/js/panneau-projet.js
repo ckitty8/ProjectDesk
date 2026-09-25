@@ -56,11 +56,11 @@ const Panneau = {
   },
 
   // Formulaire de création ; valeurs pré-remplies possibles (depuis une demande, ou l'équipe
-  // choisie dans Liste des ressources : v.equipeId ; sinon l'équipe ouverte)
+  // choisie dans Liste des ressources : v.equipeId ; sinon l'équipe ouverte).
+  // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef.
+  // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
     const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
-    const krs = etat.d.resultatsCles.filter(k => { const o = parId('objectifs', k.objectifId); return o && o.equipeId === eqId; })
-      .map(k => ({ valeur: k.id, libelle: `${parId('objectifs', k.objectifId).code} · ${k.code} · ${k.libelle}` }));
     const personnes = etat.d.ressources.filter(r => r.equipeId === eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
     const moi = maRessource();
     return `<aside class="panneau"><form class="pile" style="height:100%;gap:0" data-action-envoi="creerProjet">
@@ -70,11 +70,7 @@ const Panneau = {
         <div><label class="libelle">Code</label><input class="champ" name="code" value="${Calculs.prochainCodeProjet(eq.prefixe, etat.d.projets)}" required></div>
         <div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(v.nom || '')}" required></div>
         <div><label class="libelle">Description</label><textarea class="champ" name="description" rows="3">${esc(v.description || '')}</textarea></div>
-        <div><label class="libelle">Résultat clé visé</label>${C.liste([{ valeur: '', libelle: '—' }, ...krs], '', 'class="champ" name="resultatCleId"')}</div>
         <div><label class="libelle">Chef de projet</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], moi && moi.equipeId === eqId ? moi.id : '', 'class="champ" name="chefId"')}</div>
-        <div class="deux-colonnes"><div><label class="libelle">Début</label><input class="champ" type="date" name="debut" value="${Calculs.aujourdhui()}" required></div>
-          <div><label class="libelle">Fin</label><input class="champ" type="date" name="fin" value="${v.fin || ''}" required></div></div>
-        <div><label class="libelle">Statut</label>${C.liste(valeursDe('stp').map(x => x.libelle), STATUTS_PROJET.PLANIFIE, 'class="champ" name="statut"')}</div>
         <input type="hidden" name="equipeId" value="${eqId}">
         ${v.demandeId ? `<input type="hidden" name="demandeId" value="${v.demandeId}"><div class="discret">Le projet sera rattaché à la demande d’origine.</div>` : ''}
       </div>
@@ -101,7 +97,6 @@ Object.assign(Actions, {
   // Création : projet, affectation du chef, rattachement à la demande d'origine
   async creerProjet(_, form) {
     const f = Object.fromEntries(new FormData(form));
-    if (f.fin < f.debut) return notifier('La fin doit être après le début', 'erreur');
     const demandeId = f.demandeId; delete f.demandeId;
     const ok = await executer(async () => {
       const [cree] = await Api.creer('projets', f);

@@ -131,7 +131,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.fermer');
     await page.click('[data-action="nouveauProjet"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="creerProjet"] input[name=nom]', 'Projet de test');
-    await page.fill('form[data-action-envoi="creerProjet"] input[name=fin]', '2026-12-31');
+    verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
     verifier('Nouveau projet créé et ouvert', (await texte()).includes('Projet de test'));
     await page.click('.fermer');
@@ -194,7 +194,6 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.fiche >> nth=0'); await page.click('[data-action="statutDemande"][data-statut="analyse"]'); await page.waitForTimeout(300);
     await page.click('[data-action="statutDemande"][data-statut="acceptee"]'); await page.waitForTimeout(300);
     await page.click('[data-action="projetDepuisDemande"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="creerProjet"] input[name=fin]', '2027-02-28');
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
     await page.click('.fermer');
     verifier('Demande acceptée et projet créé depuis la demande', (await texte()).includes('Projet créé'));

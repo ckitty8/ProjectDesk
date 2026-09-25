@@ -129,7 +129,7 @@ Object.assign(Actions, {
   // Ouvre le panneau « nouveau projet » pré-rempli avec la demande
   projetDepuisDemande(d) {
     const dm = parId('demandes', d.id);
-    majEtat({ panneau: { type: 'nouveauProjet', demandeId: dm.id, nom: dm.titre, description: dm.description, fin: dm.dateSouhaitee } });
+    majEtat({ panneau: { type: 'nouveauProjet', demandeId: dm.id, nom: dm.titre, description: dm.description } });
   },
 
   choisirTypeChamp: d => majUi('monAdmin', { typeNouveau: d.type }),
