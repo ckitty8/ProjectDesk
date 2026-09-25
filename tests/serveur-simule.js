@@ -107,7 +107,8 @@ function amorcer() {
     ['lm', '2026-10-09', 'Congés validé'], ['hm', '2026-10-16', 'Congés prévisionnel'], ['sp', '2026-10-05', 'Congés validé'], ['sp', '2026-10-06', 'Congés validé'], ['ir', '2026-10-14', 'Congés validé'],
     ['ir', '2026-10-22', 'Congés prévisionnel'], ['cg', '2026-10-20', 'Congés prévisionnel'], ['nb', '2026-10-12', 'Congés prévisionnel'], ['nb', '2026-10-13', 'Congés prévisionnel'], ['nb', '2026-10-14', 'Congés prévisionnel'], ['nb', '2026-10-15', 'Congés prévisionnel'],
     ['pl', '2026-10-23', 'Congés prévisionnel'], ['tb', '2026-09-23', 'Congés prévisionnel'], ['cl', '2026-09-24', 'Congés prévisionnel'], ['cl', '2026-03-10', 'Congés validé'], ['cl', '2026-08-10', 'Congés validé']];
-  bd.absences = ABS.map(([p, jour, type]) => ({ ressource_id: idP[p], jour, type }));
+  bd.absences = ABS.map(([p, jour, type]) => ({ ressource_id: idP[p], jour, type, duree: 1 }));
+  bd.absences.push({ ressource_id: idP.lm, jour: '2026-11-13', type: 'Congés validé', duree: 0.5 });   // demi-journée (migration 009)
   bd.temps_saisis = []; bd.feuilles_temps = [];
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
   bd.ressources.forEach((r, i) => {

@@ -99,26 +99,30 @@ const Calculs = (() => {
   }
 
   /* ---------- Congés ---------- */
-  // absences : liste { ressourceId, jour, type } ; renvoie le décompte d'une personne sur une année
+  // Durée d'une absence en jours : 1 (journée) ou 0,5 (demi-journée, migration 009)
+  const dureeAbsence = a => Number(a.duree ?? 1);
+  const sommeDurees = liste => liste.reduce((s, a) => s + dureeAbsence(a), 0);
+
+  // absences : liste { ressourceId, jour, type, duree } ; décompte d'une personne sur une année (en jours)
   function recapConges(ressourceId, annee, absences, typesAbsence) {
     const siennes = absences.filter(a => a.ressourceId === ressourceId && a.jour.startsWith(String(annee)));
     const parType = {};
-    typesAbsence.forEach(t => { parType[t.libelle] = siennes.filter(a => a.type === t.libelle).length; });
+    typesAbsence.forEach(t => { parType[t.libelle] = sommeDurees(siennes.filter(a => a.type === t.libelle)); });
     const cpPris = parType[ABSENCES.CP] || 0;
-    return { parType, total: siennes.length, cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
+    return { parType, total: sommeDurees(siennes), cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
   }
 
   // Capacité d'une liste de personnes sur une période, en jours-homme.
-  // théorique = Σ jours ouvrés × capacité ; disponible = idem, moins les jours d'absence.
+  // théorique = Σ jours ouvrés × capacité ; disponible = idem, moins les absences (demi-journée = 0,5).
   function capacitePeriode(ressources, debut, fin, absences, feries) {
     let theorique = 0, disponible = 0;
-    const absent = new Set(absences.map(a => a.ressourceId + '|' + a.jour));
+    const absent = new Map(absences.map(a => [a.ressourceId + '|' + a.jour, dureeAbsence(a)]));
     for (let jour = debut; jour <= fin; jour = ajouterJours(jour, 1)) {
       if (!estJourOuvre(jour, feries)) continue;
       ressources.forEach(r => {
         const part = (r.capacite ?? 100) / 100;
         theorique += part;
-        if (!absent.has(r.id + '|' + jour)) disponible += part;
+        disponible += part * (1 - (absent.get(r.id + '|' + jour) || 0));
       });
     }
     return { theorique, disponible };
@@ -133,11 +137,12 @@ const Calculs = (() => {
     return { jours, parJour, total: parJour.reduce((a, b) => a + b, 0) };
   }
 
-  // Heures attendues d'une personne sur une semaine (jours ouvrés non absents × capacité)
+  // Heures attendues d'une personne sur une semaine (jours ouvrés, moins les absences, × capacité)
   function heuresAttendues(ressource, lundiIso, absences, feries) {
-    const absent = new Set(absences.filter(a => a.ressourceId === ressource.id).map(a => a.jour));
-    const jours = joursOuvresSemaine(lundiIso).filter(j => estJourOuvre(j, feries) && !absent.has(j));
-    return jours.length * CONFIG.HEURES_PAR_JOUR * (ressource.capacite ?? 100) / 100;
+    const absent = new Map(absences.filter(a => a.ressourceId === ressource.id).map(a => [a.jour, dureeAbsence(a)]));
+    const jours = joursOuvresSemaine(lundiIso).filter(j => estJourOuvre(j, feries))
+      .reduce((s, j) => s + 1 - (absent.get(j) || 0), 0);
+    return jours * CONFIG.HEURES_PAR_JOUR * (ressource.capacite ?? 100) / 100;
   }
 
   // Taux d'occupation = heures saisies / heures attendues (en %)

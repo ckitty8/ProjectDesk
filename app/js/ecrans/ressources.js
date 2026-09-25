@@ -25,7 +25,7 @@ const Calendrier = {
     const esc = C.esc, { annee, mois } = this.moisCourant();
     const jours = Calculs.joursDuMois(annee, mois), fer = feries(), aujourd = Calculs.aujourdhui();
     const types = valeursDe('abs', true);
-    const absence = {}; etat.d.absences.forEach(a => { absence[a.ressourceId + '|' + a.jour] = a.type; });
+    const absence = {}; etat.d.absences.forEach(a => { absence[a.ressourceId + '|' + a.jour] = a; });
 
     const entete = jours.map(j => {
       const ferme = !Calculs.estJourOuvre(j, fer), d = Calculs.depuisIso(j);
@@ -49,12 +49,13 @@ const Calendrier = {
           const cases = jours.map(j => {
             const ferme = !Calculs.estJourOuvre(j, fer);
             if (ferme) return `<td class="ferme">${fer.has(j) ? caseFeriee(j) : ''}</td>`;
-            const type = absence[r.id + '|' + j], t = types.find(x => x.libelle === type);
-            if (t) nb++;
-            const contenu = t ? `<span class="case-absence" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}</span>` : '';
+            // Absence du jour ; demi-journée (duree 0,5) marquée « ½ » et comptée 0,5
+            const a = absence[r.id + '|' + j], t = a && types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
+            if (t) nb += demi ? 0.5 : 1;
+            const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
             return editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>` : `<td>${contenu}</td>`;
           }).join('');
-          return `<tr><td class="nom"><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>${cases}${editable ? `<td class="num" style="padding:0 10px">${nb} j</td>` : ''}</tr>`;
+          return `<tr><td class="nom"><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>${cases}${editable ? `<td class="num" style="padding:0 10px">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
         }).join('');
     }).join('');
 

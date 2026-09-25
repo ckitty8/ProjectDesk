@@ -36,6 +36,7 @@
 | 1.21    | 2026-09-25 | Calendriers (Congés & capacité, Général › Gestion des ressources) : sélecteur de mois déplacé juste au-dessus du calendrier, à gauche (§ 3.2, § 3.3) |
 | 1.22    | 2026-09-25 | Jours fériés affichés par défaut dans les calendriers avec le type « Jours férié » (clé `ferie`, migration 008) (§ 4) |
 | 1.23    | 2026-09-25 | Mon dashboard › Administration : onglet **Jours fériés** (administrateurs) pour gérer la table `jours_feries` (§ 3.3) |
+| 1.24    | 2026-09-25 | Absences à la demi-journée (`absences.duree`, migration 009) : récap, solde, capacité et heures attendues comptent 0,5 ; calendrier « ½ ». Import de l'onglet Planning de `Calendrier_2026.xlsx` (117 absences « Congés validé », 2 fiches créées) (§ 4, § 6) |
 
 ---
 
@@ -153,7 +154,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -172,7 +173,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
 | `affectations` | `projet_id`, `ressource_id`, `role` (Chef de projet / Membre / Lecteur) | unique (projet, ressource) |
 | `tickets` | `projet_id`, `numero` (ex. PF-14.3), `titre`, `statut`, `priorite`, `assigne_id` | → `projets` |
-| `absences` | `ressource_id`, `jour`, `type` | clé (ressource, jour) |
+| `absences` | `ressource_id`, `jour`, `type`, `duree` (1 = journée, 0,5 = demi-journée ; migration 009) | clé (ressource, jour) |
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
 | `feuilles_temps` | `ressource_id`, `semaine` (lundi), `statut` (en_saisie / soumise / validee / a_completer), `commentaire` | clé (ressource, semaine) |
 | `notes_daily` | `user_id`, `jour`, `texte` | clé (user, jour) |
@@ -248,10 +249,10 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | À surveiller = « À risque », « En retard » ou échéance ≤ `ALERTE_ECHEANCE_JOURS` | `Calculs.projetsASurveiller` |
 | Progression d'un objectif = moyenne de ses résultats clés | `Calculs.progressionObjectif` |
 | Atteinte trimestrielle d'une équipe = moyenne des objectifs du trimestre | `Calculs.atteinteTrimestre` |
-| Récap congés : jours par type, solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
-| Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences | `Calculs.capacitePeriode` |
+| Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
+| Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |
-| Heures attendues = jours ouvrés non absents × `HEURES_PAR_JOUR` × capacité | `Calculs.heuresAttendues` |
+| Heures attendues = (jours ouvrés − absences, demi-journée = 0,5) × `HEURES_PAR_JOUR` × capacité | `Calculs.heuresAttendues` |
 | Taux d'occupation = heures saisies / heures attendues (semaine courante) | `Calculs.tauxOccupation` |
 | Code projet suivant = PREFIXE-(max + 1) | `Calculs.prochainCodeProjet` |
 | Jours ouvrés : hors week-ends et `jours_feries` | `Calculs.estJourOuvre` |
@@ -315,7 +316,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (48 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (50 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
