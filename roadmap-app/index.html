@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Roadmap PM</title>
+<meta name="viewport" content="width=1280">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-icon">🗺️</span>
+      <div>
+        <div class="brand-title">Roadmap&nbsp;PM</div>
+        <div class="brand-sub">Pilotage de backlog</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="backlog"><span>📋</span> Backlog</button>
+      <button class="nav-btn" data-view="kanban"><span>🗂️</span> Kanban</button>
+      <button class="nav-btn" data-view="timeline"><span>📅</span> Roadmap</button>
+      <button class="nav-btn" data-view="dashboard"><span>📊</span> Dashboard</button>
+      <button class="nav-btn" data-view="capacity"><span>⚙️</span> Capacité</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="btn-import" class="ghost-btn">⬆ Importer (CSV/JSON)</button>
+      <button id="btn-export-csv" class="ghost-btn">⬇ Exporter CSV</button>
+      <button id="btn-export-json" class="ghost-btn">⬇ Exporter JSON</button>
+      <button id="btn-reset" class="ghost-btn danger">↺ Réinitialiser</button>
+      <input type="file" id="import-input" accept=".csv,.json" hidden>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <input id="search" class="search" type="text" placeholder="Rechercher une demande, un demandeur, une US…">
+      <div class="filters">
+        <select id="filter-etat" data-placeholder="Tous les états"></select>
+        <select id="filter-categorie" data-placeholder="Toutes catégories"></select>
+        <select id="filter-statut" data-placeholder="Tous statuts"></select>
+        <select id="filter-planification" data-placeholder="Toutes échéances"></select>
+      </div>
+      <button id="btn-add" class="primary-btn">+ Nouvelle demande</button>
+    </header>
+
+    <section id="view-backlog" class="view active">
+      <div class="view-header">
+        <h2>Backlog des demandes</h2>
+        <span id="backlog-count" class="muted"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="backlog-table">
+          <thead>
+            <tr>
+              <th data-sort="rang">Rang</th>
+              <th data-sort="categorie">Catégorie</th>
+              <th>Demande</th>
+              <th data-sort="demandeur">Demandeur</th>
+              <th data-sort="etat">Etat</th>
+              <th data-sort="statut">Statut</th>
+              <th data-sort="planification">Planification</th>
+              <th data-sort="score">Score</th>
+              <th data-sort="chiffrageDSI">JH</th>
+              <th data-sort="fixe">★</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="backlog-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-kanban" class="view">
+      <div class="view-header"><h2>Vue Kanban — pipeline de traitement DSI</h2></div>
+      <div id="kanban-board" class="kanban-board"></div>
+    </section>
+
+    <section id="view-timeline" class="view">
+      <div class="view-header"><h2>Roadmap par trimestre</h2></div>
+      <div id="timeline-board" class="timeline-board"></div>
+    </section>
+
+    <section id="view-dashboard" class="view"></section>
+
+    <section id="view-capacity" class="view"></section>
+  </main>
+
+  <div id="overlay" class="overlay"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-header">
+      <h3 id="drawer-title">Nouvelle demande</h3>
+      <button id="drawer-close" class="icon-btn">✕</button>
+    </div>
+    <div id="drawer-form" class="drawer-form"></div>
+    <div class="drawer-actions">
+      <button id="drawer-delete" class="ghost-btn danger">Supprimer</button>
+      <button id="drawer-save" class="primary-btn">Enregistrer</button>
+    </div>
+  </aside>
+
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
