@@ -48,10 +48,11 @@ Ecrans.conges = {
 
     // Contenu de chaque onglet
     const onglet = this.onglet();
-    const grille = `<div class="carte"><div class="carte-titre"><h2>Grille mensuelle</h2><div class="puces">${pinceaux}</div></div>${Calendrier.rendre(true)}</div>`;
+    // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
+    const grille = `<div class="carte"><div class="carte-titre">${Calendrier.navigation()}<div class="puces">${pinceaux}</div></div>${Calendrier.rendre(true)}</div>`;
     // Type d'absence décompté du droit annuel (clé « cp ») : son libellé est administrable
     const typeDecompte = esc(ABSENCES.CP);
-    const recapAnnuel = `<div class="carte"><div class="carte-titre"><h2>Récap annuel ${annee}</h2><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
+    const recapAnnuel = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}<h2>Récap annuel ${annee}</h2></div><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
       <table class="tableau"><thead><tr><th>Personne</th><th>${typeDecompte}</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
         <th class="num">Total</th><th class="num">Solde</th></tr></thead>
         <tbody>${recap || `<tr><td colspan="8">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
@@ -64,12 +65,10 @@ Ecrans.conges = {
       { id: 'recap', libelle: `Récap annuel ${annee}` },
       { id: 'capacite', libelle: 'Capacité par sprint' }
     ], onglet, 'ongletConges');
-    // Navigation mensuelle : utile à la grille et au récap (année affichée)
-    const navigation = onglet === 'capacite' ? '' : Calendrier.navigation();
 
     return `
     <div class="ecran">
-      ${C.entete('Congés & capacité', onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences, récapitulatif annuel et capacité des équipes', navigation)}
+      ${C.entete('Congés & capacité', onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences, récapitulatif annuel et capacité des équipes')}
       ${onglets}
       ${{ grille, recap: recapAnnuel, capacite }[onglet]}
     </div>`;

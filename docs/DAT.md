@@ -33,6 +33,7 @@
 | 1.18    | 2026-09-25 | Données à jour sans F5 (lectures `no-store`, `no-cache` Vercel) ; panneau projet modifiable (nom, description, chef, dates) et supprimable, ouvert depuis Liste des ressources (§ 3.4, § 8) |
 | 1.19    | 2026-09-25 | Types d'absence (données) : Congés validé (vert, décompté du droit annuel, clé `cp`), Congés prévisionnel (orange), Jours férié (marron) ; Formation désactivé ; en-tête du récap annuel = libellé du type décompté (§ 3.3) |
 | 1.20    | 2026-09-25 | Panneau projet : objectif, résultat clé, période, statut, avancement et tickets retirés (§ 3.4) |
+| 1.21    | 2026-09-25 | Calendriers (Congés & capacité, Général › Gestion des ressources) : sélecteur de mois déplacé juste au-dessus du calendrier, à gauche (§ 3.2, § 3.3) |
 
 ---
 

@@ -74,8 +74,8 @@ Ecrans.ressources = {
     }).join('');
     return `
     <div class="ecran">
-      ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule', Calendrier.navigation())}
-      <div class="carte"><div class="carte-titre"><h2>Calendrier des congés</h2>${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
+      ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
+      <div class="carte"><div class="carte-titre">${Calendrier.navigation()}${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
       <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${etat.d.ressources.length} personnes</span></div>
         <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th></tr></thead>
         <tbody>${annuaire || `<tr><td colspan="5">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
