@@ -15,6 +15,7 @@
 | 1.0     | 2026-09-25 | **Pilotage Projet livré** : migration 002, application `app/`, tests de bout en bout ; Roadmap PM retiré |
 | 1.1     | 2026-09-25 | Domaines Vercel `project-desk.vercel.app` et `…-git-main-…` autorisés ; messages d'erreur de connexion explicites (§ 8) |
 | 1.2     | 2026-09-25 | Connexion Google : échange du vérificateur de session au retour, jeton lu dans `set-auth-jwt`, erreurs de retour affichées (§ 7) |
+| 1.3     | 2026-09-25 | Adresse de production corrigée : `project-desk-sepia.vercel.app` autorisée, `project-desk.vercel.app` (projet tiers) retirée (§ 8) |
 
 ---
 
@@ -233,12 +234,15 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 
 | Domaine | Nature |
 |---------|--------|
-| `https://project-desk.vercel.app` | Adresse de production (celle à communiquer aux utilisateurs) |
+| `https://project-desk-sepia.vercel.app` | **Adresse de production** (celle à communiquer aux utilisateurs) |
 | `https://project-desk-ckitty8s-projects.vercel.app` | Adresse stable de l'équipe Vercel |
 | `https://project-desk-git-main-ckitty8s-projects.vercel.app` | Adresse de la branche `main` |
 | `https://project-desk-jusy2piap-ckitty8s-projects.vercel.app` | Un déploiement précis (change à chaque déploiement) |
 | `localhost` | Développement |
 
+  Ne déclarer **que des adresses appartenant au projet Vercel** (`project-desk.vercel.app`,
+  déclarée par erreur puis retirée, appartient à un autre projet). En cas d'adresse refusée,
+  l'écran de connexion affiche l'adresse exacte à ajouter.
   Tout nouveau domaine doit être ajouté (Console Neon → Auth → Domains). Les adresses de
   prévisualisation par déploiement ne sont volontairement pas couvertes par un joker
   (`*.vercel.app` autoriserait des sites tiers).
