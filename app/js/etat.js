@@ -205,7 +205,25 @@ function ecrireMemoire(cle, valeur) { try { localStorage.setItem('pp_' + cle, va
 function allerA(ecran) {
   majEtat({ ecran, panneau: null, modale: null });
   if (Ecrans[ecran] && Ecrans[ecran].auChargement) Ecrans[ecran].auChargement();
+  rafraichirDonnees();
 }
+
+/* Rafraîchissement des données en arrière-plan : à chaque changement d'écran et au retour
+   sur l'onglet du navigateur. Sans lui, les changements faits ailleurs (autre utilisateur,
+   import direct en base) n'apparaissaient qu'après F5. On ne redessine pas pendant une
+   saisie (fenêtre, panneau ou champ actif) pour ne pas perdre ce qui est en cours. */
+let rafraichissementEnCours = false;
+async function rafraichirDonnees() {
+  if (rafraichissementEnCours || !etat.session || !etat.d.valeurs) return;
+  rafraichissementEnCours = true;
+  try {
+    await chargerDonnees();
+    const saisieEnCours = etat.modale || etat.panneau || ['INPUT', 'TEXTAREA', 'SELECT'].includes((document.activeElement || {}).tagName);
+    if (!saisieEnCours) rendre();
+  } catch (e) { /* réseau indisponible : on garde les données affichées */ }
+  finally { rafraichissementEnCours = false; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') rafraichirDonnees(); });
 
 /* ---------- Événements (délégation) ----------
    data-action="nom"            → clic

@@ -171,6 +171,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       return Calculs.recapConges(lea.id, 2026, [{ ressourceId: lea.id, jour: '2026-11-13', type: ABSENCES.CP, duree: 0.5 }], valeursDe('abs', true)).cpPris === 0.5
         && Calculs.heuresAttendues(lea, '2026-11-09', [{ ressourceId: lea.id, jour: '2026-11-13', duree: 0.5 }], new Set(['2026-11-11'])) === 3.5 * CONFIG.HEURES_PAR_JOUR * (lea.capacite ?? 100) / 100;
     }));
+    // Changement fait « ailleurs » (écriture directe, sans rechargement) : visible au changement d'écran, sans F5
+    await page.evaluate(() => { const r = etat.d.ressources[0]; return Api.creer('absences', { ressourceId: r.id, jour: '2026-11-20', type: ABSENCES.CP, duree: 1 }, 'ressource_id,jour'); });
+    const avantNavigation = await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20'));
+    await aller('ressources'); await page.waitForTimeout(400); await aller('conges'); await page.waitForTimeout(400);
+    verifier('Données rafraîchies au changement d’écran (sans F5)', !avantNavigation && await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20')));
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');

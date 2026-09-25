@@ -37,6 +37,7 @@
 | 1.22    | 2026-09-25 | Jours fériés affichés par défaut dans les calendriers avec le type « Jours férié » (clé `ferie`, migration 008) (§ 4) |
 | 1.23    | 2026-09-25 | Mon dashboard › Administration : onglet **Jours fériés** (administrateurs) pour gérer la table `jours_feries` (§ 3.3) |
 | 1.24    | 2026-09-25 | Absences à la demi-journée (`absences.duree`, migration 009) : récap, solde, capacité et heures attendues comptent 0,5 ; calendrier « ½ ». Import de l'onglet Planning de `Calendrier_2026.xlsx` (117 absences « Congés validé », 2 fiches créées) (§ 4, § 6) |
+| 1.25    | 2026-09-25 | Rafraîchissement des données en arrière-plan (changement d'écran, retour sur l'onglet) (§ 2) |
 
 ---
 
@@ -87,6 +88,9 @@ Principes :
   écriture, seules les tables touchées sont rechargées (`executer()` / `recharger()`). Exception :
   les notes de daily ne sont chargées que sur les `JOURS_DAILY` (90) derniers jours ; un écran peut
   déclarer `auChargement()` pour rafraîchir ses données à l'ouverture.
+- Toutes les données sont **relues en arrière-plan** à chaque changement d'écran et au retour sur
+  l'onglet du navigateur (`rafraichirDonnees()`), sans redessiner pendant une saisie : les changements
+  faits ailleurs (autre utilisateur, import en base) apparaissent sans F5.
 
 ### 2.1 Fichiers de l'application
 
@@ -316,7 +320,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (50 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (51 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
