@@ -10,7 +10,7 @@
      2. chaque menu de index.html est décrit dans le DAT (§ 3.1) ;
      3. chaque champ de FIELD_LABELS (data.js) est décrit dans le DAT (§ 4.1) ;
      4. chaque fonction de rendu render<Vue> citée dans le DAT existe dans app.js ;
-     5. chaque capture PNG citée dans le DAT existe sur le disque ;
+     5. chaque capture PNG citée dans le DAT existe dans docs/maquettes/ (tous sous-dossiers) ;
      6. le DAT a été modifié dans le dernier commit si le code l'a été ;
      7. chaque table créée dans db/migrations/*.sql est décrite dans le DAT.
 
@@ -61,10 +61,16 @@ fonctionsCitees.forEach(fn => {
   if (!new RegExp(`function ${fn}\\(`).test(appJs)) ecarts.push(`Fonction "${fn}" citée dans le DAT mais absente de app.js`);
 });
 
-/* ---------- 5. Captures PNG citées dans le DAT : elles existent ---------- */
+/* ---------- 5. Captures PNG citées dans le DAT : elles existent (docs/maquettes/**) ---------- */
 const captures = new Set([...dat.matchAll(/`([\w-]+\.png)`/g)].map(m => m[1]));
+// Les captures peuvent se trouver dans n'importe quel sous-dossier de docs/maquettes/
+function listerPng(dossier) {
+  return fs.readdirSync(dossier, { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? listerPng(path.join(dossier, e.name)) : (e.name.endsWith('.png') ? [e.name] : []));
+}
+const pngExistants = new Set(listerPng(path.join(ROOT, 'docs/maquettes')));
 captures.forEach(png => {
-  if (!exists(`docs/maquettes/etat-actuel/${png}`)) ecarts.push(`Capture "${png}" citée dans le DAT mais absente de docs/maquettes/etat-actuel/`);
+  if (!pngExistants.has(png)) ecarts.push(`Capture "${png}" citée dans le DAT mais absente de docs/maquettes/`);
 });
 
 /* ---------- 7. Tables SQL : chaque table créée est dans le DAT ---------- */
