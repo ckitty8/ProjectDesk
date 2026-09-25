@@ -21,6 +21,7 @@
 | 1.6     | 2026-09-25 | Nouvel écran Général › Daily des équipes ; notes de daily lisibles par les coéquipiers (migration 004) ; notes chargées sur 90 jours (§ 2, § 3.2, § 5, § 6) |
 | 1.7     | 2026-09-25 | **Section Général strictement en lecture seule** : édition des équipes et référentiels déplacée dans Mon dashboard › Administration ; contrôle automatique (§ 3, § 9, § 10) |
 | 1.8     | 2026-09-25 | **Liste des ressources en « board »** : onglets Équipes (arborescence Directions & équipes, recherche, statut, suppression si vide), Affectations, Postes, Types de contrat ; migration 005 (`directions`, statut des équipes, `type_contrat`, référentiels `poste` / `contrat`) (§ 3.3, § 4, § 5) |
+| 1.9     | 2026-09-25 | Incident « table directions absente du cache de schéma » : rechargement du cache Data API ajouté à la procédure de migration (§ 10) |
 
 ---
 
@@ -289,7 +290,10 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
    jamais en dur ; constante technique → `config.js`.
 2. Calcul métier → `calculs.js` (fonction pure), cité au § 6.
 3. Nouvelle table → migration numérotée `db/migrations/NNN_*.sql` (jamais modifier une migration
-   appliquée), GRANT + RLS + trigger de traçabilité, citée au § 4 et au § 5.2.
+   appliquée), GRANT + RLS + trigger de traçabilité, citée au § 4 et au § 5.2. **Après
+   application, recharger le cache de schéma de la Data API** (`notify pgrst, 'reload schema';`,
+   ou réenregistrer la configuration Data API dans la console Neon) **avant** de publier le code
+   qui lit la nouvelle table — sinon l'app affiche « Could not find the table … in the schema cache ».
 4. Nouvel écran → fichier `app/js/ecrans/`, entrée de menu dans `coquille.js`, balise `<script>`
    dans `index.html`, maquette PNG validée, ligne au § 3, capture dans `tests/parcours.js`.
 5. Droits : toujours en base (RLS) ; `etat.js` ne fait que masquer.
