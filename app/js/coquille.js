@@ -89,7 +89,7 @@ const Coquille = (() => {
       <h2>Aucune équipe ouverte</h2>
       <p class="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Général » reste consultable.</p>
       ${mesEquipes().length ? '<button class="btn primaire" data-action="changerEquipe">Choisir une équipe</button>'
-        : etat.estAdmin ? '<button class="btn primaire" data-action="aller" data-ecran="administration">Créer une équipe (Administration)</button>' : ''}
+        : etat.estAdmin ? '<button class="btn primaire" data-action="aller" data-ecran="monAdmin">Créer une équipe (Administration)</button>' : ''}
     </div></div>`;
   }
 
@@ -106,7 +106,7 @@ const Coquille = (() => {
       ${barreLaterale()}
       <main class="principal">
         ${enTete(ecran)}
-        <div class="contenu">${ecran.section === 'moi' && !etat.equipeCourante ? sansEquipe() : ecran.rendre()}</div>
+        <div class="contenu">${ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis()) ? sansEquipe() : ecran.rendre()}</div>
       </main>
       ${etat.panneau ? `<div class="voile" data-action="fermer"></div>${Panneau.rendre()}` : ''}
       ${etat.modale ? `<div class="voile" data-action="fermer"></div>${Modale.rendre()}` : ''}

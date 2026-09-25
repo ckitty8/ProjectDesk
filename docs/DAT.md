@@ -19,6 +19,7 @@
 | 1.4     | 2026-09-25 | Administrateurs : lecture de tout sans équipe (migration 003), entrée directe dans l'outil ; ouverture automatique de l'équipe unique ou nouvellement créée (§ 5.2, § 7) |
 | 1.5     | 2026-09-25 | Nom affiché « ProjectDesk » (paramètre `NOM_APPLICATION`), sous-titre « Multi-projets · Multi-équipes » retiré (§ 1, § 2.1) |
 | 1.6     | 2026-09-25 | Nouvel écran Général › Daily des équipes ; notes de daily lisibles par les coéquipiers (migration 004) ; notes chargées sur 90 jours (§ 2, § 3.2, § 5, § 6) |
+| 1.7     | 2026-09-25 | **Section Général strictement en lecture seule** : édition des équipes et référentiels déplacée dans Mon dashboard › Administration ; contrôle automatique (§ 3, § 9, § 10) |
 
 ---
 
@@ -31,7 +32,9 @@ entrantes (formulaire administrable). Maquette de référence :
 `docs/maquettes/pilotage-projet/source/Pilotage_Projet.dc.html`.
 
 La barre latérale a deux sections :
-- **Général** (badge « Lecture seule ») : vue consolidée de **toutes** les équipes ;
+- **Général** (badge « Lecture seule ») : vue consolidée de **toutes** les équipes — **aucune
+  modification possible** dans cette section, y compris pour un administrateur (règle vérifiée
+  automatiquement par `tests/parcours.js`) ;
 - **Mon dashboard** (badge « Édition ») : ce que l'utilisateur modifie (ses notes, ses projets,
   les congés et affectations de ses équipes, ses heures, les demandes de son équipe).
 
@@ -102,7 +105,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `dashboard` | `dashboard.js` | KPI, objectifs du trimestre (T1–T4), progression par trimestre et par équipe, projets à surveiller | `03-dashboard.png` |
 | `projets` | `projets.js` | Projets groupés par équipe, filtre d'équipe, tickets dépliables, panneau en lecture | `04-projets.png` |
 | `ressources` | `ressources.js` | Calendrier mensuel des absences (composant `Calendrier`) + annuaire | `05-ressources.png` |
-| `administration` | `administration.js` | Onglets Équipes / Référentiels / Champs (écriture : administrateurs globaux) | `06-administration.png` |
+| `administration` | `administration.js` | Onglets Équipes / Référentiels / Champs, **consultation** (lien vers Mon dashboard › Administration pour les administrateurs) | `06-administration.png` |
 | `timesheet` | `timesheet.js` | Heures par personne et par jour d'une semaine, complétude, statut des feuilles | `07-timesheet.png` |
 | `dailyEquipes` | `daily-equipes.js` | Daily des membres de mes équipes pour un jour : filtre d'équipe, « Blocages du jour », membres sans note (et absence) — maquette `daily-equipes.png` | `17-daily-equipes.png` |
 
@@ -115,7 +118,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Arborescence équipe → projet → personnes, affectations, fiches ressources | `12-liste-ressources.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
-| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu | `14-mon-admin.png`, `15-formulaire.png` |
+| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
 ### 3.4 Éléments ajoutés par rapport à la maquette
 
@@ -231,7 +234,8 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
    - une seule équipe (ou équipe mémorisée sur le poste) → ouverte directement, dashboard ;
    - plusieurs équipes sans mémoire → écran de choix d'équipe ;
    - administrateur sans équipe → directement dans l'outil (dashboard, ou Administration si
-     aucune équipe n'existe) ; les écrans « Mon dashboard » l'invitent à ouvrir/créer une équipe ;
+     aucune équipe n'existe, Mon dashboard › Administration) ; les autres écrans « Mon dashboard »
+     l'invitent à ouvrir/créer une équipe ;
    - compte sans équipe ni droit d'administration → espace demandeur.
 3. **Création d'équipe** (administrateur) : organisation Neon Auth (le créateur en devient
    `owner`) puis ligne `equipes` ; si aucune équipe n'était ouverte, la nouvelle s'ouvre. Invitation de membres par email (fenêtre équipe) ; la personne
@@ -269,7 +273,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (30 contrôles, dont l'aller-retour Google simulé, le parcours administrateur sans équipe et le daily des équipes) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (32 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe et le daily des équipes) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
@@ -284,6 +288,9 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
 4. Nouvel écran → fichier `app/js/ecrans/`, entrée de menu dans `coquille.js`, balise `<script>`
    dans `index.html`, maquette PNG validée, ligne au § 3, capture dans `tests/parcours.js`.
 5. Droits : toujours en base (RLS) ; `etat.js` ne fait que masquer.
+6. **Section Général = lecture seule** : un écran `section: 'general'` n'affiche aucun champ,
+   formulaire ni action d'écriture ; toute modification va dans « Mon dashboard ». Une nouvelle
+   action de lecture utilisée en Général doit être ajoutée à `ACTIONS_LECTURE` dans `tests/parcours.js`.
 
 ## 11. Outillage qualité documentaire
 

@@ -132,7 +132,7 @@ async function demarrer() {
       // première équipe, sinon le dashboard) ; les autres comptes sont des demandeurs.
       if (!etat.estAdmin) return majEtat({ chargement: false, equipeCourante: null, ecran: 'demandeur' });
       return majEtat({ chargement: false, equipeCourante: null,
-        ecran: ecranArrivee(etat.d.equipes.length ? 'dashboard' : 'administration') });
+        ecran: ecranArrivee(etat.d.equipes.length ? 'dashboard' : 'monAdmin') });
     }
     // Équipe ouverte : celle mémorisée sur ce poste, ou la seule équipe de l'utilisateur
     const choix = equipesReconnues.find(e => e.id === memorisee) || (equipesReconnues.length === 1 ? equipesReconnues[0] : null);

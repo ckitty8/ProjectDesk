@@ -38,7 +38,7 @@ Ecrans.choixEquipe = {
         <b style="color:var(--texte)">Vous n’êtes membre d’aucune équipe ?</b> Vous pouvez tout de même
         <a data-action="aller" data-ecran="demandeur">déposer une demande</a> et suivre son traitement.<br>
         Les équipes sont créées par un administrateur (menu Administration).
-        ${etat.estAdmin && !mesEquipes().length ? `<br><a data-action="aller" data-ecran="administration">Ouvrir l’administration</a>` : ''}
+        ${etat.estAdmin && !mesEquipes().length ? `<br><a data-action="aller" data-ecran="monAdmin">Ouvrir l’administration</a>` : ''}
       </div>
     </div></div>`;
   }

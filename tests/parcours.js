@@ -68,12 +68,37 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.fermer');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     await aller('administration'); await capture('06-administration');
-    await page.click('[data-action="ongletAdministration"][data-id="referentiels"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="ajouterValeur"] input', 'Demande légale');
-    await page.click('form[data-action-envoi="ajouterValeur"] button'); await page.waitForTimeout(300);
-    verifier('Administration : valeur de référentiel ajoutée', (await page.$$eval('input[data-action-change="renommerValeur"]', l => l.map(i => i.value))).includes('Demande légale'));
     await aller('timesheet'); await page.click('[data-action="semainePrecedente"]'); await page.click('[data-action="semaineSuivante"]');
     await capture('07-timesheet');
+
+    /* --- Règle : la section « Général » est en lecture seule ---
+       Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
+    const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
+      'moisPrecedent', 'moisSuivant', 'semainePrecedente', 'semaineSuivante', 'ongletAdministration', 'choisirReferentiel',
+      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler'];
+    const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
+      (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
+        .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
+    const interdites = [];
+    for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes', 'administration']) {
+      await aller(ecran);
+      if (ecran === 'administration') {
+        for (const onglet of ['equipes', 'referentiels', 'champs']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+      } else interdites.push(...await ecritures());
+    }
+    await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
+    interdites.push(...await page.$$eval('.panneau [data-action-change], .panneau [data-action-envoi], .panneau [data-action-saisie]', els => els.map(e => 'panneau:' + (e.dataset.actionChange || e.dataset.actionEnvoi || e.dataset.actionSaisie))));
+    await page.click('.fermer');
+    verifier('Général : lecture seule (aucune action d’écriture)', interdites.length === 0, [...new Set(interdites)].join(', '));
+
+    /* --- Administration (Mon dashboard) : référentiels modifiables par l'administratrice --- */
+    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="referentiels"]'); await page.waitForTimeout(200);
+    await page.fill('form[data-action-envoi="ajouterValeur"] input', 'Demande légale');
+    await page.click('form[data-action-envoi="ajouterValeur"] button'); await page.waitForTimeout(300);
+    verifier('Mon admin : valeur de référentiel ajoutée', (await page.$$eval('input[data-action-change="renommerValeur"]', l => l.map(i => i.value))).includes('Demande légale'));
+    await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('[data-action="modifierEquipe"] >> nth=0'); await page.waitForTimeout(400);
+    verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
+    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
 
     await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
@@ -171,7 +196,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Admin sans équipe : arrive dans l’outil (pas l’espace demandeur)', !(await texte()).includes('Espace demandeur') && (await texte()).includes('Dashboard général'));
     await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
     verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
-    await page.click('[data-action="aller"][data-ecran="administration"]'); await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
+    await page.click('[data-action="aller"][data-ecran="monAdmin"]'); await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]');
     await page.click('[data-action="nouvelleEquipe"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');

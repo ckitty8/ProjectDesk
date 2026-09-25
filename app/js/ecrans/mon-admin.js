@@ -4,23 +4,40 @@
      de traitement (analyse, acceptation/refus, création du projet).
    - Formulaire de demande : champs, ordre, obligatoire, aperçu.
      (Modification des champs réservée aux administrateurs globaux.)
+   - Équipes et Référentiels (administrateurs globaux, et responsables
+     d'équipe pour « Modifier » leur équipe) : c'est ici, et non dans la
+     section Général (lecture seule), que l'administration se modifie.
+   Accessible sans équipe ouverte pour un administrateur (création de
+   la première équipe) ; l'onglet Demandes demande alors une équipe.
    ============================================================ */
 'use strict';
 
 Ecrans.monAdmin = {
   titre: 'Administration',
   section: 'moi',
+  sansEquipePermis: () => etat.estAdmin,        // voir coquille.js : écran ouvert sans équipe
   rendre() {
-    const u = ui('monAdmin', { onglet: 'demandes' });
+    const u = ui('monAdmin', { onglet: etat.equipeCourante ? 'demandes' : 'equipes' });
     const miennes = etat.d.demandes.filter(dm => dm.equipeId === etat.equipeCourante);
+    const gereEquipes = etat.estAdmin || mesEquipes().some(e => estResponsableDe(e.id));
     const onglets = C.onglets([
       { id: 'demandes', libelle: 'Demandes entrantes', compte: miennes.filter(dm => ['nouvelle', 'analyse'].includes(dm.statut)).length },
-      { id: 'formulaire', libelle: 'Formulaire de demande', compte: etat.d.champs.length }
+      { id: 'formulaire', libelle: 'Formulaire de demande', compte: etat.d.champs.length },
+      ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
+      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length }] : [])
     ], u.onglet, 'ongletMonAdmin');
+    let corps;
+    if (u.onglet === 'equipes') corps = Administration.equipes(true);
+    else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
+    else if (u.onglet === 'formulaire') corps = this.formulaire();
+    else corps = etat.equipeCourante ? this.demandes(miennes, u.selection)
+      : `<div class="carte">${C.vide('Ouvrez ou créez une équipe (onglet Équipes) pour traiter ses demandes.')}</div>`;
+    const sousTitre = etat.equipeCourante ? `Demandes adressées à l’équipe ${C.esc(equipe(etat.equipeCourante).nom)}, formulaire${gereEquipes ? ', équipes' : ''}${etat.estAdmin ? ' et référentiels' : ''}`
+      : 'Création des équipes, référentiels et formulaire de demande';
     return `
     <div class="ecran" style="max-width:1500px">
-      ${C.entete('Administration', `Traitement des demandes adressées à l’équipe ${C.esc(equipe(etat.equipeCourante).nom)} et configuration du formulaire`)}
-      ${onglets}${u.onglet === 'demandes' ? this.demandes(miennes, u.selection) : this.formulaire()}
+      ${C.entete('Administration', sousTitre)}
+      ${onglets}${corps}
     </div>`;
   },
 
