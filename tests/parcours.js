@@ -142,28 +142,37 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('11-conges');
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
-    await aller('listeRessources'); await capture('12-liste-ressources');
+    await aller('listeRessources');
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
-    verifier('Liste des ressources : directions et équipes en arborescence', !!(await page.$('#table-unites tr[data-parent] >> text=Data')) && (await lignesUnites()).some(l => l.startsWith('Plateforme')));
-    await page.fill('#table-unites input, .recherche-champ input', 'data'); await page.waitForTimeout(150);
-    verifier('Liste des ressources : recherche d’une unité', (await lignesUnites()).every(l => /data|plateforme/i.test(l)) && (await lignesUnites()).length === 2);
-    verifier('Liste des ressources : suppression impossible d’une équipe non vide', !!(await page.$('button.btn-icone[disabled][title$="non vide : passez-la en Inactive"]')));
-    await page.click('[data-action="ajouterUnite"]'); await page.click('[data-action="choisirTypeUnite"][data-type="direction"]');
+    const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
+    verifier('Liste des ressources : direction → équipe → projet', await ligneVisible('Plateforme') && await ligneVisible('Data')
+      && !!(await page.$('#table-unites tr[data-chemin~="' + (await page.getAttribute('#table-unites tr:has-text("Data DA")', 'data-id')) + '"]')));
+    await page.click('tr:has-text("PF-12") [data-action="deplierProjetArbre"]'); await page.waitForTimeout(200);
+    await capture('12-liste-ressources');
+    verifier('Liste des ressources : membres d’un projet avec leur rôle', (await lignesUnites()).some(l => /Chef de projet|Membre/.test(l) && !l.startsWith('PF')));
+    await page.fill('.recherche-champ input', 'data'); await page.waitForTimeout(150);
+    verifier('Liste des ressources : recherche (unité et son contenu)', await ligneVisible('Data') && !(await ligneVisible('Mobile')));
+    await page.fill('.recherche-champ input', ''); await page.waitForTimeout(150);
+    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('button.btn-icone[disabled][title$="non vide : passez-la en Inactive"]')));
+    await page.click('[data-action="nouvelleUnite"][data-type="direction"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Test');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'DT');
     await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Liste des ressources : direction (espace de travail) ajoutée', (await lignesUnites()).some(l => l.startsWith('Direction Test'))
-      && !!(await page.$('#table-unites tr:has-text("Direction Test") b')));
+    verifier('Liste des ressources : direction ajoutée', await ligneVisible('Direction Test'));
+    await page.click('tr:has-text("Direction Test") [data-action="nouvelleUnite"][data-type="equipe"]');
+    verifier('Liste des ressources : « + Équipe » pré-rattache à la direction',
+      (await page.$eval('select[name=parentId]', s => s.options[s.selectedIndex].text)) === 'Direction Test');
+    await page.click('.modale .fermer');
     await page.click('tr:has-text("Direction Test") [data-action="supprimerEquipe"]'); await page.waitForTimeout(400);
-    verifier('Liste des ressources : direction vide supprimée', !(await lignesUnites()).some(l => l.startsWith('Direction Test')));
+    verifier('Liste des ressources : direction vide supprimée', !(await ligneVisible('Direction Test')));
     await page.click('[data-action="ongletListeRessources"][data-id="postes"]'); await page.waitForTimeout(200);
     await capture('18-postes');
     reponsePrompt = 'Développeur back-end';
     await page.click('tr:has-text("Dév. back-end") [data-action="renommerValeurListe"]'); await page.waitForTimeout(400);
     reponsePrompt = 'Merci de compléter';
-    await page.click('[data-action="ongletListeRessources"][data-id="affectations"]'); await page.waitForTimeout(200);
+    await page.click('[data-action="ongletListeRessources"][data-id="organisation"]'); await page.click('[data-action="toutDeplier"]'); await page.waitForTimeout(200);
     verifier('Postes : renommage propagé aux fiches ressources', (await texte()).includes('Développeur back-end'));
-    await page.click('[data-action="assigner"] >> nth=0'); await page.waitForTimeout(200);
+    await page.click('tr:has-text("PF-12") [data-action="assigner"]'); await page.waitForTimeout(200);
     await page.selectOption('select[name=ressource]', { index: 3 }); await page.waitForTimeout(200);
     await page.check('input[name=projet] >> nth=0');
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
@@ -218,6 +227,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Admin sans équipe : arrive dans l’outil (pas l’espace demandeur)', !(await texte()).includes('Espace demandeur') && (await texte()).includes('Dashboard général'));
     await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
     verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
+    await page.click('[data-action="aller"][data-ecran="listeRessources"]'); await page.waitForTimeout(200);
+    verifier('Admin sans équipe : Liste des ressources ouverte (arborescence)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#table-unites')));
     await page.click('[data-action="aller"][data-ecran="monAdmin"]'); await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]');
     await page.click('[data-action="nouvelleEquipe"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');

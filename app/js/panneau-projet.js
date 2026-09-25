@@ -55,9 +55,10 @@ const Panneau = {
     </aside>`;
   },
 
-  // Formulaire de création ; valeurs pré-remplies possibles (depuis une demande)
+  // Formulaire de création ; valeurs pré-remplies possibles (depuis une demande, ou l'équipe
+  // choisie dans Liste des ressources : v.equipeId ; sinon l'équipe ouverte)
   nouveauProjet(v) {
-    const esc = C.esc, eqId = etat.equipeCourante, eq = equipe(eqId);
+    const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
     const krs = etat.d.resultatsCles.filter(k => { const o = parId('objectifs', k.objectifId); return o && o.equipeId === eqId; })
       .map(k => ({ valeur: k.id, libelle: `${parId('objectifs', k.objectifId).code} · ${k.code} · ${k.libelle}` }));
     const personnes = etat.d.ressources.filter(r => r.equipeId === eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
@@ -74,6 +75,7 @@ const Panneau = {
         <div class="deux-colonnes"><div><label class="libelle">Début</label><input class="champ" type="date" name="debut" value="${Calculs.aujourdhui()}" required></div>
           <div><label class="libelle">Fin</label><input class="champ" type="date" name="fin" value="${v.fin || ''}" required></div></div>
         <div><label class="libelle">Statut</label>${C.liste(valeursDe('stp').map(x => x.libelle), STATUTS_PROJET.PLANIFIE, 'class="champ" name="statut"')}</div>
+        <input type="hidden" name="equipeId" value="${eqId}">
         ${v.demandeId ? `<input type="hidden" name="demandeId" value="${v.demandeId}"><div class="discret">Le projet sera rattaché à la demande d’origine.</div>` : ''}
       </div>
       <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Créer le projet</button></div>
@@ -102,7 +104,7 @@ Object.assign(Actions, {
     if (f.fin < f.debut) return notifier('La fin doit être après le début', 'erreur');
     const demandeId = f.demandeId; delete f.demandeId;
     const ok = await executer(async () => {
-      const [cree] = await Api.creer('projets', { ...f, equipeId: etat.equipeCourante });
+      const [cree] = await Api.creer('projets', f);
       if (f.chefId) await Api.creer('affectations', { projetId: cree.id, ressourceId: f.chefId, role: ROLES_PROJET.CHEF });
       if (demandeId) await Api.modifier('demandes', { id: 'eq.' + demandeId }, { projetId: cree.id });
       etat.panneau = { type: 'projet', id: cree.id };

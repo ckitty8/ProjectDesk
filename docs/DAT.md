@@ -23,6 +23,7 @@
 | 1.8     | 2026-09-25 | **Liste des ressources en « board »** : onglets Équipes (arborescence Directions & équipes, recherche, statut, suppression si vide), Affectations, Postes, Types de contrat ; migration 005 (`directions`, statut des équipes, `type_contrat`, référentiels `poste` / `contrat`) (§ 3.3, § 4, § 5) |
 | 1.9     | 2026-09-25 | Incident « table directions absente du cache de schéma » : rechargement du cache Data API ajouté à la procédure de migration (§ 10) |
 | 1.10    | 2026-09-25 | **Direction = espace de travail** (maquette `direction-espace-travail.png`) : directions et équipes dans la même table `equipes` (`type`, `parent_id`), table `directions` supprimée (migration 006) (§ 3.3, § 4, § 5) |
+| 1.11    | 2026-09-25 | **Liste des ressources = arborescence Direction → Équipe → Projet → Membres** (maquette `arborescence-ressources.png`) ; onglet Affectations fusionné ; écran ouvert sans équipe pour un administrateur ; « Nouveau projet » accepte l'équipe choisie (§ 3.3) |
 
 ---
 
@@ -119,7 +120,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
-| `listeRessources` | `liste-ressources.js` | Onglets (maquette `liste-ressources-board.png`) : **Équipes** — tableau « Directions & équipes » (direction → équipes ; une direction est elle-même un espace de travail, maquette `direction-espace-travail.png`, nombre de ressources, responsable, statut Active/Inactive, modifier / supprimer, recherche, « + Ajouter une unité ») ; **Affectations** — arborescence équipe → projet → personnes, fiches ressources ; **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Une unité n'est supprimable que vide (sinon la passer en Inactive) ; édition réservée aux administrateurs | `12-liste-ressources.png`, `18-postes.png` |
+| `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Personne », « + Membre », modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
@@ -282,7 +283,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (38 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (41 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

@@ -56,6 +56,6 @@ Ecrans.mesProjets = {
 };
 
 Object.assign(Actions, {
-  nouveauProjet: () => majEtat({ panneau: { type: 'nouveauProjet' } }),
+  nouveauProjet: d => majEtat({ panneau: { type: 'nouveauProjet', equipeId: (d && d.equipe) || null } }),
   ouvrirObjectifs: () => majEtat({ modale: { type: 'objectifs' } })
 });

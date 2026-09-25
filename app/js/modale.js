@@ -3,7 +3,6 @@
    - affectation : assigner une ressource à des projets, avec un rôle
                    (maquette : « Assigner une ressource »)
    - ressource   : fiche d'une personne (nom, poste, capacité, email)
-   - unite       : « + Ajouter une unité » : choix Direction ou Équipe
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
    - objectifs   : objectifs (OKR) et résultats clés de mon équipe
@@ -13,8 +12,7 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs,
-      unite: this.unite }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -65,7 +63,7 @@ const Modale = {
 
   /* ---------- Équipe : création / modification, membres et invitations ---------- */
   equipe(m) {
-    const esc = C.esc, e = m.id ? equipe(m.id) : { nom: '', prefixe: '', couleur: '#003CC8', type: m.typeUnite || 'equipe' };
+    const esc = C.esc, e = m.id ? equipe(m.id) : { nom: '', prefixe: '', couleur: '#003CC8', type: m.typeUnite || 'equipe', parentId: m.parentId || null };
     const libelleType = e.type === 'direction' ? 'Direction' : 'Équipe';
     // Directions proposées pour le rattachement (sauf l'unité elle-même)
     const directions = etat.d.equipes.filter(x => x.type === 'direction' && x.id !== m.id).map(x => ({ valeur: x.id, libelle: x.nom }));
@@ -107,17 +105,6 @@ const Modale = {
     const valeurs = valeursDe(refId).map(v => v.libelle);
     if (valeur && !valeurs.includes(valeur)) valeurs.unshift(valeur);
     return C.liste([{ valeur: '', libelle: '—' }, ...valeurs], valeur || '', `class="champ" name="${nom}"`);
-  },
-
-  /* ---------- « + Ajouter une unité » : direction ou équipe ---------- */
-  unite() {
-    const choix = (type, icone, titre, texte) => `<button class="carte-choix" style="text-align:left;background:#fff;cursor:pointer" data-action="choisirTypeUnite" data-type="${type}">
-      ${C.icone(icone, 22)}<div><b>${titre}</b><div class="discret" style="font-size:12px">${texte}</div></div></button>`;
-    return `<div style="display:flex;flex-direction:column">${this.entete('Ajouter une unité')}
-      <div class="panneau-corps">
-        ${choix('direction', 'direction', 'Direction', 'Regroupe des équipes (ex. DSI, Métier, Finance). Pas d’espace de travail propre.')}
-        ${choix('equipe', 'equipe', 'Équipe', 'Espace de travail : membres, projets, demandes. Peut être rattachée à une direction.')}
-      </div></div>`;
   },
 
   /* ---------- Objectifs (OKR) de l'équipe courante ---------- */
@@ -180,8 +167,6 @@ Object.assign(Actions, {
     executer(async () => { await Api.supprimer('ressources', { id: 'eq.' + d.id }); etat.modale = null; }, 'ressources', 'affectations', 'absences', 'temps');
   },
 
-  /* Unités : le choix Direction / Équipe ouvre la même fenêtre, type pré-rempli */
-  choisirTypeUnite: d => majEtat({ modale: { type: 'equipe', id: null, typeUnite: d.type } }),
 
   /* Équipes */
   async modifierEquipe(d) {
