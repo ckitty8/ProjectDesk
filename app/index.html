@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilotage Projet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+  <!-- Toute l'interface est dessinée dans #app par js/coquille.js et js/ecrans/*.js -->
+  <div id="app"></div>
+  <div id="notification" class="notification" role="status"></div>
+
+  <!-- Ordre de chargement : configuration, outils, état, puis écrans (qui s'enregistrent dans Ecrans) -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/calculs.js"></script>
+  <script src="js/etat.js"></script>
+  <script src="js/composants.js"></script>
+  <script src="js/coquille.js"></script>
+  <script src="js/panneau-projet.js"></script>
+  <script src="js/modale.js"></script>
+  <script src="js/ecrans/connexion.js"></script>
+  <script src="js/ecrans/choix-equipe.js"></script>
+  <script src="js/ecrans/espace-demandeur.js"></script>
+  <script src="js/ecrans/dashboard.js"></script>
+  <script src="js/ecrans/projets.js"></script>
+  <script src="js/ecrans/ressources.js"></script>
+  <script src="js/ecrans/administration.js"></script>
+  <script src="js/ecrans/timesheet.js"></script>
+  <script src="js/ecrans/daily.js"></script>
+  <script src="js/ecrans/mes-projets.js"></script>
+  <script src="js/ecrans/conges.js"></script>
+  <script src="js/ecrans/liste-ressources.js"></script>
+  <script src="js/ecrans/mon-timesheet.js"></script>
+  <script src="js/ecrans/mon-admin.js"></script>
+</body>
+</html>
