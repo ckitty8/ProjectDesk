@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#F5F7FA;color:#141A26;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#003CC8;text-decoration:none}a:hover{color:#002A8F;text-decoration:underline}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+input[type=range]{accent-color:#003CC8}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;background:#F5F7FA">
+<aside style="width:232px;flex:0 0 232px;background:#0A1633;color:#AEB9D3;display:flex;flex-direction:column;height:100vh">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.07)">
+    <div style="width:28px;height:28px;border-radius:7px;background:#003CC8;display:flex;align-items:flex-end;justify-content:center;gap:3px;padding:7px 6px">
+      <div style="width:4px;height:8px;background:#fff;border-radius:1px"></div>
+      <div style="width:4px;height:14px;background:#fff;border-radius:1px"></div>
+      <div style="width:4px;height:11px;background:#9DB6FF;border-radius:1px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <div style="color:#fff;font-weight:600;font-size:14px;letter-spacing:-0.01em">Pilotage Projet</div>
+      <div style="font-size:11px;color:#7F8BA8">Multi-projets · Multi-équipes</div>
+    </div>
+  </div>
+  <nav style="flex:1;overflow:auto;padding:14px 10px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6F7C9B;padding:0 10px 6px;display:flex;justify-content:space-between"><span>Général</span><span style="font-weight:500;letter-spacing:0.02em;text-transform:none">lecture</span></div>
+      <sc-for list="{{ genNav }}" as="it" hint-placeholder-count="5">
+        <div onClick="{{ it.go }}" style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:6px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ it.icon }}"></path></svg>
+          <span>{{ it.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6F7C9B;padding:0 10px 6px;display:flex;justify-content:space-between;white-space:nowrap;gap:6px"><span>Mon dashboard</span><span style="font-weight:500;letter-spacing:0.02em;text-transform:none">édition</span></div>
+      <sc-for list="{{ monNav }}" as="it" hint-placeholder-count="4">
+        <div onClick="{{ it.go }}" style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:6px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ it.icon }}"></path></svg>
+          <span>{{ it.label }}</span>
+        </div>
+        <sc-if value="{{ it.hasChildren }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 18px;padding-left:10px;border-left:1px solid rgba(255,255,255,0.10)">
+            <sc-for list="{{ it.children }}" as="c" hint-placeholder-count="2">
+              <div onClick="{{ c.go }}" style="min-height:28px;display:flex;align-items:center;padding:0 10px;border-radius:5px;cursor:pointer;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </nav>
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid rgba(255,255,255,0.07)">
+    <div style="width:32px;height:32px;border-radius:50%;background:#2B4DB8;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px">CL</div>
+    <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+      <div style="color:#fff;font-weight:500;font-size:13px">Camille Laurent</div>
+      <div style="font-size:11.5px;color:#7F8BA8">Chef de projet · Plateforme</div>
+    </div>
+  </div>
+</aside>
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;height:100vh">
+  <header style="height:52px;flex:0 0 52px;background:#fff;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:16px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="color:#6B7485">{{ crumbGroup }}</span>
+      <span style="color:#B3BAC7">/</span>
+      <span style="font-weight:600">{{ crumbTitle }}</span>
+      <span style="margin-left:8px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ modeBg }};color:{{ modeFg }}">{{ modeLabel }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;height:32px;width:260px;padding:0 10px;border:1px solid #E3E7EE;border-radius:7px;background:#F8F9FB;color:#8A93A3">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Rechercher un projet, un ticket…</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid #E3E7EE;border-radius:4px;padding:0 5px;background:#fff">⌘K</span>
+    </div>
+  </header>
+  <div style="flex:1;overflow:auto">
+
+  <sc-if value="{{ is.gDash }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Dashboard général" style="padding:24px;display:flex;flex-direction:column;gap:20px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Dashboard général</h1>
+        <div style="color:#6B7485;margin-top:4px">Vue consolidée des équipes · T4 2026</div>
+      </div>
+      <div style="display:flex;gap:2px;padding:2px;background:#EBEEF3;border-radius:7px">
+        <div style="padding:5px 12px;border-radius:5px;color:#5B6576">T2</div>
+        <div style="padding:5px 12px;border-radius:5px;color:#5B6576">T3</div>
+        <div style="padding:5px 12px;border-radius:5px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,0.08);font-weight:500">T4 2026</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <div style="color:#6B7485;font-size:12px">{{ k.label }}</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <div style="font-size:24px;font-weight:600;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ k.value }}</div>
+            <div style="font-size:12px;color:{{ k.deltaColor }}">{{ k.delta }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0;font-size:14px;font-weight:600">Objectifs T4 2026</h2>
+        <span style="color:#6B7485;font-size:12px">{{ objCount }} objectifs · {{ krCount }} résultats clés</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
+        <sc-for list="{{ objectives }}" as="o" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5B6576"><span style="width:8px;height:8px;border-radius:2px;background:{{ o.color }}"></span>{{ o.teamName }}</div>
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ o.confBg }};color:{{ o.confFg }}">Confiance {{ o.conf }}</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;text-wrap:pretty">{{ o.title }}</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="flex:1;height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ o.pctW }};background:{{ o.color }};border-radius:3px"></div></div>
+              <div style="font-weight:600;font-variant-numeric:tabular-nums;width:36px;text-align:right">{{ o.pctW }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid #EEF1F5;padding-top:10px">
+              <sc-for list="{{ o.krs }}" as="kr" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A93A3">{{ kr.code }}</span>
+                  <span style="flex:1;color:#3E4757">{{ kr.label }}</span>
+                  <div style="width:48px;height:4px;background:#EEF1F5;border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ kr.w }};background:#8CA6E8"></div></div>
+                  <span style="width:30px;text-align:right;color:#5B6576;font-variant-numeric:tabular-nums">{{ kr.w }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px">
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between;gap:8px"><h2 style="margin:0;font-size:14px;font-weight:600">Progression par trimestre</h2><span style="color:#6B7485;font-size:12px">Atteinte moyenne des OKR · 2026</span></div>
+        <div style="display:grid;grid-template-columns:120px repeat(4,minmax(0,1fr));font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5">
+          <div style="padding:8px 16px">Équipe</div><div style="padding:8px 12px">T1</div><div style="padding:8px 12px">T2</div><div style="padding:8px 12px">T3</div><div style="padding:8px 12px">T4</div>
+        </div>
+        <sc-for list="{{ quarterRows }}" as="q" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:120px repeat(4,minmax(0,1fr));align-items:center;border-bottom:1px solid #EEF1F5">
+            <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;font-weight:500"><span style="width:8px;height:8px;border-radius:2px;background:{{ q.color }}"></span>{{ q.name }}</div>
+            <sc-for list="{{ q.cells }}" as="c" hint-placeholder-count="4">
+              <div style="padding:12px;display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ c.w }};background:{{ c.bar }}"></div></div>
+                <span style="width:32px;text-align:right;font-variant-numeric:tabular-nums;color:#3E4757">{{ c.w }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE"><h2 style="margin:0;font-size:14px;font-weight:600">Projets à surveiller</h2></div>
+        <sc-for list="{{ watchList }}" as="w" hint-placeholder-count="3">
+          <div onClick="{{ w.open }}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #EEF1F5;cursor:pointer" style-hover="background:#F8F9FB">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A93A3;width:48px">{{ w.code }}</span>
+            <div style="flex:1;min-width:0"><div style="font-weight:500">{{ w.name }}</div><div style="font-size:12px;color:#6B7485">{{ w.teamName }} · échéance {{ w.due }}</div></div>
+            <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ w.st.bg }};color:{{ w.st.fg }}">{{ w.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+<sc-if value="{{ is.gProjets }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Projets et Roadmap" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Projets et Roadmap</h1>
+        <div style="color:#6B7485;margin-top:4px">{{ projCount }} projets · objectifs, avancement et tickets par équipe</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ teamChips }}" as="t" hint-placeholder-count="5">
+          <div onClick="{{ t.pick }}" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 10px;border-radius:14px;cursor:pointer;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-weight:500;font-size:12px"><span style="width:7px;height:7px;border-radius:2px;background:{{ t.color }}"></span>{{ t.name }}</div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+      <div style="min-width:1000px">
+      <div style="display:grid;grid-template-columns:32px minmax(200px,2fr) minmax(200px,2fr) 160px 170px 70px 90px 100px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #E3E7EE;background:#FAFBFC">
+        <div></div><div style="padding:9px 12px">Projet</div><div style="padding:9px 12px">Objectif · Résultat clé</div><div style="padding:9px 12px">Chef de projet</div><div style="padding:9px 12px">Avancement</div><div style="padding:9px 12px">Tickets</div><div style="padding:9px 12px">Échéance</div><div style="padding:9px 12px">Statut</div>
+      </div>
+      <sc-for list="{{ projRows }}" as="r" hint-placeholder-count="10">
+        <sc-if value="{{ r.isGroup }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#F5F7FA;border-bottom:1px solid #E3E7EE;font-weight:600;font-size:12.5px">
+            <span style="width:9px;height:9px;border-radius:2px;background:{{ r.color }}"></span>{{ r.name }}
+            <span style="font-weight:400;color:#6B7485">{{ r.count }} projets · {{ r.avg }} d’avancement moyen</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ r.isProj }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ r.openPanel }}" style="display:grid;grid-template-columns:32px minmax(200px,2fr) minmax(200px,2fr) 160px 170px 70px 90px 100px;align-items:center;border-bottom:1px solid #EEF1F5;cursor:pointer;background:{{ r.rowBg }}" style-hover="background:#F8FAFF">
+            <div onClick="{{ r.toggle }}" style="height:100%;display:flex;align-items:center;justify-content:center;color:#8A93A3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:{{ r.rot }};transition:transform .15s"><path d="M9 6l6 6-6 6"></path></svg></div>
+            <div style="padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0"><div style="font-weight:500">{{ r.name }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A93A3">{{ r.code }}</div></div>
+            <div style="padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0"><div style="color:#3E4757">{{ r.okr }}</div><div style="font-size:12px;color:#6B7485">{{ r.kr }}</div></div>
+            <div style="padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ r.leadIni }}</span><span style="font-size:12.5px">{{ r.lead }}</span></div>
+            <div style="padding:10px 12px;display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ r.pct }};background:{{ r.barColor }}"></div></div><span style="width:34px;text-align:right;font-variant-numeric:tabular-nums">{{ r.pct }}</span></div>
+            <div style="padding:10px 12px;font-variant-numeric:tabular-nums;color:#3E4757">{{ r.doneT }}/{{ r.totT }}</div>
+            <div style="padding:10px 12px;color:#3E4757;font-size:12.5px">{{ r.due }}</div>
+            <div style="padding:10px 12px"><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;background:{{ r.st.bg }};color:{{ r.st.fg }}">{{ r.status }}</span></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ r.isTicket }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:32px 100px minmax(0,1fr) 90px 60px 100px;align-items:center;border-bottom:1px solid #F1F3F7;background:#FBFCFD;font-size:12.5px">
+            <div></div>
+            <div style="padding:7px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B7485">{{ r.id }}</div>
+            <div style="padding:7px 12px;color:#2A3242">{{ r.title }}</div>
+            <div style="padding:7px 12px;font-size:12px;color:{{ r.prioColor }}">{{ r.prio }}</div>
+            <div style="padding:7px 12px"><span style="width:20px;height:20px;border-radius:50%;background:#EEF1F5;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;color:#3E4757">{{ r.who }}</span></div>
+            <div style="padding:7px 12px"><span style="font-size:11px;font-weight:500;padding:1px 7px;border-radius:10px;background:{{ r.st.bg }};color:{{ r.st.fg }}">{{ r.status }}</span></div>
+          </div>
+        </sc-if>
+      </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.gRess }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Gestion des ressources (lecture)" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Gestion des ressources</h1>
+        <div style="color:#6B7485;margin-top:4px">Calendrier des absences et annuaire des ressources · lecture seule</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div onClick="{{ prevMonth }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg></div>
+        <div style="min-width:130px;text-align:center;font-weight:600">{{ monthLabel }}</div>
+        <div onClick="{{ nextMonth }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+      <div style="padding:10px 16px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:14px;font-weight:600">Calendrier des congés</h2>
+        <div style="display:flex;gap:14px;font-size:12px;color:#5B6576;flex-wrap:wrap">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:{{ l.bg }};border:1px solid {{ l.fg }}"></span>{{ l.label }}</div></sc-for>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <div style="min-width:960px">
+          <div style="display:grid;grid-template-columns:{{ calCols }};border-bottom:1px solid #E3E7EE;background:#FAFBFC">
+            <div style="padding:6px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;display:flex;align-items:center">Personne</div>
+            <sc-for list="{{ calDays }}" as="d" hint-placeholder-count="31">
+              <div style="display:flex;flex-direction:column;align-items:center;padding:5px 0;font-size:10px;color:{{ d.fg }};background:{{ d.bg }}"><span>{{ d.dow }}</span><span style="font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums">{{ d.num }}</span></div>
+            </sc-for>
+          </div>
+          <sc-for list="{{ calRowsRO }}" as="r" hint-placeholder-count="10">
+            <sc-if value="{{ r.isTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 16px;background:#F5F7FA;border-bottom:1px solid #EEF1F5;font-size:11.5px;font-weight:600;color:#3E4757;display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:{{ r.color }}"></span>{{ r.name }}</div>
+            </sc-if>
+            <sc-if value="{{ r.isPerson }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:{{ calCols }};border-bottom:1px solid #EEF1F5">
+                <div style="padding:0 16px;height:30px;display:flex;align-items:center;gap:8px;font-size:12.5px"><span style="width:20px;height:20px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ r.ini }}</span>{{ r.name }}</div>
+                <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="31">
+                  <div style="height:30px;border-left:1px solid #F1F3F7;padding:3px 2px;background:{{ c.base }}"><div style="height:100%;border-radius:3px;background:{{ c.bg }};color:{{ c.fg }};font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ c.short }}</div></div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+      <div style="min-width:820px">
+      <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between"><h2 style="margin:0;font-size:14px;font-weight:600">Liste des ressources</h2><span style="color:#6B7485;font-size:12px">{{ peopleCount }} personnes</span></div>
+      <div style="display:grid;grid-template-columns:minmax(200px,1.4fr) 130px minmax(150px,1fr) minmax(220px,2fr) 100px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+        <div style="padding:8px 16px">Nom</div><div style="padding:8px 12px">Équipe</div><div style="padding:8px 12px">Poste</div><div style="padding:8px 12px">Projets</div><div style="padding:8px 12px">Capacité</div>
+      </div>
+      <sc-for list="{{ peopleRows }}" as="p" hint-placeholder-count="12">
+        <div style="display:grid;grid-template-columns:minmax(200px,1.4fr) 130px minmax(150px,1fr) minmax(220px,2fr) 100px;align-items:center;border-bottom:1px solid #EEF1F5">
+          <div style="padding:9px 16px;display:flex;align-items:center;gap:8px"><span style="width:24px;height:24px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ p.ini }}</span><span style="font-weight:500">{{ p.name }}</span></div>
+          <div style="padding:9px 12px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:2px;background:{{ p.color }}"></span>{{ p.teamName }}</div>
+          <div style="padding:9px 12px;color:#3E4757">{{ p.poste }}</div>
+          <div style="padding:9px 12px;display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ p.projs }}" as="x" hint-placeholder-count="2"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:1px 6px;border-radius:4px;background:#F1F3F7;color:#3E4757">{{ x.code }}</span></sc-for></div>
+          <div style="padding:9px 12px;font-variant-numeric:tabular-nums">{{ p.cap }} %</div>
+        </div>
+      </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+<sc-if value="{{ is.gAdmin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Administration" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div>
+      <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Administration</h1>
+      <div style="color:#6B7485;margin-top:4px">Équipes, référentiels et champs du formulaire de demandes</div>
+    </div>
+    <div style="display:flex;gap:20px;border-bottom:1px solid #E3E7EE">
+      <sc-for list="{{ adminTabs }}" as="t" hint-placeholder-count="3">
+        <div onClick="{{ t.pick }}" style="padding:8px 2px;cursor:pointer;font-weight:500;color:{{ t.fg }};border-bottom:2px solid {{ t.line }};margin-bottom:-1px;display:flex;gap:6px">{{ t.label }}<span style="color:#8A93A3;font-weight:400">{{ t.count }}</span></div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ adminIs.equipes }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+        <div style="padding:10px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:14px;font-weight:600">Équipes</h2><div onClick="{{ addTeam }}" style="height:30px;padding:0 12px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer" style-hover="background:#0033AD">+ Nouvelle équipe</div></div>
+        <div style="display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(160px,1fr) 110px 110px 80px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+          <div style="padding:8px 16px">Équipe</div><div style="padding:8px 12px">Responsable</div><div style="padding:8px 12px">Membres</div><div style="padding:8px 12px">Projets</div><div></div>
+        </div>
+        <sc-for list="{{ teamRows }}" as="t" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(160px,1fr) 110px 110px 80px;align-items:center;border-bottom:1px solid #EEF1F5">
+            <div style="padding:10px 16px;font-weight:500;display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:2px;background:{{ t.color }}"></span>{{ t.name }}</div>
+            <div style="padding:10px 12px">{{ t.lead }}</div>
+            <div style="padding:10px 12px;font-variant-numeric:tabular-nums">{{ t.members }}</div>
+            <div style="padding:10px 12px;font-variant-numeric:tabular-nums">{{ t.projects }}</div>
+            <div style="padding:10px 12px;color:#003CC8;cursor:pointer">Modifier</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ adminIs.refs }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:12px;align-items:start">
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ refList }}" as="r" hint-placeholder-count="5">
+            <div onClick="{{ r.pick }}" style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};font-weight:{{ r.fw }}"><span>{{ r.name }}</span><span style="color:#8A93A3">{{ r.count }}</span></div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+          <div style="padding:10px 16px;border-bottom:1px solid #E3E7EE"><h2 style="margin:0;font-size:14px;font-weight:600">{{ refCur.name }}</h2></div>
+          <div style="display:grid;grid-template-columns:48px minmax(0,1fr) 90px 80px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+            <div style="padding:8px 16px">#</div><div style="padding:8px 12px">Valeur</div><div style="padding:8px 12px">Couleur</div><div style="padding:8px 12px">Active</div>
+          </div>
+          <sc-for list="{{ refCur.values }}" as="v" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:48px minmax(0,1fr) 90px 80px;align-items:center;border-bottom:1px solid #EEF1F5;opacity:{{ v.op }}">
+              <div style="padding:9px 16px;color:#8A93A3;font-variant-numeric:tabular-nums">{{ v.n }}</div>
+              <div style="padding:9px 12px;font-weight:500">{{ v.l }}</div>
+              <div style="padding:9px 12px"><span style="display:block;width:14px;height:14px;border-radius:4px;background:{{ v.c }}"></span></div>
+              <div style="padding:9px 12px"><div onClick="{{ v.toggle }}" style="width:30px;height:18px;border-radius:9px;background:{{ v.tBg }};cursor:pointer;display:flex;align-items:center"><div style="width:14px;height:14px;border-radius:50%;background:#fff;margin-left:{{ v.tKnob }};transition:margin .15s"></div></div></div>
+            </div>
+          </sc-for>
+          <div style="display:flex;gap:8px;padding:10px 16px">
+            <input value="{{ newVal }}" onChange="{{ onNewVal }}" placeholder="Nouvelle valeur…" style="flex:1;height:32px;border:1px solid #E3E7EE;border-radius:7px;padding:0 10px;outline:none">
+            <div onClick="{{ addVal }}" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #E3E7EE;display:flex;align-items:center;font-weight:500;cursor:pointer" style-hover="background:#F5F7FA">Ajouter</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ adminIs.champs }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+        <div style="padding:10px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="margin:0;font-size:14px;font-weight:600">Champs du formulaire de demandes</h2><span style="color:#6B7485;font-size:12px">L’ordre et la prévisualisation se gèrent dans Mon dashboard › Administration</span></div>
+        <div style="display:grid;grid-template-columns:minmax(200px,2fr) 130px minmax(140px,1fr) 120px 100px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+          <div style="padding:8px 16px">Libellé</div><div style="padding:8px 12px">Type</div><div style="padding:8px 12px">Référentiel</div><div style="padding:8px 12px">Origine</div><div style="padding:8px 12px">Obligatoire</div>
+        </div>
+        <sc-for list="{{ fieldRows }}" as="f" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:minmax(200px,2fr) 130px minmax(140px,1fr) 120px 100px;align-items:center;border-bottom:1px solid #EEF1F5">
+            <div style="padding:9px 16px;font-weight:500">{{ f.label }}</div>
+            <div style="padding:9px 12px;color:#3E4757">{{ f.type }}</div>
+            <div style="padding:9px 12px;color:#3E4757">{{ f.refName }}</div>
+            <div style="padding:9px 12px;color:#6B7485">{{ f.sys }}</div>
+            <div style="padding:9px 12px"><div onClick="{{ f.toggle }}" style="width:30px;height:18px;border-radius:9px;background:{{ f.tBg }};cursor:pointer;display:flex;align-items:center"><div style="width:14px;height:14px;border-radius:50%;background:#fff;margin-left:{{ f.tKnob }};transition:margin .15s"></div></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.gTime }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Timesheet" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Timesheet</h1>
+        <div style="color:#6B7485;margin-top:4px">Heures déclarées par personne · toutes équipes</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div onClick="{{ prevWeek }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg></div>
+        <div style="min-width:250px;text-align:center;font-weight:600">{{ weekLabel }}</div>
+        <div onClick="{{ nextWeek }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ nextWeekOp }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <sc-for list="{{ tsKpis }}" as="k" hint-placeholder-count="3">
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px"><div style="color:#6B7485;font-size:12px">{{ k.label }}</div><div style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">{{ k.value }}</div></div>
+      </sc-for>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+      <div style="min-width:900px">
+      <div style="display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(140px,1.2fr) repeat(5,70px) 80px 110px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #E3E7EE;background:#FAFBFC">
+        <div style="padding:9px 16px">Personne</div><div style="padding:9px 12px">Projets</div>
+        <sc-for list="{{ tsDays }}" as="d" hint-placeholder-count="5"><div style="padding:9px 8px;text-align:center">{{ d.label }}</div></sc-for>
+        <div style="padding:9px 12px;text-align:right">Total</div><div style="padding:9px 12px">Statut</div>
+      </div>
+      <sc-for list="{{ tsRows }}" as="r" hint-placeholder-count="12">
+        <sc-if value="{{ r.isTeam }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:6px 16px;background:#F5F7FA;border-bottom:1px solid #EEF1F5;font-size:11.5px;font-weight:600;color:#3E4757;display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:{{ r.color }}"></span>{{ r.name }}</div>
+        </sc-if>
+        <sc-if value="{{ r.isPerson }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(140px,1.2fr) repeat(5,70px) 80px 110px;align-items:center;border-bottom:1px solid #EEF1F5">
+            <div style="padding:8px 16px;display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ r.ini }}</span><span style="font-weight:500">{{ r.name }}</span></div>
+            <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B7485">{{ r.projs }}</div>
+            <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5">
+              <div style="padding:4px"><div style="height:26px;border-radius:5px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;font-size:12px;font-weight:500">{{ c.v }}</div></div>
+            </sc-for>
+            <div style="padding:8px 12px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums">{{ r.total }}</div>
+            <div style="padding:8px 12px"><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;background:{{ r.st.bg }};color:{{ r.st.fg }}">{{ r.status }}</span></div>
+          </div>
+        </sc-if>
+      </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+<sc-if value="{{ is.mDaily }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Daily" style="padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;max-width:1280px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Daily</h1>
+          <div style="color:#6B7485;margin-top:4px">Notes de stand-up quotidien</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div onClick="{{ goToday }}" style="height:30px;padding:0 12px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;cursor:pointer;font-weight:500">Aujourd’hui</div>
+          <div onClick="{{ prevDay }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg></div>
+          <div onClick="{{ nextDay }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ nextOp }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;display:flex;flex-direction:column">
+        <div style="padding:14px 18px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:15px;font-weight:600;text-transform:capitalize">{{ dayLabel }}</span><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ dayTagBg }};color:{{ dayTagFg }}">{{ dayTag }}</span></div>
+          <div onClick="{{ insertTpl }}" style="font-size:12px;color:#003CC8;cursor:pointer;font-weight:500">Insérer le modèle Hier / Aujourd’hui / Blocages</div>
+        </div>
+        <textarea value="{{ noteText }}" onChange="{{ onNote }}" placeholder="Qu’avez-vous fait hier, que prévoyez-vous aujourd’hui, qu’est-ce qui vous bloque ?" style="border:none;outline:none;resize:vertical;min-height:420px;padding:16px 18px;font-size:14px;line-height:1.65;background:transparent;font-family:'IBM Plex Sans',sans-serif"></textarea>
+        <div style="padding:9px 18px;border-top:1px solid #EEF1F5;display:flex;justify-content:space-between;font-size:12px;color:#8A93A3"><span>{{ noteWords }} mots</span><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#0F8A6B"></span>Enregistré automatiquement</span></div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden;position:sticky;top:0">
+      <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE"><h2 style="margin:0;font-size:14px;font-weight:600">Historique</h2></div>
+      <sc-for list="{{ history }}" as="h" hint-placeholder-count="10">
+        <div onClick="{{ h.pick }}" style="padding:9px 14px 9px 13px;border-bottom:1px solid #EEF1F5;cursor:pointer;background:{{ h.bg }};border-left:3px solid {{ h.border }};display:flex;flex-direction:column;gap:2px" style-hover="background:#F8FAFF">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:600;text-transform:capitalize">{{ h.dow }} {{ h.date }}</span><span style="color:#8A93A3">{{ h.cnt }}</span></div>
+          <div style="font-size:12px;color:{{ h.snipFg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.snip }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.mProjets }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Mes projets et Roadmap" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Mes projets et Roadmap</h1>
+        <div style="color:#6B7485;margin-top:4px">{{ myCount }} projets dont {{ myLead }} en tant que chef de projet · cliquez sur une barre pour mettre à jour l’avancement</div>
+      </div>
+      <div style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer" style-hover="background:#0033AD">+ Nouveau projet</div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+      <div style="min-width:1000px;display:grid;grid-template-columns:300px minmax(0,1fr)">
+        <div style="padding:9px 16px;border-bottom:1px solid #E3E7EE;background:#FAFBFC;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">Projet</div>
+        <div style="display:flex;border-bottom:1px solid #E3E7EE;background:#FAFBFC">
+          <sc-for list="{{ roadMonths }}" as="m" hint-placeholder-count="7"><div style="width:{{ m.w }};padding:9px 8px;border-left:1px solid #EEF1F5;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">{{ m.label }}</div></sc-for>
+        </div>
+        <sc-for list="{{ roadRows }}" as="r" hint-placeholder-count="5">
+          <div onClick="{{ r.open }}" style="padding:10px 16px;border-bottom:1px solid #EEF1F5;display:flex;flex-direction:column;gap:4px;cursor:pointer" style-hover="background:#F8FAFF">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A93A3">{{ r.code }}</span><span style="font-weight:500">{{ r.name }}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#6B7485"><span style="width:7px;height:7px;border-radius:2px;background:{{ r.color }}"></span>{{ r.teamName }}<span style="padding:1px 7px;border-radius:10px;border:1px solid #E3E7EE;background:{{ r.rb }};color:{{ r.rf }};font-weight:500">{{ r.role }}</span></div>
+          </div>
+          <div onClick="{{ r.open }}" style="position:relative;border-bottom:1px solid #EEF1F5;cursor:pointer;min-height:56px">
+            <div style="position:absolute;top:0;bottom:0;left:{{ todayLeft }};width:1px;background:#003CC8;opacity:0.5"></div>
+            <div style="position:absolute;top:14px;height:28px;left:{{ r.left }};width:{{ r.width }};border-radius:6px;background:#EEF2FB;border:1px solid #D3DDF3;overflow:hidden">
+              <div style="position:absolute;inset:0 auto 0 0;width:{{ r.fill }};background:{{ r.color }};opacity:0.9"></div>
+              <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:11.5px;font-weight:600;color:#fff;text-shadow:0 0 2px rgba(0,0,0,0.25)"><span>{{ r.pct }}</span></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;font-size:12px;color:#6B7485;align-items:center"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:1px;background:#003CC8"></span>Aujourd’hui, 25 sept.</span><span>Barre claire : durée planifiée · barre pleine : avancement</span></div>
+  </div>
+  </sc-if>
+<sc-if value="{{ is.mCong }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Congés et capacité" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1440px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Congés &amp; capacité</h1>
+        <div style="color:#6B7485;margin-top:4px">Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div onClick="{{ prevMonth }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg></div>
+        <div style="min-width:130px;text-align:center;font-weight:600">{{ monthLabel }}</div>
+        <div onClick="{{ nextMonth }}" style="width:30px;height:30px;border:1px solid #E3E7EE;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+      <div style="padding:10px 16px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:14px;font-weight:600">Grille mensuelle</h2>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ brushes }}" as="b" hint-placeholder-count="5">
+            <div onClick="{{ b.pick }}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid {{ b.border }};background:{{ b.bg }};display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500"><span style="width:12px;height:12px;border-radius:3px;background:{{ b.sw }};border:1px solid {{ b.swb }}"></span>{{ b.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <div style="min-width:1000px">
+          <div style="display:grid;grid-template-columns:{{ calColsEd }};border-bottom:1px solid #E3E7EE;background:#FAFBFC">
+            <div style="padding:6px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;display:flex;align-items:center">Personne</div>
+            <sc-for list="{{ calDays }}" as="d" hint-placeholder-count="31">
+              <div style="display:flex;flex-direction:column;align-items:center;padding:5px 0;font-size:10px;color:{{ d.fg }};background:{{ d.bg }}"><span>{{ d.dow }}</span><span style="font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums">{{ d.num }}</span></div>
+            </sc-for>
+            <div style="padding:6px 8px;font-size:11px;color:#6B7485;font-weight:500;display:flex;align-items:center;justify-content:flex-end">Total</div>
+          </div>
+          <sc-for list="{{ calRowsEd }}" as="r" hint-placeholder-count="10">
+            <sc-if value="{{ r.isTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 16px;background:#F5F7FA;border-bottom:1px solid #EEF1F5;font-size:11.5px;font-weight:600;color:#3E4757;display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:{{ r.color }}"></span>{{ r.name }}</div>
+            </sc-if>
+            <sc-if value="{{ r.isPerson }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:{{ calColsEd }};border-bottom:1px solid #EEF1F5">
+                <div style="padding:0 16px;height:32px;display:flex;align-items:center;gap:8px;font-size:12.5px"><span style="width:20px;height:20px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ r.ini }}</span>{{ r.name }}</div>
+                <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="31">
+                  <div onClick="{{ c.click }}" style="height:32px;border-left:1px solid #F1F3F7;padding:3px 2px;background:{{ c.base }};cursor:{{ c.cur }}" style-hover="background:#EEF3FF"><div style="height:100%;border-radius:3px;background:{{ c.bg }};color:{{ c.fg }};font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ c.short }}</div></div>
+                </sc-for>
+                <div style="display:flex;align-items:center;justify-content:flex-end;padding:0 8px;font-variant-numeric:tabular-nums;font-weight:500;border-left:1px solid #EEF1F5">{{ r.cnt }}</div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:12px;align-items:start">
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+        <div style="min-width:560px">
+        <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between"><h2 style="margin:0;font-size:14px;font-weight:600">Récap annuel 2026</h2><span style="color:#6B7485;font-size:12px">en jours · droit CP : 25 j</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1.6fr) 110px repeat(4,54px) 60px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+          <div style="padding:8px 16px">Personne</div><div style="padding:8px 8px">CP pris</div><div style="padding:8px 6px;text-align:right">RTT</div><div style="padding:8px 6px;text-align:right">Mal.</div><div style="padding:8px 6px;text-align:right">Form.</div><div style="padding:8px 6px;text-align:right">Total</div><div style="padding:8px 12px;text-align:right">Solde</div>
+        </div>
+        <sc-for list="{{ recap }}" as="p" hint-placeholder-count="12">
+          <div style="display:grid;grid-template-columns:minmax(170px,1.6fr) 110px repeat(4,54px) 60px;align-items:center;border-bottom:1px solid #EEF1F5;font-variant-numeric:tabular-nums">
+            <div style="padding:7px 16px;display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:2px;background:{{ p.color }}"></span>{{ p.name }}</div>
+            <div style="padding:7px 8px;display:flex;align-items:center;gap:6px"><div style="flex:1;height:5px;background:#EEF1F5;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ p.cpW }};background:#003CC8"></div></div><span style="width:20px;text-align:right">{{ p.cp }}</span></div>
+            <div style="padding:7px 6px;text-align:right">{{ p.rtt }}</div>
+            <div style="padding:7px 6px;text-align:right">{{ p.mal }}</div>
+            <div style="padding:7px 6px;text-align:right">{{ p.form }}</div>
+            <div style="padding:7px 6px;text-align:right;font-weight:600">{{ p.total }}</div>
+            <div style="padding:7px 12px;text-align:right;font-weight:600;color:{{ p.soldeFg }}">{{ p.solde }}</div>
+          </div>
+        </sc-for>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow-x:auto">
+        <div style="min-width:640px">
+        <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between"><h2 style="margin:0;font-size:14px;font-weight:600">Capacité par sprint</h2><span style="color:#6B7485;font-size:12px">jours-homme disponibles / théoriques</span></div>
+        <div style="display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+          <div style="padding:8px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">Équipe</div>
+          <sc-for list="{{ sprints }}" as="s" hint-placeholder-count="6"><div style="padding:6px 8px;background:{{ s.bg }};display:flex;flex-direction:column"><span style="font-size:11.5px;font-weight:600">{{ s.name }} <span style="color:#003CC8;font-weight:500">{{ s.tag }}</span></span><span style="font-size:10.5px;color:#8A93A3">{{ s.dates }}</span></div></sc-for>
+        </div>
+        <sc-for list="{{ capRows }}" as="t" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));border-bottom:1px solid #EEF1F5;align-items:stretch">
+            <div style="padding:10px 16px;display:flex;align-items:center;gap:8px;font-weight:500"><span style="width:8px;height:8px;border-radius:2px;background:{{ t.color }}"></span>{{ t.name }}</div>
+            <sc-for list="{{ t.cells }}" as="c" hint-placeholder-count="6">
+              <div style="padding:8px;background:{{ c.bg }};display:flex;flex-direction:column;gap:5px;font-variant-numeric:tabular-nums">
+                <div style="font-size:12px"><span style="font-weight:600">{{ c.v }}</span> <span style="color:#8A93A3;font-size:11px">{{ c.sub }}</span></div>
+                <div style="height:4px;background:#EEF1F5;border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ c.w }};background:{{ c.bar }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));background:#FAFBFC">
+          <div style="padding:10px 16px;font-weight:600">Total</div>
+          <sc-for list="{{ capTot }}" as="c" hint-placeholder-count="6"><div style="padding:10px 8px;font-variant-numeric:tabular-nums;font-size:12px;background:{{ c.bg }}"><span style="font-weight:600">{{ c.v }}</span> <span style="color:#8A93A3;font-size:11px">{{ c.sub }}</span></div></sc-for>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.mListe }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Liste des ressources" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1200px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Liste des ressources</h1>
+        <div style="color:#6B7485;margin-top:4px">Affectations par équipe, projet et personne</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div onClick="{{ expandAll }}" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #E3E7EE;background:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Tout déplier</div>
+        <div onClick="{{ openAssign }}" style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer" style-hover="background:#0033AD">+ Assigner une ressource</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+      <sc-for list="{{ listeKpis }}" as="k" hint-placeholder-count="4">
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline"><span style="color:#6B7485;font-size:12px">{{ k.label }}</span><span style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums">{{ k.value }}</span></div>
+      </sc-for>
+    </div>
+    <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+      <sc-for list="{{ treeRows }}" as="r" hint-placeholder-count="12">
+        <sc-if value="{{ r.isTeam }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:10px;padding:0 16px;height:42px;background:#F5F7FA;border-bottom:1px solid #E3E7EE;cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7485" stroke-width="2" style="transform:{{ r.rot }};transition:transform .15s"><path d="M9 6l6 6-6 6"></path></svg>
+            <span style="width:10px;height:10px;border-radius:3px;background:{{ r.color }}"></span>
+            <span style="font-weight:600">{{ r.name }}</span>
+            <span style="color:#6B7485;font-size:12px">{{ r.meta }}</span>
+            <span style="margin-left:auto;font-size:12px;color:#003CC8;font-weight:500">+ Projet</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ r.isProj }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:10px;padding:0 16px 0 40px;height:40px;border-bottom:1px solid #EEF1F5;cursor:pointer" style-hover="background:#FAFBFC">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2" style="transform:{{ r.rot }};transition:transform .15s"><path d="M9 6l6 6-6 6"></path></svg>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B7485">{{ r.code }}</span>
+            <span style="font-weight:500">{{ r.name }}</span>
+            <span style="color:#8A93A3;font-size:12px">{{ r.meta }}</span>
+            <div onClick="{{ r.add }}" style="margin-left:auto;height:26px;padding:0 10px;border-radius:6px;border:1px solid #E3E7EE;background:#fff;display:flex;align-items:center;font-size:12px;font-weight:500;color:#003CC8" style-hover="border-color:#B7C8F5">+ Ajouter une personne</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ r.isPerson }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:10px;padding:0 16px 0 82px;height:40px;border-bottom:1px solid #F1F3F7">
+            <span style="width:24px;height:24px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ r.ini }}</span>
+            <span style="font-weight:500">{{ r.name }}</span>
+            <span style="color:#6B7485;font-size:12px">{{ r.poste }}</span>
+            <span style="color:#8A93A3;font-size:11.5px">{{ r.others }}</span>
+            <span style="margin-left:auto;font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;border:1px solid #E3E7EE;background:{{ r.rb }};color:{{ r.rf }}">{{ r.role }}</span>
+            <div onClick="{{ r.edit }}" style="font-size:12px;color:#003CC8;cursor:pointer;width:60px;text-align:right">Modifier</div>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+<sc-if value="{{ is.mAdmin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Mon administration" style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1500px">
+    <div>
+      <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">Administration</h1>
+      <div style="color:#6B7485;margin-top:4px">Traitement des demandes entrantes et configuration du formulaire</div>
+    </div>
+    <div style="display:flex;gap:20px;border-bottom:1px solid #E3E7EE">
+      <sc-for list="{{ mAdminTabs }}" as="t" hint-placeholder-count="2">
+        <div onClick="{{ t.pick }}" style="padding:8px 2px;cursor:pointer;font-weight:500;color:{{ t.fg }};border-bottom:2px solid {{ t.line }};margin-bottom:-1px;display:flex;gap:6px">{{ t.label }}<span style="color:#8A93A3;font-weight:400">{{ t.count }}</span></div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ mAdminIs.demandes }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start">
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:10px;overflow-x:auto">
+          <sc-for list="{{ reqCols }}" as="col" hint-placeholder-count="4">
+            <div style="background:#EEF1F5;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:360px">
+              <div style="display:flex;align-items:center;gap:8px;padding:4px 6px;font-weight:600;font-size:12.5px"><span style="width:8px;height:8px;border-radius:50%;background:{{ col.dot }}"></span>{{ col.label }}<span style="color:#8A93A3;font-weight:400">{{ col.count }}</span></div>
+              <sc-for list="{{ col.cards }}" as="c" hint-placeholder-count="2">
+                <div onClick="{{ c.pick }}" style="background:#fff;border:1px solid {{ c.border }};box-shadow:{{ c.sh }};border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:pointer">
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="font-family:'IBM Plex Mono',monospace;color:#8A93A3">{{ c.id }}</span><span style="color:{{ c.prioColor }};font-weight:500">{{ c.prio }}</span></div>
+                  <div style="font-weight:500;line-height:1.35;text-wrap:pretty">{{ c.title }}</div>
+                  <div style="font-size:11.5px;color:#6B7485">{{ c.type }}</div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#6B7485"><span style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:{{ c.color }}"></span>{{ c.teamName }}</span><span>{{ c.date }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;display:flex;flex-direction:column">
+          <div style="padding:14px 16px;border-bottom:1px solid #E3E7EE;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A93A3">{{ rq.id }}</span><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ rq.sbg }};color:{{ rq.sfg }}">{{ rq.status }}</span></div>
+            <div style="font-size:15px;font-weight:600;text-wrap:pretty">{{ rq.title }}</div>
+            <div style="font-size:12px;color:#6B7485">{{ rq.from }} · {{ rq.dept }} · reçue le {{ rq.date }}</div>
+          </div>
+          <div style="padding:14px 16px;display:flex;border-bottom:1px solid #EEF1F5">
+            <sc-for list="{{ rqSteps }}" as="s" hint-placeholder-count="3">
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center"><span style="width:12px;height:12px;border-radius:50%;background:{{ s.dot }};flex:0 0 12px"></span><sc-if value="{{ s.hasLine }}" hint-placeholder-val="{{ true }}"><span style="flex:1;height:2px;background:{{ s.line }};margin:0 4px"></span></sc-if></div>
+                <span style="font-size:11.5px;font-weight:500;color:{{ s.fg }}">{{ s.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:120px minmax(0,1fr);row-gap:8px;font-size:12.5px;border-bottom:1px solid #EEF1F5">
+            <span style="color:#6B7485">Type</span><span>{{ rq.type }}</span>
+            <span style="color:#6B7485">Équipe</span><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:2px;background:{{ rq.color }}"></span>{{ rq.teamName }}</span>
+            <span style="color:#6B7485">Priorité</span><span style="color:{{ rq.prioColor }};font-weight:500">{{ rq.prio }}</span>
+            <span style="color:#6B7485">Date souhaitée</span><span>{{ rq.wish }}</span>
+            <span style="color:#6B7485">Budget estimé</span><span>{{ rq.budget }}</span>
+          </div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid #EEF1F5">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">Description du besoin</span>
+            <p style="margin:0;line-height:1.55;color:#2A3242;text-wrap:pretty">{{ rq.desc }}</p>
+          </div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">Commentaire d’analyse</span>
+            <textarea value="{{ rq.note }}" onChange="{{ onReqNote }}" placeholder="Estimation, dépendances, motif de refus…" style="min-height:72px;border:1px solid #E3E7EE;border-radius:7px;padding:8px 10px;outline:none;resize:vertical;line-height:1.5"></textarea>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid #E3E7EE;display:flex;gap:8px;justify-content:flex-end;background:#FAFBFC;border-radius:0 0 10px 10px">
+            <sc-if value="{{ rq.isNew }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ startAn }}" style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Démarrer l’analyse</div>
+            </sc-if>
+            <sc-if value="{{ rq.isAn }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ refuse }}" style="height:32px;padding:0 14px;border-radius:7px;border:1px solid #E3E7EE;background:#fff;color:#A32020;display:flex;align-items:center;font-weight:500;cursor:pointer">Refuser</div>
+              <div onClick="{{ accept }}" style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Accepter</div>
+            </sc-if>
+            <sc-if value="{{ rq.isDone }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ reopen }}" style="height:32px;padding:0 14px;border-radius:7px;border:1px solid #E3E7EE;background:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Rouvrir l’analyse</div>
+            </sc-if>
+            <sc-if value="{{ rq.isOk }}" hint-placeholder-val="{{ false }}">
+              <div style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Créer le projet</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ mAdminIs.form }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start">
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE"><h2 style="margin:0;font-size:14px;font-weight:600">Champs</h2></div>
+          <div style="display:grid;grid-template-columns:52px minmax(0,1fr) 110px 70px 36px;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;border-bottom:1px solid #EEF1F5;background:#FAFBFC">
+            <div style="padding:8px 12px">Ordre</div><div style="padding:8px 8px">Libellé</div><div style="padding:8px 8px">Type</div><div style="padding:8px 8px">Requis</div><div></div>
+          </div>
+          <sc-for list="{{ formRows }}" as="f" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:52px minmax(0,1fr) 110px 70px 36px;align-items:center;border-bottom:1px solid #EEF1F5">
+              <div style="padding:6px 8px 6px 12px;display:flex;gap:2px;color:#6B7485">
+                <div onClick="{{ f.up }}" style="width:18px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ f.upOp }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"></path></svg></div>
+                <div onClick="{{ f.down }}" style="width:18px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ f.downOp }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"></path></svg></div>
+              </div>
+              <div style="padding:6px 8px;display:flex;flex-direction:column;gap:1px">
+                <input value="{{ f.label }}" onChange="{{ f.onLabel }}" style="height:28px;border:1px solid transparent;border-radius:5px;padding:0 6px;margin-left:-6px;outline:none;font-weight:500;background:transparent" style-focus="border-color:#B7C8F5;background:#fff">
+                <span style="font-size:11px;color:#8A93A3">{{ f.refName }}</span>
+              </div>
+              <div style="padding:6px 8px;color:#3E4757;font-size:12.5px">{{ f.type }}</div>
+              <div style="padding:6px 8px"><div onClick="{{ f.toggle }}" style="width:30px;height:18px;border-radius:9px;background:{{ f.tBg }};cursor:pointer;display:flex;align-items:center"><div style="width:14px;height:14px;border-radius:50%;background:#fff;margin-left:{{ f.tKnob }};transition:margin .15s"></div></div></div>
+              <div style="display:flex;justify-content:center">
+                <sc-if value="{{ f.notSys }}" hint-placeholder-val="{{ true }}"><div onClick="{{ f.del }}" style="width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#8A93A3;cursor:pointer" style-hover="background:#FDE8E8;color:#A32020"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></div></sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;background:#FAFBFC">
+            <span style="font-size:12px;color:#6B7485">Ajouter un champ</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <sc-for list="{{ ftypes }}" as="t" hint-placeholder-count="6"><div onClick="{{ t.pick }}" style="height:28px;padding:0 10px;border-radius:14px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;font-size:12px;font-weight:500;cursor:pointer">{{ t.l }}</div></sc-for>
+              <div onClick="{{ addField }}" style="margin-left:auto;height:30px;padding:0 12px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">+ Ajouter</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E7EE;border-radius:10px;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between"><h2 style="margin:0;font-size:14px;font-weight:600">Aperçu demandeur</h2><span style="font-size:12px;color:#6B7485">Nouvelle demande</span></div>
+          <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ formRows }}" as="f" hint-placeholder-count="6">
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12.5px;font-weight:500">{{ f.label }} <span style="color:#A32020">{{ f.reqMark }}</span></label>
+                <sc-if value="{{ f.isShort }}" hint-placeholder-val="{{ true }}"><div style="height:34px;border:1px solid #E3E7EE;border-radius:7px"></div></sc-if>
+                <sc-if value="{{ f.isNum }}" hint-placeholder-val="{{ false }}"><div style="height:34px;width:160px;border:1px solid #E3E7EE;border-radius:7px;display:flex;align-items:center;padding:0 10px;color:#9AA2B1">0</div></sc-if>
+                <sc-if value="{{ f.isLong }}" hint-placeholder-val="{{ false }}"><div style="height:84px;border:1px solid #E3E7EE;border-radius:7px"></div></sc-if>
+                <sc-if value="{{ f.isDate }}" hint-placeholder-val="{{ false }}"><div style="height:34px;width:180px;border:1px solid #E3E7EE;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;color:#9AA2B1"><span>jj/mm/aaaa</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"></path></svg></div></sc-if>
+                <sc-if value="{{ f.isList }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><span style="height:28px;padding:0 10px;border-radius:14px;border:1px solid #E3E7EE;display:flex;align-items:center;font-size:12px;color:#3E4757">{{ o.l }}</span></sc-for></div></sc-if>
+                <sc-if value="{{ f.isFile }}" hint-placeholder-val="{{ false }}"><div style="height:56px;border:1px dashed #C5CCD8;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#6B7485;font-size:12px">Déposer des fichiers ou parcourir</div></sc-if>
+              </div>
+            </sc-for>
+            <div style="display:flex;justify-content:flex-end"><div style="height:34px;padding:0 16px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500">Envoyer la demande</div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+  </div>
+</main>
+<sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePanel }}" style="position:fixed;inset:0;background:rgba(10,22,51,0.18);z-index:20"></div>
+  <aside style="position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100vw;background:#fff;border-left:1px solid #E3E7EE;box-shadow:-12px 0 32px rgba(16,24,40,0.10);z-index:21;display:flex;flex-direction:column">
+    <div style="padding:14px 18px;border-bottom:1px solid #E3E7EE;display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#6B7485"><span style="font-family:'IBM Plex Mono',monospace">{{ pp.code }}</span><span style="width:7px;height:7px;border-radius:2px;background:{{ pp.color }}"></span>{{ pp.teamName }}</div>
+        <div style="font-size:17px;font-weight:600">{{ pp.name }}</div>
+      </div>
+      <div onClick="{{ closePanel }}" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6B7485" style-hover="background:#F1F3F7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+    </div>
+    <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EEF1F5">
+        <p style="margin:0;color:#2A3242;line-height:1.55;text-wrap:pretty">{{ pp.desc }}</p>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);row-gap:8px;font-size:12.5px;align-items:center">
+          <span style="color:#6B7485">Objectif</span><span>{{ pp.okr }}</span>
+          <span style="color:#6B7485">Résultat clé</span><span>{{ pp.kr }}</span>
+          <span style="color:#6B7485">Chef de projet</span><span style="display:flex;align-items:center;gap:6px"><span style="width:20px;height:20px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ pp.leadIni }}</span>{{ pp.lead }}</span>
+          <span style="color:#6B7485">Période</span><span>{{ pp.dates }}</span>
+          <span style="color:#6B7485">Statut</span>
+          <span>
+            <sc-if value="{{ pRead }}" hint-placeholder-val="{{ true }}"><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:{{ pp.st.bg }};color:{{ pp.st.fg }}">{{ pp.status }}</span></sc-if>
+            <sc-if value="{{ pEdit }}" hint-placeholder-val="{{ false }}"><select value="{{ pp.status }}" onChange="{{ onStatus }}" style="height:28px;border:1px solid #E3E7EE;border-radius:6px;padding:0 6px;background:#fff"><sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.l }}">{{ o.l }}</option></sc-for></select></sc-if>
+          </span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#6B7485">Avancement · {{ pp.doneT }}/{{ pp.totT }} tickets</span><span style="font-weight:600">{{ pp.pct }}</span></div>
+          <sc-if value="{{ pRead }}" hint-placeholder-val="{{ true }}"><div style="height:8px;background:#EEF1F5;border-radius:4px;overflow:hidden"><div style="height:100%;width:{{ pp.pct }};background:{{ pp.bar }}"></div></div></sc-if>
+          <sc-if value="{{ pEdit }}" hint-placeholder-val="{{ false }}"><input type="range" min="0" max="100" step="5" value="{{ pp.pctNum }}" onChange="{{ onPct }}" style="width:100%"></sc-if>
+        </div>
+        <sc-if value="{{ pRead }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#6B7485;background:#F5F7FA;border-radius:6px;padding:8px 10px">{{ pReadNote }}</div></sc-if>
+      </div>
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #EEF1F5">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500">Équipe projet</span>
+        <sc-for list="{{ pp.members }}" as="m" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;background:#E4EAF7;color:#1F3B8A;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ m.ini }}</span><span style="flex:1">{{ m.name }}</span><span style="font-size:11px;font-weight:500;padding:1px 8px;border-radius:10px;border:1px solid #E3E7EE;background:{{ m.rb }};color:{{ m.rf }}">{{ m.role }}</span></div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#6B7485;font-weight:500;margin-bottom:4px">Tickets</span>
+        <sc-for list="{{ pp.tickets }}" as="t" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F1F3F7;font-size:12.5px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A93A3;width:62px">{{ t.id }}</span>
+            <span style="flex:1">{{ t.title }}</span>
+            <span style="font-size:11px;font-weight:500;padding:1px 7px;border-radius:10px;background:{{ t.st.bg }};color:{{ t.st.fg }}">{{ t.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+</sc-if>
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ mClose }}" style="position:fixed;inset:0;background:rgba(10,22,51,0.35);z-index:30;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div onClick="{{ mStop }}" style="width:640px;max-width:100%;max-height:88vh;background:#fff;border-radius:12px;box-shadow:0 24px 64px rgba(16,24,40,0.25);display:flex;flex-direction:column">
+      <div style="padding:16px 20px;border-bottom:1px solid #E3E7EE;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:15px;font-weight:600">{{ mTitle }}</div>
+        <div onClick="{{ mClose }}" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6B7485"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid #EEF1F5">
+        <label style="font-size:12.5px;font-weight:500">Ressource</label>
+        <select value="{{ mPid }}" onChange="{{ onPid }}" style="height:36px;border:1px solid #E3E7EE;border-radius:7px;padding:0 10px;background:#fff;outline:none"><sc-for list="{{ personOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select>
+      </div>
+      <div style="flex:1;overflow:auto;padding:8px 20px 16px">
+        <sc-for list="{{ mGroups }}" as="g" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:#3E4757;padding:12px 0 6px"><span style="width:8px;height:8px;border-radius:2px;background:{{ g.color }}"></span>{{ g.name }}</div>
+          <sc-for list="{{ g.projs }}" as="p" hint-placeholder-count="2">
+            <div onClick="{{ p.toggle }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #EEF1F5;border-radius:8px;margin-bottom:6px;cursor:pointer;background:{{ p.rowBg }}">
+              <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid {{ p.boxBorder }};background:{{ p.boxBg }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ p.checked }}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M5 12l5 5 9-10"></path></svg></sc-if></div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B7485;width:44px">{{ p.code }}</span>
+              <span style="flex:1;font-weight:500">{{ p.name }}</span>
+              <sc-if value="{{ p.checked }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:2px;padding:2px;background:#EEF1F5;border-radius:6px">
+                  <sc-for list="{{ p.roles }}" as="r" hint-placeholder-count="3"><div onClick="{{ r.pick }}" style="padding:3px 8px;border-radius:4px;font-size:11.5px;font-weight:500;background:{{ r.bg }};color:{{ r.fg }};box-shadow:{{ r.sh }}">{{ r.label }}</div></sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid #E3E7EE;display:flex;align-items:center;gap:8px;background:#FAFBFC;border-radius:0 0 12px 12px">
+        <span style="flex:1;color:#6B7485;font-size:12px">{{ mCount }}</span>
+        <div onClick="{{ mClose }}" style="height:32px;padding:0 14px;border-radius:7px;border:1px solid #E3E7EE;background:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer">Annuler</div>
+        <div onClick="{{ mSave }}" style="height:32px;padding:0 14px;border-radius:7px;background:#003CC8;color:#fff;display:flex;align-items:center;font-weight:500;cursor:pointer;opacity:{{ mSaveOp }}">Enregistrer les affectations</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const MS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const MF=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const DF=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const DOW=['D','L','M','M','J','V','S'];
+const ME='cl', TODAY='2026-09-25';
+const TEAMS0=[{id:'pf',name:'Plateforme',color:'#003CC8',lead:'Camille Laurent'},{id:'da',name:'Data',color:'#0F8A6B',lead:'Hugo Martin'},{id:'mo',name:'Mobile',color:'#B25E09',lead:'Inès Roux'},{id:'pr',name:'Produit',color:'#7A3FC2',lead:'Nadia Benali'}];
+const PEOPLE=[
+{id:'cl',name:'Camille Laurent',team:'pf',poste:'Chef de projet',cap:100},{id:'tb',name:'Thomas Bernard',team:'pf',poste:'Dév. back-end',cap:100},{id:'lm',name:'Léa Moreau',team:'pf',poste:'Dév. front-end',cap:80},{id:'jd',name:'Julien Dubois',team:'pf',poste:'DevOps',cap:100},
+{id:'hm',name:'Hugo Martin',team:'da',poste:'Lead data',cap:100},{id:'sp',name:'Sarah Petit',team:'da',poste:'Data engineer',cap:100},{id:'ag',name:'Antoine Garcia',team:'da',poste:'Data analyst',cap:60},
+{id:'ir',name:'Inès Roux',team:'mo',poste:'Lead mobile',cap:100},{id:'mf',name:'Maxime Fournier',team:'mo',poste:'Dév. iOS',cap:100},{id:'cg',name:'Chloé Girard',team:'mo',poste:'Dév. Android',cap:90},
+{id:'nb',name:'Nadia Benali',team:'pr',poste:'Product manager',cap:100},{id:'pl',name:'Paul Lefèvre',team:'pr',poste:'Product designer',cap:100}];
+const PM=Object.fromEntries(PEOPLE.map((p,i)=>[p.id,{...p,i}]));
+const PROJ=[
+{code:'PF-12',name:'Migration Kubernetes',team:'pf',okr:'O1 · Fiabiliser la plateforme',kr:'KR1.1 · Disponibilité 99,9 %',lead:'jd',pct:72,s:'2026-07-01',e:'2026-11-15',status:'En cours',tot:34,d:'Migration des 22 services applicatifs vers le cluster Kubernetes managé, avec bascule progressive par lot.',t:['Conteneuriser les services batch','Configurer l’autoscaling du cluster','Migrer la base de sessions','Plan de bascule et rollback']},
+{code:'PF-14',name:'SSO & gestion des droits',team:'pf',okr:'O2 · Sécuriser les accès',kr:'KR2.1 · 100 % des apps en SSO',lead:'cl',pct:45,s:'2026-08-15',e:'2026-11-30',status:'À risque',tot:28,d:'Généraliser l’authentification unique sur les applications internes et centraliser la gestion des rôles.',t:['Connecteur annuaire LDAP','Mapping des rôles applicatifs','Migration de l’outil RH vers le SSO','Recette sécurité']},
+{code:'PF-17',name:'Portail développeurs',team:'pf',okr:'O1 · Fiabiliser la plateforme',kr:'KR1.3 · Onboarding dév. < 1 jour',lead:'lm',pct:20,s:'2026-09-15',e:'2026-12-20',status:'En cours',tot:19,d:'Point d’entrée unique pour la documentation, le catalogue d’API et l’onboarding des développeurs.',t:['Maquettes du portail','Catalogue des API','Guide d’onboarding','Génération des clés d’API']},
+{code:'DA-05',name:'Entrepôt de données v2',team:'da',okr:'O3 · Décider avec la donnée',kr:'KR3.1 · 12 sources connectées',lead:'hm',pct:64,s:'2026-07-15',e:'2026-12-10',status:'En cours',tot:41,d:'Nouvel entrepôt de données centralisant les sources métiers avec historisation et contrôles qualité.',t:['Connecteur CRM','Modèle de données ventes','Historisation des référentiels','Contrôles de qualité']},
+{code:'DA-08',name:'Tableaux de bord finance',team:'da',okr:'O3 · Décider avec la donnée',kr:'KR3.2 · 5 rapports automatisés',lead:'ag',pct:88,s:'2026-07-01',e:'2026-10-18',status:'En cours',tot:16,d:'Automatisation des rapports mensuels de la direction financière.',t:['Rapport de trésorerie','Rapport budget vs réalisé','Alertes de dépassement','Recette avec la DAF']},
+{code:'MO-21',name:'App terrain hors-ligne',team:'mo',okr:'O4 · Équiper les équipes terrain',kr:'KR4.1 · 300 utilisateurs actifs',lead:'ir',pct:38,s:'2026-07-10',e:'2026-11-05',status:'En retard',tot:37,d:'Application mobile utilisable sans réseau pour les interventions terrain, synchronisée au retour en couverture.',t:['Synchronisation différée','Stockage chiffré local','Gestion des conflits','Tests terrain pilote']},
+{code:'MO-23',name:'Notifications push',team:'mo',okr:'O4 · Équiper les équipes terrain',kr:'KR4.2 · Taux d’ouverture 40 %',lead:'mf',pct:100,s:'2026-07-01',e:'2026-09-30',status:'Terminé',tot:12,d:'Service de notifications push pour les applications mobiles internes.',t:['Service d’envoi','Préférences utilisateur','Suivi des ouvertures']},
+{code:'PR-03',name:'Refonte du parcours de demande',team:'pr',okr:'O5 · Simplifier les demandes internes',kr:'KR5.1 · Délai de traitement < 5 jours',lead:'nb',pct:55,s:'2026-08-01',e:'2026-11-28',status:'En cours',tot:22,d:'Nouveau formulaire et circuit de validation des demandes adressées aux équipes projet.',t:['Entretiens demandeurs','Nouveau formulaire','Circuit de validation','Notifications de suivi']},
+{code:'PR-06',name:'Design system interne',team:'pr',okr:'O6 · Unifier l’expérience des outils',kr:'KR6.1 · Adopté par 4 équipes',lead:'pl',pct:30,s:'2026-10-01',e:'2027-01-15',status:'Planifié',tot:18,d:'Bibliothèque de composants et de règles partagées par les outils internes.',t:['Inventaire des composants','Tokens de couleur et typographie','Documentation','Kit Figma']}];
+const ASSIGN0=[['PF-12','jd','Chef de projet'],['PF-12','tb','Membre'],['PF-12','cl','Lecteur'],['PF-14','cl','Chef de projet'],['PF-14','tb','Membre'],['PF-14','lm','Membre'],['PF-17','lm','Chef de projet'],['PF-17','cl','Membre'],['PF-17','jd','Membre'],['DA-05','hm','Chef de projet'],['DA-05','sp','Membre'],['DA-05','cl','Lecteur'],['DA-08','ag','Chef de projet'],['DA-08','sp','Membre'],['MO-21','ir','Chef de projet'],['MO-21','mf','Membre'],['MO-21','cg','Membre'],['MO-23','mf','Chef de projet'],['MO-23','cg','Membre'],['PR-03','nb','Chef de projet'],['PR-03','pl','Membre'],['PR-03','cl','Membre'],['PR-06','pl','Chef de projet'],['PR-06','nb','Lecteur'],['PR-06','lm','Membre']].map(([code,pid,role])=>({code,pid,role}));
+const ST={'En cours':{bg:'#E8EEFF',fg:'#0033AD'},'À risque':{bg:'#FFF1DC',fg:'#8A4B00'},'En retard':{bg:'#FDE8E8',fg:'#A32020'},'Terminé':{bg:'#E3F5EC',fg:'#0B6B4F'},'À faire':{bg:'#F1F3F7',fg:'#4A5363'},'En revue':{bg:'#F1E9FB',fg:'#5E2CA5'},'Planifié':{bg:'#F1F3F7',fg:'#4A5363'},'Validée':{bg:'#E3F5EC',fg:'#0B6B4F'},'À compléter':{bg:'#FFF1DC',fg:'#8A4B00'},'En saisie':{bg:'#E8EEFF',fg:'#0033AD'}};
+const ROLE={'Chef de projet':{bg:'#E8EEFF',fg:'#0033AD'},'Membre':{bg:'#F1F3F7',fg:'#3E4757'},'Lecteur':{bg:'#FFFFFF',fg:'#6B7485'}};
+const LT={CP:{label:'Congés payés',short:'CP',bg:'#DCE5FF',fg:'#0033AD'},RTT:{label:'RTT',short:'RTT',bg:'#DDF2E8',fg:'#0B6B4F'},MAL:{label:'Maladie',short:'MA',bg:'#FDE2E2',fg:'#A32020'},FOR:{label:'Formation',short:'FO',bg:'#FFEBCC',fg:'#8A4B00'}};
+const HOL={'2026-01-01':1,'2026-04-06':1,'2026-05-01':1,'2026-05-08':1,'2026-05-14':1,'2026-05-25':1,'2026-07-14':1,'2026-08-15':1,'2026-11-01':1,'2026-11-11':1,'2026-12-25':1,'2027-01-01':1};
+const PRIO={Critique:'#A32020',Haute:'#B25E09',Moyenne:'#4A5363',Basse:'#8A93A3'};
+const RS={new:{label:'Nouvelle',bg:'#E8EEFF',fg:'#0033AD',dot:'#003CC8'},analyse:{label:'En analyse',bg:'#FFF1DC',fg:'#8A4B00',dot:'#D98A1C'},ok:{label:'Acceptée',bg:'#E3F5EC',fg:'#0B6B4F',dot:'#0F8A6B'},ko:{label:'Refusée',bg:'#F1F3F7',fg:'#4A5363',dot:'#8A93A3'}};
+const REFS0=[
+{id:'type',name:'Types de demande',values:[['Nouveau projet','#003CC8'],['Évolution','#0F8A6B'],['Anomalie','#A32020'],['Accès / droits','#7A3FC2'],['Donnée / rapport','#B25E09']]},
+{id:'prio',name:'Priorités',values:[['Critique','#A32020'],['Haute','#B25E09'],['Moyenne','#4A5363'],['Basse','#8A93A3']]},
+{id:'stp',name:'Statuts projet',values:[['Planifié','#8A93A3'],['En cours','#003CC8'],['À risque','#D98A1C'],['En retard','#D14343'],['Terminé','#0F8A6B']]},
+{id:'role',name:'Rôles projet',values:[['Chef de projet','#003CC8'],['Membre','#4A5363'],['Lecteur','#8A93A3']]},
+{id:'abs',name:'Types d’absence',values:[['Congés payés','#003CC8'],['RTT','#0F8A6B'],['Maladie','#A32020'],['Formation','#B25E09']]}].map(r=>({...r,values:r.values.map(([l,c])=>({l,c,on:true}))}));
+const FIELDS0=[
+{id:'f1',label:'Titre de la demande',type:'Texte court',req:true,sys:true},{id:'f2',label:'Type de demande',type:'Liste',req:true,ref:'type',sys:true},{id:'f3',label:'Description du besoin',type:'Texte long',req:true},{id:'f4',label:'Équipe concernée',type:'Liste',req:true,ref:'teams'},{id:'f5',label:'Priorité souhaitée',type:'Liste',req:false,ref:'prio'},{id:'f6',label:'Date de livraison souhaitée',type:'Date',req:false},{id:'f7',label:'Budget estimé (k€)',type:'Nombre',req:false},{id:'f8',label:'Pièces jointes',type:'Fichier',req:false}];
+const FTYPES=['Texte court','Texte long','Liste','Date','Nombre','Fichier'];
+const REQS0=[
+{id:'DEM-047',title:'Tableau de bord absentéisme RH',type:'Donnée / rapport',from:'Élodie Charpentier',dept:'RH',date:'24 sept.',prio:'Haute',status:'new',team:'da',wish:'15 déc. 2026',budget:'12',desc:'Suivi mensuel du taux d’absentéisme par service, avec comparaison sur 12 mois glissants. Export attendu pour le comité social.'},
+{id:'DEM-046',title:'Accès SSO pour l’outil de paie',type:'Accès / droits',from:'Marc Lambert',dept:'Finance',date:'23 sept.',prio:'Critique',status:'new',team:'pf',wish:'31 oct. 2026',budget:'—',desc:'L’outil de paie impose encore un mot de passe dédié. Demande d’intégration au SSO avant la campagne de fin d’année.'},
+{id:'DEM-045',title:'Application de relevé de compteurs',type:'Nouveau projet',from:'Sophie Mercier',dept:'Exploitation',date:'22 sept.',prio:'Moyenne',status:'analyse',team:'mo',wish:'mars 2027',budget:'80',desc:'Saisie des relevés de compteurs sur tablette par les techniciens, avec photo et géolocalisation.'},
+{id:'DEM-044',title:'Export comptable automatique',type:'Évolution',from:'Karim Haddad',dept:'Comptabilité',date:'19 sept.',prio:'Haute',status:'analyse',team:'da',wish:'30 nov. 2026',budget:'15',desc:'Générer chaque nuit l’export des écritures au format attendu par le logiciel comptable.'},
+{id:'DEM-043',title:'Refonte de l’intranet',type:'Nouveau projet',from:'Julie Fontaine',dept:'Communication',date:'17 sept.',prio:'Moyenne',status:'analyse',team:'pr',wish:'T2 2027',budget:'120',desc:'Moderniser l’intranet : recherche, annuaire, actualités par site.'},
+{id:'DEM-041',title:'Doublons clients dans le CRM',type:'Anomalie',from:'Marc Lambert',dept:'Finance',date:'12 sept.',prio:'Haute',status:'ok',team:'da',wish:'15 oct. 2026',budget:'—',desc:'Environ 4 % des fiches clients sont en double depuis la dernière reprise de données.'},
+{id:'DEM-040',title:'Note de frais sur mobile',type:'Évolution',from:'Sophie Mercier',dept:'Exploitation',date:'10 sept.',prio:'Basse',status:'ok',team:'mo',wish:'janv. 2027',budget:'25',desc:'Photographier et soumettre un justificatif depuis l’application terrain.'},
+{id:'DEM-038',title:'Assistant conversationnel RH',type:'Nouveau projet',from:'Élodie Charpentier',dept:'RH',date:'5 sept.',prio:'Basse',status:'ko',team:'pr',wish:'2027',budget:'60',desc:'Répondre automatiquement aux questions fréquentes des salariés.',note:'Hors périmètre 2026, à reproposer au cadrage budgétaire 2027.'}];
+const NOTES0={
+'2026-09-25':'Hier\n- Revue de la PR connecteur LDAP avec Thomas, deux retours à traiter\n- Point budget T4 avec Nadia\n\nAujourd’hui\n- Finaliser le plan de migration des applications legacy vers le SSO\n- Préparer la démo du sprint 20\n\nBlocages\n- Accès annuaire côté DSI toujours en attente',
+'2026-09-24':'Hier\n- Atelier mapping des rôles avec l’équipe RH\n\nAujourd’hui\n- Revue de la PR connecteur LDAP\n- Point budget T4\n\nBlocages\n- Aucun',
+'2026-09-23':'Hier\n- Comité de pilotage Plateforme\n\nAujourd’hui\n- Atelier mapping des rôles RH\n- Mise à jour du planning PF-14 (glissement de 2 semaines)\n\nBlocages\n- Disponibilité de Léa réduite (formation jeudi)',
+'2026-09-22':'Hier\n- Rétrospective sprint 19\n\nAujourd’hui\n- Préparation du comité de pilotage\n- Relecture des maquettes du portail développeurs',
+'2026-09-21':'Aujourd’hui\n- Lancement du sprint 20\n- Priorisation du backlog SSO avec Thomas et Léa',
+'2026-09-18':'Hier\n- Démo sprint 19\n\nAujourd’hui\n- Rétrospective\n- Envoi du compte rendu au sponsor',
+'2026-09-17':'Aujourd’hui\n- Préparation de la démo sprint 19\n- Point de synchronisation avec l’équipe Data sur l’entrepôt v2'};
+const ICON={dash:'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',proj:'M3 6h18M3 12h12M3 18h7',road:'M3 6h8M7 12h10M13 18h8',ress:'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M21 19v-1a4 4 0 0 0-3-3.8M16 4.2a3 3 0 0 1 0 5.6',admin:'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',time:'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18',daily:'M6 3h9l4 4v14H6zM9 10h7M9 14h7M9 18h4'};
+const pad=n=>String(n).padStart(2,'0');
+const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const ds=dt=>key(dt.getFullYear(),dt.getMonth(),dt.getDate());
+const fmt=s=>{const d=pd(s);return `${d.getDate()} ${MS[d.getMonth()]}`;};
+const ini=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+const pctS=n=>Math.round(n)+'%';
+const num=n=>String(Math.round(n*10)/10).replace('.',',');
+function baseLeave(pi,y,m,d){const s=(pi*7+m*13+y)%11;const r1=3+((pi*5+m*3)%17),l1=1+((pi+m)%4);if(s<6&&d>=r1&&d<r1+l1)return ['CP','CP','RTT','CP','FOR','MAL'][s];if(s%3===0&&d===24-(pi%5))return 'RTT';if(m===7&&d>=3+pi%10&&d<13+pi%10)return 'CP';return null;}
+const LCACHE={};
+const tog=(on)=>({tBg:on?'#003CC8':'#D5DAE3',tKnob:on?'14px':'2px'});
+
+class Component extends DCLogic {
+  state={screen:'gDash',panel:null,open:{'PF-14':true},teamF:'all',ym:[2026,9],edits:{},brush:'CP',adminTab:'equipes',refSel:'type',refs:REFS0,newVal:'',fields:FIELDS0,newType:'Texte court',reqs:REQS0,reqSel:'DEM-047',mAdminTab:'demandes',day:TODAY,notes:NOTES0,assign:ASSIGN0,tree:{pf:true,da:true},modal:null,pOver:{},tsWeek:0,teams:TEAMS0};
+  go(id){this.setState({screen:id,panel:null});}
+  proj(code){const p=PROJ.find(x=>x.code===code);return {...p,...(this.state.pOver[code]||{})};}
+  projs(){return PROJ.map(p=>this.proj(p.code));}
+  tm(){return Object.fromEntries(this.state.teams.map(t=>[t.id,t]));}
+  leave(pid,y,m,d){const k=`${pid}|${key(y,m,d)}`;const e=this.state.edits[k];if(e!==undefined)return e==='none'?null:e;const dw=new Date(y,m,d).getDay();if(dw===0||dw===6||HOL[key(y,m,d)])return null;return baseLeave(PM[pid].i,y,m,d);}
+  
+  setLeave(pid,y,m,d){const cur=this.leave(pid,y,m,d),b=this.state.brush;const nv=b==='none'||cur===b?'none':b;this.setState(s=>({edits:{...s.edits,[`${pid}|${key(y,m,d)}`]:nv}}));}
+  bar(st){return st==='En retard'?'#D14343':st==='À risque'?'#D98A1C':st==='Terminé'?'#0F8A6B':'#003CC8';}
+  tickets(p){const done=Math.round(p.pct/100*p.t.length);const mem=this.state.assign.filter(a=>a.code===p.code).map(a=>a.pid);const pre=p.code.split('-')[0];const n=+p.code.split('-')[1];
+    return p.t.map((title,i)=>{const status=i<done?'Terminé':i===done?'En revue':i===done+1?'En cours':'À faire';const prio=['Haute','Moyenne','Critique','Basse'][(i+n)%4];return {id:`${pre}-${n*100+i*7+3}`,title,status,st:ST[status],prio,prioColor:PRIO[prio],who:ini(PM[mem[i%mem.length]||p.lead].name)};});}
+  nav(){const sc=this.state.screen;const it=(id,label,icon,extra)=>{const on=sc===id||(extra&&extra.includes(sc));return {id,label,icon:ICON[icon],go:()=>this.go(id==='mRess'?'mCong':id),bg:on?'#17295A':'transparent',fg:on?'#FFFFFF':'#AEB9D3',fw:on?'500':'400',hasChildren:false,children:[]};};
+    const mr=it('mRess','Gestion des ressources','ress',['mCong','mListe']);mr.hasChildren=true;
+    mr.children=[['mCong','Congés & capacité'],['mListe','Liste des ressources']].map(([id,label])=>({label,go:()=>this.go(id),bg:sc===id?'rgba(255,255,255,0.08)':'transparent',fg:sc===id?'#FFFFFF':'#98A4C0'}));
+    if(sc==='mCong'||sc==='mListe'){mr.bg='transparent';}
+    const TITLES={gDash:'Dashboard général',gProjets:'Projets et Roadmap',gRess:'Gestion des ressources',gAdmin:'Administration',gTime:'Timesheet',mDaily:'Daily',mProjets:'Projets et Roadmap',mCong:'Gestion des ressources · Congés & capacité',mListe:'Gestion des ressources · Liste des ressources',mAdmin:'Administration'};
+    const g=sc[0]==='g';const is={};Object.keys(TITLES).forEach(k=>is[k]=k===sc);
+    return {is,genNav:[it('gDash','Dashboard général','dash'),it('gProjets','Projets et Roadmap','proj'),it('gRess','Gestion des ressources','ress'),it('gAdmin','Administration','admin'),it('gTime','Timesheet','time')],
+      monNav:[it('mDaily','Daily','daily'),it('mProjets','Projets et Roadmap','road'),mr,it('mAdmin','Administration','admin')],
+      crumbGroup:g?'Général':'Mon dashboard',crumbTitle:TITLES[sc],modeLabel:g?'Lecture seule':'Édition',modeBg:g?'#F1F3F7':'#E8EEFF',modeFg:g?'#4A5363':'#0033AD'};}
+  vDash(){const ps=this.projs(),TM=this.tm();const act=ps.filter(p=>p.status!=='Terminé');
+    const OBJ=[['pf','Fiabiliser la plateforme','haute',[['KR1.1','Disponibilité 99,9 %',80],['KR1.2','Temps de rétablissement < 30 min',62],['KR1.3','Onboarding dév. < 1 jour',20]]],['pf','Sécuriser les accès','moyenne',[['KR2.1','100 % des apps en SSO',45],['KR2.2','Revue trimestrielle des droits',50]]],['da','Décider avec la donnée','haute',[['KR3.1','12 sources connectées',64],['KR3.2','5 rapports automatisés',88]]],['mo','Équiper les équipes terrain','faible',[['KR4.1','300 utilisateurs actifs',38],['KR4.2','Taux d’ouverture push 40 %',100]]],['pr','Simplifier les demandes internes','moyenne',[['KR5.1','Délai de traitement < 5 jours',55],['KR5.2','Satisfaction demandeurs > 4/5',40]]],['pr','Unifier l’expérience des outils','moyenne',[['KR6.1','Design system adopté par 4 équipes',30],['KR6.2','20 composants documentés',35]]]];
+    const CONF={haute:['#E3F5EC','#0B6B4F'],moyenne:['#FFF1DC','#8A4B00'],faible:['#FDE8E8','#A32020']};
+    const objectives=OBJ.map(([t,title,conf,krs])=>({teamName:TM[t].name,color:TM[t].color,title,conf,confBg:CONF[conf][0],confFg:CONF[conf][1],pctW:pctS(krs.reduce((a,k)=>a+k[2],0)/krs.length),krs:krs.map(([code,label,v])=>({code,label,w:v+'%'}))}));
+    const Q={pf:[82,76,71,54],da:[70,78,85,62],mo:[64,58,49,35],pr:[75,80,68,44]};
+    return {kpis:[{label:'Projets actifs',value:String(act.length),delta:'+2 vs T3',deltaColor:'#0B6B4F'},{label:'Avancement moyen',value:pctS(act.reduce((a,p)=>a+p.pct,0)/act.length),delta:'+6 pts',deltaColor:'#0B6B4F'},{label:'Projets à risque ou en retard',value:String(ps.filter(p=>p.status==='À risque'||p.status==='En retard').length),delta:'+1',deltaColor:'#A32020'},{label:'Tickets ouverts',value:String(ps.reduce((a,p)=>a+p.tot-Math.round(p.tot*p.pct/100),0)),delta:'−18 sur 7 j',deltaColor:'#0B6B4F'},{label:'Taux d’occupation',value:'87%',delta:'cible 85 %',deltaColor:'#6B7485'}],
+      objectives,objCount:OBJ.length,krCount:OBJ.reduce((a,o)=>a+o[3].length,0),
+      quarterRows:this.state.teams.filter(t=>Q[t.id]).map(t=>({name:t.name,color:t.color,cells:Q[t.id].map((v,i)=>({w:v+'%',bar:i===3?'#8CA6E8':t.color}))})),
+      watchList:ps.filter(p=>p.status==='À risque'||p.status==='En retard'||(p.pct>80&&p.status!=='Terminé')).map(p=>({code:p.code,name:p.name,teamName:TM[p.team].name,due:fmt(p.e),status:p.status,st:ST[p.status],open:()=>this.setState({panel:p.code})}))};}
+  vProj(){const {teamF,open,panel,teams}=this.state;const ps=this.projs();const rows=[];
+    teams.filter(t=>teamF==='all'||t.id===teamF).forEach(t=>{const tp=ps.filter(p=>p.team===t.id);if(!tp.length)return;
+      rows.push({isGroup:true,name:t.name,color:t.color,count:tp.length,avg:pctS(tp.reduce((a,p)=>a+p.pct,0)/tp.length)});
+      tp.forEach(p=>{const op=!!open[p.code];const L=PM[p.lead];
+        rows.push({isProj:true,code:p.code,name:p.name,okr:p.okr,kr:p.kr,lead:L.name,leadIni:ini(L.name),pct:p.pct+'%',barColor:this.bar(p.status),doneT:Math.round(p.tot*p.pct/100),totT:p.tot,due:fmt(p.e),status:p.status,st:ST[p.status],rot:op?'rotate(90deg)':'none',rowBg:panel===p.code?'#F3F6FF':'#FFFFFF',openPanel:()=>this.setState({panel:p.code}),toggle:e=>{e.stopPropagation();this.setState(s=>({open:{...s.open,[p.code]:!s.open[p.code]}}));}});
+        if(op)this.tickets(p).forEach(tk=>rows.push({isTicket:true,...tk}));});});
+    const chip=(id,name,color)=>({name,color,pick:()=>this.setState({teamF:id}),bg:teamF===id?'#E8EEFF':'#FFFFFF',fg:teamF===id?'#0033AD':'#3E4757',border:teamF===id?'#B7C8F5':'#E3E7EE'});
+    return {projRows:rows,projCount:ps.length,teamChips:[chip('all','Toutes les équipes','#8A93A3'),...teams.map(t=>chip(t.id,t.name,t.color))]};}
+  calendar(editable){const [y,m]=this.state.ym;const n=new Date(y,m+1,0).getDate();const TM=this.tm();
+    const days=[];for(let d=1;d<=n;d++){const dw=new Date(y,m,d).getDay();const we=dw===0||dw===6,hol=!!HOL[key(y,m,d)],td=key(y,m,d)===TODAY;days.push({d,we,hol,dow:DOW[dw],num:d,bg:we||hol?'#F1F3F7':'transparent',fg:td?'#003CC8':we?'#9AA2B1':'#5B6576'});}
+    const rows=[];this.state.teams.forEach(t=>{const ppl=PEOPLE.filter(p=>p.team===t.id);if(!ppl.length)return;rows.push({isTeam:true,name:t.name,color:t.color});
+      ppl.forEach(p=>{let cnt=0;const cells=days.map(dd=>{const lv=dd.we||dd.hol?null:this.leave(p.id,y,m,dd.d);const T=lv?LT[lv]:null;if(T)cnt++;return {base:dd.we||dd.hol?'#F5F7FA':'#FFFFFF',bg:T?T.bg:'transparent',fg:T?T.fg:'#9AA2B1',short:T?T.short:dd.hol?'F':'',click:editable&&!dd.we&&!dd.hol?()=>this.setLeave(p.id,y,m,dd.d):undefined,cur:editable&&!dd.we&&!dd.hol?'pointer':'default'};});
+        rows.push({isPerson:true,name:p.name,ini:ini(p.name),cells,cnt:num(cnt)+' j'});});});
+    const mv=k=>()=>this.setState(s=>{let [yy,mm]=s.ym;mm+=k;if(mm<0){mm=11;yy--;}if(mm>11){mm=0;yy++;}return {ym:[yy,mm]};});
+    return {calDays:days,calCols:`200px repeat(${n},minmax(24px,1fr))`,calColsEd:`200px repeat(${n},minmax(24px,1fr)) 56px`,calRows:rows,monthLabel:`${MF[m]} ${y}`,prevMonth:mv(-1),nextMonth:mv(1)};}
+  vRess(){const TM=this.tm();const cal=this.calendar(false);
+    return {calDays:cal.calDays,calCols:cal.calCols,calRowsRO:cal.calRows,monthLabel:cal.monthLabel,prevMonth:cal.prevMonth,nextMonth:cal.nextMonth,
+      legend:[...Object.values(LT).map(t=>({label:t.label,bg:t.bg,fg:t.bg})),{label:'Férié / week-end',bg:'#F1F3F7',fg:'#E3E7EE'}],
+      peopleCount:PEOPLE.length,peopleRows:PEOPLE.map(p=>({name:p.name,ini:ini(p.name),teamName:TM[p.team].name,color:TM[p.team].color,poste:p.poste,cap:p.cap,projs:this.state.assign.filter(a=>a.pid===p.id).map(a=>({code:a.code}))}))};}
+  vAdmin(){const {adminTab,teams,refs,refSel,fields,newVal}=this.state;const ps=this.projs();
+    const tab=(id,label,count)=>({label,count,pick:()=>this.setState({adminTab:id}),fg:adminTab===id?'#141A26':'#6B7485',line:adminTab===id?'#003CC8':'transparent'});
+    const rc=refs.find(r=>r.id===refSel);
+    const refName=id=>id==='teams'?'Équipes':(refs.find(r=>r.id===id)||{}).name||'—';
+    return {adminTabs:[tab('equipes','Équipes',teams.length),tab('refs','Référentiels',refs.length),tab('champs','Champs du formulaire',fields.length)],adminIs:{equipes:adminTab==='equipes',refs:adminTab==='refs',champs:adminTab==='champs'},
+      teamRows:teams.map(t=>({name:t.name,color:t.color,lead:t.lead,members:PEOPLE.filter(p=>p.team===t.id).length,projects:ps.filter(p=>p.team===t.id).length})),
+      addTeam:()=>this.setState(s=>({teams:[...s.teams,{id:'t'+s.teams.length,name:'Nouvelle équipe',color:'#5B6576',lead:'—'}]})),
+      refList:refs.map(r=>({name:r.name,count:r.values.length,pick:()=>this.setState({refSel:r.id}),bg:r.id===refSel?'#F3F6FF':'transparent',fg:r.id===refSel?'#0033AD':'#3E4757',fw:r.id===refSel?'500':'400'})),
+      refCur:{name:rc.name,values:rc.values.map((v,i)=>({n:i+1,l:v.l,c:v.c,...tog(v.on),op:v.on?'1':'0.5',toggle:()=>this.setState(s=>({refs:s.refs.map(r=>r.id!==refSel?r:{...r,values:r.values.map((x,j)=>j===i?{...x,on:!x.on}:x)})}))}))},
+      newVal,onNewVal:e=>this.setState({newVal:e.target.value}),addVal:()=>{if(!newVal.trim())return;this.setState(s=>({newVal:'',refs:s.refs.map(r=>r.id!==refSel?r:{...r,values:[...r.values,{l:newVal.trim(),c:'#5B6576',on:true}]})}));},
+      fieldRows:fields.map(f=>({label:f.label,type:f.type,refName:f.type==='Liste'?refName(f.ref):'—',sys:f.sys?'Système':'Personnalisé',...tog(f.req),toggle:()=>this.updField(f.id,{req:!f.req})}))};}
+  updField(id,patch){this.setState(s=>({fields:s.fields.map(f=>f.id===id?{...f,...patch}:f)}));}
+  vTime(){const {tsWeek,teams}=this.state;const mon=new Date(2026,8,21+tsWeek*7);const days=[0,1,2,3,4].map(i=>new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+i));const today=pd(TODAY);
+    let sum=0,exp=0;const rows=[];
+    teams.forEach(t=>{const ppl=PEOPLE.filter(p=>p.team===t.id);if(!ppl.length)return;rows.push({isTeam:true,name:t.name,color:t.color});
+      ppl.forEach(p=>{let tot=0,filled=0;const cells=days.map((d,j)=>{const fut=d>today;const lv=this.leave(p.id,d.getFullYear(),d.getMonth(),d.getDate());const hol=HOL[ds(d)];
+        if(fut)return {v:'—',bg:'transparent',fg:'#B3BAC7'};if(hol)return {v:'Férié',bg:'#F1F3F7',fg:'#6B7485'};if(lv)return {v:LT[lv].short,bg:LT[lv].bg,fg:LT[lv].fg};
+        const miss=tsWeek===0&&p.i%5===2&&j>=3;if(miss)return {v:'',bg:'#FFF8EC',fg:'#8A4B00'};
+        const h=[7,7.5,8,7,7.5][(p.i+j+tsWeek)%5]*p.cap/100;tot+=h;filled++;return {v:num(h),bg:'transparent',fg:'#141A26'};});
+        const past=days.filter(d=>d<=today).length;const status=tsWeek<0?'Validée':past<5?'En saisie':cells.some(c=>c.v==='')?'À compléter':'Validée';
+        sum+=tot;exp+=past*7.5*p.cap/100;
+        rows.push({isPerson:true,name:p.name,ini:ini(p.name),cells,total:num(tot)+' h',status:tsWeek===0&&cells.some(c=>c.v==='')?'À compléter':status,st:ST[tsWeek===0&&cells.some(c=>c.v==='')?'À compléter':status],projs:this.state.assign.filter(a=>a.pid===p.id).map(a=>a.code).join(' · ')});});});
+    const wk=39+tsWeek;const last=days[4];
+    return {tsRows:rows,tsDays:days.map(d=>({label:`${DF[d.getDay()].slice(0,3)}. ${d.getDate()}`})),weekLabel:`Semaine ${wk} · ${days[0].getDate()} ${MS[days[0].getMonth()]} – ${last.getDate()} ${MS[last.getMonth()]} ${last.getFullYear()}`,
+      tsKpis:[{label:'Heures saisies',value:num(sum)+' h'},{label:'Taux de complétude',value:exp?pctS(Math.min(100,sum/exp*100)):'—'},{label:'Feuilles à compléter',value:String(rows.filter(r=>r.status==='À compléter').length)}],
+      prevWeek:()=>this.setState(s=>({tsWeek:s.tsWeek-1})),nextWeek:()=>this.setState(s=>({tsWeek:Math.min(0,s.tsWeek+1)})),nextWeekOp:tsWeek>=0?'0.4':'1'};}
+  vDaily(){const {day,notes}=this.state;const d=pd(day);const step=k=>{let x=new Date(d);do{x.setDate(x.getDate()+k);}while(x.getDay()===0||x.getDay()===6);return ds(x);};
+    const hist=[];let x=pd(TODAY);while(hist.length<12){if(x.getDay()!==0&&x.getDay()!==6){const k=ds(x);const txt=(notes[k]||'').split('\n').filter(l=>l.trim()&&!/^(Hier|Aujourd’hui|Blocages)$/.test(l.trim())).map(l=>l.replace(/^- /,''));const on=k===day;
+      hist.push({k,dow:DF[x.getDay()],date:`${x.getDate()} ${MS[x.getMonth()]}`,snip:txt[0]||'Aucune note',cnt:txt.length?`${txt.length} point${txt.length>1?'s':''}`:'',snipFg:txt.length?'#3E4757':'#9AA2B1',pick:()=>this.setState({day:k}),bg:on?'#F3F6FF':'#FFFFFF',border:on?'#003CC8':'transparent'});}x.setDate(x.getDate()-1);}
+    const isT=day===TODAY;
+    return {dayLabel:`${DF[d.getDay()]} ${d.getDate()} ${MF[d.getMonth()]} ${d.getFullYear()}`,dayTag:isT?'Aujourd’hui':`il y a ${Math.round((pd(TODAY)-d)/864e5)} j`,dayTagBg:isT?'#E8EEFF':'#F1F3F7',dayTagFg:isT?'#0033AD':'#4A5363',
+      noteText:notes[day]||'',onNote:e=>{const v=e.target.value;this.setState(s=>({notes:{...s.notes,[day]:v}}));},
+      prevDay:()=>this.setState({day:step(-1)}),nextDay:()=>{if(!isT)this.setState({day:step(1)});},nextOp:isT?'0.4':'1',goToday:()=>this.setState({day:TODAY}),
+      insertTpl:()=>this.setState(s=>({notes:{...s.notes,[day]:(s.notes[day]?s.notes[day]+'\n\n':'')+'Hier\n- \n\nAujourd’hui\n- \n\nBlocages\n- '}})),
+      history:hist,noteWords:String((notes[day]||'').split(/\s+/).filter(Boolean).length)};}
+  vRoad(){const TM=this.tm();const start=new Date(2026,6,1),end=new Date(2027,1,1);const T=end-start;const pos=dt=>((dt-start)/T*100).toFixed(2)+'%';
+    const months=[];for(let i=0;i<7;i++){const a=new Date(2026,6+i,1),b=new Date(2026,7+i,1);months.push({label:`${MS[a.getMonth()]} ${String(a.getFullYear()).slice(2)}`,w:((b-a)/T*100).toFixed(2)+'%'});}
+    const mine=this.state.assign.filter(a=>a.pid===ME);
+    const rows=mine.map(a=>{const p=this.proj(a.code);const s=pd(p.s),e=pd(p.e);return {code:p.code,name:p.name,teamName:TM[p.team].name,color:TM[p.team].color,left:pos(s),width:((e-s)/T*100).toFixed(2)+'%',fill:p.pct+'%',pct:p.pct+'%',dates:`${fmt(p.s)} → ${fmt(p.e)}`,role:a.role,rb:ROLE[a.role].bg,rf:ROLE[a.role].fg,status:p.status,st:ST[p.status],open:()=>this.setState({panel:p.code}),canEdit:a.role!=='Lecteur'};});
+    return {roadMonths:months,todayLeft:pos(pd(TODAY)),roadRows:rows,myCount:rows.length,myLead:rows.filter(r=>r.role==='Chef de projet').length};}
+  vCong(){const {brush}=this.state;const [y]=[2026];
+    const brushes=[...Object.entries(LT).map(([id,t])=>({label:t.label,sw:t.bg,swb:t.fg,pick:()=>this.setState({brush:id}),bg:brush===id?'#F3F6FF':'#FFFFFF',border:brush===id?'#003CC8':'#E3E7EE'})),{label:'Effacer',sw:'#FFFFFF',swb:'#B3BAC7',pick:()=>this.setState({brush:'none'}),bg:brush==='none'?'#F3F6FF':'#FFFFFF',border:brush==='none'?'#003CC8':'#E3E7EE'}];
+    const TM=this.tm();
+    const recap=PEOPLE.map(p=>{const c={CP:0,RTT:0,MAL:0,FOR:0};for(let m=0;m<12;m++){const n=new Date(y,m+1,0).getDate();for(let d=1;d<=n;d++){const l=this.leave(p.id,y,m,d);if(l)c[l]++;}}
+      const solde=25-c.CP;return {name:p.name,ini:ini(p.name),teamName:TM[p.team].name,color:TM[p.team].color,cp:c.CP,rtt:c.RTT,mal:c.MAL,form:c.FOR,total:c.CP+c.RTT+c.MAL+c.FOR,solde,soldeFg:solde<0?'#A32020':'#141A26',cpW:Math.min(100,c.CP/25*100)+'%'};});
+    const sprints=[0,1,2,3,4,5].map(i=>{const a=new Date(2026,8,14+i*14);const b=new Date(a);b.setDate(b.getDate()+11);return {name:`Sprint ${19+i}`,a,dates:`${a.getDate()} ${MS[a.getMonth()]} – ${b.getDate()} ${MS[b.getMonth()]}`,cur:i===1};});
+    const capOf=(ppl,s)=>{let c=0,th=0;ppl.forEach(p=>{for(let k=0;k<14;k++){const d=new Date(s.a);d.setDate(d.getDate()+k);const dw=d.getDay();if(dw===0||dw===6)continue;th+=p.cap/100;if(HOL[ds(d)])continue;if(!this.leave(p.id,d.getFullYear(),d.getMonth(),d.getDate()))c+=p.cap/100;}});return [c,th];};
+    const capRows=this.state.teams.map(t=>{const ppl=PEOPLE.filter(p=>p.team===t.id);if(!ppl.length)return null;return {name:t.name,color:t.color,n:ppl.length,cells:sprints.map(s=>{const [c,th]=capOf(ppl,s);const r=c/th;return {v:num(c)+' j',sub:`/ ${num(th)}`,w:pctS(r*100),bar:r<0.8?'#D98A1C':t.color,bg:s.cur?'#FAFBFF':'transparent'};})};}).filter(Boolean);
+    const capTot=sprints.map(s=>{const [c,th]=capOf(PEOPLE,s);return {v:num(c)+' j',sub:`/ ${num(th)}`,bg:s.cur?'#FAFBFF':'transparent'};});
+    return {brushes,recap,sprints:sprints.map(s=>({name:s.name,dates:s.dates,bg:s.cur?'#F3F6FF':'transparent',tag:s.cur?'en cours':''})),capRows,capTot,editCount:String(Object.keys(this.state.edits).length)};}
+  openModal(pid,code){const sel={};if(pid)this.state.assign.filter(a=>a.pid===pid).forEach(a=>sel[a.code]=a.role);if(code&&!sel[code])sel[code]='Membre';this.setState({modal:{pid:pid||'',sel,pre:code||null}});}
+  vListe(){const {tree,assign,teams}=this.state;const ps=this.projs();const rows=[];
+    teams.forEach(t=>{const tp=ps.filter(p=>p.team===t.id);const op=!!tree[t.id];const ppl=new Set(assign.filter(a=>tp.some(p=>p.code===a.code)).map(a=>a.pid));
+      rows.push({isTeam:true,name:t.name,color:t.color,meta:`${tp.length} projet${tp.length>1?'s':''} · ${ppl.size} personne${ppl.size>1?'s':''}`,rot:op?'rotate(90deg)':'none',toggle:()=>this.setState(s=>({tree:{...s.tree,[t.id]:!s.tree[t.id]}}))});
+      if(!op)return;
+      tp.forEach(p=>{const ms=assign.filter(a=>a.code===p.code);const k='p'+p.code;const po=tree[k]!==false;
+        rows.push({isProj:true,code:p.code,name:p.name,meta:`${ms.length} membre${ms.length>1?'s':''}`,rot:po?'rotate(90deg)':'none',toggle:()=>this.setState(s=>({tree:{...s.tree,[k]:!po}})),add:e=>{e.stopPropagation();this.openModal(null,p.code);}});
+        if(po)ms.sort((a,b)=>['Chef de projet','Membre','Lecteur'].indexOf(a.role)-['Chef de projet','Membre','Lecteur'].indexOf(b.role)).forEach(a=>{const P=PM[a.pid];const others=assign.filter(x=>x.pid===a.pid&&x.code!==p.code).length;
+          rows.push({isPerson:true,name:P.name,ini:ini(P.name),poste:P.poste,role:a.role,rb:ROLE[a.role].bg,rf:ROLE[a.role].fg,others:others?`+${others} autre${others>1?'s':''} projet${others>1?'s':''}`:'',edit:()=>this.openModal(a.pid)});});});});
+    return {treeRows:rows,listeKpis:[{label:'Équipes',value:String(teams.length)},{label:'Projets',value:String(ps.length)},{label:'Personnes',value:String(PEOPLE.length)},{label:'Affectations',value:String(assign.length)}],openAssign:()=>this.openModal(null,null),
+      expandAll:()=>this.setState(s=>{const t={};s.teams.forEach(x=>t[x.id]=true);return {tree:t};})};}
+  vModal(){const m=this.state.modal;if(!m)return {modalOpen:false};const TM=this.tm();
+    const setSel=fn=>this.setState(s=>({modal:{...s.modal,sel:fn({...s.modal.sel})}}));
+    const groups=this.state.teams.map(t=>({name:t.name,color:t.color,projs:PROJ.filter(p=>p.team===t.id).map(p=>{const r=m.sel[p.code];return {code:p.code,name:p.name,checked:!!r,boxBg:r?'#003CC8':'#FFFFFF',boxBorder:r?'#003CC8':'#C5CCD8',rowBg:r?'#FAFBFF':'#FFFFFF',toggle:()=>setSel(x=>{if(x[p.code])delete x[p.code];else x[p.code]='Membre';return x;}),
+      roles:['Chef de projet','Membre','Lecteur'].map(role=>({label:role,bg:r===role?'#FFFFFF':'transparent',fg:r===role?'#141A26':'#6B7485',sh:r===role?'0 1px 2px rgba(16,24,40,0.10)':'none',pick:e=>{e.stopPropagation();setSel(x=>{x[p.code]=role;return x;});}}))};})})).filter(g=>g.projs.length);
+    const cnt=Object.keys(m.sel).length;
+    return {modalOpen:true,mPid:m.pid,mTitle:m.pre&&!m.pid?`Ajouter une ressource à ${m.pre}`:m.pid?`Affectations de ${PM[m.pid].name}`:'Assigner une ressource',
+      personOpts:[{id:'',label:'Choisir une personne…'},...PEOPLE.map(p=>({id:p.id,label:`${p.name} — ${p.poste} (${TM[p.team].name})`}))],
+      onPid:e=>{const pid=e.target.value;const sel={};this.state.assign.filter(a=>a.pid===pid).forEach(a=>sel[a.code]=a.role);if(m.pre&&!sel[m.pre])sel[m.pre]='Membre';this.setState({modal:{...m,pid,sel}});},
+      mGroups:groups,mCount:`${cnt} projet${cnt>1?'s':''} sélectionné${cnt>1?'s':''}`,mSaveOp:m.pid?'1':'0.5',
+      mClose:()=>this.setState({modal:null}),mStop:e=>e.stopPropagation(),
+      mSave:()=>{if(!m.pid)return;this.setState(s=>({modal:null,assign:[...s.assign.filter(a=>a.pid!==m.pid),...Object.entries(m.sel).map(([code,role])=>({code,pid:m.pid,role}))]}));}};}
+  vMAdmin(){const {reqs,reqSel,mAdminTab,fields,refs,newType,teams}=this.state;const TM=this.tm();
+    const tab=(id,label,count)=>({label,count,pick:()=>this.setState({mAdminTab:id}),fg:mAdminTab===id?'#141A26':'#6B7485',line:mAdminTab===id?'#003CC8':'transparent'});
+    const cols=['new','analyse','ok','ko'].map(st=>{const rs=reqs.filter(r=>r.status===st);return {label:RS[st].label,dot:RS[st].dot,count:rs.length,cards:rs.map(r=>({id:r.id,title:r.title,type:r.type,from:r.from,date:r.date,prio:r.prio,prioColor:PRIO[r.prio],teamName:TM[r.team].name,color:TM[r.team].color,border:r.id===reqSel?'#003CC8':'#E3E7EE',sh:r.id===reqSel?'0 0 0 3px rgba(0,60,200,0.10)':'none',pick:()=>this.setState({reqSel:r.id})}))};});
+    const r=reqs.find(x=>x.id===reqSel)||reqs[0];const set=patch=>this.setState(s=>({reqs:s.reqs.map(x=>x.id===r.id?{...x,...patch}:x)}));
+    const order=['new','analyse','dec'];const idx=r.status==='new'?0:r.status==='analyse'?1:2;
+    const steps=[['Reçue',r.date],['En analyse',''],[r.status==='ko'?'Refusée':r.status==='ok'?'Acceptée':'Décision','']].map(([label,sub],i)=>({label,sub,dot:i<idx||(i===2&&idx===2)?(r.status==='ko'&&i===2?'#8A93A3':'#0F8A6B'):i===idx?'#003CC8':'#D5DAE3',fg:i<=idx?'#141A26':'#8A93A3',line:i<idx?'#0F8A6B':'#E3E7EE',hasLine:i<2}));
+    const refOpts=id=>id==='teams'?teams.map(t=>t.name):((refs.find(x=>x.id===id)||{values:[]}).values.filter(v=>v.on).map(v=>v.l));
+    const move=(i,k)=>this.setState(s=>{const f=[...s.fields];const j=i+k;if(j<0||j>=f.length)return null;[f[i],f[j]]=[f[j],f[i]];return {fields:f};});
+    return {mAdminTabs:[tab('demandes','Demandes entrantes',reqs.filter(x=>x.status==='new'||x.status==='analyse').length),tab('form','Formulaire de demande',fields.length)],mAdminIs:{demandes:mAdminTab==='demandes',form:mAdminTab==='form'},
+      reqCols:cols,
+      rq:{id:r.id,title:r.title,type:r.type,from:r.from,dept:r.dept,date:r.date,prio:r.prio,prioColor:PRIO[r.prio],teamName:TM[r.team].name,color:TM[r.team].color,desc:r.desc,wish:r.wish,budget:r.budget==='—'?'—':r.budget+' k€',status:RS[r.status].label,sbg:RS[r.status].bg,sfg:RS[r.status].fg,note:r.note||'',
+        isNew:r.status==='new',isAn:r.status==='analyse',isDone:r.status==='ok'||r.status==='ko',isOk:r.status==='ok'},
+      rqSteps:steps,onReqNote:e=>set({note:e.target.value}),startAn:()=>set({status:'analyse'}),accept:()=>set({status:'ok'}),refuse:()=>set({status:'ko'}),reopen:()=>set({status:'analyse'}),
+      formRows:fields.map((f,i)=>({label:f.label,type:f.type,sys:!!f.sys,notSys:!f.sys,refName:f.type==='Liste'?(f.ref==='teams'?'Équipes':(refs.find(x=>x.id===f.ref)||{}).name||'—'):'',...tog(f.req),toggle:()=>this.updField(f.id,{req:!f.req}),onLabel:e=>this.updField(f.id,{label:e.target.value}),up:()=>move(i,-1),down:()=>move(i,1),upOp:i===0?'0.3':'1',downOp:i===fields.length-1?'0.3':'1',del:()=>this.setState(s=>({fields:s.fields.filter(x=>x.id!==f.id)})),
+        isShort:f.type==='Texte court',isLong:f.type==='Texte long',isList:f.type==='Liste',isDate:f.type==='Date',isNum:f.type==='Nombre',isFile:f.type==='Fichier',opts:(f.type==='Liste'?refOpts(f.ref):[]).map(l=>({l})),reqMark:f.req?'*':''})),
+      ftypes:FTYPES.map(l=>({l,bg:newType===l?'#E8EEFF':'#FFFFFF',fg:newType===l?'#0033AD':'#3E4757',border:newType===l?'#B7C8F5':'#E3E7EE',pick:()=>this.setState({newType:l})})),
+      addField:()=>this.setState(s=>({fields:[...s.fields,{id:'f'+Date.now(),label:'Nouveau champ',type:s.newType,req:false,ref:s.newType==='Liste'?'prio':undefined}]}))};}
+  vPanel(){const code=this.state.panel;if(!code)return {panelOpen:false};const p=this.proj(code);const TM=this.tm();const ed=this.state.screen[0]==='m';
+    const mine=this.state.assign.find(a=>a.pid===ME&&a.code===code);const canEdit=ed&&mine&&mine.role!=='Lecteur';
+    const set=patch=>this.setState(s=>({pOver:{...s.pOver,[code]:{...(s.pOver[code]||{}),...patch}}}));
+    return {panelOpen:true,pp:{code:p.code,name:p.name,teamName:TM[p.team].name,color:TM[p.team].color,okr:p.okr,kr:p.kr,lead:PM[p.lead].name,leadIni:ini(PM[p.lead].name),pct:p.pct+'%',pctNum:p.pct,bar:this.bar(p.status),dates:`${fmt(p.s)} → ${fmt(p.e)}`,status:p.status,st:ST[p.status],desc:p.d,doneT:Math.round(p.tot*p.pct/100),totT:p.tot,
+      members:this.state.assign.filter(a=>a.code===code).map(a=>({name:PM[a.pid].name,ini:ini(PM[a.pid].name),role:a.role,rb:ROLE[a.role].bg,rf:ROLE[a.role].fg})),tickets:this.tickets(p)},
+      pEdit:!!canEdit,pRead:!canEdit,pReadNote:ed&&!canEdit?'Rôle Lecteur sur ce projet : modification impossible.':'Vue générale en lecture seule. Modifiez ce projet depuis Mon dashboard.',
+      statusOpts:['Planifié','En cours','À risque','En retard','Terminé'].map(l=>({l})),onPct:e=>set({pct:+e.target.value}),onStatus:e=>set({status:e.target.value}),closePanel:()=>this.setState({panel:null})};}
+  renderVals(){const sc=this.state.screen;const M={gDash:'vDash',gProjets:'vProj',gRess:'vRess',gAdmin:'vAdmin',gTime:'vTime',mDaily:'vDaily',mProjets:'vRoad',mListe:'vListe',mAdmin:'vMAdmin'};
+    let v={};if(sc==='mCong'){const c=this.calendar(true);v={calDays:c.calDays,calColsEd:c.calColsEd,calRowsEd:c.calRows,monthLabel:c.monthLabel,prevMonth:c.prevMonth,nextMonth:c.nextMonth,...this.vCongCached()};}else if(M[sc])v=this[M[sc]]();
+    return Object.assign({},this.nav(),v,this.vModal(),this.vPanel());}
+  vCongCached(){const k=this.state.edits;const b=this.state.brush;if(this._cc&&this._cc.k===k){return {...this._cc.v,brushes:this.vBrushes()};}const v=this.vCong();this._cc={k,v};return v;}
+  vBrushes(){const {brush}=this.state;return [...Object.entries(LT).map(([id,t])=>({label:t.label,sw:t.bg,swb:t.fg,pick:()=>this.setState({brush:id}),bg:brush===id?'#F3F6FF':'#FFFFFF',border:brush===id?'#003CC8':'#E3E7EE'})),{label:'Effacer',sw:'#FFFFFF',swb:'#B3BAC7',pick:()=>this.setState({brush:'none'}),bg:brush==='none'?'#F3F6FF':'#FFFFFF',border:brush==='none'?'#003CC8':'#E3E7EE'}];}
+}
+</script>
+</body>
+</html>

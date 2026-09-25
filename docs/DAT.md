@@ -11,6 +11,7 @@
 | 0.3     | 2026-09-25 | Transfert du projet dans le dépôt ProjectDesk ; README racine (§ 7) |
 | 0.4     | 2026-09-25 | Base Neon créée (schéma, RLS, Data API) et maquettes « connexion-bdd » — app pas encore branchée (§ 9) |
 | 0.5     | 2026-09-25 | Déploiement Vercel : `vercel.json`, domaines déclarés dans Neon Auth (§ 9.5) |
+| 0.6     | 2026-09-25 | Nouvelle cible « Pilotage Projet » : maquette de référence + maquettes complémentaires (§ 10) ; maquettes connexion-bdd retirées |
 
 ---
 
@@ -203,7 +204,7 @@ ProjectDesk/
 │   ├── DAT.md                     # ce document
 │   └── maquettes/
 │       ├── etat-actuel/           # captures PNG de chaque écran (référence)
-│       └── connexion-bdd/         # maquettes connexion / organisations / membres (§ 9)
+│       └── pilotage-projet/       # maquette cible Pilotage Projet + compléments (§ 10)
 └── roadmap-app/
     ├── index.html · style.css · data.js · app.js
     └── README.md                  # guide utilisateur
@@ -228,7 +229,7 @@ Le hook **signale** sans annuler le commit ; les écarts sont corrigés au commi
 ## 9. Base de données Neon (en cours d'intégration)
 
 > Statut : **base prête, application pas encore branchée** (elle utilise toujours le
-> `localStorage`). Le branchement suit la validation des maquettes `docs/maquettes/connexion-bdd/`.
+> `localStorage`). Le branchement suit la validation des maquettes `docs/maquettes/pilotage-projet/` (§ 10).
 
 ### 9.1 Architecture cible
 
@@ -291,3 +292,32 @@ reste le référentiel unique (§ 6, règle 1). La base ne contrôle que les bor
 
 > Tout nouveau domaine (domaine personnalisé, prévisualisation de branche) doit être ajouté
 > dans Neon Console → Auth → Domains, sinon la connexion y sera refusée.
+
+## 10. Nouvelle cible : « Pilotage Projet » (en cours de conception)
+
+> Décision du porteur (2026-09-25) : la maquette `Pilotage_Projet.dc.html` **remplace Roadmap PM**.
+> Ce DAT sera réécrit (v1.0) lors de la livraison du code ; les §§ 1 à 9 décrivent encore Roadmap PM.
+
+### 10.1 Décisions
+
+| Sujet | Décision |
+|-------|----------|
+| Périmètre | Les 10 écrans de la maquette, livrés en une fois |
+| Organisation Neon Auth | 1 organisation = 1 équipe |
+| Lecture | Tout membre d'une équipe lit toutes les équipes (section « Général ») |
+| Écriture | Dans son équipe et ses projets (rôle projet Chef de projet / Membre ; Lecteur = lecture) |
+| Administration | Administrateurs globaux : équipes, référentiels, champs du formulaire |
+| Timesheet | Chacun saisit sa ligne (écran « Mon timesheet »), le chef d'équipe valide |
+| Demandeurs | Compte « demandeur » : dépose et suit ses demandes, ne voit rien d'autre |
+| Ancien schéma | Tables `demandes` / `capacites` (Roadmap PM, vides) supprimées ; `roadmap-app/` retiré |
+
+### 10.2 Maquettes
+
+| Dossier | Contenu |
+|---------|---------|
+| `docs/maquettes/pilotage-projet/` | 10 écrans + panneau projet (`01-gDash.png` … `11-panneau-projet.png`), rendus depuis `source/Pilotage_Projet.dc.html` |
+| `docs/maquettes/pilotage-projet/complements/` | Écrans absents de la maquette : `connexion.png`, `choix-equipe.png`, `mon-timesheet.png`, `espace-demandeur.png`, `bloc-utilisateur.png` |
+
+Remarques sur la maquette source : `support.js` d'origine non fourni (moteur de rendu réécrit dans
+`source/support.js`) ; le Timesheet de la maquette affiche « NaN » (bug de données de la maquette,
+sans objet dans l'application qui lira les heures en base).
