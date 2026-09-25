@@ -28,17 +28,22 @@ const Modale = {
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && peutEditerProjet(p));
       if (!projets.length) return '';
       return `<div class="libelle" style="margin-top:10px">${esc(e.nom)}</div>` + projets.map(p => {
-        const a = actuelles.find(x => x.projetId === p.id), coche = a || (!rId && m.projetId === p.id);
+        // Coché : déjà affecté, ou projet d'où l'on vient (« + Membre »)
+        const a = actuelles.find(x => x.projetId === p.id), coche = a || m.projetId === p.id;
         return `<label class="ligne-flex" style="padding:5px 0"><input type="checkbox" name="projet" value="${p.id}" ${coche ? 'checked' : ''}>
           ${C.code(p.code)}<span style="flex:1">${esc(p.nom)}</span>
           ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : ROLES_PROJET.MEMBRE, `class="champ" style="width:auto;height:28px" name="role-${p.id}"`)}</label>`;
       }).join('');
     }).join('');
-    const nbCoches = rId ? actuelles.length : (m.projetId ? 1 : 0);
+    const nbCoches = actuelles.length + (m.projetId && !actuelles.some(x => x.projetId === m.projetId) ? 1 : 0);
+    // Équipe où créer une nouvelle personne : celle du projet d'origine, sinon l'équipe ouverte
+    const equipeNouvelle = m.projetId ? projet(m.projetId).equipeId : etat.equipeCourante;
     return `<form class="pile" style="gap:0;min-height:0;flex:1;display:flex;flex-direction:column" data-action-envoi="enregistrerAffectations">
-      ${this.entete(rId ? `Affectations de ${ressource(rId).nom}` : m.projetId ? `Ajouter une ressource à ${projet(m.projetId).code}` : 'Assigner une ressource')}
+      ${this.entete(m.projetId ? `Ajouter une ressource à ${projet(m.projetId).code}` : rId ? `Affectations de ${ressource(rId).nom}` : 'Assigner une ressource')}
       <div class="panneau-corps"><div><label class="libelle">Ressource</label>
-        ${C.liste([{ valeur: '', libelle: '— choisir —' }, ...personnes], rId, 'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}</div>
+        ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— aucune fiche : créez la personne —' }, ...personnes], rId, 'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}
+        ${equipeNouvelle ? `<div style="margin-top:6px"><a data-action="nouvellePersonneAffectation" data-equipe="${equipeNouvelle}">+ Nouvelle personne</a>
+          <span class="discret" style="font-size:12px">(créée dans ${esc(equipe(equipeNouvelle).nom)}, puis sélectionnée ici)</span></div>` : ''}</div>
         <div>${groupes || C.vide('Aucun projet modifiable.')}</div></div>
       <div class="panneau-pied"><span class="discret" style="flex:1">${nbCoches} affectation(s)</span>
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer les affectations</button></div></form>`;
@@ -47,7 +52,8 @@ const Modale = {
   /* ---------- Fiche ressource ---------- */
   ressource(m) {
     const esc = C.esc, r = m.id ? ressource(m.id) : { equipeId: m.equipeId, capacite: 100 };
-    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}">
+    // data-retour-projet : création lancée depuis « + Membre » → retour à l'affectation ensuite
+    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-retour-projet="${m.retourProjet || ''}">
       ${this.entete(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne · ' + equipe(r.equipeId).nom)}
       <div class="panneau-corps">
         <div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
@@ -157,11 +163,14 @@ Object.assign(Actions, {
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite);
     executer(async () => {
-      if (d.id) await Api.modifier('ressources', { id: 'eq.' + d.id }, f);
-      else await Api.creer('ressources', { ...f, equipeId: d.equipe });
-      etat.modale = null;
+      if (d.id) { await Api.modifier('ressources', { id: 'eq.' + d.id }, f); etat.modale = null; return; }
+      const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
+      // Venue de « + Membre » : on revient à l'affectation avec la personne sélectionnée
+      etat.modale = d.retourProjet ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet } : null;
     }, 'ressources');
   },
+  // Depuis la fenêtre d'affectation : créer la personne puis y revenir
+  nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, retourProjet: etat.modale.projetId || '' } }),
   supprimerRessource(d) {
     if (!confirm('Supprimer cette personne ? Ses affectations, absences et temps seront supprimés.')) return;
     executer(async () => { await Api.supprimer('ressources', { id: 'eq.' + d.id }); etat.modale = null; }, 'ressources', 'affectations', 'absences', 'temps');

@@ -187,6 +187,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.check('input[name=projet] >> nth=0');
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
     verifier('Affectation enregistrée (modale fermée)', !(await page.$('.modale')));
+    // « + Membre » → « + Nouvelle personne » → retour à l'affectation, personne sélectionnée
+    await page.click('tr:has-text("PF-17") [data-action="assigner"]'); await page.waitForTimeout(200);
+    await page.click('[data-action="nouvellePersonneAffectation"]'); await page.waitForTimeout(200);
+    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');
+    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
+    const choisie = await page.$eval('select[name=ressource]', s => s.options[s.selectedIndex].text);
+    const pf17Coche = await page.$eval('label:has-text("PF-17") input[name=projet]', c => c.checked);
+    await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
+    verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
+      && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
 
     await aller('monTimesheet'); await page.click('[data-action="semainePrecedente"]'); await page.waitForTimeout(200);
     await page.click('[data-action="semaineSuivante"]'); await page.waitForTimeout(200);

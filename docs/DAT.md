@@ -27,6 +27,7 @@
 | 1.12    | 2026-09-25 | Incident « column equipes.direction_id does not exist » (cache Data API après la migration 006) : procédure de migration corrigée, `notify` insuffisant (§ 10) |
 | 1.13    | 2026-09-25 | « Nouveau projet » : champs Résultat clé visé, Début, Fin et Statut retirés (§ 3.4) |
 | 1.14    | 2026-09-25 | Valeurs système des référentiels **renommables** (clé technique `cle`, renommage propagé aux données, droits par clé) — migration 007 (§ 4, § 5) |
+| 1.15    | 2026-09-25 | Affectation : « + Nouvelle personne » depuis « + Membre » (fiche créée puis sélectionnée) (§ 3.4) |
 
 ---
 
@@ -137,7 +138,9 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
   description, chef de projet ; résultat clé, dates et statut ne sont pas demandés à la création
   (statut « Planifié » par défaut ; un projet sans dates n'apparaît pas dans le Gantt de Mes projets) ;
 - **ajout / statut de tickets** dans le panneau projet ;
-- fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
+- fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations) ;
+- dans la fenêtre d'affectation, lien **« + Nouvelle personne »** : crée la fiche dans l'équipe du
+  projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
 ## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`)
 
@@ -295,7 +298,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (43 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (44 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
