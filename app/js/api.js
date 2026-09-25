@@ -46,7 +46,7 @@ const Api = (() => {
   function depuisBdd(ligne) {
     const objet = {};
     Object.entries(ligne).forEach(([cle, valeur]) => { objet[versCamel(cle)] = valeur; });
-    ['heures', 'budget'].forEach(c => { if (typeof objet[c] === 'string') objet[c] = Number(objet[c]); });
+    ['heures', 'budget', 'duree'].forEach(c => { if (typeof objet[c] === 'string') objet[c] = Number(objet[c]); });
     return objet;
   }
 
@@ -156,11 +156,21 @@ const Api = (() => {
   const urlTable = (table, filtres) => `${CONFIG.DATA_API_URL}/${table}?${requete(filtres)}`;
 
   // Lecture : renvoie des objets en camelCase.
-  // cache: 'no-store' : sans lui, le navigateur peut resservir une ancienne réponse de la même
-  // adresse après une écriture (données à jour seulement après F5).
+  // - Pagination : la Data API limite le nombre de lignes par réponse ; on lit donc page après
+  //   page (limit / offset) jusqu'à une page vide. filtres.order doit donner un ordre stable
+  //   (clé unique en dernier, voir ordreDe dans etat.js), sinon des lignes seraient sautées.
+  // - cache: 'no-store' : sans lui, le navigateur peut resservir une ancienne réponse de la même
+  //   adresse après une écriture (données à jour seulement après F5).
+  const TAILLE_PAGE = 1000;
   async function lire(table, filtres = {}) {
-    const lignes = await appeler(urlTable(table, { select: '*', ...filtres }),
-      { credentials: 'omit', cache: 'no-store', headers: await entetes() });
+    let lignes = [];
+    for (let offset = 0; ; ) {
+      const page = await appeler(urlTable(table, { select: '*', ...filtres, limit: TAILLE_PAGE, offset }),
+        { credentials: 'omit', cache: 'no-store', headers: await entetes() });
+      if (!page.length) break;
+      lignes = lignes.concat(page);
+      offset += page.length;
+    }
     return lignes.map(depuisBdd);
   }
 

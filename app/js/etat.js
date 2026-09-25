@@ -70,8 +70,13 @@ function rendre() {
 // toute valeur autre qu'un code hexadécimal #RRGGBB est remplacée (protection contre l'injection).
 const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
+// Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
+const CLES_UNIQUES = { absences: 'ressource_id,jour', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
+  notes: 'user_id,jour', administrateurs: 'user_id' };
+const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
+
 async function chargerTable(cle) {
-  const filtres = { ...(TRIS[cle] ? { order: TRIS[cle] } : {}), ...(FILTRES[cle] ? FILTRES[cle]() : {}) };
+  const filtres = { order: ordreDe(cle), ...(FILTRES[cle] ? FILTRES[cle]() : {}) };
   const lignes = await Api.lire(TABLES[cle], filtres);
   lignes.forEach(l => { if ('couleur' in l) l.couleur = couleurSure(l.couleur); });
   etat.d[cle] = lignes;

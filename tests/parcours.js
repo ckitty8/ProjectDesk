@@ -176,6 +176,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const avantNavigation = await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20'));
     await aller('ressources'); await page.waitForTimeout(400); await aller('conges'); await page.waitForTimeout(400);
     verifier('Données rafraîchies au changement d’écran (sans F5)', !avantNavigation && await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20')));
+    verifier('Lecture paginée : plus de 50 absences chargées malgré le plafond de 50 lignes par réponse', await page.evaluate(() => etat.d.absences.length > 50));
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');

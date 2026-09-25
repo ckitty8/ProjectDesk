@@ -109,6 +109,9 @@ function amorcer() {
     ['pl', '2026-10-23', 'Congés prévisionnel'], ['tb', '2026-09-23', 'Congés prévisionnel'], ['cl', '2026-09-24', 'Congés prévisionnel'], ['cl', '2026-03-10', 'Congés validé'], ['cl', '2026-08-10', 'Congés validé']];
   bd.absences = ABS.map(([p, jour, type]) => ({ ressource_id: idP[p], jour, type, duree: 1 }));
   bd.absences.push({ ressource_id: idP.lm, jour: '2026-11-13', type: 'Congés validé', duree: 0.5 });   // demi-journée (migration 009)
+  // Volume : congés de Paul sur le 1er trimestre (> 50 lignes au total) pour éprouver la lecture paginée
+  for (let d = new Date(Date.UTC(2026, 0, 5)); d < new Date(Date.UTC(2026, 3, 1)); d.setUTCDate(d.getUTCDate() + 1))
+    if (d.getUTCDay() % 6) bd.absences.push({ ressource_id: idP.pl, jour: d.toISOString().slice(0, 10), type: 'Congés validé', duree: 1 });
   bd.temps_saisis = []; bd.feuilles_temps = [];
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
   bd.ressources.forEach((r, i) => {
@@ -265,12 +268,23 @@ async function auth(req, res, chemin, url) {
 const CLES = { absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'] };
 function filtrer(lignes, params) {
   let r = lignes;
-  params.forEach((v, k) => { if (['select', 'order', 'on_conflict'].includes(k)) return;
+  params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
     if (v.startsWith('eq.')) r = r.filter(l => String(l[k]) === v.slice(3));
     if (v.startsWith('gte.')) r = r.filter(l => String(l[k]) >= v.slice(4)); });
+  // Tri multi-colonnes « a,b.desc » comme PostgREST
   const ordre = params.get('order');
-  if (ordre) { const [col, sens] = ordre.split('.'); r = [...r].sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (sens === 'desc' ? -1 : 1)); }
+  if (ordre) {
+    const criteres = ordre.split(',').map(c => c.split('.'));
+    r = [...r].sort((a, b) => { for (const [col, sens] of criteres) {
+      const d = a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0; if (d) return d * (sens === 'desc' ? -1 : 1); } return 0; });
+  }
   return r;
+}
+// Plafond de lignes par réponse, comme la Data API : oblige l'application à paginer
+const MAX_LIGNES = 50;
+function paginer(lignes, params) {
+  const offset = Number(params.get('offset') || 0), limite = Math.min(Number(params.get('limit') || MAX_LIGNES), MAX_LIGNES);
+  return lignes.slice(offset, offset + limite);
 }
 async function donnees(req, res, table, url) {
   const moi = utilisateurDuJeton(req);
@@ -284,7 +298,7 @@ async function donnees(req, res, table, url) {
   // Notes de daily : l'auteur et ses coéquipiers (même organisation), comme la règle RLS
   const partage = autre => membres.some(m1 => m1.userId === moi.id && membres.some(m2 => m2.userId === autre && m2.organizationId === m1.organizationId));
   const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id || partage(n.user_id)) : bd[table];
-  if (req.method === 'GET') return envoyer(res, 200, filtrer(visibles(), p));
+  if (req.method === 'GET') return envoyer(res, 200, paginer(filtrer(visibles(), p), p));
   // Contrôles de suppression des migrations 005-006 (unité non vide : refus)
   if (req.method === 'DELETE') {
     const cibles0 = filtrer(bd[table], p);
