@@ -47,7 +47,7 @@ Ecrans.mesProjets = {
 
     return `
     <div class="ecran">
-      ${C.entete('Mes projets et Roadmap', `${lignes.length} projets dont ${nbChef} en tant que chef de projet · cliquez sur une barre pour mettre à jour l’avancement`, actions)}
+      ${C.entete('Mes projets et Roadmap', `${lignes.length} projets dont ${nbChef} en tant que chef de projet · cliquez sur une barre pour ouvrir le projet`, actions)}
       ${avertissement}
       <div class="carte">${frise || C.vide('Aucun projet daté où vous êtes affecté(e).')}</div>
       <div class="discret"><span style="color:var(--primaire)">—</span> Aujourd’hui, ${Calculs.formatCourt(jour)} &nbsp; Barre claire : durée planifiée · barre pleine : avancement</div>

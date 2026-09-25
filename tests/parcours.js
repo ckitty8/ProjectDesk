@@ -128,12 +128,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('mesProjets'); await capture('09-mes-projets');
     await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);
     await capture('10-panneau-projet');
-    await page.selectOption('select[data-champ="statut"]', 'En retard'); await page.waitForTimeout(300);
-    verifier('Panneau : description sans caractère parasite', !(await page.inputValue('.panneau textarea[data-champ="description"]')).startsWith('>'));
-    verifier('Panneau : statut modifié', (await page.inputValue('select[data-champ="statut"]')) === 'En retard');
-    await page.fill('form[data-action-envoi="ajouterTicket"] input[name=titre]', 'Ticket de test');
-    await page.click('form[data-action-envoi="ajouterTicket"] button'); await page.waitForTimeout(300);
-    verifier('Panneau : ticket ajouté', (await texte()).includes('Ticket de test'));
+    verifier('Panneau : ni objectif, ni période, ni statut, ni avancement, ni tickets',
+      !(await page.$('.panneau [data-champ="statut"], .panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
+      && !(await page.textContent('.panneau')).includes('Résultat clé'));
     await page.click('.fermer');
     await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
@@ -206,9 +203,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Projet modifiable depuis l'arborescence : nom, dates
     await page.click('tr:has-text("PF-17") [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
-    await page.fill('.panneau input[data-champ="fin"]', '2027-03-31'); await page.press('.panneau input[data-champ="fin"]', 'Tab'); await page.waitForTimeout(300);
-    verifier('Projet : nom et date de fin modifiés depuis Liste des ressources',
-      await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2' && p.fin === '2027-03-31'; }));
+    verifier('Projet : nom modifié depuis Liste des ressources',
+      await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));
     await page.click('.panneau .fermer');
 
     await aller('monTimesheet'); await page.click('[data-action="semainePrecedente"]'); await page.waitForTimeout(200);

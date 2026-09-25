@@ -32,6 +32,7 @@
 | 1.17    | 2026-09-25 | Congés & capacité : trois onglets au lieu de trois blocs ; récap annuel sur les personnes de la grille (et non plus l'équipe ouverte seule) (§ 3.3) |
 | 1.18    | 2026-09-25 | Données à jour sans F5 (lectures `no-store`, `no-cache` Vercel) ; panneau projet modifiable (nom, description, chef, dates) et supprimable, ouvert depuis Liste des ressources (§ 3.4, § 8) |
 | 1.19    | 2026-09-25 | Types d'absence (données) : Congés validé (vert, décompté du droit annuel, clé `cp`), Congés prévisionnel (orange), Jours férié (marron) ; Formation désactivé ; en-tête du récap annuel = libellé du type décompté (§ 3.3) |
+| 1.20    | 2026-09-25 | Panneau projet : objectif, résultat clé, période, statut, avancement et tickets retirés (§ 3.4) |
 
 ---
 
@@ -141,9 +142,10 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - panneau **Nouveau projet** (aussi ouvert par « Créer le projet » sur une demande acceptée) : code, nom,
   description, chef de projet ; résultat clé, dates et statut ne sont pas demandés à la création
   (statut « Planifié » par défaut ; un projet sans dates n'apparaît pas dans le Gantt de Mes projets) ;
-- **ajout / statut de tickets** dans le panneau projet ; panneau projet **modifiable** (nom, description,
-  chef, début, fin, statut, avancement, suppression du projet), ouvert aussi depuis l'icône ✎ d'un
-  projet dans Liste des ressources ;
+- panneau projet réduit (demande du porteur) à : nom, description, chef de projet, équipe projet
+  (membres et rôles), suppression du projet — **modifiable** si `peutEditerProjet` ; objectif, résultat
+  clé, période, statut, avancement et tickets n'y figurent plus (colonnes conservées en base). Ouvert
+  aussi depuis l'icône ✎ d'un projet dans Liste des ressources ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations) ;
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
@@ -307,7 +309,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (48 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (46 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
