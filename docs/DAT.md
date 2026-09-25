@@ -24,6 +24,7 @@
 | 1.9     | 2026-09-25 | Incident « table directions absente du cache de schéma » : rechargement du cache Data API ajouté à la procédure de migration (§ 10) |
 | 1.10    | 2026-09-25 | **Direction = espace de travail** (maquette `direction-espace-travail.png`) : directions et équipes dans la même table `equipes` (`type`, `parent_id`), table `directions` supprimée (migration 006) (§ 3.3, § 4, § 5) |
 | 1.11    | 2026-09-25 | **Liste des ressources = arborescence Direction → Équipe → Projet → Membres** (maquette `arborescence-ressources.png`) ; onglet Affectations fusionné ; écran ouvert sans équipe pour un administrateur ; « Nouveau projet » accepte l'équipe choisie (§ 3.3) |
+| 1.12    | 2026-09-25 | Incident « column equipes.direction_id does not exist » (cache Data API après la migration 006) : procédure de migration corrigée, `notify` insuffisant (§ 10) |
 
 ---
 
@@ -295,9 +296,11 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
 2. Calcul métier → `calculs.js` (fonction pure), cité au § 6.
 3. Nouvelle table → migration numérotée `db/migrations/NNN_*.sql` (jamais modifier une migration
    appliquée), GRANT + RLS + trigger de traçabilité, citée au § 4 et au § 5.2. **Après
-   application, recharger le cache de schéma de la Data API** (`notify pgrst, 'reload schema';`,
-   ou réenregistrer la configuration Data API dans la console Neon) **avant** de publier le code
-   qui lit la nouvelle table — sinon l'app affiche « Could not find the table … in the schema cache ».
+   application, recharger le cache de schéma de la Data API en réenregistrant sa configuration**
+   (console Neon › Data API › Save, ou outil MCP `update_data_api` avec les mêmes réglages) **avant**
+   de publier le code. `notify pgrst, 'reload schema'` **ne suffit pas** sur Neon (constaté deux fois) :
+   sans rechargement, l'app affiche « Could not find the table … in the schema cache » ou
+   « column … does not exist » (colonne supprimée encore connue du cache).
 4. Nouvel écran → fichier `app/js/ecrans/`, entrée de menu dans `coquille.js`, balise `<script>`
    dans `index.html`, maquette PNG validée, ligne au § 3, capture dans `tests/parcours.js`.
 5. Droits : toujours en base (RLS) ; `etat.js` ne fait que masquer.

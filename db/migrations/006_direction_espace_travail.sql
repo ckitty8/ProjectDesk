@@ -61,5 +61,6 @@ begin
 end;
 $$;
 
-/* ---------- 5. La Data API relit le schéma (sinon « schema cache ») ---------- */
+/* ---------- 5. Demande de relecture du schéma (insuffisante seule sur Neon : réenregistrer
+   aussi la configuration Data API, voir DAT § 10) ---------- */
 notify pgrst, 'reload schema';
