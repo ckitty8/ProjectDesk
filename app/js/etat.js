@@ -39,7 +39,7 @@ const TABLES = {
   absences: 'absences', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
-const TRIS = { equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
+const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
 // Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;

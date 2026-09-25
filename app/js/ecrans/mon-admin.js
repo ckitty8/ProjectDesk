@@ -4,6 +4,9 @@
      de traitement (analyse, acceptation/refus, création du projet).
    - Formulaire de demande : champs, ordre, obligatoire, aperçu.
      (Modification des champs réservée aux administrateurs globaux.)
+   - Jours fériés (administrateurs globaux) : ajout, date, libellé,
+     suppression ; ils s'affichent dans les calendriers et sont exclus
+     des jours ouvrés (capacité, timesheet).
    - Équipes et Référentiels (administrateurs globaux, et responsables
      d'équipe pour « Modifier » leur équipe) : c'est ici, et non dans la
      section Général (lecture seule), que l'administration se modifie.
@@ -11,6 +14,9 @@
    la première équipe) ; l'onglet Demandes demande alors une équipe.
    ============================================================ */
 'use strict';
+
+// Jour férié d'une date (null si aucun)
+const parJour = jour => etat.d.joursFeries.find(f => f.jour === jour) || null;
 
 Ecrans.monAdmin = {
   titre: 'Administration',
@@ -24,12 +30,14 @@ Ecrans.monAdmin = {
       { id: 'demandes', libelle: 'Demandes entrantes', compte: miennes.filter(dm => ['nouvelle', 'analyse'].includes(dm.statut)).length },
       { id: 'formulaire', libelle: 'Formulaire de demande', compte: etat.d.champs.length },
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
-      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length }] : [])
+      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
+        { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : [])
     ], u.onglet, 'ongletMonAdmin');
     let corps;
     if (u.onglet === 'equipes') corps = Administration.equipes(true);
     else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
     else if (u.onglet === 'formulaire') corps = this.formulaire();
+    else if (u.onglet === 'feries' && etat.estAdmin) corps = this.feries();
     else corps = etat.equipeCourante ? this.demandes(miennes, u.selection)
       : `<div class="carte">${C.vide('Ouvrez ou créez une équipe (onglet Équipes) pour traiter ses demandes.')}</div>`;
     const sousTitre = etat.equipeCourante ? `Demandes adressées à l’équipe ${C.esc(equipe(etat.equipeCourante).nom)}, formulaire${gereEquipes ? ', équipes' : ''}${etat.estAdmin ? ' et référentiels' : ''}`
@@ -39,6 +47,25 @@ Ecrans.monAdmin = {
       ${C.entete('Administration', sousTitre)}
       ${onglets}${corps}
     </div>`;
+  },
+
+  /* Jours fériés (table jours_feries, clé = la date), par année */
+  feries() {
+    const esc = C.esc, annees = [...new Set(etat.d.joursFeries.map(f => f.jour.slice(0, 4)))].sort();
+    const annee = ui('feries', { annee: Calculs.aujourdhui().slice(0, 4) }).annee;
+    const lignes = etat.d.joursFeries.filter(f => f.jour.startsWith(annee)).map(f => `<tr>
+        <td><input type="date" class="champ" style="width:auto" value="${f.jour}" data-action-change="dateFerie" data-jour="${f.jour}"></td>
+        <td><input class="champ" value="${esc(f.libelle)}" data-action-change="libelleFerie" data-jour="${f.jour}"></td>
+        <td class="num">${C.boutonIcone('supprimer', 'supprimerFerie', `data-jour="${f.jour}"`, 'Supprimer ce jour férié')}</td></tr>`).join('');
+    const puces = [...new Set([...annees, annee])].sort().map(a =>
+      `<button class="puce${a === annee ? ' active' : ''}" data-action="anneeFeries" data-annee="${a}">${a}</button>`).join('');
+    return `<div class="carte"><div class="carte-titre"><h2>Jours fériés</h2><div class="puces">${puces}</div></div>
+      <table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th class="num"></th></tr></thead>
+        <tbody>${lignes || `<tr><td colspan="3">${C.vide('Aucun jour férié pour ' + annee + '.')}</td></tr>`}</tbody></table>
+      <form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterFerie">
+        <input type="date" class="champ" name="jour" required style="width:auto"><input class="champ" name="libelle" placeholder="Libellé (ex. Lundi de Pentecôte)" required>
+        <button class="btn">Ajouter</button></form>
+      <div class="discret" style="font-size:12px;padding:0 16px 14px">Affichés dans les calendriers avec le type « ${esc(ABSENCES.FERIE)} » ; non comptés comme jours ouvrés (capacité, timesheet).</div></div>`;
   },
 
   demandes(liste, selectionId) {
@@ -122,6 +149,23 @@ Ecrans.monAdmin = {
 };
 
 Object.assign(Actions, {
+  /* Jours fériés (administrateurs) */
+  anneeFeries: d => majUi('feries', { annee: d.annee }),
+  ajouterFerie(_, form) {
+    const f = Object.fromEntries(new FormData(form));
+    if (parJour(f.jour)) return notifier('Ce jour est déjà férié', 'erreur');
+    executer(() => Api.creer('jours_feries', { jour: f.jour, libelle: f.libelle.trim() }), 'joursFeries');
+  },
+  libelleFerie: (d, el) => el.value.trim() && executer(() => Api.modifier('jours_feries', { jour: 'eq.' + d.jour }, { libelle: el.value.trim() }), 'joursFeries'),
+  dateFerie(d, el) {
+    if (!el.value || el.value === d.jour) return;
+    if (parJour(el.value)) { el.value = d.jour; return notifier('Ce jour est déjà férié', 'erreur'); }
+    executer(() => Api.modifier('jours_feries', { jour: 'eq.' + d.jour }, { jour: el.value }), 'joursFeries');
+  },
+  supprimerFerie(d) {
+    if (confirm('Supprimer ce jour férié ?')) executer(() => Api.supprimer('jours_feries', { jour: 'eq.' + d.jour }), 'joursFeries');
+  },
+
   ongletMonAdmin: d => majUi('monAdmin', { onglet: d.id }),
   choisirDemande: d => majUi('monAdmin', { selection: d.id }),
   statutDemande: d => executer(() => Api.modifier('demandes', { id: 'eq.' + d.id }, { statut: d.statut }), 'demandes'),

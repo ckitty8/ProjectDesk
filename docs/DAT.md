@@ -35,6 +35,7 @@
 | 1.20    | 2026-09-25 | Panneau projet : objectif, résultat clé, période, statut, avancement et tickets retirés (§ 3.4) |
 | 1.21    | 2026-09-25 | Calendriers (Congés & capacité, Général › Gestion des ressources) : sélecteur de mois déplacé juste au-dessus du calendrier, à gauche (§ 3.2, § 3.3) |
 | 1.22    | 2026-09-25 | Jours fériés affichés par défaut dans les calendriers avec le type « Jours férié » (clé `ferie`, migration 008) (§ 4) |
+| 1.23    | 2026-09-25 | Mon dashboard › Administration : onglet **Jours fériés** (administrateurs) pour gérer la table `jours_feries` (§ 3.3) |
 
 ---
 
@@ -133,7 +134,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence), Récap annuel (mêmes personnes que la grille), Capacité par sprint | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
-| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
+| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
 ### 3.4 Éléments ajoutés par rapport à la maquette
 
@@ -314,7 +315,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (47 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (48 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

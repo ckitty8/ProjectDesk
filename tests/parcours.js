@@ -108,6 +108,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Référentiels : valeur système renommée et propagée', (await page.evaluate(() => ROLES_PROJET.MEMBRE)) === 'Contributeur'
       && (await page.evaluate(() => etat.d.affectations.some(a => a.role === 'Contributeur') && !etat.d.affectations.some(a => a.role === 'Membre'))));
     await renommerRole('Contributeur', 'Membre');
+    // Jours fériés administrables : ajout, renommage, suppression
+    await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
+    await page.fill('form[data-action-envoi="ajouterFerie"] input[name=jour]', '2026-05-25');
+    await page.fill('form[data-action-envoi="ajouterFerie"] input[name=libelle]', 'Lundi de Pentecôte');
+    await page.click('form[data-action-envoi="ajouterFerie"] button'); await page.waitForTimeout(300);
+    const champFerie = 'input[data-action-change="libelleFerie"][data-jour="2026-05-25"]';
+    await page.fill(champFerie, 'Pentecôte'); await page.press(champFerie, 'Tab'); await page.waitForTimeout(300);
+    const ferieModifie = await page.evaluate(() => (etat.d.joursFeries.find(f => f.jour === '2026-05-25') || {}).libelle);
+    await page.click('[data-action="supprimerFerie"][data-jour="2026-05-25"]'); await page.waitForTimeout(300);
+    verifier('Jours fériés : ajout, renommage et suppression', ferieModifie === 'Pentecôte'
+      && !(await page.evaluate(() => etat.d.joursFeries.some(f => f.jour === '2026-05-25'))));
     await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
     verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
     await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]');
