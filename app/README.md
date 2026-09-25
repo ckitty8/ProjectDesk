@@ -46,7 +46,7 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
    organisation Neon Auth dont vous devenez propriétaire), puis d'inviter les membres par email.
 4. Dans **Mon dashboard › Liste des ressources › Organisation**, construire l'arborescence :
    « + Ajouter une direction », puis sur la direction « + Équipe », sur l'équipe « + Projet » et
-   « + Personne » (avec l'email : le lien avec le compte se fait automatiquement à la connexion),
+   « + Membre » (avec l'email : le lien avec le compte se fait automatiquement à la connexion),
    enfin sur le projet « + Membre ». Ajuster si besoin les onglets **Postes** et **Types de contrat**.
 
 ## Rôles

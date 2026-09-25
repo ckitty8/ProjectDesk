@@ -28,6 +28,7 @@
 | 1.13    | 2026-09-25 | « Nouveau projet » : champs Résultat clé visé, Début, Fin et Statut retirés (§ 3.4) |
 | 1.14    | 2026-09-25 | Valeurs système des référentiels **renommables** (clé technique `cle`, renommage propagé aux données, droits par clé) — migration 007 (§ 4, § 5) |
 | 1.15    | 2026-09-25 | Affectation : « + Nouvelle personne » depuis « + Membre » (fiche créée puis sélectionnée) (§ 3.4) |
+| 1.16    | 2026-09-25 | Libellé unique « Membre » : « + Personne » → « + Membre », « + Nouvelle personne » → « + Nouveau membre » (§ 3.3, § 3.4) |
 
 ---
 
@@ -124,7 +125,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
-| `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Personne », « + Membre », modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
+| `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
@@ -139,7 +140,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
   (statut « Planifié » par défaut ; un projet sans dates n'apparaît pas dans le Gantt de Mes projets) ;
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations) ;
-- dans la fenêtre d'affectation, lien **« + Nouvelle personne »** : crée la fiche dans l'équipe du
+- dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
 ## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`)

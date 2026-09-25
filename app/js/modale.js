@@ -42,7 +42,7 @@ const Modale = {
       ${this.entete(m.projetId ? `Ajouter une ressource à ${projet(m.projetId).code}` : rId ? `Affectations de ${ressource(rId).nom}` : 'Assigner une ressource')}
       <div class="panneau-corps"><div><label class="libelle">Ressource</label>
         ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— aucune fiche : créez la personne —' }, ...personnes], rId, 'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}
-        ${equipeNouvelle ? `<div style="margin-top:6px"><a data-action="nouvellePersonneAffectation" data-equipe="${equipeNouvelle}">+ Nouvelle personne</a>
+        ${equipeNouvelle ? `<div style="margin-top:6px"><a data-action="nouvellePersonneAffectation" data-equipe="${equipeNouvelle}">+ Nouveau membre</a>
           <span class="discret" style="font-size:12px">(créée dans ${esc(equipe(equipeNouvelle).nom)}, puis sélectionnée ici)</span></div>` : ''}</div>
         <div>${groupes || C.vide('Aucun projet modifiable.')}</div></div>
       <div class="panneau-pied"><span class="discret" style="flex:1">${nbCoches} affectation(s)</span>
@@ -54,7 +54,7 @@ const Modale = {
     const esc = C.esc, r = m.id ? ressource(m.id) : { equipeId: m.equipeId, capacite: 100 };
     // data-retour-projet : création lancée depuis « + Membre » → retour à l'affectation ensuite
     return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-retour-projet="${m.retourProjet || ''}">
-      ${this.entete(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne · ' + equipe(r.equipeId).nom)}
+      ${this.entete(m.id ? 'Fiche de ' + r.nom : 'Nouveau membre · ' + equipe(r.equipeId).nom)}
       <div class="panneau-corps">
         <div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
         <div class="deux-colonnes"><div><label class="libelle">Poste</label>${this.listeReferentiel('poste', r.poste, 'poste')}</div>

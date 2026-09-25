@@ -187,7 +187,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.check('input[name=projet] >> nth=0');
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
     verifier('Affectation enregistrée (modale fermée)', !(await page.$('.modale')));
-    // « + Membre » → « + Nouvelle personne » → retour à l'affectation, personne sélectionnée
+    // « + Membre » → « + Nouveau membre » → retour à l'affectation, personne sélectionnée
     await page.click('tr:has-text("PF-17") [data-action="assigner"]'); await page.waitForTimeout(200);
     await page.click('[data-action="nouvellePersonneAffectation"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');

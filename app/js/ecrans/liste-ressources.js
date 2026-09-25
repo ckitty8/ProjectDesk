@@ -104,7 +104,7 @@ Ecrans.listeRessources = {
       const boutons = [
         admin && direction ? `<a data-action="nouvelleUnite" data-type="equipe" data-parent="${e.id}">+ Équipe</a>` : '',
         membre ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : '',
-        membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : '',
+        membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Membre</a>` : '',
         admin || estResponsableDe(e.id) ? C.boutonIcone('modifier', 'modifierEquipe', `data-id="${e.id}"`, 'Modifier ' + libelle) : '',
         admin ? C.boutonIcone('supprimer', 'supprimerEquipe', `data-id="${e.id}"`, vide ? 'Supprimer ' + libelle
           : sesEquipes.length ? 'Direction non vide : rattachez ses équipes ailleurs' : 'Unité non vide : passez-la en Inactive', !vide) : ''
