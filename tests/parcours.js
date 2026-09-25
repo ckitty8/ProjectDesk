@@ -98,6 +98,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="ajouterValeur"] input', 'Demande légale');
     await page.click('form[data-action-envoi="ajouterValeur"] button'); await page.waitForTimeout(300);
     verifier('Mon admin : valeur de référentiel ajoutée', (await page.$$eval('input[data-action-change="renommerValeur"]', l => l.map(i => i.value))).includes('Demande légale'));
+    // Valeur système renommable : le nouveau libellé est repris par les données et par les calculs
+    await page.click('[data-action="choisirReferentiel"][data-id="role"]'); await page.waitForTimeout(200);
+    const renommerRole = async (ancien, nouveau) => {
+      const champ = `input[data-action-change="renommerValeur"][value="${ancien}"]`;
+      await page.fill(champ, nouveau); await page.press(champ, 'Tab'); await page.waitForTimeout(400);
+    };
+    await renommerRole('Membre', 'Contributeur');
+    verifier('Référentiels : valeur système renommée et propagée', (await page.evaluate(() => ROLES_PROJET.MEMBRE)) === 'Contributeur'
+      && (await page.evaluate(() => etat.d.affectations.some(a => a.role === 'Contributeur') && !etat.d.affectations.some(a => a.role === 'Membre'))));
+    await renommerRole('Contributeur', 'Membre');
     await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
     verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
     await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]');

@@ -104,7 +104,7 @@ const Calculs = (() => {
     const siennes = absences.filter(a => a.ressourceId === ressourceId && a.jour.startsWith(String(annee)));
     const parType = {};
     typesAbsence.forEach(t => { parType[t.libelle] = siennes.filter(a => a.type === t.libelle).length; });
-    const cpPris = parType[ABSENCE_CP] || 0;
+    const cpPris = parType[ABSENCES.CP] || 0;
     return { parType, total: siennes.length, cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
   }
 

@@ -133,8 +133,13 @@ function amorcer() {
     poste: ['Chef de projet', 'Product manager', 'Product designer', 'Dév. back-end', 'Dév. front-end', 'DevOps', 'Lead data', 'Data engineer', 'Data analyst', 'Lead mobile', 'Dév. iOS', 'Dév. Android'].map(l => [l, '#4A5363']),
     contrat: [['CDI', '#0F8A6B'], ['CDD', '#003CC8'], ['Prestataire', '#B25E09'], ['Alternance', '#7A3FC2']] };
   bd.valeurs_referentiel = [];
+  // Clés techniques des valeurs système (migration 007)
+  const CLES_SYSTEME = { 'stp:Planifié': 'planifie', 'stp:En cours': 'en_cours', 'stp:À risque': 'a_risque', 'stp:En retard': 'en_retard', 'stp:Terminé': 'termine',
+    'stt:À faire': 'a_faire', 'stt:En cours': 'en_cours', 'stt:En revue': 'en_revue', 'stt:Terminé': 'termine',
+    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés payés': 'cp' };
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
-    bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1 })));
+    bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
+      cle: systeme ? CLES_SYSTEME[ref + ':' + libelle] : null })));
   bd.champs_formulaire = [['Titre de la demande', 'Texte court', true, null, 'titre', true], ['Type de demande', 'Liste', true, 'type', 'type', true],
     ['Description du besoin', 'Texte long', true, null, 'description', false], ['Équipe concernée', 'Liste', true, 'equipes', 'equipe_id', true],
     ['Priorité souhaitée', 'Liste', false, 'prio', 'priorite', false], ['Date de livraison souhaitée', 'Date', false, null, 'date_souhaitee', false],
@@ -287,8 +292,10 @@ async function donnees(req, res, table, url) {
   if (req.method === 'DELETE') { const cibles = new Set(filtrer(bd[table], p)); bd[table] = bd[table].filter(l => !cibles.has(l)); return envoyer(res, 204); }
   const corps = await lireCorps(req);
   if (req.method === 'PATCH' && table === 'valeurs_referentiel' && corps.libelle) filtrer(bd[table], p).forEach(v => {
-    const champ = { poste: 'poste', contrat: 'type_contrat' }[v.referentiel_id];
-    if (champ) bd.ressources.filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; });
+    // Propagation du renommage aux données (trigger propager_renommage_valeur, migration 007)
+    const cibles = { poste: [['ressources', 'poste']], contrat: [['ressources', 'type_contrat']], stp: [['projets', 'statut']], stt: [['tickets', 'statut']],
+      role: [['affectations', 'role']], abs: [['absences', 'type']], type: [['demandes', 'type']], prio: [['demandes', 'priorite'], ['tickets', 'priorite']] }[v.referentiel_id] || [];
+    cibles.forEach(([t, champ]) => bd[t].filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; }));
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
   if (req.method === 'POST') {

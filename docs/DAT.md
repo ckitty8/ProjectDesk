@@ -26,6 +26,7 @@
 | 1.11    | 2026-09-25 | **Liste des ressources = arborescence Direction → Équipe → Projet → Membres** (maquette `arborescence-ressources.png`) ; onglet Affectations fusionné ; écran ouvert sans équipe pour un administrateur ; « Nouveau projet » accepte l'équipe choisie (§ 3.3) |
 | 1.12    | 2026-09-25 | Incident « column equipes.direction_id does not exist » (cache Data API après la migration 006) : procédure de migration corrigée, `notify` insuffisant (§ 10) |
 | 1.13    | 2026-09-25 | « Nouveau projet » : champs Résultat clé visé, Début, Fin et Statut retirés (§ 3.4) |
+| 1.14    | 2026-09-25 | Valeurs système des référentiels **renommables** (clé technique `cle`, renommage propagé aux données, droits par clé) — migration 007 (§ 4, § 5) |
 
 ---
 
@@ -138,7 +139,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -148,7 +149,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
 | `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets, demandes) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
-| `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `ordre` | → `referentiels` |
+| `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`), `ordre` | → `referentiels` |
 | `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
 | `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié) | → `equipes` |
@@ -170,8 +171,14 @@ Historique : la migration `001_schema_initial.sql` (Roadmap PM) créait `demande
 remplacée par `equipes.type` / `equipes.parent_id` (table vide, accord du porteur).
 
 Les **libellés système** (statuts de projet et de ticket, rôles, « Congés payés ») sont
-utilisés par les calculs : en base `valeurs_referentiel.systeme = true` (ni renommage ni
-suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `config.js`.
+utilisés par les calculs et les droits. Depuis la migration 007 ils sont **renommables** par un
+administrateur : chaque valeur système porte une clé technique `cle` (non modifiable), l'app
+remplace au chargement les constantes de `config.js` par les libellés actuels
+(`synchroniserLibellesSysteme()` dans `etat.js`, table `LIBELLES_SYSTEME`), la fonction
+`peut_editer_projet` reconnaît les rôles par leur clé, les valeurs par défaut des colonnes passent
+par `libelle_systeme(referentiel, cle)`, et le trigger `propager_renommage_valeur()` recopie le
+nouveau libellé dans les données (projets, tickets, affectations, absences, demandes, ressources).
+Une valeur système reste non supprimable (trigger `proteger_valeur_systeme()`) ; on peut la désactiver.
 
 ## 5. Sécurité
 
@@ -186,6 +193,7 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 | `mes_ressources()` | Fiches ressources liées au compte |
 | `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
+| `libelle_systeme(referentiel, cle)` | Libellé actuel d'une valeur système (valeurs par défaut des colonnes) |
 | `partage_une_equipe(user)` | L'utilisateur connecté partage au moins une équipe avec `user` (lecture des daily) |
 
 ### 5.2 Matrice des droits (RLS)
@@ -287,7 +295,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (42 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (43 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

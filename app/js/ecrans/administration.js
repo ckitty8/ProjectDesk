@@ -34,8 +34,8 @@ const Administration = {
       data-action="choisirReferentiel" data-id="${r.id}"><span>${esc(r.nom)}</span><span class="pale">${valeursDe(r.id, true).length}</span></a>`).join('');
     const valeurs = valeursDe(ref.id, true).map((v, i) => `
       <tr><td class="pale">${i + 1}</td>
-        <td>${modifiable && !v.systeme ? `<input class="champ" value="${esc(v.libelle)}" data-action-change="renommerValeur" data-id="${v.id}">` : esc(v.libelle)}
-          ${v.systeme ? '<span class="pale" title="Utilisée par les calculs : ni renommage ni suppression"> · système</span>' : ''}</td>
+        <td>${modifiable ? `<input class="champ" value="${esc(v.libelle)}" data-action-change="renommerValeur" data-id="${v.id}">` : esc(v.libelle)}
+          ${v.systeme ? '<span class="pale" title="Utilisée par les calculs : renommable (les données suivent), non supprimable"> · système</span>' : ''}</td>
         <td>${modifiable ? `<input type="color" class="couleur-choix" value="${v.couleur}" data-action-change="colorerValeur" data-id="${v.id}">` : C.pastille(v.couleur)}</td>
         <td>${modifiable ? `<button class="interrupteur${v.actif ? ' actif' : ''}" data-action="basculerValeur" data-id="${v.id}"></button>` : (v.actif ? 'Oui' : '<span class="pale">Non</span>')}</td></tr>`).join('');
     return `<div style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start">
@@ -84,7 +84,9 @@ Object.assign(Actions, {
   nouvelleEquipe: () => majEtat({ modale: { type: 'equipe', id: null } }),
   // (modifierEquipe est défini dans modale.js : il charge aussi les membres de l'équipe)
 
-  renommerValeur: (d, el) => executer(() => Api.modifier('valeurs_referentiel', { id: 'eq.' + d.id }, { libelle: el.value.trim() }), 'valeurs'),
+  // Renommer : la base propage le nouveau libellé aux données (projets, tickets, affectations…)
+  renommerValeur: (d, el) => executer(() => Api.modifier('valeurs_referentiel', { id: 'eq.' + d.id }, { libelle: el.value.trim() }),
+    'valeurs', 'projets', 'tickets', 'affectations', 'absences', 'demandes', 'ressources'),
   colorerValeur: (d, el) => executer(() => Api.modifier('valeurs_referentiel', { id: 'eq.' + d.id }, { couleur: el.value }), 'valeurs'),
   basculerValeur(d) {
     const v = parId('valeurs', d.id);

@@ -12,7 +12,7 @@
 Ecrans.conges = {
   titre: 'Gestion des ressources · Congés & capacité',
   section: 'moi',
-  pinceau: () => ui('conges', { pinceau: ABSENCE_CP }).pinceau,
+  pinceau: () => ui('conges', { pinceau: ABSENCES.CP }).pinceau,
 
   rendre() {
     const esc = C.esc, pinceau = this.pinceau(), annee = Calendrier.moisCourant().annee;
@@ -27,7 +27,7 @@ Ecrans.conges = {
       const rc = Calculs.recapConges(r.id, annee, etat.d.absences, types);
       return `<tr><td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(r.nom)}</span></td>
         <td><span class="ligne-flex"><span style="width:60px">${C.barre(rc.cpPris / CONFIG.DROIT_CP_ANNUEL * 100, '#003CC8', 'fine')}</span>${rc.cpPris}</span></td>
-        ${types.filter(t => t.libelle !== ABSENCE_CP).map(t => `<td class="num">${rc.parType[t.libelle] || 0}</td>`).join('')}
+        ${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<td class="num">${rc.parType[t.libelle] || 0}</td>`).join('')}
         <td class="num"><b>${rc.total}</b></td><td class="num"><b>${rc.soldeCp}</b></td></tr>`;
     }).join('');
 
@@ -49,7 +49,7 @@ Ecrans.conges = {
       <div class="carte"><div class="carte-titre"><h2>Grille mensuelle</h2><div class="puces">${pinceaux}</div></div>${Calendrier.rendre(true)}</div>
       <div style="display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px;align-items:start">
         <div class="carte"><div class="carte-titre"><h2>Récap annuel ${annee}</h2><span class="discret">en jours · droit CP : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
-          <table class="tableau"><thead><tr><th>Personne</th><th>CP pris</th>${types.filter(t => t.libelle !== ABSENCE_CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
+          <table class="tableau"><thead><tr><th>Personne</th><th>CP pris</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
             <th class="num">Total</th><th class="num">Solde</th></tr></thead>
             <tbody>${recap || `<tr><td colspan="8">${C.vide('Aucune ressource dans votre équipe.')}</td></tr>`}</tbody></table></div>
         <div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint</h2><span class="discret">jours-homme disponibles / théoriques</span></div>

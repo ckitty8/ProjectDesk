@@ -75,6 +75,13 @@ async function chargerTable(cle) {
   const lignes = await Api.lire(TABLES[cle], filtres);
   lignes.forEach(l => { if ('couleur' in l) l.couleur = couleurSure(l.couleur); });
   etat.d[cle] = lignes;
+  if (cle === 'valeurs') synchroniserLibellesSysteme();
+}
+// Libellés système (config.js) = libellés actuels en base, retrouvés par leur clé technique
+function synchroniserLibellesSysteme() {
+  etat.d.valeurs.filter(v => v.cle && LIBELLES_SYSTEME[v.referentielId]).forEach(v => {
+    LIBELLES_SYSTEME[v.referentielId][v.cle.toUpperCase()] = v.libelle;
+  });
 }
 async function chargerDonnees() {
   await Promise.all(Object.keys(TABLES).map(chargerTable));

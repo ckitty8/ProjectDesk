@@ -34,11 +34,16 @@ const CONFIG = {
 };
 
 // Libellés « système » des référentiels, utilisés par les calculs.
-// Ils sont protégés en base (valeurs_referentiel.systeme = true : ni renommage ni suppression).
+// Valeurs initiales ; au chargement, synchroniserLibellesSysteme() (etat.js) les remplace par
+// les libellés actuels de la base, retrouvés par leur clé technique (valeurs_referentiel.cle =
+// nom de la propriété en minuscules, ex. EN_COURS → 'en_cours') : un administrateur peut donc
+// les renommer (migration 007) sans casser les calculs.
 const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 'À risque', EN_RETARD: 'En retard', TERMINE: 'Terminé' };
 const STATUTS_TICKET = { A_FAIRE: 'À faire', EN_COURS: 'En cours', EN_REVUE: 'En revue', TERMINE: 'Terminé' };
 const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
-const ABSENCE_CP = 'Congés payés';
+const ABSENCES = { CP: 'Congés payés' };
+// Référentiel en base → objet de libellés système ci-dessus
+const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, stt: STATUTS_TICKET, role: ROLES_PROJET, abs: ABSENCES };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
 const STATUTS_DEMANDE = {
