@@ -18,6 +18,7 @@
 | 1.3     | 2026-09-25 | Adresse de production corrigée : `project-desk-sepia.vercel.app` autorisée, `project-desk.vercel.app` (projet tiers) retirée (§ 8) |
 | 1.4     | 2026-09-25 | Administrateurs : lecture de tout sans équipe (migration 003), entrée directe dans l'outil ; ouverture automatique de l'équipe unique ou nouvellement créée (§ 5.2, § 7) |
 | 1.5     | 2026-09-25 | Nom affiché « ProjectDesk » (paramètre `NOM_APPLICATION`), sous-titre « Multi-projets · Multi-équipes » retiré (§ 1, § 2.1) |
+| 1.6     | 2026-09-25 | Nouvel écran Général › Daily des équipes ; notes de daily lisibles par les coéquipiers (migration 004) ; notes chargées sur 90 jours (§ 2, § 3.2, § 5, § 6) |
 
 ---
 
@@ -63,7 +64,9 @@ Principes :
   masquer les boutons inutiles.
 - **Aucune dépendance** JavaScript, aucun build (règle n°1). Polices IBM Plex (Google Fonts).
 - Toutes les tables sont chargées à l'ouverture (volumétrie d'équipes projet) ; après chaque
-  écriture, seules les tables touchées sont rechargées (`executer()` / `recharger()`).
+  écriture, seules les tables touchées sont rechargées (`executer()` / `recharger()`). Exception :
+  les notes de daily ne sont chargées que sur les `JOURS_DAILY` (90) derniers jours ; un écran peut
+  déclarer `auChargement()` pour rafraîchir ses données à l'ouverture.
 
 ### 2.1 Fichiers de l'application
 
@@ -101,12 +104,13 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `ressources` | `ressources.js` | Calendrier mensuel des absences (composant `Calendrier`) + annuaire | `05-ressources.png` |
 | `administration` | `administration.js` | Onglets Équipes / Référentiels / Champs (écriture : administrateurs globaux) | `06-administration.png` |
 | `timesheet` | `timesheet.js` | Heures par personne et par jour d'une semaine, complétude, statut des feuilles | `07-timesheet.png` |
+| `dailyEquipes` | `daily-equipes.js` | Daily des membres de mes équipes pour un jour : filtre d'équipe, « Blocages du jour », membres sans note (et absence) — maquette `daily-equipes.png` | `17-daily-equipes.png` |
 
 ### 3.3 Section « Mon dashboard » (édition)
 
 | Écran | Fichier | Contenu | Capture |
 |-------|---------|---------|---------|
-| `daily` | `daily.js` | Note du jour (privée, enregistrement auto après 0,8 s), modèle, historique | `08-daily.png` |
+| `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Arborescence équipe → projet → personnes, affectations, fiches ressources | `12-liste-ressources.png` |
@@ -123,7 +127,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql` et `003_lecture_administrateurs.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -169,6 +173,7 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 | `mes_ressources()` | Fiches ressources liées au compte |
 | `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
+| `partage_une_equipe(user)` | L'utilisateur connecté partage au moins une équipe avec `user` (lecture des daily) |
 
 ### 5.2 Matrice des droits (RLS)
 
@@ -181,7 +186,7 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 | `projets` | membres, administrateurs | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
 | `affectations`, `tickets` | membres, administrateurs | `peut_editer_projet` |
 | `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
-| `notes_daily` | auteur | auteur |
+| `notes_daily` | auteur, personnes partageant une équipe avec lui, administrateurs | auteur |
 | `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
 | toutes | — | rôle `anonymous` : aucun droit |
 
@@ -208,6 +213,8 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Taux d'occupation = heures saisies / heures attendues (semaine courante) | `Calculs.tauxOccupation` |
 | Code projet suivant = PREFIXE-(max + 1) | `Calculs.prochainCodeProjet` |
 | Jours ouvrés : hors week-ends et `jours_feries` | `Calculs.estJourOuvre` |
+| Note de daily découpée en rubriques (ligne sans tiret = titre, ex. Hier / Aujourd'hui / Blocages) | `Calculs.rubriquesDaily` |
+| Blocages = lignes de la rubrique « Blocages », hors « Aucun », « RAS », « néant », « rien » | `Calculs.blocagesDaily` |
 
 ## 7. Parcours principaux
 
@@ -262,7 +269,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (27 contrôles, dont l'aller-retour Google simulé et le parcours administrateur sans équipe) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (30 contrôles, dont l'aller-retour Google simulé, le parcours administrateur sans équipe et le daily des équipes) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

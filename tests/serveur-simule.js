@@ -148,7 +148,9 @@ function amorcer() {
   bd.demandes = DEM.map(([titre, type, eq, priorite, statut, demandeur_nom, service, description, commentaire, demandeur_id], i) => ({
     id: uuid(), numero: 38 + i, titre, type, description, equipe_id: idEq[eq], priorite, date_souhaitee: '2026-12-15', budget: 12, valeurs: {},
     statut, commentaire, demandeur_id, demandeur_nom, service, projet_id: null, cree_le: `2026-09-${String(10 + i * 2).padStart(2, '0')}T09:00:00Z` }));
-  bd.notes_daily = [{ user_id: camille.id, jour: '2026-09-25', texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n- Point budget T4 avec Nadia\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n- Préparer la démo du sprint 20\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' },
+  const jourJ = new Date().toISOString().slice(0, 10);   // notes « du jour » pour les tests
+  bd.notes_daily = [{ user_id: thomas.id, jour: jourJ, texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
+    { user_id: camille.id, jour: jourJ, texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n- Point budget T4 avec Nadia\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n- Préparer la démo du sprint 20\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' },
     { user_id: camille.id, jour: '2026-09-24', texte: 'Hier\n- Atelier mapping des rôles\n\nAujourd’hui\n- Revue de la PR LDAP\n- Point budget T4' }];
 }
 amorcer();
@@ -248,7 +250,8 @@ const CLES = { absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_i
 function filtrer(lignes, params) {
   let r = lignes;
   params.forEach((v, k) => { if (['select', 'order', 'on_conflict'].includes(k)) return;
-    if (v.startsWith('eq.')) r = r.filter(l => String(l[k]) === v.slice(3)); });
+    if (v.startsWith('eq.')) r = r.filter(l => String(l[k]) === v.slice(3));
+    if (v.startsWith('gte.')) r = r.filter(l => String(l[k]) >= v.slice(4)); });
   const ordre = params.get('order');
   if (ordre) { const [col, sens] = ordre.split('.'); r = [...r].sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (sens === 'desc' ? -1 : 1)); }
   return r;
@@ -262,7 +265,9 @@ async function donnees(req, res, table, url) {
   }
   if (!bd[table]) return envoyer(res, 404, { message: 'Table inconnue : ' + table });
   const p = url.searchParams;
-  const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id) : bd[table];
+  // Notes de daily : l'auteur et ses coéquipiers (même organisation), comme la règle RLS
+  const partage = autre => membres.some(m1 => m1.userId === moi.id && membres.some(m2 => m2.userId === autre && m2.organizationId === m1.organizationId));
+  const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id || partage(n.user_id)) : bd[table];
   if (req.method === 'GET') return envoyer(res, 200, filtrer(visibles(), p));
   if (req.method === 'DELETE') { const cibles = new Set(filtrer(bd[table], p)); bd[table] = bd[table].filter(l => !cibles.has(l)); return envoyer(res, 204); }
   const corps = await lireCorps(req);

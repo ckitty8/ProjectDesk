@@ -27,7 +27,8 @@ const Coquille = (() => {
     { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj' },
     { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress' },
     { id: 'administration', libelle: 'Administration', icone: 'admin' },
-    { id: 'timesheet', libelle: 'Timesheet', icone: 'time' }
+    { id: 'timesheet', libelle: 'Timesheet', icone: 'time' },
+    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily' }
   ];
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },

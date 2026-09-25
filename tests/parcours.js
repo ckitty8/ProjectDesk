@@ -76,12 +76,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('07-timesheet');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
 
+    await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
+    verifier('Daily des équipes : note d’un coéquipier visible', (await texte()).includes('Mapping des rôles applicatifs'));
+    verifier('Daily des équipes : blocages du jour regroupés', (await texte()).includes('Blocages du jour') && (await texte()).includes('Identifiants de recette expirés'));
+
     /* --- Mon dashboard (édition) --- */
     await aller('daily'); await capture('08-daily');
     await page.click('[data-action="dailyDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
     await page.fill('#note-daily', 'Hier\n- Test automatique\n- Deuxième point'); await page.waitForTimeout(1200);
     await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
     verifier('Daily : note enregistrée et visible dans l’historique', (await texte()).includes('Test automatique'));
+    verifier('Daily personnel : la note d’un coéquipier n’apparaît pas', !(await page.inputValue('#note-daily')).includes('Mapping des rôles'));
 
     await aller('mesProjets'); await capture('09-mes-projets');
     await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);

@@ -11,7 +11,8 @@ Ecrans.daily = {
   titre: 'Daily',
   section: 'moi',
   jour: () => ui('daily', { jour: Calculs.aujourdhui() }).jour,
-  texte: jour => (etat.d.notes.find(n => n.jour === jour) || {}).texte || '',
+  // Mes notes uniquement (les notes des coéquipiers sont aussi chargées, pour « Daily des équipes »)
+  texte: jour => (etat.d.notes.find(n => n.jour === jour && n.userId === etat.session.user.id) || {}).texte || '',
 
   // Jour ouvré précédent / suivant (on saute les week-ends)
   decaler(jour, sens) {
@@ -30,7 +31,7 @@ Ecrans.daily = {
     return `
     <div class="ecran" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:start;max-width:1280px">
       <div class="pile" style="gap:16px">
-        ${C.entete('Daily', 'Notes de stand-up quotidien', `
+        ${C.entete('Daily', 'Notes de stand-up quotidien · visibles par les membres de vos équipes (Général › Daily des équipes)', `
           <button class="btn" data-action="dailyAujourdhui">Aujourd’hui</button>
           <button class="btn" data-action="dailyDecaler" data-sens="-1" title="Jour précédent">‹</button>
           <button class="btn" data-action="dailyDecaler" data-sens="1" title="Jour suivant">›</button>`)}
@@ -65,7 +66,7 @@ async function enregistrerNote(jour, texte) {
   const indicateur = document.getElementById('etat-sauvegarde');
   try {
     const [note] = await Api.creer('notes_daily', { userId: etat.session.user.id, jour, texte }, 'user_id,jour');
-    etat.d.notes = etat.d.notes.filter(n => n.jour !== jour).concat(note);
+    etat.d.notes = etat.d.notes.filter(n => !(n.jour === jour && n.userId === note.userId)).concat(note);
     if (indicateur) indicateur.innerHTML = '<span style="color:var(--succes)">●</span> Enregistré automatiquement';
   } catch (e) {
     if (indicateur) indicateur.innerHTML = '<span style="color:var(--danger)">●</span> Échec de l’enregistrement : ' + C.esc(e.message);

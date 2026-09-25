@@ -156,6 +156,25 @@ const Calculs = (() => {
   }
   const numeroDemande = n => 'DEM-' + String(n).padStart(3, '0');
   const nbPoints = texte => (texte || '').split('\n').filter(l => l.trim().startsWith('-')).length;
+
+  // Découpe une note de daily en rubriques (Hier / Aujourd'hui / Blocages / autre) :
+  // [{ titre, lignes: [...] }] — un titre est une ligne sans tiret qui ne commence pas par « - ».
+  function rubriquesDaily(texte) {
+    const rubriques = []; let courante = null;
+    (texte || '').split('\n').forEach(l => {
+      const ligne = l.trim(); if (!ligne) return;
+      if (!ligne.startsWith('-')) { courante = { titre: ligne, lignes: [] }; rubriques.push(courante); return; }
+      if (!courante) { courante = { titre: '', lignes: [] }; rubriques.push(courante); }
+      courante.lignes.push(ligne.replace(/^-\s*/, ''));
+    });
+    return rubriques;
+  }
+  // Blocages réels d'une note : lignes de la rubrique « Blocages », hors « Aucun », « RAS », « néant »
+  const estRubriqueBlocages = titre => /^blocages?\b/i.test(titre);
+  function blocagesDaily(texte) {
+    return rubriquesDaily(texte).filter(r => estRubriqueBlocages(r.titre)).flatMap(r => r.lignes)
+      .filter(l => l && !/^(aucun|aucune|ras|néant|rien)\.?$/i.test(l));
+  }
   const nbMots = texte => (texte || '').split(/\s+/).filter(Boolean).length;
 
   return {
@@ -164,6 +183,6 @@ const Calculs = (() => {
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
     capacitePeriode, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
-    nbPoints, nbMots
+    nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();

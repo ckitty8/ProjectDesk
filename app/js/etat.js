@@ -21,6 +21,7 @@ const etat = {
   organisations: [],        // équipes Neon Auth de l'utilisateur
   invitations: [],          // invitations reçues
   rolesEquipe: {},          // { equipeId: 'owner' | 'admin' | 'member' }
+  membresEquipe: {},        // { equipeId: [{ userId, nom, role }] } (comptes Neon Auth des équipes)
   equipeCourante: null,     // id de l'équipe ouverte
   estAdmin: false,
   ecran: 'dashboard',
@@ -39,6 +40,10 @@ const TABLES = {
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
 const TRIS = { valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
+// Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
+// sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
+const JOURS_DAILY = 90;
+const FILTRES = { notes: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }) };
 
 /* ---------- Mise à jour et rendu ---------- */
 function majEtat(modifications, options = {}) {
@@ -66,7 +71,7 @@ function rendre() {
 const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 async function chargerTable(cle) {
-  const filtres = TRIS[cle] ? { order: TRIS[cle] } : {};
+  const filtres = { ...(TRIS[cle] ? { order: TRIS[cle] } : {}), ...(FILTRES[cle] ? FILTRES[cle]() : {}) };
   const lignes = await Api.lire(TABLES[cle], filtres);
   lignes.forEach(l => { if ('couleur' in l) l.couleur = couleurSure(l.couleur); });
   etat.d[cle] = lignes;
@@ -139,16 +144,19 @@ async function demarrer() {
 }
 
 // Rôle Neon Auth (owner / admin / member) de l'utilisateur dans chacune de ses équipes
+// et liste des membres de chaque équipe (utilisée par « Daily des équipes »)
 async function chargerRoles() {
-  const roles = {};
+  const roles = {}, membres = {};
   await Promise.all(mesEquipes().map(async e => {
     try {
       const org = await Api.lireOrganisation(e.id);
       const moi = (org.members || []).find(m => m.userId === etat.session.user.id);
       if (moi) roles[e.id] = moi.role;
+      membres[e.id] = (org.members || []).map(m => ({ userId: m.userId, nom: m.user ? m.user.name || m.user.email : '?', role: m.role }));
     } catch (err) { /* équipe illisible : rôle inconnu */ }
   }));
   etat.rolesEquipe = roles;
+  etat.membresEquipe = membres;
 }
 
 /* ---------- Droits (miroir des règles RLS, pour l'affichage uniquement) ----------
@@ -185,7 +193,12 @@ function lireMemoire(cle) { try { return localStorage.getItem('pp_' + cle); } ca
 function ecrireMemoire(cle, valeur) { try { localStorage.setItem('pp_' + cle, valeur); } catch (e) { /* navigation privée */ } }
 
 /* ---------- Navigation ---------- */
-function allerA(ecran) { majEtat({ ecran, panneau: null, modale: null }); }
+// Un écran peut déclarer auChargement() : données à rafraîchir à son ouverture
+// (ex. Daily des équipes recharge les notes saisies entre-temps par les coéquipiers).
+function allerA(ecran) {
+  majEtat({ ecran, panneau: null, modale: null });
+  if (Ecrans[ecran] && Ecrans[ecran].auChargement) Ecrans[ecran].auChargement();
+}
 
 /* ---------- Événements (délégation) ----------
    data-action="nom"            → clic
