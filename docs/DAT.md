@@ -10,6 +10,7 @@
 | 0.2     | 2026-09-25 | Règle n°7 : script de vérification des documents + hook post-commit (§ 7, § 8) |
 | 0.3     | 2026-09-25 | Transfert du projet dans le dépôt ProjectDesk ; README racine (§ 7) |
 | 0.4     | 2026-09-25 | Base Neon créée (schéma, RLS, Data API) et maquettes « connexion-bdd » — app pas encore branchée (§ 9) |
+| 0.5     | 2026-09-25 | Déploiement Vercel : `vercel.json`, domaines déclarés dans Neon Auth (§ 9.5) |
 
 ---
 
@@ -194,6 +195,7 @@ Incohérences connues dans l'existant (à arbitrer, non corrigées) :
 ProjectDesk/
 ├── README.md                      # présentation du dépôt
 ├── CLAUDE.md                      # règles de travail permanentes
+├── vercel.json                    # déploiement Vercel : « / » redirige vers roadmap-app/
 ├── .githooks/post-commit          # lance la vérification des documents après commit
 ├── scripts/verifier-docs.js       # contrôle doc ↔ code (règle n°7)
 ├── db/migrations/                 # scripts SQL versionnés de la base Neon (§ 9)
@@ -270,5 +272,22 @@ reste le référentiel unique (§ 6, règle 1). La base ne contrôle que les bor
 | # | Sujet | État |
 |---|-------|------|
 | O1 | Droits par rôle (owner / admin / member) sur les données | Non décidé — aujourd'hui tous les membres lisent et modifient |
-| O2 | Domaine Vercel à déclarer dans Neon Auth (domaines de confiance) | En attente du domaine |
+| O2 | Domaine Vercel à déclarer dans Neon Auth (domaines de confiance) | Fait (§ 9.5) — à compléter si un domaine personnalisé est ajouté |
 | O3 | Invitations par email (nécessite la vérification d'email) | Désactivées : invitations visibles dans l'app |
+
+### 9.5 Déploiement (Vercel)
+
+- Projet Vercel : `project-desk` (équipe `ckitty8s-projects`), site 100 % statique, sans build.
+- `vercel.json` redirige la racine `/` vers `/roadmap-app/` (les chemins relatifs de
+  `index.html` vers `style.css`, `data.js`, `app.js` restent valides).
+- Vercel publie la branche `main` : l'application n'est en ligne qu'après fusion dans `main`.
+- Domaines de confiance déclarés dans Neon Auth (branche `production`) :
+
+| Domaine | Nature |
+|---------|--------|
+| `https://project-desk-ckitty8s-projects.vercel.app` | Adresse stable de l'équipe (à privilégier) |
+| `https://project-desk-jusy2piap-ckitty8s-projects.vercel.app` | Adresse d'un déploiement précis (change à chaque déploiement) |
+| `localhost` | Autorisé par défaut (développement) |
+
+> Tout nouveau domaine (domaine personnalisé, prévisualisation de branche) doit être ajouté
+> dans Neon Console → Auth → Domains, sinon la connexion y sera refusée.

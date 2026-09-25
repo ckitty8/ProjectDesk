@@ -11,6 +11,7 @@ Outils de pilotage de projet pour chef de projet, pensés pour le poste de trava
 | [`docs/DAT.md`](docs/DAT.md) | Document d'Architecture Technique : architecture, menus, modèle de données, règles métier. |
 | [`docs/maquettes/`](docs/maquettes/) | Maquettes PNG (faites avant tout développement front) et captures de l'état actuel. |
 | [`CLAUDE.md`](CLAUDE.md) | Règles de travail permanentes du projet. |
+| [`vercel.json`](vercel.json) | Déploiement Vercel (la racine du site ouvre `roadmap-app/`). |
 | [`scripts/verifier-docs.js`](scripts/verifier-docs.js) | Vérification de la cohérence documentation ↔ code, à lancer après chaque commit. |
 
 ## Après avoir cloné
