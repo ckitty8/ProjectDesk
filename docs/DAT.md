@@ -9,6 +9,7 @@
 | 0.1     | 2026-09-25 | Création du DAT à partir de l'existant (v1 de l'application) |
 | 0.2     | 2026-09-25 | Règle n°7 : script de vérification des documents + hook post-commit (§ 7, § 8) |
 | 0.3     | 2026-09-25 | Transfert du projet dans le dépôt ProjectDesk ; README racine (§ 7) |
+| 0.4     | 2026-09-25 | Base Neon créée (schéma, RLS, Data API) et maquettes « connexion-bdd » — app pas encore branchée (§ 9) |
 
 ---
 
@@ -195,10 +196,12 @@ ProjectDesk/
 ├── CLAUDE.md                      # règles de travail permanentes
 ├── .githooks/post-commit          # lance la vérification des documents après commit
 ├── scripts/verifier-docs.js       # contrôle doc ↔ code (règle n°7)
+├── db/migrations/                 # scripts SQL versionnés de la base Neon (§ 9)
 ├── docs/
 │   ├── DAT.md                     # ce document
 │   └── maquettes/
-│       └── etat-actuel/           # captures PNG de chaque écran (référence)
+│       ├── etat-actuel/           # captures PNG de chaque écran (référence)
+│       └── connexion-bdd/         # maquettes connexion / organisations / membres (§ 9)
 └── roadmap-app/
     ├── index.html · style.css · data.js · app.js
     └── README.md                  # guide utilisateur
@@ -219,3 +222,53 @@ ProjectDesk/
 
 Activation du hook, une fois par poste : `git config core.hooksPath .githooks`.
 Le hook **signale** sans annuler le commit ; les écarts sont corrigés au commit suivant.
+
+## 9. Base de données Neon (en cours d'intégration)
+
+> Statut : **base prête, application pas encore branchée** (elle utilise toujours le
+> `localStorage`). Le branchement suit la validation des maquettes `docs/maquettes/connexion-bdd/`.
+
+### 9.1 Architecture cible
+
+```
+Navigateur (roadmap-app, statique, hébergé sur Vercel)
+   │  1. connexion (email/mot de passe, Google) ──► Neon Auth (Better Auth)
+   │                                                 └─ organisations, membres, invitations
+   │  2. jeton JWT (15 min)
+   ▼
+Neon Data API (REST) ──► Postgres « neondb » (branche production, Francfort)
+                           └─ règles RLS : on ne voit que les organisations dont on est membre
+```
+
+| Élément | Valeur |
+|---------|--------|
+| Projet Neon | `ProjectDesk` (`dark-lake-97562553`), branche `production` |
+| Neon Auth | `https://ep-lucky-mud-b1gqp3gd.neonauth.c-5.eu-central-1.aws.neon.tech/neondb/auth` |
+| Data API | `https://ep-lucky-mud-b1gqp3gd.apirest.c-5.eu-central-1.aws.neon.tech/neondb/rest/v1` |
+| Migrations | `db/migrations/*.sql`, appliquées dans l'ordre, jamais modifiées une fois appliquées |
+
+### 9.2 Tables
+
+| Table | Rôle | Clé | Remarques |
+|-------|------|-----|-----------|
+| `demandes` | Backlog (une ligne = une demande, champs du § 4.1 en snake_case) | `id` (uuid) | `organisation_id` → `neon_auth.organization` ; traçabilité `cree_par`, `cree_le`, `modifie_par`, `modifie_le` |
+| `capacites` | Paramètres du simulateur (§ 4.2), une ligne par organisation | `organisation_id` | valeurs par défaut = `DEFAULT_CAPACITY` |
+| `neon_auth.*` | Utilisateurs, sessions, organisations, membres, invitations | — | gérées par Neon Auth, **ne pas modifier** |
+
+Les listes de valeurs (statuts, catégories…) ne sont **pas** contrôlées en base : `data.js`
+reste le référentiel unique (§ 6, règle 1). La base ne contrôle que les bornes numériques.
+
+### 9.3 Sécurité
+
+- Fonction `mes_organisations()` : organisations de l'utilisateur du jeton (lit `neon_auth.member`).
+- RLS activée sur `demandes` et `capacites` : lecture/écriture limitées à `mes_organisations()`.
+- Rôle `anonymous` : aucun droit. Test réalisé : sans jeton, 0 ligne lue, insertion refusée,
+  schéma `neon_auth` inaccessible.
+
+### 9.4 Points ouverts
+
+| # | Sujet | État |
+|---|-------|------|
+| O1 | Droits par rôle (owner / admin / member) sur les données | Non décidé — aujourd'hui tous les membres lisent et modifient |
+| O2 | Domaine Vercel à déclarer dans Neon Auth (domaines de confiance) | En attente du domaine |
+| O3 | Invitations par email (nécessite la vérification d'email) | Désactivées : invitations visibles dans l'app |

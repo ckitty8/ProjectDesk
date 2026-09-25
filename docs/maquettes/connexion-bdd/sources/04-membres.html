@@ -1,0 +1,15 @@
+<!-- Vue "Membres" : injectée dans la page réelle par le script de capture -->
+<div class="view-header"><h2>Membres de l'organisation</h2><span class="muted">DSI — Pôle Applications · 3 membres</span></div>
+<div class="card" style="margin-bottom:16px">
+  <h3>Inviter un membre</h3>
+  <div class="ligne-form" style="max-width:720px"><input placeholder="email@entreprise.fr" value="alex.martin@entreprise.fr"><select><option>member</option><option>admin</option></select><button class="primary-btn">Envoyer l'invitation</button></div>
+  <p class="hint">La personne invitée crée son compte (ou se connecte) avec cet email : l'invitation apparaît sur son écran de choix d'organisation.</p>
+</div>
+<div class="table-wrap"><table class="backlog-table"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Membre depuis</th></tr></thead><tbody>
+<tr><td class="demande-title">Camille Durand (vous)</td><td>camille.durand@entreprise.fr</td><td><span class="role owner">owner</span></td><td>25/09/2026</td></tr>
+<tr><td class="demande-title">Dominique Leroy</td><td>dominique@entreprise.fr</td><td><span class="role admin">admin</span></td><td>25/09/2026</td></tr>
+<tr><td class="demande-title">Sam Bernard</td><td>sam.bernard@entreprise.fr</td><td><span class="role">member</span></td><td>26/09/2026</td></tr>
+</tbody></table></div>
+<div class="card" style="margin-top:16px"><h3>Invitations envoyées</h3>
+<table class="mini-table"><thead><tr><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead><tbody>
+<tr><td>alex.martin@entreprise.fr</td><td>member</td><td>En attente</td><td><button class="btn-petit">Annuler</button></td></tr></tbody></table></div>

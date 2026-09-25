@@ -11,7 +11,8 @@
      3. chaque champ de FIELD_LABELS (data.js) est décrit dans le DAT (§ 4.1) ;
      4. chaque fonction de rendu render<Vue> citée dans le DAT existe dans app.js ;
      5. chaque capture PNG citée dans le DAT existe sur le disque ;
-     6. le DAT a été modifié dans le dernier commit si le code l'a été.
+     6. le DAT a été modifié dans le dernier commit si le code l'a été ;
+     7. chaque table créée dans db/migrations/*.sql est décrite dans le DAT.
 
    Aucune dépendance : Node.js seul. Le script n'écrit rien, il signale.
    Code de sortie : 0 = tout est cohérent, 1 = au moins un écart.
@@ -66,11 +67,22 @@ captures.forEach(png => {
   if (!exists(`docs/maquettes/etat-actuel/${png}`)) ecarts.push(`Capture "${png}" citée dans le DAT mais absente de docs/maquettes/etat-actuel/`);
 });
 
+/* ---------- 7. Tables SQL : chaque table créée est dans le DAT ---------- */
+const dossierMigrations = path.join(ROOT, 'db/migrations');
+if (fs.existsSync(dossierMigrations)) {
+  fs.readdirSync(dossierMigrations).filter(f => f.endsWith('.sql')).forEach(fichier => {
+    const sql = fs.readFileSync(path.join(dossierMigrations, fichier), 'utf8');
+    [...sql.matchAll(/create table if not exists public\.(\w+)/gi)].forEach(m => {
+      if (!dat.includes('`' + m[1] + '`')) ecarts.push(`Table "${m[1]}" (${fichier}) absente du DAT § 9`);
+    });
+  });
+}
+
 /* ---------- 6. Dernier commit : code modifié => DAT modifié ---------- */
 try {
   const fichiers = execSync('git diff-tree --no-commit-id --name-only -r HEAD', { cwd: ROOT })
     .toString().split('\n').filter(Boolean);
-  const codeTouche = fichiers.some(f => /^roadmap-app\/.*\.(js|html|css)$/.test(f));
+  const codeTouche = fichiers.some(f => /^(roadmap-app\/.*\.(js|html|css)|db\/.*\.sql)$/.test(f));
   const datTouche = fichiers.includes('docs/DAT.md');
   if (codeTouche && !datTouche) ecarts.push('Le dernier commit modifie le code mais pas docs/DAT.md (règle n°5)');
 } catch (e) {
