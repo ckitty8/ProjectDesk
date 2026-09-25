@@ -1,7 +1,9 @@
 /* ============================================================
    Panneau latéral « Projet » (maquette 11-panneau-projet.png)
    - Détail : objectif, chef, période, statut, avancement, équipe
-     projet, tickets. Modifiable si peutEditerProjet (sinon lecture).
+     projet, tickets. Modifiable si peutEditerProjet (sinon lecture) :
+     nom, description, chef, début, fin, statut, avancement ; suppression
+     du projet par un membre de son équipe (règle RLS).
      Depuis la section « Général », le panneau reste en lecture.
    - Création : formulaire « Nouveau projet » (bouton de Mes projets,
      de la Liste des ressources, ou depuis une demande acceptée).
@@ -24,21 +26,30 @@ const Panneau = {
     const note = ecranGeneral ? 'Vue générale en lecture seule. Modifiez ce projet depuis Mon dashboard.'
       : !editable ? 'Rôle Lecteur ou autre équipe : modification impossible.' : '';
 
+    // Champ modifiable du projet (enregistré à la sortie du champ par majProjet)
+    const champ = (nom, html) => editable ? html.replace('<CHAMP', `data-action-change="majProjet" data-champ="${nom}" data-id="${p.id}"`) : '';
+    const personnesEquipe = etat.d.ressources.filter(r => r.equipeId === p.equipeId).map(r => ({ valeur: r.id, libelle: r.nom }));
     const statut = editable ? C.liste(valeursDe('stp').map(v => v.libelle), p.statut, `class="champ" style="width:auto" data-action-change="majProjet" data-champ="statut" data-id="${p.id}"`) : C.badgeRef('stp', p.statut);
     const ticketsHtml = tickets.map(t => `<div class="ligne-flex" style="padding:7px 0;border-bottom:1px solid var(--bordure-fine)">
         ${C.code(t.numero)}<span style="flex:1">${esc(t.titre)}</span>
         ${editable ? C.liste(valeursDe('stt').map(v => v.libelle), t.statut, `class="champ" style="width:auto;height:26px;font-size:12px" data-action-change="statutTicket" data-id="${t.id}"`) : C.badgeRef('stt', t.statut)}</div>`).join('');
 
     return `<aside class="panneau">
-      <div class="panneau-entete"><div><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div><h2 style="font-size:18px;margin-top:4px">${esc(p.nom)}</h2></div>
+      <div class="panneau-entete"><div style="flex:1"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
+          ${editable ? champ('nom', `<input class="champ" style="font-size:16px;font-weight:600;margin-top:4px" value="${esc(p.nom)}" required <CHAMP>`)
+            : `<h2 style="font-size:18px;margin-top:4px">${esc(p.nom)}</h2>`}</div>
         <button class="fermer" data-action="fermer" title="Fermer">✕</button></div>
       <div class="panneau-corps">
-        ${p.description ? `<div>${esc(p.description)}</div>` : ''}
+        ${editable ? champ('description', `<textarea class="champ" rows="2" placeholder="Description" <CHAMP>${esc(p.description || '')}</textarea>`)
+          : p.description ? `<div>${esc(p.description)}</div>` : ''}
         <div class="infos">
           <span>Objectif</span><span>${obj ? esc(obj.code + ' · ' + obj.titre) : '—'}</span>
           <span>Résultat clé</span><span>${kr ? esc(kr.code + ' · ' + kr.libelle) : '—'}</span>
-          <span>Chef de projet</span><span class="ligne-flex">${chef ? C.avatar(chef.nom) + esc(chef.nom) : '—'}</span>
-          <span>Période</span><span>${Calculs.formatCourt(p.debut)} → ${Calculs.formatCourt(p.fin)}</span>
+          <span>Chef de projet</span><span class="ligne-flex">${editable ? champ('chefId', C.liste([{ valeur: '', libelle: '—' }, ...personnesEquipe], p.chefId || '', 'class="champ" style="width:auto" <CHAMP'))
+            : chef ? C.avatar(chef.nom) + esc(chef.nom) : '—'}</span>
+          <span>Période</span><span class="ligne-flex">${editable
+            ? champ('debut', `<input type="date" class="champ" style="width:auto" value="${p.debut || ''}" <CHAMP>`) + ' → ' + champ('fin', `<input type="date" class="champ" style="width:auto" value="${p.fin || ''}" <CHAMP>`)
+            : `${Calculs.formatCourt(p.debut)} → ${Calculs.formatCourt(p.fin)}`}</span>
           <span>Statut</span><span>${statut}</span>
         </div>
         <div><div class="ligne-flex" style="justify-content:space-between"><span class="discret">Avancement · ${n.termines}/${n.total} tickets</span><b id="avancement-valeur">${p.avancement}%</b></div>
@@ -46,11 +57,13 @@ const Panneau = {
             : `<div style="margin-top:8px">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}</div>`}</div>
         ${note ? `<div class="discret" style="font-size:12px">${note}</div>` : ''}
         <div><div class="libelle">Équipe projet</div>${membres.map(a => { const r = ressource(a.ressourceId); return r ? `<div class="ligne-flex" style="padding:5px 0">${C.avatar(r.nom)}<span style="flex:1">${esc(r.nom)}</span>${C.badgeRef('role', a.role)}</div>` : ''; }).join('') || '<span class="pale">Aucun membre.</span>'}
-          ${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Ajouter une personne</a>` : ''}</div>
+          ${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</div>
         <div><div class="libelle">Tickets</div>${ticketsHtml || '<span class="pale">Aucun ticket.</span>'}
           ${editable ? `<form class="ligne-flex" style="margin-top:8px" data-action-envoi="ajouterTicket" data-projet="${p.id}">
             <input class="champ" name="titre" placeholder="Nouveau ticket" required>${C.liste(valeursDe('prio').map(v => v.libelle), 'Moyenne', 'class="champ" name="priorite" style="width:auto"')}
             <button class="btn">Ajouter</button></form>` : ''}</div>
+        ${editable && estMembreDe(p.equipeId) ? `<div style="border-top:1px solid var(--bordure-fine);padding-top:12px">
+          <button class="btn danger" data-action="supprimerProjet" data-id="${p.id}">Supprimer le projet</button></div>` : ''}
       </div>
     </aside>`;
   },
@@ -82,9 +95,18 @@ const Panneau = {
 Object.assign(Actions, {
   // Déplacement du curseur : affichage immédiat du pourcentage (enregistrement au relâchement)
   apercuAvancement: (_, el) => { document.getElementById('avancement-valeur').textContent = el.value + '%'; },
+  // Modification d'un champ du projet ; champ vidé = valeur nulle (nom obligatoire)
   majProjet(d, el) {
-    const valeur = d.champ === 'avancement' ? Number(el.value) : el.value;
+    const brut = el.value.trim();
+    if (d.champ === 'nom' && !brut) return notifier('Le nom est obligatoire', 'erreur');
+    const p = projet(d.id), debut = d.champ === 'debut' ? brut : p.debut, fin = d.champ === 'fin' ? brut : p.fin;
+    if (debut && fin && fin < debut) return notifier('La fin doit être après le début', 'erreur');
+    const valeur = d.champ === 'avancement' ? Number(brut) : (brut || null);
     executer(() => Api.modifier('projets', { id: 'eq.' + d.id }, { [d.champ]: valeur }), 'projets');
+  },
+  supprimerProjet(d) {
+    if (!confirm('Supprimer ce projet ? Ses tickets, affectations et heures saisies seront supprimés.')) return;
+    executer(async () => { await Api.supprimer('projets', { id: 'eq.' + d.id }); etat.panneau = null; }, 'projets', 'tickets', 'affectations', 'temps', 'demandes');
   },
   statutTicket: (d, el) => executer(() => Api.modifier('tickets', { id: 'eq.' + d.id }, { statut: el.value }), 'tickets'),
   ajouterTicket(d, form) {

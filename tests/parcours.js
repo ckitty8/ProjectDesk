@@ -129,6 +129,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);
     await capture('10-panneau-projet');
     await page.selectOption('select[data-champ="statut"]', 'En retard'); await page.waitForTimeout(300);
+    verifier('Panneau : description sans caractère parasite', !(await page.inputValue('.panneau textarea[data-champ="description"]')).startsWith('>'));
     verifier('Panneau : statut modifié', (await page.inputValue('select[data-champ="statut"]')) === 'En retard');
     await page.fill('form[data-action-envoi="ajouterTicket"] input[name=titre]', 'Ticket de test');
     await page.click('form[data-action-envoi="ajouterTicket"] button'); await page.waitForTimeout(300);
@@ -143,7 +144,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="creerProjet"] input[name=nom]', 'Projet de test');
     verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Nouveau projet créé et ouvert', (await texte()).includes('Projet de test'));
+    verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');
     await page.click('.fermer');
 
     await aller('conges'); await page.click('[data-action="moisSuivant"]');
@@ -202,6 +203,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
     verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
+    // Projet modifiable depuis l'arborescence : nom, dates
+    await page.click('tr:has-text("PF-17") [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
+    await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
+    await page.fill('.panneau input[data-champ="fin"]', '2027-03-31'); await page.press('.panneau input[data-champ="fin"]', 'Tab'); await page.waitForTimeout(300);
+    verifier('Projet : nom et date de fin modifiés depuis Liste des ressources',
+      await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2' && p.fin === '2027-03-31'; }));
+    await page.click('.panneau .fermer');
 
     await aller('monTimesheet'); await page.click('[data-action="semainePrecedente"]'); await page.waitForTimeout(200);
     await page.click('[data-action="semaineSuivante"]'); await page.waitForTimeout(200);

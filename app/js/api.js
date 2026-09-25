@@ -155,10 +155,12 @@ const Api = (() => {
   }
   const urlTable = (table, filtres) => `${CONFIG.DATA_API_URL}/${table}?${requete(filtres)}`;
 
-  // Lecture : renvoie des objets en camelCase
+  // Lecture : renvoie des objets en camelCase.
+  // cache: 'no-store' : sans lui, le navigateur peut resservir une ancienne réponse de la même
+  // adresse après une écriture (données à jour seulement après F5).
   async function lire(table, filtres = {}) {
     const lignes = await appeler(urlTable(table, { select: '*', ...filtres }),
-      { credentials: 'omit', headers: await entetes() });
+      { credentials: 'omit', cache: 'no-store', headers: await entetes() });
     return lignes.map(depuisBdd);
   }
 

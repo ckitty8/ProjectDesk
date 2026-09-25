@@ -88,7 +88,8 @@ Ecrans.listeRessources = {
             ${C.icone('projet')}${C.code(p.code)} ${esc(p.nom)}</span></td>
          <td class="num" style="text-align:center">${membres.length}</td><td>Chef : ${nomRessource(p.chefId)}</td>
          <td>${C.badgeRef('stp', p.statut)}</td>
-         <td class="num">${peutEditerProjet(p) ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</td>`);
+         <td class="num"><span class="ligne-flex" style="justify-content:flex-end">${peutEditerProjet(p) ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}
+           ${C.boutonIcone('modifier', 'ouvrirProjet', `data-id="${p.id}"`, peutEditerProjet(p) ? 'Modifier le projet' : 'Voir le projet')}</span></td>`);
       membres.forEach(a => { const r = ressource(a.ressourceId); if (r) lignePersonne(r, a, niveau + 1, [...chemin, p.id], masquee || !ouvert); });
     };
 

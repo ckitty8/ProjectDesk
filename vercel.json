@@ -1,5 +1,20 @@
 {
   "redirects": [
-    { "source": "/", "destination": "/app/", "permanent": false }
+    {
+      "source": "/",
+      "destination": "/app/",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/app/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
   ]
 }
