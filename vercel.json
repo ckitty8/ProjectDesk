@@ -1,5 +1,5 @@
 {
   "redirects": [
-    { "source": "/", "destination": "/roadmap-app/", "permanent": false }
+    { "source": "/", "destination": "/app/", "permanent": false }
   ]
 }

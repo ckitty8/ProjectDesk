@@ -10,7 +10,7 @@ sauf consigne contraire explicite du porteur du projet.
 
 1. **Code lisible et modifiable par un tech lead humain.**
    - Pas de framework, de build ou de dépendance ajoutés sans nécessité démontrée.
-   - Fonctions courtes, noms explicites (en français pour le métier, cohérents avec `data.js`).
+   - Fonctions courtes, noms explicites (en français pour le métier, cohérents avec les tables SQL).
    - Pas d'astuce « clever » : on préfère 5 lignes claires à 1 ligne obscure.
 
 2. **Commenter le code.**
@@ -22,14 +22,16 @@ sauf consigne contraire explicite du porteur du projet.
    - Toute création ou modification d'écran commence par une maquette PNG déposée dans
      `docs/maquettes/<nom-de-la-fonctionnalite>/`, montrée au porteur du projet avant le code.
    - Les captures de l'état actuel des écrans sont dans `docs/maquettes/etat-actuel/` et
-     doivent être régénérées après chaque changement visuel livré.
+     doivent être régénérées après chaque changement visuel livré (`node tests/parcours.js`).
 
 4. **Cohérence entre les fonctionnalités** (l'architecture finale n'est pas figée).
-   - Un seul endroit pour les référentiels (listes, couleurs, libellés) : `roadmap-app/data.js`.
-   - Un seul endroit pour les calculs métier (score, rang, charge) : section
-     « Business logic » de `roadmap-app/app.js`. Les vues consomment, elles ne recalculent pas.
-   - Réutiliser les composants existants (badge, carte, tiroir de formulaire, filtres) avant
-     d'en créer de nouveaux.
+   - Listes métier (types, priorités, statuts, rôles, absences) : **en base**, table
+     `valeurs_referentiel` (administrable). Constantes techniques : `app/js/config.js`.
+   - Un seul endroit pour les calculs métier : `app/js/calculs.js` (fonctions pures).
+     Les écrans consomment, ils ne recalculent pas.
+   - Droits : toujours en base (règles RLS) ; l'application ne fait que masquer les boutons.
+   - Réutiliser les composants existants (`app/js/composants.js`, panneau, modale, calendrier)
+     avant d'en créer de nouveaux.
    - Avant d'ajouter une fonctionnalité, vérifier le § « Points de cohérence » du DAT.
 
 5. **Mettre à jour le DAT à chaque évolution.**
@@ -38,7 +40,7 @@ sauf consigne contraire explicite du porteur du projet.
      jour le DAT **dans le même commit**, et ajoute une ligne à son historique.
 
 7. **À la fin de chaque commit, vérifier tous les documents.**
-   - Relire `README.md`, `CLAUDE.md`, `docs/DAT.md`, `roadmap-app/README.md` et les captures de
+   - Relire `README.md`, `CLAUDE.md`, `docs/DAT.md`, `app/README.md` et les captures de
      `docs/maquettes/` : ils doivent décrire le code tel qu'il est après le commit.
    - Lancer `node scripts/verifier-docs.js` (automatique après chaque commit si le hook est
      activé : `git config core.hooksPath .githooks`).
@@ -50,7 +52,7 @@ sauf consigne contraire explicite du porteur du projet.
 - [ ] Code commenté, lisible
 - [ ] Référentiels / calculs centralisés (pas de duplication)
 - [ ] `docs/DAT.md` à jour + ligne d'historique
-- [ ] Captures `docs/maquettes/etat-actuel/` régénérées (si changement visuel)
+- [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
 
 ## Après chaque commit
 
