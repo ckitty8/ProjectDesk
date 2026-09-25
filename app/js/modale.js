@@ -168,6 +168,8 @@ Object.assign(Actions, {
         await Api.creer('equipes', { id: org.id, nom: f.nom, prefixe: f.prefixe, couleur: f.couleur });
         etat.organisations = await Api.listerOrganisations();
         etat.rolesEquipe[org.id] = 'owner';
+        // Première équipe de l'utilisateur : elle devient l'équipe ouverte
+        if (!etat.equipeCourante) { etat.equipeCourante = org.id; ecrireMemoire('equipe', org.id); }
       }
       etat.modale = null;
     }, 'equipes');

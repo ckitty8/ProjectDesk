@@ -48,7 +48,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('form button'); await page.waitForTimeout(300);
     verifier('Connexion refusée avec un mauvais mot de passe', (await texte()).includes('incorrect'));
     await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('[data-action="ouvrirEquipe"]');
+    await page.waitForSelector('.laterale');
+    verifier('Une seule équipe : ouverture directe de l’outil (dashboard)', (await texte()).includes('Dashboard général'));
+    await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
     await capture('02-choix-equipe');
     verifier('Choix d’équipe : invitation reçue affichée', (await texte()).includes('Produit'));
     await page.click('[data-action="ouvrirEquipe"]');
@@ -156,6 +158,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`${form} .btn.primaire`); await page.waitForTimeout(400);
     await capture('16-espace-demandeur');
     verifier('Demandeur : demande déposée et suivie', ((await texte()).match(/Demande automatique/g) || []).length >= 1 && (await texte()).includes('Nouvelle'));
+
+    /* --- Administratrice sans équipe : entrée directe dans l'outil, création d'équipe --- */
+    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
+    await page.fill('input[name=email]', 'admin@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
+    await page.waitForSelector('.laterale');
+    verifier('Admin sans équipe : arrive dans l’outil (pas l’espace demandeur)', !(await texte()).includes('Espace demandeur') && (await texte()).includes('Dashboard général'));
+    await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
+    verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
+    await page.click('[data-action="aller"][data-ecran="administration"]'); await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
+    await page.click('[data-action="nouvelleEquipe"]');
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');
+    await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(500);
+    verifier('Admin : équipe créée et ouverte automatiquement', (await page.textContent('.bloc-equipe')).includes('Direction Digitale'));
 
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');

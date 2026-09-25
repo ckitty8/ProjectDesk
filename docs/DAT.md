@@ -16,6 +16,7 @@
 | 1.1     | 2026-09-25 | Domaines Vercel `project-desk.vercel.app` et `…-git-main-…` autorisés ; messages d'erreur de connexion explicites (§ 8) |
 | 1.2     | 2026-09-25 | Connexion Google : échange du vérificateur de session au retour, jeton lu dans `set-auth-jwt`, erreurs de retour affichées (§ 7) |
 | 1.3     | 2026-09-25 | Adresse de production corrigée : `project-desk-sepia.vercel.app` autorisée, `project-desk.vercel.app` (projet tiers) retirée (§ 8) |
+| 1.4     | 2026-09-25 | Administrateurs : lecture de tout sans équipe (migration 003), entrée directe dans l'outil ; ouverture automatique de l'équipe unique ou nouvellement créée (§ 5.2, § 7) |
 
 ---
 
@@ -120,7 +121,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
-## 4. Modèle de données (migration `db/migrations/002_pilotage_projet.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql` et `003_lecture_administrateurs.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -173,13 +174,13 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 |--------|---------|----------|
 | `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
 | `administrateurs` | administrateurs (et sa propre ligne) | administrateurs |
-| `ressources` | membres | équipe concernée, administrateurs |
-| `objectifs`, `resultats_cles` | membres | équipe concernée |
-| `projets` | membres | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
-| `affectations`, `tickets` | membres | `peut_editer_projet` |
-| `absences`, `temps_saisis`, `feuilles_temps` | membres | la personne elle-même ou son équipe |
+| `ressources` | membres, administrateurs | équipe concernée, administrateurs |
+| `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
+| `projets` | membres, administrateurs | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
+| `affectations`, `tickets` | membres, administrateurs | `peut_editer_projet` |
+| `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
 | `notes_daily` | auteur | auteur |
-| `demandes` | le demandeur (les siennes) et les membres | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
+| `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
 | toutes | — | rôle `anonymous` : aucun droit |
 
 Contrôles complémentaires (triggers) : `controler_feuille_temps()` (validation/renvoi réservés
@@ -217,9 +218,14 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
      ensuite retiré de l'adresse. En cas d'échec, `?error=…` est traduit sur l'écran de connexion.
    - Jeton de la Data API : en-tête `set-auth-jwt` de `/get-session`, sinon `/token` ; renouvelé
      une minute avant expiration (15 min).
-2. **Sans équipe** : administrateur → Administration (création d'équipe) ; sinon → espace demandeur.
+2. **Écran d'arrivée** :
+   - une seule équipe (ou équipe mémorisée sur le poste) → ouverte directement, dashboard ;
+   - plusieurs équipes sans mémoire → écran de choix d'équipe ;
+   - administrateur sans équipe → directement dans l'outil (dashboard, ou Administration si
+     aucune équipe n'existe) ; les écrans « Mon dashboard » l'invitent à ouvrir/créer une équipe ;
+   - compte sans équipe ni droit d'administration → espace demandeur.
 3. **Création d'équipe** (administrateur) : organisation Neon Auth (le créateur en devient
-   `owner`) puis ligne `equipes`. Invitation de membres par email (fenêtre équipe) ; la personne
+   `owner`) puis ligne `equipes` ; si aucune équipe n'était ouverte, la nouvelle s'ouvre. Invitation de membres par email (fenêtre équipe) ; la personne
    accepte depuis l'écran de choix d'équipe.
 4. **Demande** : dépôt (demandeur) → Nouvelle → En analyse → Acceptée / Refusée (équipe) →
    « Créer le projet » (lien `demandes.projet_id`).
@@ -253,8 +259,8 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 
 | Outil | Contenu |
 |-------|---------|
-| `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (23 contrôles, dont l'aller-retour Google simulé) + captures `docs/maquettes/etat-actuel/` |
+| `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (27 contrôles, dont l'aller-retour Google simulé et le parcours administrateur sans équipe) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

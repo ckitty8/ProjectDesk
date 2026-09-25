@@ -42,7 +42,7 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
    insert into public.administrateurs (user_id)
    select id::text from neon_auth."user" where email = 'votre.email@entreprise.fr';
    ```
-3. Se reconnecter : l'écran **Administration** permet de créer les équipes (chaque équipe est une
+3. Se reconnecter : l'administrateur arrive directement dans l'outil ; l'écran **Administration** permet de créer les équipes (chaque équipe est une
    organisation Neon Auth dont vous devenez propriétaire), puis d'inviter les membres par email.
 4. Dans **Liste des ressources**, créer les fiches des personnes (avec leur email : le lien avec
    leur compte se fait automatiquement à leur connexion), puis les projets et affectations.

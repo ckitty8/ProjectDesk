@@ -45,7 +45,8 @@ function amorcer() {
   membres.push({ id: uuid(), organizationId: idEq.pf, userId: camille.id, role: 'owner' });
   membres.push({ id: uuid(), organizationId: idEq.pf, userId: thomas.id, role: 'member' });
   invitations.push({ id: uuid(), organizationId: idEq.pr, email: 'camille@test.fr', role: 'member', status: 'pending' });
-  bd.administrateurs = [{ user_id: camille.id }];
+  const admin = u('Christelle Admin', 'admin@test.fr');        // administratrice sans équipe
+  bd.administrateurs = [{ user_id: camille.id }, { user_id: admin.id }];
 
   const PERS = [['cl', 'Camille Laurent', 'pf', 'Chef de projet', 100, camille.id], ['tb', 'Thomas Bernard', 'pf', 'Dév. back-end', 100, thomas.id],
     ['lm', 'Léa Moreau', 'pf', 'Dév. front-end', 80], ['jd', 'Julien Dubois', 'pf', 'DevOps', 100], ['hm', 'Hugo Martin', 'da', 'Lead data', 100],

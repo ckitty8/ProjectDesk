@@ -63,8 +63,8 @@ const Coquille = (() => {
         ${MENU_MOI.map(lienMenu).join('')}
       </nav>
       <div class="bloc-utilisateur">
-        <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${esc(eq.nom)}</b>
-          <a data-action="changerEquipe">Changer</a></div>
+        <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>
+          ${mesEquipes().length ? '<a data-action="changerEquipe">Changer</a>' : ''}</div>
         <div class="bloc-moi">${C.avatar(nom, true)}<div><div class="moi-nom">${esc(nom)}</div>
           <a class="moi-sortie" data-action="deconnexion">Se déconnecter</a></div></div>
       </div>
@@ -82,6 +82,16 @@ const Coquille = (() => {
     </header>`;
   }
 
+  // « Mon dashboard » demande une équipe ouverte (cas d'un administrateur sans équipe)
+  function sansEquipe() {
+    return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px">
+      <h2>Aucune équipe ouverte</h2>
+      <p class="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Général » reste consultable.</p>
+      ${mesEquipes().length ? '<button class="btn primaire" data-action="changerEquipe">Choisir une équipe</button>'
+        : etat.estAdmin ? '<button class="btn primaire" data-action="aller" data-ecran="administration">Créer une équipe (Administration)</button>' : ''}
+    </div></div>`;
+  }
+
   // Rendu complet de la page selon l'état
   function rendre() {
     if (etat.chargement) return `<div class="plein-ecran"><div class="chargement">Chargement…</div></div>`;
@@ -95,7 +105,7 @@ const Coquille = (() => {
       ${barreLaterale()}
       <main class="principal">
         ${enTete(ecran)}
-        <div class="contenu">${ecran.rendre()}</div>
+        <div class="contenu">${ecran.section === 'moi' && !etat.equipeCourante ? sansEquipe() : ecran.rendre()}</div>
       </main>
       ${etat.panneau ? `<div class="voile" data-action="fermer"></div>${Panneau.rendre()}` : ''}
       ${etat.modale ? `<div class="voile" data-action="fermer"></div>${Modale.rendre()}` : ''}
