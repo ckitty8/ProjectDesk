@@ -71,5 +71,20 @@ const C = (() => {
 
   const vide = texte => `<div class="vide">${esc(texte)}</div>`;
 
-  return { esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide };
+  // Petites icônes (traits, couleur du texte) : direction, équipe, modifier, supprimer, recherche
+  const TRACES = {
+    direction: 'M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M16 9h3a1 1 0 0 1 1 1v11M8 7h4M8 11h4M8 15h4M3 21h18',
+    equipe: 'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M21 19v-1a4 4 0 0 0-3-3.8M16 4.2a3 3 0 0 1 0 5.6',
+    modifier: 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4',
+    supprimer: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+    recherche: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-4.3-4.3'
+  };
+  const icone = (nom, taille = 16) => `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+    stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="${TRACES[nom]}"></path></svg>`;
+  // Bouton-icône d'action ; desactive = bouton grisé avec l'explication en infobulle
+  const boutonIcone = (nom, action, attributs, titre, desactive = false) =>
+    `<button class="btn-icone" title="${esc(titre)}" ${desactive ? 'disabled' : `data-action="${action}" ${attributs}`}>${icone(nom)}</button>`;
+  const badgeActif = actif => actif ? badge('Active', '#0B6B4F', '#E3F5EC') : badge('Inactive', '#4A5363', '#F1F3F7');
+
+  return { esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();

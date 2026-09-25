@@ -44,14 +44,16 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
    ```
 3. Se reconnecter : l'administrateur arrive directement dans l'outil ; **Mon dashboard › Administration › Équipes** permet de créer les équipes (chaque équipe est une
    organisation Neon Auth dont vous devenez propriétaire), puis d'inviter les membres par email.
-4. Dans **Liste des ressources**, créer les fiches des personnes (avec leur email : le lien avec
+4. Dans **Liste des ressources › Équipes**, créer les directions et y rattacher les équipes ;
+   ajuster si besoin les onglets **Postes** et **Types de contrat**.
+5. Dans **Liste des ressources › Affectations**, créer les fiches des personnes (avec leur email : le lien avec
    leur compte se fait automatiquement à leur connexion), puis les projets et affectations.
 
 ## Rôles
 
 | Qui | Peut |
 |-----|------|
-| Administrateur global (table `administrateurs`) | Créer les équipes, gérer référentiels et champs du formulaire |
+| Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels (dont postes et types de contrat) et champs du formulaire |
 | Responsable d'équipe (rôle `owner` / `admin` de l'organisation) | Inviter des membres, valider les feuilles de temps |
 | Membre d'une équipe | Tout lire (section Général) ; modifier son équipe et ses projets (sauf rôle projet « Lecteur ») |
 | Demandeur (compte sans équipe) | Déposer des demandes et suivre les siennes |

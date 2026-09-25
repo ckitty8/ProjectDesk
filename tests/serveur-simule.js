@@ -56,7 +56,13 @@ function amorcer() {
   const idP = {};
   bd.ressources = PERS.map(([cle, nom, eq, poste, capacite, userId]) => { const id = uuid(); idP[cle] = id;
     return { id, equipe_id: idEq[eq], nom, poste, capacite, email: cle + '@test.fr', user_id: userId || null }; });
-  bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; });
+  bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; e.actif = true; });
+  // Directions (migration 005) : DSI (Plateforme, Data), Métier (Mobile, Produit), Finance (vide)
+  const dir = (nom, resp) => ({ id: uuid(), nom, responsable_id: idP[resp] || null, actif: true });
+  const dsi = dir('DSI', 'cl'), metier = dir('Métier', 'nb'), finance = dir('Finance');
+  bd.directions = [dsi, metier, finance];
+  bd.equipes.forEach((e, i) => { e.direction_id = [dsi.id, dsi.id, metier.id, metier.id][i]; });
+  bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; });
 
   const OBJ = [['pf', 'O1', 'Fiabiliser la plateforme', 'haute', [['KR1.1', 'Disponibilité 99,9 %', 80], ['KR1.2', 'Temps de rétablissement < 30 min', 62], ['KR1.3', 'Onboarding dév. < 1 jour', 20]]],
     ['pf', 'O2', 'Sécuriser les accès', 'moyenne', [['KR2.1', '100 % des apps en SSO', 45], ['KR2.2', 'Revue trimestrielle des droits', 50]]],
@@ -119,14 +125,16 @@ function amorcer() {
   });
 
   // Référentiels et champs : identiques à la migration 002
-  bd.referentiels = [['type', 'Types de demande', 1], ['prio', 'Priorités', 2], ['stp', 'Statuts projet', 3], ['stt', 'Statuts ticket', 4], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6]]
+  bd.referentiels = [['type', 'Types de demande', 1], ['prio', 'Priorités', 2], ['stp', 'Statuts projet', 3], ['stt', 'Statuts ticket', 4], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8]]
     .map(([id, nom, ordre]) => ({ id, nom, ordre }));
   const V = { type: [['Nouveau projet', '#003CC8'], ['Évolution', '#0F8A6B'], ['Anomalie', '#A32020'], ['Accès / droits', '#7A3FC2'], ['Donnée / rapport', '#B25E09']],
     prio: [['Critique', '#A32020'], ['Haute', '#B25E09'], ['Moyenne', '#4A5363'], ['Basse', '#8A93A3']],
     stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
     stt: [['À faire', '#4A5363', 1], ['En cours', '#003CC8', 1], ['En revue', '#5E2CA5', 1], ['Terminé', '#0F8A6B', 1]],
     role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],
-    abs: [['Congés payés', '#003CC8', 1, 'CP'], ['RTT', '#0F8A6B', 0, 'RTT'], ['Maladie', '#A32020', 0, 'MA'], ['Formation', '#B25E09', 0, 'FO']] };
+    abs: [['Congés payés', '#003CC8', 1, 'CP'], ['RTT', '#0F8A6B', 0, 'RTT'], ['Maladie', '#A32020', 0, 'MA'], ['Formation', '#B25E09', 0, 'FO']],
+    poste: ['Chef de projet', 'Product manager', 'Product designer', 'Dév. back-end', 'Dév. front-end', 'DevOps', 'Lead data', 'Data engineer', 'Data analyst', 'Lead mobile', 'Dév. iOS', 'Dév. Android'].map(l => [l, '#4A5363']),
+    contrat: [['CDI', '#0F8A6B'], ['CDD', '#003CC8'], ['Prestataire', '#B25E09'], ['Alternance', '#7A3FC2']] };
   bd.valeurs_referentiel = [];
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1 })));
@@ -225,6 +233,10 @@ async function auth(req, res, chemin, url) {
       membres.push({ id: uuid(), organizationId: o.id, userId: moi.id, role: 'owner' }); return envoyer(res, 200, o);
     }
     case '/organization/set-active': return envoyer(res, 200, {});
+    case '/organization/delete': {
+      const i = organisations.findIndex(o => o.id === corps.organizationId); if (i >= 0) organisations.splice(i, 1);
+      return envoyer(res, 200, {});
+    }
     case '/organization/get-full-organization': {
       const id = url.searchParams.get('organizationId'), o = organisations.find(x => x.id === id);
       return envoyer(res, 200, { ...o, members: membres.filter(m => m.organizationId === id).map(m => ({ ...m, user: vueUtilisateur(utilisateurs.find(u => u.id === m.userId)) })),
@@ -269,8 +281,20 @@ async function donnees(req, res, table, url) {
   const partage = autre => membres.some(m1 => m1.userId === moi.id && membres.some(m2 => m2.userId === autre && m2.organizationId === m1.organizationId));
   const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id || partage(n.user_id)) : bd[table];
   if (req.method === 'GET') return envoyer(res, 200, filtrer(visibles(), p));
+  // Contrôles de suppression de la migration 005 (unité ou valeur utilisée : refus)
+  if (req.method === 'DELETE') {
+    const cibles0 = filtrer(bd[table], p);
+    if (table === 'equipes' && cibles0.some(e => bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id)))
+      return envoyer(res, 400, { message: 'Équipe non vide (ressources ou projets) : passez-la plutôt en « Inactive »' });
+    if (table === 'directions' && cibles0.some(d => bd.equipes.some(e => e.direction_id === d.id)))
+      return envoyer(res, 409, { message: 'Direction non vide : rattachez ses équipes ailleurs' });
+  }
   if (req.method === 'DELETE') { const cibles = new Set(filtrer(bd[table], p)); bd[table] = bd[table].filter(l => !cibles.has(l)); return envoyer(res, 204); }
   const corps = await lireCorps(req);
+  if (req.method === 'PATCH' && table === 'valeurs_referentiel' && corps.libelle) filtrer(bd[table], p).forEach(v => {
+    const champ = { poste: 'poste', contrat: 'type_contrat' }[v.referentiel_id];
+    if (champ) bd.ressources.filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; });
+  });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
   if (req.method === 'POST') {
     const conflit = p.get('on_conflict') ? p.get('on_conflict').split(',') : null;
@@ -280,6 +304,7 @@ async function donnees(req, res, table, url) {
       if (table === 'demandes') { l.numero = Math.max(0, ...bd.demandes.map(x => x.numero)) + 1; l.statut = l.statut || 'nouvelle'; l.demandeur_id = moi.id; l.cree_le = maintenant(); l.valeurs = l.valeurs || {}; }
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
+      if (['equipes', 'directions'].includes(table)) l.actif = l.actif ?? true;
       const cle = conflit || CLES[table];
       const existante = conflit && bd[table].find(x => cle.every(c => String(x[c]) === String(l[c])));
       if (existante) { Object.assign(existante, l); return existante; }

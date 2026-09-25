@@ -20,6 +20,7 @@
 | 1.5     | 2026-09-25 | Nom affiché « ProjectDesk » (paramètre `NOM_APPLICATION`), sous-titre « Multi-projets · Multi-équipes » retiré (§ 1, § 2.1) |
 | 1.6     | 2026-09-25 | Nouvel écran Général › Daily des équipes ; notes de daily lisibles par les coéquipiers (migration 004) ; notes chargées sur 90 jours (§ 2, § 3.2, § 5, § 6) |
 | 1.7     | 2026-09-25 | **Section Général strictement en lecture seule** : édition des équipes et référentiels déplacée dans Mon dashboard › Administration ; contrôle automatique (§ 3, § 9, § 10) |
+| 1.8     | 2026-09-25 | **Liste des ressources en « board »** : onglets Équipes (arborescence Directions & équipes, recherche, statut, suppression si vide), Affectations, Postes, Types de contrat ; migration 005 (`directions`, statut des équipes, `type_contrat`, référentiels `poste` / `contrat`) (§ 3.3, § 4, § 5) |
 
 ---
 
@@ -116,7 +117,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Grille mensuelle éditable (« pinceau » par type d'absence), récap annuel, capacité par sprint | `11-conges.png` |
-| `listeRessources` | `liste-ressources.js` | Arborescence équipe → projet → personnes, affectations, fiches ressources | `12-liste-ressources.png` |
+| `listeRessources` | `liste-ressources.js` | Onglets (maquette `liste-ressources-board.png`) : **Équipes** — tableau « Directions & équipes » (direction → équipes, nombre de ressources, responsable, statut Active/Inactive, modifier / supprimer, recherche, « + Ajouter une unité ») ; **Affectations** — arborescence équipe → projet → personnes, fiches ressources ; **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Une unité n'est supprimable que vide (sinon la passer en Inactive) ; édition réservée aux administrateurs | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** (administrateurs). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
@@ -130,7 +131,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - **ajout / statut de tickets** dans le panneau projet ;
 - fenêtres **fiche ressource** et **équipe** (membres Neon Auth, invitations).
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -138,12 +139,13 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | Table | Contenu | Clé / liens |
 |-------|---------|-------------|
 | `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
-| `equipes` | Équipe = organisation Neon Auth « reconnue » : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id` | `id` = `neon_auth.organization.id` |
-| `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs` | `id` |
+| `directions` | Regroupement d'équipes (sans espace de travail propre) : `nom` (unique), `responsable_id`, `actif` | → `ressources` |
+| `equipes` | Équipe = organisation Neon Auth « reconnue » : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `direction_id`, `actif` (une équipe inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; → `directions` |
+| `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `ordre` | → `referentiels` |
 | `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
-| `ressources` | Personnes : `equipe_id`, `nom`, `poste`, `capacite` (%), `email`, `user_id` (compte lié) | → `equipes` |
+| `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié) | → `equipes` |
 | `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
 | `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
@@ -182,7 +184,7 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 
 | Tables | Lecture | Écriture |
 |--------|---------|----------|
-| `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
+| `directions`, `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
 | `administrateurs` | administrateurs (et sa propre ligne) | administrateurs |
 | `ressources` | membres, administrateurs | équipe concernée, administrateurs |
 | `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
@@ -195,7 +197,10 @@ suppression, trigger `proteger_valeur_systeme()`), côté app constantes de `con
 
 Contrôles complémentaires (triggers) : `controler_feuille_temps()` (validation/renvoi réservés
 au responsable ; feuille validée figée), `controler_temps_saisi()` (heures d'une semaine validée
-non modifiables).
+non modifiables), `controler_suppression_equipe()` (équipe avec ressources ou projets non
+supprimable ; une direction non vide est protégée par sa clé étrangère), `propager_renommage_valeur()`
+(renommer un poste / type de contrat met à jour les fiches ressources), `controler_suppression_valeur()`
+(poste / type de contrat utilisé non supprimable).
 
 Tests réalisés en base (bloc annulé, sans jeton) : aucune donnée métier lisible, insertion
 refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
@@ -273,7 +278,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (32 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe et le daily des équipes) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (38 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

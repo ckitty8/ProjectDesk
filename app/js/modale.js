@@ -3,7 +3,9 @@
    - affectation : assigner une ressource à des projets, avec un rôle
                    (maquette : « Assigner une ressource »)
    - ressource   : fiche d'une personne (nom, poste, capacité, email)
-   - equipe      : créer / modifier une équipe, membres et invitations
+   - unite       : « + Ajouter une unité » : choix Direction ou Équipe
+   - direction   : créer / modifier une direction (regroupement d'équipes)
+   - equipe      : créer / modifier une équipe (direction, statut), membres et invitations
    - objectifs   : objectifs (OKR) et résultats clés de mon équipe
    ============================================================ */
 'use strict';
@@ -11,7 +13,8 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs,
+      unite: this.unite, direction: this.direction }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -50,8 +53,9 @@ const Modale = {
       ${this.entete(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne · ' + equipe(r.equipeId).nom)}
       <div class="panneau-corps">
         <div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
-        <div class="deux-colonnes"><div><label class="libelle">Poste</label><input class="champ" name="poste" value="${esc(r.poste || '')}"></div>
-          <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required></div></div>
+        <div class="deux-colonnes"><div><label class="libelle">Poste</label>${this.listeReferentiel('poste', r.poste, 'poste')}</div>
+          <div><label class="libelle">Type de contrat</label>${this.listeReferentiel('contrat', r.typeContrat, 'typeContrat')}</div></div>
+        <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
         <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
         ${r.userId ? '<div class="discret">Compte de connexion lié.</div>' : ''}
       </div>
@@ -74,6 +78,9 @@ const Modale = {
           <div class="deux-colonnes"><div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(e.nom)}" required></div>
             <div class="deux-colonnes"><div><label class="libelle">Préfixe projets</label><input class="champ" name="prefixe" value="${esc(e.prefixe)}" maxlength="4" required style="text-transform:uppercase"></div>
               <div><label class="libelle">Couleur</label><input type="color" class="couleur-choix" style="width:100%;height:34px" name="couleur" value="${e.couleur}"></div></div></div>
+          <div class="deux-colonnes"><div><label class="libelle">Direction</label>${C.liste([{ valeur: '', libelle: '— aucune —' },
+              ...etat.d.directions.map(dir => ({ valeur: dir.id, libelle: dir.nom }))], e.directionId || m.directionId || '', 'class="champ" name="directionId"')}</div>
+            <div><label class="libelle">Statut</label>${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div></div>
           ${m.id ? `<div><label class="libelle">Responsable</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}</div>` : ''}
           ${etat.estAdmin ? `<div style="text-align:right"><button class="btn primaire">${m.id ? 'Enregistrer' : 'Créer l’équipe'}</button></div>`
             : '<div class="discret" style="font-size:12px">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
@@ -89,6 +96,39 @@ const Modale = {
             <button class="btn">Inviter</button></form>
             <div class="discret" style="font-size:12px">La personne invitée crée son compte avec cet email : l’invitation apparaît sur son écran de choix d’équipe.</div>` : ''}` : ''}
       </div></div>`;
+  },
+
+  // Liste d'un référentiel (postes, contrats) ; garde la valeur actuelle même si elle est désactivée
+  listeReferentiel(refId, valeur, nom) {
+    const valeurs = valeursDe(refId).map(v => v.libelle);
+    if (valeur && !valeurs.includes(valeur)) valeurs.unshift(valeur);
+    return C.liste([{ valeur: '', libelle: '—' }, ...valeurs], valeur || '', `class="champ" name="${nom}"`);
+  },
+
+  /* ---------- « + Ajouter une unité » : direction ou équipe ---------- */
+  unite() {
+    const choix = (type, icone, titre, texte) => `<button class="carte-choix" style="text-align:left;background:#fff;cursor:pointer" data-action="choisirTypeUnite" data-type="${type}">
+      ${C.icone(icone, 22)}<div><b>${titre}</b><div class="discret" style="font-size:12px">${texte}</div></div></button>`;
+    return `<div style="display:flex;flex-direction:column">${this.entete('Ajouter une unité')}
+      <div class="panneau-corps">
+        ${choix('direction', 'direction', 'Direction', 'Regroupe des équipes (ex. DSI, Métier, Finance). Pas d’espace de travail propre.')}
+        ${choix('equipe', 'equipe', 'Équipe', 'Espace de travail : membres, projets, demandes. Peut être rattachée à une direction.')}
+      </div></div>`;
+  },
+
+  /* ---------- Direction : création / modification ---------- */
+  direction(m) {
+    const esc = C.esc, dir = m.id ? parId('directions', m.id) : { nom: '', actif: true };
+    const personnes = etat.d.ressources.map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}` }));
+    return `<form data-action-envoi="enregistrerDirection" data-id="${m.id || ''}">
+      ${this.entete(m.id ? 'Direction ' + dir.nom : 'Nouvelle direction')}
+      <div class="panneau-corps">
+        <div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(dir.nom)}" required></div>
+        <div class="deux-colonnes"><div><label class="libelle">Responsable</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], dir.responsableId || '', 'class="champ" name="responsableId"')}</div>
+          <div><label class="libelle">Statut</label>${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(dir.actif !== false), 'class="champ" name="actif"')}</div></div>
+        <div class="discret" style="font-size:12px">Les équipes se rattachent à une direction depuis leur fiche (Modifier l’équipe).</div>
+      </div>
+      <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
   },
 
   /* ---------- Objectifs (OKR) de l'équipe courante ---------- */
@@ -151,6 +191,17 @@ Object.assign(Actions, {
     executer(async () => { await Api.supprimer('ressources', { id: 'eq.' + d.id }); etat.modale = null; }, 'ressources', 'affectations', 'absences', 'temps');
   },
 
+  /* Unités : choix du type, directions */
+  choisirTypeUnite: d => majEtat({ modale: d.type === 'direction' ? { type: 'direction', id: null } : { type: 'equipe', id: null } }),
+  enregistrerDirection(d, form) {
+    const f = Object.fromEntries(new FormData(form)); f.actif = f.actif !== 'false';
+    executer(async () => {
+      if (d.id) await Api.modifier('directions', { id: 'eq.' + d.id }, f);
+      else await Api.creer('directions', f);
+      etat.modale = null;
+    }, 'directions');
+  },
+
   /* Équipes */
   async modifierEquipe(d) {
     majEtat({ modale: { type: 'equipe', id: d.id, organisation: null } });
@@ -159,13 +210,13 @@ Object.assign(Actions, {
   },
   // Création : organisation Neon Auth (le créateur en devient propriétaire) + ligne « equipes »
   async enregistrerEquipe(d, form) {
-    const f = Object.fromEntries(new FormData(form)); f.prefixe = f.prefixe.toUpperCase();
+    const f = Object.fromEntries(new FormData(form)); f.prefixe = f.prefixe.toUpperCase(); f.actif = f.actif !== 'false';
     await executer(async () => {
       if (d.id) { await Api.modifier('equipes', { id: 'eq.' + d.id }, f); }
       else {
         const slug = f.nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString(36);
         const org = await Api.creerOrganisation(f.nom, slug);
-        await Api.creer('equipes', { id: org.id, nom: f.nom, prefixe: f.prefixe, couleur: f.couleur });
+        await Api.creer('equipes', { id: org.id, nom: f.nom, prefixe: f.prefixe, couleur: f.couleur, directionId: f.directionId, actif: f.actif });
         etat.organisations = await Api.listerOrganisations();
         etat.rolesEquipe[org.id] = 'owner';
         // Première équipe de l'utilisateur : elle devient l'équipe ouverte

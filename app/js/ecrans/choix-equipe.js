@@ -22,7 +22,7 @@ Ecrans.choixEquipe = {
       const courante = e.id === etat.equipeCourante;
       return `
       <div class="carte-choix" ${courante ? 'style="border-color:#B7C8F5;background:#F3F6FF"' : ''}>${C.pastille(e.couleur)}
-        <div style="flex:1"><b>${esc(e.nom)}</b><div class="discret" style="font-size:12px">
+        <div style="flex:1"><b>${esc(e.nom)}</b> ${e.actif === false ? C.badgeActif(false) : ''}<div class="discret" style="font-size:12px">
           ${nbPers} personnes · ${nbProj} projets · rôle ${esc(etat.rolesEquipe[e.id] || 'member')}</div></div>
         <button class="btn ${courante ? 'primaire' : ''}" data-action="ouvrirEquipe" data-id="${e.id}">Ouvrir</button>
       </div>`;

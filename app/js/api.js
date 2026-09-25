@@ -133,6 +133,9 @@ const Api = (() => {
   const inviterMembre = (organizationId, email, role) =>
     appeler(auth('/organization/invite-member'), json('POST', { organizationId, email, role }));
   const listerMesInvitations = () => appeler(auth('/organization/list-user-invitations'));
+  // Suppression d'une équipe côté Neon Auth (réservée au propriétaire de l'organisation)
+  const supprimerOrganisation = organizationId =>
+    appeler(auth('/organization/delete'), json('POST', { organizationId }));
   const accepterInvitation = invitationId =>
     appeler(auth('/organization/accept-invitation'), json('POST', { invitationId }));
   const refuserInvitation = invitationId =>
@@ -192,7 +195,7 @@ const Api = (() => {
   return {
     inscrire, connecter, connecterGoogle, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
     listerOrganisations, creerOrganisation, activerOrganisation, lireOrganisation, inviterMembre,
-    listerMesInvitations, accepterInvitation, refuserInvitation,
+    listerMesInvitations, accepterInvitation, refuserInvitation, supprimerOrganisation,
     lire, creer, modifier, supprimer, executer
   };
 })();

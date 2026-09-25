@@ -33,7 +33,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
   page.on('pageerror', e => erreurs.push(e.message));
   // Les échecs de chargement réseau (polices bloquées, 401 volontaire du test) ne sont pas des erreurs JS
   page.on('console', m => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) erreurs.push(m.text()); });
-  page.on('dialog', d => d.accept(d.type() === 'prompt' ? 'Merci de compléter' : undefined));
+  // Boîtes de dialogue : confirmations acceptées ; réponse des « prompt » modifiable par le test
+  let reponsePrompt = 'Merci de compléter';
+  page.on('dialog', d => d.accept(d.type() === 'prompt' ? reponsePrompt : undefined));
 
   const capture = async nom => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(CAPTURES, nom + '.png') }); };
   const aller = async ecran => { await page.click(`[data-action="aller"][data-ecran="${ecran}"]`); await page.waitForTimeout(250); };
@@ -61,7 +63,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="choisirTrimestre"][data-t="4"]'); await page.waitForTimeout(200);
     verifier('Dashboard : 6 objectifs au T4', (await texte()).includes('6 objectifs'));
     await aller('projets'); await capture('04-projets');
-    await page.click('[data-action="deplierProjet"]'); await page.waitForTimeout(200);
+    await page.click('tr:has-text("PF-12") [data-action="deplierProjet"]'); await page.waitForTimeout(200);
     verifier('Projets : tickets dépliés', (await texte()).includes('PF-12.1'));
     await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue générale en lecture seule'));
@@ -96,7 +98,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="ajouterValeur"] input', 'Demande légale');
     await page.click('form[data-action-envoi="ajouterValeur"] button'); await page.waitForTimeout(300);
     verifier('Mon admin : valeur de référentiel ajoutée', (await page.$$eval('input[data-action-change="renommerValeur"]', l => l.map(i => i.value))).includes('Demande légale'));
-    await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('[data-action="modifierEquipe"] >> nth=0'); await page.waitForTimeout(400);
+    await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
     verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
     await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
@@ -141,6 +143,24 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources'); await capture('12-liste-ressources');
+    const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
+    verifier('Liste des ressources : directions et équipes en arborescence', (await lignesUnites()).some(l => l.startsWith('DSI')) && (await lignesUnites()).some(l => l.startsWith('Plateforme')));
+    await page.fill('#table-unites input, .recherche-champ input', 'data'); await page.waitForTimeout(150);
+    verifier('Liste des ressources : recherche d’une unité', (await lignesUnites()).every(l => /data|dsi/i.test(l)) && (await lignesUnites()).length === 2);
+    verifier('Liste des ressources : suppression impossible d’une équipe non vide', !!(await page.$('button.btn-icone[disabled][title^="Équipe non vide"]')));
+    await page.click('[data-action="ajouterUnite"]'); await page.click('[data-action="choisirTypeUnite"][data-type="direction"]');
+    await page.fill('form[data-action-envoi="enregistrerDirection"] input[name=nom]', 'Direction Test');
+    await page.click('form[data-action-envoi="enregistrerDirection"] .btn.primaire'); await page.waitForTimeout(300);
+    verifier('Liste des ressources : direction ajoutée', (await lignesUnites()).some(l => l.startsWith('Direction Test')));
+    await page.click('tr:has-text("Direction Test") [data-action="supprimerDirection"]'); await page.waitForTimeout(300);
+    verifier('Liste des ressources : direction vide supprimée', !(await lignesUnites()).some(l => l.startsWith('Direction Test')));
+    await page.click('[data-action="ongletListeRessources"][data-id="postes"]'); await page.waitForTimeout(200);
+    await capture('18-postes');
+    reponsePrompt = 'Développeur back-end';
+    await page.click('tr:has-text("Dév. back-end") [data-action="renommerValeurListe"]'); await page.waitForTimeout(400);
+    reponsePrompt = 'Merci de compléter';
+    await page.click('[data-action="ongletListeRessources"][data-id="affectations"]'); await page.waitForTimeout(200);
+    verifier('Postes : renommage propagé aux fiches ressources', (await texte()).includes('Développeur back-end'));
     await page.click('[data-action="assigner"] >> nth=0'); await page.waitForTimeout(200);
     await page.selectOption('select[name=ressource]', { index: 3 }); await page.waitForTimeout(200);
     await page.check('input[name=projet] >> nth=0');

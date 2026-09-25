@@ -33,13 +33,13 @@ const etat = {
 
 // Tables chargées et nom de la clé dans etat.d
 const TABLES = {
-  equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
+  equipes: 'equipes', directions: 'directions', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   tickets: 'tickets', objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', champs: 'champs_formulaire', joursFeries: 'jours_feries',
   absences: 'absences', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
-const TRIS = { valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
+const TRIS = { directions: 'nom', equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
 // Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;

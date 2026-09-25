@@ -156,3 +156,14 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .historique a { display: block; padding: 10px 16px; border-bottom: 1px solid var(--bordure-fine); color: var(--texte); border-left: 3px solid transparent; }
 .historique a.actif { border-left-color: var(--primaire); background: #F3F6FF; } .historique a:hover { text-decoration: none; background: var(--fond-doux); }
 .couleur-choix { width: 28px; height: 28px; padding: 0; border: 1px solid var(--bordure); border-radius: 6px; background: none; }
+
+/* ---------- Tableau « Directions & équipes » (Liste des ressources) ---------- */
+.btn-icone { background: none; border: 0; color: var(--pale); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.btn-icone:hover { color: var(--texte); background: var(--fond-doux); }
+.btn-icone[disabled] { opacity: .35; cursor: default; background: none; }
+.recherche-champ { display: flex; align-items: center; gap: 8px; width: 320px; height: 36px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 8px; background: #fff; color: var(--pale); }
+.recherche-champ input { border: 0; outline: none; flex: 1; background: none; }
+.arbre-enfant { display: flex; align-items: center; gap: 8px; padding-left: 34px; position: relative; }
+.arbre-enfant::before { content: ''; position: absolute; left: 14px; top: -10px; bottom: -10px; border-left: 1px solid var(--bordure); }
+.arbre-parent { display: flex; align-items: center; gap: 8px; }
+.arbre-parent .chevron { width: 16px; color: var(--pale); background: none; border: 0; cursor: pointer; padding: 0; }

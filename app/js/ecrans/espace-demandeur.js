@@ -8,7 +8,8 @@
 const FormulaireDemande = {
   // Options d'un champ Liste : valeurs d'un référentiel, ou la liste des équipes
   options(champ) {
-    if (champ.referentielId === 'equipes') return etat.d.equipes.map(e => ({ valeur: e.id, libelle: e.nom }));
+    // Équipes : seules les équipes actives reçoivent des demandes
+    if (champ.referentielId === 'equipes') return etat.d.equipes.filter(e => e.actif !== false).map(e => ({ valeur: e.id, libelle: e.nom }));
     return valeursDe(champ.referentielId).map(v => v.libelle);
   },
 
