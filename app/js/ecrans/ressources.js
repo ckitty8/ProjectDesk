@@ -40,24 +40,44 @@ const Calendrier = {
       ? `<span class="case-absence" title="${esc(libelleFerie(j))}" style="color:${typeFerie.couleur};background:${C.teinte(typeFerie.couleur, .16)}">${esc(typeFerie.abrege || 'JF')}</span>`
       : `<span title="${esc(libelleFerie(j))}">F</span>`;
 
-    const lignes = etat.d.equipes.map(e => {
+    // Ligne d'une personne (niveau = retrait dans l'arborescence)
+    const lignePersonne = (r, niveau) => {
+      let nb = 0;
+      const cases = jours.map(j => {
+        const ferme = !Calculs.estJourOuvre(j, fer);
+        if (ferme) return `<td class="ferme">${fer.has(j) ? caseFeriee(j) : ''}</td>`;
+        // Absence du jour ; demi-journée (duree 0,5) marquée « ½ » et comptée 0,5
+        const a = absence[r.id + '|' + j], t = a && types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
+        if (t) nb += demi ? 0.5 : 1;
+        const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
+        return editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>` : `<td>${contenu}</td>`;
+      }).join('');
+      return `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}</span></td>${cases}${editable ? `<td class="num" style="padding:0 10px">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
+    };
+    const ligneGroupe = (contenu, niveau, secondaire) => `<tr class="groupe"><td colspan="${jours.length + (editable ? 2 : 1)}">
+      <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
+
+    // Composition comme dans Liste des ressources : direction → équipe → projet → membres,
+    // puis les personnes de l'unité sans projet. Une personne sur plusieurs projets apparaît sous chacun.
+    const unite = (e, niveau) => {
+      const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
+      const projets = etat.d.projets.filter(p => p.equipeId === e.id);
       const personnes = etat.d.ressources.filter(r => r.equipeId === e.id);
-      if (!personnes.length) return '';
-      return `<tr class="groupe"><td colspan="${jours.length + (editable ? 2 : 1)}"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td></tr>` +
-        personnes.map(r => {
-          let nb = 0;
-          const cases = jours.map(j => {
-            const ferme = !Calculs.estJourOuvre(j, fer);
-            if (ferme) return `<td class="ferme">${fer.has(j) ? caseFeriee(j) : ''}</td>`;
-            // Absence du jour ; demi-journée (duree 0,5) marquée « ½ » et comptée 0,5
-            const a = absence[r.id + '|' + j], t = a && types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
-            if (t) nb += demi ? 0.5 : 1;
-            const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
-            return editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>` : `<td>${contenu}</td>`;
-          }).join('');
-          return `<tr><td class="nom"><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>${cases}${editable ? `<td class="num" style="padding:0 10px">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
-        }).join('');
-    }).join('');
+      const affectees = new Set();
+      const blocsProjets = projets.map(p => {
+        const membres = etat.d.affectations.filter(a => a.projetId === p.id).map(a => ressource(a.ressourceId)).filter(Boolean);
+        membres.forEach(r => affectees.add(r.id));
+        return membres.length ? ligneGroupe(`${C.icone('projet', 14)}${C.code(p.code)} ${esc(p.nom)}`, niveau + 1, true) + membres.map(r => lignePersonne(r, niveau + 2)).join('') : '';
+      }).join('');
+      const sansProjet = personnes.filter(r => !affectees.has(r.id));
+      const contenu = sousEquipes.map(x => unite(x, niveau + 1)).join('') + blocsProjets
+        + (sansProjet.length && projets.length ? ligneGroupe('Sans projet', niveau + 1, true) : '')
+        + sansProjet.map(r => lignePersonne(r, niveau + (projets.length ? 2 : 1))).join('');
+      if (!contenu) return '';
+      return ligneGroupe(`${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${esc(e.nom)}`, niveau, false) + contenu;
+    };
+    const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
+    const lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
 
     return `<div class="calendrier"><table><thead><tr><th class="nom">Personne</th>${entete}${editable ? '<th>Total</th>' : ''}</tr></thead>
       <tbody>${lignes || `<tr><td class="nom" colspan="${jours.length + 1}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;

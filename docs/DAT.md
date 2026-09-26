@@ -39,6 +39,7 @@
 | 1.24    | 2026-09-25 | Absences à la demi-journée (`absences.duree`, migration 009) : récap, solde, capacité et heures attendues comptent 0,5 ; calendrier « ½ ». Import de l'onglet Planning de `Calendrier_2026.xlsx` (117 absences « Congés validé », 2 fiches créées) (§ 4, § 6) |
 | 1.25    | 2026-09-25 | Rafraîchissement des données en arrière-plan (changement d'écran, retour sur l'onglet) (§ 2) |
 | 1.26    | 2026-09-25 | Lecture paginée de toutes les tables (plafond de lignes de la Data API : les absences d'été importées n'étaient pas chargées) ; serveur simulé plafonné à 50 lignes (§ 2, § 9) |
+| 1.27    | 2026-09-26 | Incident « permission denied for schema auth » à chaque modification : `tracer_modification()` passe en `SECURITY DEFINER` (migration 010) ; calendrier des congés groupé comme Liste des ressources (§ 3.3, § 5) |
 
 ---
 
@@ -140,7 +141,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 |-------|---------|---------|---------|
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
-| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence), Récap annuel (mêmes personnes que la grille), Capacité par sprint | `11-conges.png` |
+| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; personnes groupées comme dans Liste des ressources : direction → équipe → projet → membres, puis « Sans projet »), Récap annuel (mêmes personnes que la grille), Capacité par sprint | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
@@ -162,7 +163,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -236,6 +237,12 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `notes_daily` | auteur, personnes partageant une équipe avec lui, administrateurs | auteur |
 | `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
 | toutes | — | rôle `anonymous` : aucun droit |
+
+Le trigger de traçabilité `tracer_modification()` est `SECURITY DEFINER` (migration 010) : le rôle
+`authenticated` n'a pas l'usage du schéma `auth` (propriété de Neon), seules les fonctions à droits du
+propriétaire peuvent appeler `auth.user_id()` à l'exécution (les règles RLS et valeurs par défaut, déjà
+résolues, n'en ont pas besoin). Toute nouvelle fonction PL/pgSQL appelant `auth.user_id()` doit donc être
+`SECURITY DEFINER` avec `search_path = ''`.
 
 Contrôles complémentaires (triggers) : `controler_feuille_temps()` (validation/renvoi réservés
 au responsable ; feuille validée figée), `controler_temps_saisi()` (heures d'une semaine validée
