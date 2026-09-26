@@ -77,7 +77,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
        Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
       'moisPrecedent', 'moisSuivant', 'semainePrecedente', 'semaineSuivante', 'ongletAdministration', 'choisirReferentiel',
-      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler'];
+      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier'];
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
         .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
@@ -171,6 +171,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="choisirPinceau"][data-id="Congés prévisionnel"]');
     await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);
     await capture('11-conges');
+    // Vue « Par équipe » : une ligne par personne + synthèse par projet ; vue « Par projet » : ses membres seulement
+    const personnesAffichees = async () => page.$$eval('.calendrier tr[data-personne]', t => t.map(x => x.dataset.personne));
+    const parEquipe = await personnesAffichees();
+    verifier('Congés : chaque personne une seule fois (vue par équipe)', parEquipe.length > 0 && new Set(parEquipe).size === parEquipe.length);
+    verifier('Congés : synthèse des absents par projet', (await page.$$('.calendrier tr.ligne-synthese')).length > 0);
+    await page.click('[data-action="vueCalendrier"][data-mode="projet"]'); await page.waitForTimeout(200);
+    const parProjet = await personnesAffichees();
+    const attendus = await page.evaluate(() => { const p = Calendrier.projetChoisi(); return etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId); });
+    verifier('Congés : vue par projet = ses membres, une fois chacun', parProjet.length === attendus.length && parProjet.every(id => attendus.includes(id))
+      && (await page.$$('.calendrier tr.ligne-synthese')).length === 1);
+    await page.click('[data-action="vueCalendrier"][data-mode="equipe"]'); await page.waitForTimeout(150);
     await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Récap annuel (personnes de la grille)', (await texte()).includes('Solde') && !(await texte()).includes('Aucune ressource') && !(await page.$('td[data-action="basculerAbsence"]')));
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);

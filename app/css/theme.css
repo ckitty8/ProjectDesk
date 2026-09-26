@@ -186,3 +186,13 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .menu-aide-entree { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; color: var(--texte); cursor: pointer; text-decoration: none; }
 .menu-aide-entree:hover { background: var(--fond-doux); }
 .menu-aide-sep { height: 1px; background: var(--bordure-fine); margin: 4px 0; }
+
+/* Calendrier : étiquettes de projets et lignes de synthèse (absents / membres) */
+.calendrier td.nom > .ligne-flex { max-width: 250px; overflow: hidden; }
+.nom-complement { display: flex; gap: 3px; flex-wrap: nowrap; overflow: hidden; max-width: 210px; margin: 1px 0 3px; }
+.etiquette { display: inline-block; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; font-size: 10.5px; color: var(--discret); border: 1px solid var(--bordure); border-radius: 4px; padding: 0 5px; margin-left: 2px; font-weight: 400; }
+.calendrier tr.ligne-synthese td { background: #FAFBFD; font-size: 10.5px; }
+.calendrier tr.ligne-synthese td.nom { color: var(--discret); font-size: 12.5px; }
+.calendrier td.synthese-vide { color: #C9CFD9; }
+.calendrier td.synthese.partiel { background: #FFF4E0; color: #8A4B00; font-weight: 600; }
+.calendrier td.synthese.critique { background: #FDECEC; color: #B42318; font-weight: 600; }

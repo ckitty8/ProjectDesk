@@ -112,6 +112,14 @@ const Calculs = (() => {
     return { parType, total: sommeDurees(siennes), cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
   }
 
+  // Absents d'un groupe (membres d'un projet) un jour donné, en personnes (demi-journée = 0,5).
+  // Niveau : 'aucun' | 'partiel' (au moins un absent) | 'critique' (plus de la moitié absente).
+  function absentsDuJour(ressourceIds, jour, absences) {
+    const absents = absences.filter(a => a.jour === jour && ressourceIds.includes(a.ressourceId)).reduce((s, a) => s + dureeAbsence(a), 0);
+    const niveau = !absents ? 'aucun' : absents > ressourceIds.length / 2 ? 'critique' : 'partiel';
+    return { absents, total: ressourceIds.length, niveau };
+  }
+
   // Capacité d'une liste de personnes sur une période, en jours-homme.
   // théorique = Σ jours ouvrés × capacité ; disponible = idem, moins les absences (demi-journée = 0,5).
   function capacitePeriode(ressources, debut, fin, absences, feries) {
@@ -187,7 +195,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    capacitePeriode, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    capacitePeriode, absentsDuJour, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();

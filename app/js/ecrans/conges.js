@@ -49,7 +49,7 @@ Ecrans.conges = {
     // Contenu de chaque onglet
     const onglet = this.onglet();
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
-    const grille = `<div class="carte"><div class="carte-titre">${Calendrier.navigation()}<div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
+    const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div><div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     // Type d'absence décompté du droit annuel (clé « cp ») : son libellé est administrable
     const typeDecompte = esc(ABSENCES.CP);
     const recapAnnuel = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}<h2>Récap annuel ${annee} ${C.aide('droitAnnuel')}</h2></div><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>

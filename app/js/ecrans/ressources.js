@@ -2,6 +2,8 @@
    Général › Gestion des ressources (maquette 03-gRess.png) — lecture
    Calendrier mensuel des absences + annuaire des ressources.
    Le composant Calendrier est partagé avec Mon dashboard › Congés.
+   Vues : « Par équipe » (chaque personne une fois, étiquettes de projets,
+   synthèse des absents par projet) et « Par projet » (membres d'un projet).
    ============================================================ */
 'use strict';
 
@@ -18,6 +20,22 @@ const Calendrier = {
     return `<div class="ligne-flex"><button class="btn" data-action="moisPrecedent">‹</button>
       <b style="min-width:130px;text-align:center">${Calculs.libelleMois(annee, mois)}</b>
       <button class="btn" data-action="moisSuivant">›</button></div>`;
+  },
+
+  // Vue du calendrier : « equipe » (défaut) ou « projet » (+ projet choisi) ; commune aux deux écrans
+  vue: () => ui('calendrier', { mode: 'equipe', projetId: null }),
+  // Projets proposés en vue « Par projet » (ceux qui ont des membres) et projet affiché
+  projetsAvecMembres: () => etat.d.projets.filter(p => etat.d.affectations.some(a => a.projetId === p.id)),
+  projetChoisi() { const liste = this.projetsAvecMembres(); return liste.find(p => p.id === this.vue().projetId) || liste[0] || null; },
+
+  // Sélecteur « Par équipe / Par projet » (+ liste des projets en vue projet)
+  selecteurVue() {
+    const v = this.vue(), p = this.projetChoisi();
+    return `<div class="ligne-flex" style="margin-left:14px"><div class="puces">
+        <button class="puce${v.mode === 'equipe' ? ' active' : ''}" data-action="vueCalendrier" data-mode="equipe">Par équipe</button>
+        <button class="puce${v.mode === 'projet' ? ' active' : ''}" data-action="vueCalendrier" data-mode="projet">Par projet</button></div>
+      ${v.mode === 'projet' ? C.liste(this.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p ? p.id : '',
+        'class="champ" style="width:auto;height:30px" data-action-change="projetCalendrier"') : ''}</div>`;
   },
 
   // Tableau personnes × jours ; editable = clic sur une case pour poser/retirer une absence
@@ -40,8 +58,17 @@ const Calendrier = {
       ? `<span class="case-absence" title="${esc(libelleFerie(j))}" style="color:${typeFerie.couleur};background:${C.teinte(typeFerie.couleur, .16)}">${esc(typeFerie.abrege || 'JF')}</span>`
       : `<span title="${esc(libelleFerie(j))}">F</span>`;
 
-    // Ligne d'une personne (niveau = retrait dans l'arborescence)
-    const lignePersonne = (r, niveau) => {
+    // Projets d'une personne (étiquettes à côté du nom, vue « Par équipe »)
+    const projetsDe = r => etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean);
+    // (au plus 3 étiquettes sur une ligne, puis « +N » ; liste complète en infobulle)
+    const etiquettes = r => {
+      const liste = projetsDe(r), MAX = 3;
+      return liste.slice(0, MAX).map(p => `<span class="etiquette" title="${esc(p.code + ' · ' + p.nom)}">${esc(p.nom)}</span>`).join('')
+        + (liste.length > MAX ? `<span class="etiquette" title="${esc(liste.slice(MAX).map(p => p.nom).join(', '))}">+${liste.length - MAX}</span>` : '');
+    };
+
+    // Ligne d'une personne (niveau = retrait ; complement = étiquettes, mention « responsable »)
+    const lignePersonne = (r, niveau, complement = '') => {
       let nb = 0;
       const cases = jours.map(j => {
         const ferme = !Calculs.estJourOuvre(j, fer);
@@ -52,35 +79,52 @@ const Calendrier = {
         const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
         return editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>` : `<td>${contenu}</td>`;
       }).join('');
-      return `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}</span></td>${cases}${editable ? `<td class="num" style="padding:0 10px">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
+      // complément (étiquettes de projets, « responsable ») sur une 2e ligne : la colonne reste étroite
+      return `<tr data-personne="${r.id}"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}
+        <span><span>${esc(r.nom)}</span>${complement ? `<span class="nom-complement">${complement}</span>` : ''}</span></span></td>${cases}${editable ? `<td class="num" style="padding:0 10px;white-space:nowrap">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
     };
     const ligneGroupe = (contenu, niveau, secondaire) => `<tr class="groupe"><td colspan="${jours.length + (editable ? 2 : 1)}">
       <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
 
-    // Composition comme dans Liste des ressources : direction → (responsable) → équipe → projet →
-    // membres, puis les personnes de l'unité sans projet. Une personne sur plusieurs projets apparaît sous chacun.
+    // Synthèse d'un projet : absents / membres pour chaque jour ouvré (Calculs.absentsDuJour)
+    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(id => ressource(id));
+    const ligneSynthese = (p, niveau) => {
+      const ids = membresDe(p);
+      const cases = jours.map(j => {
+        if (!Calculs.estJourOuvre(j, fer)) return '<td class="ferme"></td>';
+        const s = Calculs.absentsDuJour(ids, j, etat.d.absences);
+        return s.niveau === 'aucun' ? '<td class="synthese-vide">·</td>'
+          : `<td class="synthese ${s.niveau}" title="${Calculs.nombre(s.absents)} absent(s) sur ${s.total}">${Calculs.nombre(s.absents)}/${s.total}</td>`;
+      }).join('');
+      return `<tr class="ligne-synthese"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.icone('projet', 14)}${esc(p.nom)}</span></td>${cases}${editable ? '<td></td>' : ''}</tr>`;
+    };
+
+    // Vue « Par équipe » : chaque personne une seule fois sous son unité (responsable en tête),
+    // puis la synthèse des absences par projet de l'unité (maquette conges-sans-doublon, pistes 2 et 3).
     const unite = (e, niveau) => {
       const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
-      const projets = etat.d.projets.filter(p => p.equipeId === e.id);
-      const personnes = etat.d.ressources.filter(r => r.equipeId === e.id);
-      const affectees = new Set();
-      const blocsProjets = projets.map(p => {
-        const membres = etat.d.affectations.filter(a => a.projetId === p.id).map(a => ressource(a.ressourceId)).filter(Boolean);
-        membres.forEach(r => affectees.add(r.id));
-        return membres.length ? ligneGroupe(`${C.icone('projet', 14)}${C.code(p.code)} ${esc(p.nom)}`, niveau + 1, true) + membres.map(r => lignePersonne(r, niveau + 2)).join('') : '';
-      }).join('');
-      // Le responsable de l'unité (sans affectation) est affiché en tête, pas dans « Sans projet »
-      const responsables = personnes.filter(r => r.id === e.responsableId && !affectees.has(r.id));
-      const sansProjet = personnes.filter(r => !affectees.has(r.id) && r.id !== e.responsableId);
-      const contenu = responsables.map(r => lignePersonne(r, niveau + 1)).join('')
-        + sousEquipes.map(x => unite(x, niveau + 1)).join('') + blocsProjets
-        + (sansProjet.length && projets.length ? ligneGroupe('Sans projet', niveau + 1, true) : '')
-        + sansProjet.map(r => lignePersonne(r, niveau + (projets.length ? 2 : 1))).join('');
+      const projets = etat.d.projets.filter(p => p.equipeId === e.id && membresDe(p).length);
+      const personnes = etat.d.ressources.filter(r => r.equipeId === e.id)
+        .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
+      const contenu = personnes.map(r => lignePersonne(r, niveau + 1,
+          (r.id === e.responsableId ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')
+        + sousEquipes.map(x => unite(x, niveau + 1)).join('')
+        + (projets.length ? ligneGroupe(`Projets — absents / membres par jour ${C.aide('syntheseProjets')}`, niveau + 1, true) + projets.map(p => ligneSynthese(p, niveau + 1)).join('') : '');
       if (!contenu) return '';
       return ligneGroupe(`${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${esc(e.nom)}`, niveau, false) + contenu;
     };
-    const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
-    const lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
+
+    // Vue « Par projet » : les membres du projet choisi, une fois chacun, puis sa synthèse
+    const vue = this.vue();
+    let lignes;
+    if (vue.mode === 'projet') {
+      const p = this.projetChoisi();
+      lignes = p ? ligneGroupe(`${C.icone('projet', 14)}${C.code(p.code)} ${esc(p.nom)} <span class="discret" style="font-weight:400">${membresDe(p).length} membres</span>`, 0, false)
+        + membresDe(p).map(id => lignePersonne(ressource(id), 1)).join('') + ligneSynthese(p, 1) : '';
+    } else {
+      const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
+      lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
+    }
 
     return `<div class="calendrier"><table><thead><tr><th class="nom">Personne</th>${entete}${editable ? '<th>Total</th>' : ''}</tr></thead>
       <tbody>${lignes || `<tr><td class="nom" colspan="${jours.length + 1}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
@@ -107,7 +151,7 @@ Ecrans.ressources = {
     return `
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
-      <div class="carte"><div class="carte-titre">${Calendrier.navigation()}${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
+      <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
       <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${etat.d.ressources.length} personnes</span></div>
         <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th></tr></thead>
         <tbody>${annuaire || `<tr><td colspan="5">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
@@ -116,6 +160,8 @@ Ecrans.ressources = {
 };
 
 Object.assign(Actions, {
+  vueCalendrier: d => majUi('calendrier', { mode: d.mode }),
+  projetCalendrier: (_, el) => majUi('calendrier', { projetId: el.value }),
   moisPrecedent() { const m = Calendrier.moisCourant(); majUi('calendrier', m.mois === 0 ? { annee: m.annee - 1, mois: 11 } : { mois: m.mois - 1 }); },
   moisSuivant() { const m = Calendrier.moisCourant(); majUi('calendrier', m.mois === 11 ? { annee: m.annee + 1, mois: 0 } : { mois: m.mois + 1 }); }
 });
