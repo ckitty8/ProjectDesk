@@ -155,6 +155,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');
     await page.click('.fermer');
 
+    // Bulles d'information : présentes et lisibles au survol
+    await aller('dashboard'); await page.hover('.kpi .aide'); await page.waitForTimeout(100);
+    verifier('Bulles d’information : texte affiché au survol', await page.$eval('.kpi .aide .bulle', b => getComputedStyle(b).display !== 'none' && b.textContent.length > 20)
+      && (await page.$$('.aide')).length >= 5);
     await aller('conges'); await page.click('[data-action="moisSuivant"]');
     await page.click('[data-action="choisirPinceau"][data-id="Congés prévisionnel"]');
     await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);

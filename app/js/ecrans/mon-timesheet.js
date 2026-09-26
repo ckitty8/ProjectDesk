@@ -75,7 +75,7 @@ Ecrans.monTimesheet = {
           <td>${C.badgeFeuille(f.statut)}</td><td class="num"><button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${f.semaine}">Renvoyer</button>
           <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${f.semaine}">Valider</button></td></tr>`;
       }).join('');
-      return `<div class="carte"><div class="carte-titre"><h2>À valider — équipe ${esc(e.nom)}</h2><span class="discret">visible par le chef d’équipe (owner/admin)</span></div>
+      return `<div class="carte"><div class="carte-titre"><h2>À valider — équipe ${esc(e.nom)} ${C.aide('aValider')}</h2><span class="discret">visible par le chef d’équipe (owner/admin)</span></div>
         <table class="tableau"><thead><tr><th>Personne</th><th>Semaine</th><th class="num">Heures</th><th>Statut</th><th></th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune feuille en attente de validation.')}</td></tr>`}</tbody></table></div>`;
     }).join('');

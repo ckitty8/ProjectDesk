@@ -63,3 +63,32 @@ const TYPES_CHAMP = ['Texte court', 'Texte long', 'Liste', 'Date', 'Nombre', 'Fi
 
 // Surcharge éventuelle (tests automatisés avec un serveur simulé)
 if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);
+
+/* ============================================================
+   Bulles d'information (composant C.aide) — un seul endroit pour les textes.
+   Chaque clé est utilisée à côté de l'élément qu'elle explique ; une valeur peut
+   être une fonction quand le texte dépend d'un libellé administrable.
+   ============================================================ */
+const AIDES = {
+  sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule : rien ne s’y modifie, même pour un administrateur.',
+  sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les demandes de votre équipe.',
+  avancementMoyen: 'Moyenne de l’avancement (%) des projets non terminés.',
+  projetsRisque: 'Projets au statut « À risque » ou « En retard ».',
+  tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
+  projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
+  pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
+  // Fonction : le libellé du type décompté est administrable (lu au moment de l'affichage)
+  droitAnnuel: () => `Solde = droit annuel (${CONFIG.DROIT_CP_ANNUEL} j) − jours de « ${ABSENCES.CP} ». Les autres types ne sont pas décomptés. Une demi-journée compte 0,5.`,
+  capaciteSprint: 'Par sprint de 2 semaines : jours-homme disponibles / théoriques. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences.',
+  ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
+  responsableRole: 'Unité : son responsable. Projet : son chef. Personne : son rôle sur le projet (Chef de projet et Membre peuvent le modifier, Lecteur le consulte).',
+  statutUnite: 'Une unité inactive reste visible mais n’est plus proposée dans le formulaire de demande. Une unité ne peut être supprimée que vide.',
+  valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
+  completude: 'Heures saisies ÷ heures attendues de la semaine, toutes personnes confondues.',
+  aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',
+  dailyVisibilite: 'Vos notes sont lisibles par les personnes de vos équipes (Général › Daily des équipes) et par les administrateurs.',
+  referentielSysteme: 'Valeurs « système » : utilisées par les calculs et les droits. Renommables (les données suivent), désactivables, mais non supprimables.',
+  joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
+  rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
+  avancementProjet: 'Avancement (%) du projet ; « x/y » = tickets terminés sur le total.'
+};

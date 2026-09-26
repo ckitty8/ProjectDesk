@@ -44,6 +44,7 @@
 | 1.29    | 2026-09-26 | `no-cache` étendu à tout le site : à l'ouverture (sans F5) le navigateur resservait d'anciennes copies (page et données) (§ 8) |
 | 1.30    | 2026-09-26 | Calendrier des congés : le responsable d'une unité sans affectation est affiché en tête de l'unité (et non sous « Sans projet ») (§ 3.3) |
 | 1.31    | 2026-09-26 | Liste des ressources : le responsable d'une unité (sans projet) est affiché juste sous l'unité, avant ses équipes et projets (§ 3.3) |
+| 1.32    | 2026-09-26 | Bulles d'information « ⓘ » (composant `C.aide`, textes `AIDES`) : sections, KPI, congés, liste des ressources, timesheet, daily, administration, projets (§ 2.1, § 10) |
 
 ---
 
@@ -109,7 +110,7 @@ Principes :
 | `app/js/api.js` | Appels Neon Auth (session, jeton, organisations, invitations) et Data API (`lire`, `creer` avec upsert, `modifier`, `supprimer`, `executer`) ; conversion camelCase ↔ snake_case |
 | `app/js/calculs.js` | **Seul endroit des règles de calcul** (§ 6) : fonctions pures |
 | `app/js/etat.js` | État global, chargement, navigation, délégation d'événements (`data-action`, `data-action-change`, `data-action-saisie`, `data-action-envoi`), droits d'affichage |
-| `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes (échappement HTML `esc`) |
+| `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js`) (échappement HTML `esc`) |
 | `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, bloc utilisateur |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition) et « Nouveau projet » |
 | `app/js/modale.js` | Fenêtres : affectations, fiche ressource, équipe (membres, invitations), objectifs |
@@ -335,7 +336,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (52 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (53 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
@@ -358,6 +359,8 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
 6. **Section Général = lecture seule** : un écran `section: 'general'` n'affiche aucun champ,
    formulaire ni action d'écriture ; toute modification va dans « Mon dashboard ». Une nouvelle
    action de lecture utilisée en Général doit être ajoutée à `ACTIONS_LECTURE` dans `tests/parcours.js`.
+- Explication d'un élément (règle de calcul, droit, statut) → bulle `C.aide('clé')`, texte ajouté à
+  `AIDES` dans `config.js` (un seul endroit pour les textes d'aide).
 
 ## 11. Outillage qualité documentaire
 

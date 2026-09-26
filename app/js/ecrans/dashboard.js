@@ -20,10 +20,10 @@ Ecrans.dashboard = {
     const occupation = Calculs.tauxOccupation(ressources, Calculs.lundi(jour), temps, absences, feries());
     const kpis = [
       C.kpi('Projets actifs', actifs.length, `${projets.length - actifs.length} terminés`),
-      C.kpi('Avancement moyen', Calculs.pourcent(Calculs.avancementMoyen(actifs)), 'projets actifs'),
-      C.kpi('Projets à risque ou en retard', aRisque),
+      C.kpi('Avancement moyen', Calculs.pourcent(Calculs.avancementMoyen(actifs)), 'projets actifs', 'avancementMoyen'),
+      C.kpi('Projets à risque ou en retard', aRisque, '', 'projetsRisque'),
       C.kpi('Tickets ouverts', Calculs.ticketsOuverts(tickets), `sur ${tickets.length}`),
-      C.kpi('Taux d’occupation', Calculs.pourcent(occupation), `cible ${CONFIG.CIBLE_OCCUPATION} %`)
+      C.kpi('Taux d’occupation', Calculs.pourcent(occupation), `cible ${CONFIG.CIBLE_OCCUPATION} %`, 'tauxOccupation')
     ].join('');
 
     // Objectifs du trimestre choisi
@@ -69,7 +69,7 @@ Ecrans.dashboard = {
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.75fr);gap:16px;align-items:start">
         <div class="carte"><div class="carte-titre"><h2>Progression par trimestre</h2><span class="discret">Atteinte moyenne des OKR · ${annee}</span></div>
           <table class="tableau"><thead><tr><th>Équipe</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th></tr></thead><tbody>${lignesTrimestres}</tbody></table></div>
-        <div class="carte"><div class="carte-titre"><h2>Projets à surveiller</h2></div>
+        <div class="carte"><div class="carte-titre"><h2>Projets à surveiller ${C.aide('projetsSurveiller')}</h2></div>
           <table class="tableau"><tbody>${surveiller || `<tr><td>${C.vide('Aucun projet à risque ni échéance proche.')}</td></tr>`}</tbody></table></div>
       </div>
     </div>`;

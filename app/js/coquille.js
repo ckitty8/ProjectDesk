@@ -58,9 +58,9 @@ const Coquille = (() => {
         <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div>
       </div>
       <nav>
-        <div class="menu-titre"><span>Général</span><span>lecture</span></div>
+        <div class="menu-titre"><span>Général ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${MENU_GENERAL.map(lienMenu).join('')}
-        <div class="menu-titre"><span>Mon dashboard</span><span>édition</span></div>
+        <div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
         ${MENU_MOI.map(lienMenu).join('')}
       </nav>
       <div class="bloc-utilisateur">

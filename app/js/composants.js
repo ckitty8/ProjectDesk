@@ -57,8 +57,8 @@ const C = (() => {
     </div>`;
 
   // Carte indicateur (KPI)
-  const kpi = (libelle, valeur, complement = '') => `
-    <div class="carte kpi"><div class="kpi-libelle">${esc(libelle)}</div>
+  const kpi = (libelle, valeur, complement = '', cleAide = '') => `
+    <div class="carte kpi"><div class="kpi-libelle">${esc(libelle)}${cleAide ? ' ' + aide(cleAide) : ''}</div>
       <div class="kpi-valeur">${valeur}<span class="kpi-complement">${complement}</span></div></div>`;
 
   // Liste déroulante : options [{ valeur, libelle }] ou chaînes
@@ -68,6 +68,12 @@ const C = (() => {
       return `<option value="${esc(v)}"${String(v) === String(valeur ?? '') ? ' selected' : ''}>${esc(l)}</option>`;
     }).join('')}</select>`;
   }
+
+  // Bulle d'information « ⓘ » : texte de AIDES (config.js), visible au survol ou au clavier (tabulation)
+  const aide = cle => {
+    const texte = typeof AIDES[cle] === 'function' ? AIDES[cle]() : (AIDES[cle] || '');
+    return `<span class="aide" tabindex="0" role="note" aria-label="${esc(texte)}">ⓘ<span class="bulle">${esc(texte)}</span></span>`;
+  };
 
   const vide = texte => `<div class="vide">${esc(texte)}</div>`;
 
@@ -87,5 +93,5 @@ const C = (() => {
     `<button class="btn-icone" title="${esc(titre)}" ${desactive ? 'disabled' : `data-action="${action}" ${attributs}`}>${icone(nom)}</button>`;
   const badgeActif = actif => actif ? badge('Active', '#0B6B4F', '#E3F5EC') : badge('Inactive', '#4A5363', '#F1F3F7');
 
-  return { esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
+  return { aide, esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();

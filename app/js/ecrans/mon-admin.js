@@ -59,7 +59,7 @@ Ecrans.monAdmin = {
         <td class="num">${C.boutonIcone('supprimer', 'supprimerFerie', `data-jour="${f.jour}"`, 'Supprimer ce jour férié')}</td></tr>`).join('');
     const puces = [...new Set([...annees, annee])].sort().map(a =>
       `<button class="puce${a === annee ? ' active' : ''}" data-action="anneeFeries" data-annee="${a}">${a}</button>`).join('');
-    return `<div class="carte"><div class="carte-titre"><h2>Jours fériés</h2><div class="puces">${puces}</div></div>
+    return `<div class="carte"><div class="carte-titre"><h2>Jours fériés ${C.aide('joursFeries')}</h2><div class="puces">${puces}</div></div>
       <table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th class="num"></th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="3">${C.vide('Aucun jour férié pour ' + annee + '.')}</td></tr>`}</tbody></table>
       <form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterFerie">

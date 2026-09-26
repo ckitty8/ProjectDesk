@@ -46,7 +46,7 @@ Ecrans.daily = {
         </div>
       </div>
       <div class="carte historique" style="margin-top:58px">
-        <div class="carte-titre"><h2>Historique</h2></div>
+        <div class="carte-titre"><h2>Historique ${C.aide('dailyVisibilite')}</h2></div>
         ${historique.map(h => {
           const t = this.texte(h), pts = Calculs.nbPoints(t);
           const premier = t.split('\n').find(l => l.trim().startsWith('-') && l.trim().length > 2);

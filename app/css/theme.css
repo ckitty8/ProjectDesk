@@ -167,3 +167,13 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .arbre-enfant::before { content: ''; position: absolute; left: 14px; top: -10px; bottom: -10px; border-left: 1px solid var(--bordure); }
 .arbre-parent { display: flex; align-items: center; gap: 8px; }
 .arbre-parent .chevron { width: 16px; color: var(--pale); background: none; border: 0; cursor: pointer; padding: 0; }
+
+/* Bulle d'information (C.aide) */
+.aide { position: relative; display: inline-flex; margin-left: 4px; color: var(--pale); cursor: help; font-size: 12px; font-weight: 400;
+  text-transform: none; letter-spacing: 0; vertical-align: middle; outline: none; }
+.aide:hover, .aide:focus { color: var(--primaire); }
+.aide .bulle { display: none; position: absolute; top: 120%; left: 50%; transform: translateX(-50%); z-index: 50; width: 280px;
+  padding: 10px 12px; border-radius: 8px; background: #141A26; color: #fff; font-size: 12px; line-height: 1.45; font-weight: 400;
+  text-align: left; white-space: normal; text-transform: none; letter-spacing: 0; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.aide:hover .bulle, .aide:focus .bulle { display: block; }
+.menu-titre .aide .bulle { left: 0; transform: none; }

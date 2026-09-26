@@ -49,14 +49,14 @@ Ecrans.conges = {
     // Contenu de chaque onglet
     const onglet = this.onglet();
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
-    const grille = `<div class="carte"><div class="carte-titre">${Calendrier.navigation()}<div class="puces">${pinceaux}</div></div>${Calendrier.rendre(true)}</div>`;
+    const grille = `<div class="carte"><div class="carte-titre">${Calendrier.navigation()}<div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     // Type d'absence décompté du droit annuel (clé « cp ») : son libellé est administrable
     const typeDecompte = esc(ABSENCES.CP);
-    const recapAnnuel = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}<h2>Récap annuel ${annee}</h2></div><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
+    const recapAnnuel = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}<h2>Récap annuel ${annee} ${C.aide('droitAnnuel')}</h2></div><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
       <table class="tableau"><thead><tr><th>Personne</th><th>${typeDecompte}</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
         <th class="num">Total</th><th class="num">Solde</th></tr></thead>
         <tbody>${recap || `<tr><td colspan="8">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
-    const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint</h2><span class="discret">jours-homme disponibles / théoriques</span></div>
+    const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint ${C.aide('capaciteSprint')}</h2><span class="discret">jours-homme disponibles / théoriques</span></div>
       <table class="tableau"><thead><tr><th>Équipe</th>${sprints.map(s => `<th ${s.numero === courant ? 'style="background:#F3F6FF;color:var(--primaire)"' : ''}>Sprint ${s.numero}${s.numero === courant ? ' · en cours' : ''}
         <div style="text-transform:none;letter-spacing:0">${Calculs.formatCourt(s.debut)} – ${Calculs.formatCourt(s.fin)}</div></th>`).join('')}</tr></thead>
         <tbody>${lignesCap}${ligneTotal}</tbody></table></div>`;

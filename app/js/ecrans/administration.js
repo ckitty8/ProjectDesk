@@ -20,7 +20,7 @@ const Administration = {
         <td>${etat.d.ressources.filter(r => r.equipeId === e.id).length}</td><td>${etat.d.projets.filter(p => p.equipeId === e.id).length}</td>
         <td class="num">${peutModifier ? `<a data-action="modifierEquipe" data-id="${e.id}">Modifier</a>` : ''}</td></tr>`;
     }).join('');
-    return `<div class="carte"><div class="carte-titre"><h2>Équipes</h2>
+    return `<div class="carte"><div class="carte-titre"><h2>Équipes ${C.aide('rolesEquipe')}</h2>
         ${modifiable && etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleEquipe">+ Nouvelle équipe</button>' : ''}</div>
       <table class="tableau"><thead><tr><th>Équipe</th><th>Responsable</th><th>Membres</th><th>Projets</th><th></th></tr></thead>
       <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration).')}</td></tr>`}</tbody></table></div>`;
@@ -40,7 +40,7 @@ const Administration = {
         <td>${modifiable ? `<button class="interrupteur${v.actif ? ' actif' : ''}" data-action="basculerValeur" data-id="${v.id}"></button>` : (v.actif ? 'Oui' : '<span class="pale">Non</span>')}</td></tr>`).join('');
     return `<div style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start">
       <div class="carte" style="padding:8px">${gauche}</div>
-      <div class="carte"><div class="carte-titre"><h2>${esc(ref.nom)}</h2></div>
+      <div class="carte"><div class="carte-titre"><h2>${esc(ref.nom)} ${valeursDe(ref.id, true).some(v => v.systeme) ? C.aide('referentielSysteme') : ''}</h2></div>
         <table class="tableau"><thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead><tbody>${valeurs}</tbody></table>
         ${modifiable ? `<form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterValeur" data-ref="${ref.id}">
           <input class="champ" name="libelle" placeholder="Nouvelle valeur" required><button class="btn">Ajouter</button></form>` : ''}</div></div>`;

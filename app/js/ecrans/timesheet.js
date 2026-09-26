@@ -56,7 +56,7 @@ Ecrans.timesheet = {
     <div class="ecran">
       ${C.entete('Timesheet', 'Heures déclarées par personne · toutes équipes', Semaine.navigation())}
       <div class="grille-kpi q3">${C.kpi('Heures saisies', Calculs.nombre(totalSaisi) + ' h', `sur ${Calculs.nombre(totalAttendu)} h attendues`)}
-        ${C.kpi('Taux de complétude', Calculs.pourcent(completude))}${C.kpi('Feuilles à compléter', aCompleter)}</div>
+        ${C.kpi('Taux de complétude', Calculs.pourcent(completude), '', 'completude')}${C.kpi('Feuilles à compléter', aCompleter)}</div>
       <div class="carte"><table class="tableau"><thead><tr><th>Personne</th><th>Projets</th>
         ${jours.map(j => { const d = Calculs.depuisIso(j); return `<th class="num">${['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'][d.getDay()]} ${d.getDate()}</th>`; }).join('')}
         <th class="num">Total</th><th>Statut</th></tr></thead><tbody>${lignes || `<tr><td colspan="9">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>

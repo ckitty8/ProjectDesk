@@ -135,7 +135,7 @@ Ecrans.listeRessources = {
     return `<div class="carte">
       <div class="carte-titre"><h2>Directions, équipes, projets et membres</h2>
         <label class="recherche-champ">${C.icone('recherche')}<input placeholder="Rechercher (unité, projet, personne)" data-action-saisie="filtrerArbre"></label></div>
-      <table class="tableau" id="table-unites"><thead><tr><th>Nom</th><th style="text-align:center">Ressources</th><th>Responsable / rôle</th><th>Statut</th><th class="num">Actions</th></tr></thead>
+      <table class="tableau" id="table-unites"><thead><tr><th>Nom</th><th style="text-align:center">Ressources ${C.aide('ressourcesUnite')}</th><th>Responsable / rôle ${C.aide('responsableRole')}</th><th>Statut ${C.aide('statutUnite')}</th><th class="num">Actions</th></tr></thead>
         <tbody>${lignes.join('') || `<tr><td colspan="5">${C.vide(admin ? 'Aucune unité : « + Ajouter une direction » pour commencer.' : 'Aucune unité.')}</td></tr>`}</tbody></table></div>`;
   },
 
@@ -151,7 +151,7 @@ Ecrans.listeRessources = {
           + C.boutonIcone('supprimer', 'supprimerValeurListe', `data-id="${v.id}"`, n ? 'Valeur utilisée : passez-la en Inactive' : 'Supprimer', !!n) : ''}</td></tr>`;
     }).join('');
     return `<div class="carte"><div class="carte-titre"><h2>${esc(titre)}</h2><span class="discret">Utilisés dans les fiches ressources</span></div>
-      <table class="tableau"><thead><tr><th>Nom</th><th style="text-align:center">Ressources</th><th>Statut</th><th class="num">Actions</th></tr></thead>
+      <table class="tableau"><thead><tr><th>Nom</th><th style="text-align:center">Ressources</th><th>Statut ${C.aide('valeursListe')}</th><th class="num">Actions</th></tr></thead>
       <tbody>${lignes || `<tr><td colspan="4">${C.vide('Aucune valeur.')}</td></tr>`}</tbody></table></div>`;
   },
 

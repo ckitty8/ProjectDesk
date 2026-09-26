@@ -29,7 +29,7 @@ Ecrans.projets = {
     <div class="ecran">
       ${C.entete('Projets et Roadmap', `${projets.length} projets · objectifs, avancement et tickets par équipe`, `<div class="puces">${filtres}</div>`)}
       <div class="carte"><table class="tableau">
-        <thead><tr><th style="width:24px"></th><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement</th><th>Tickets</th><th>Échéance</th><th>Statut</th></tr></thead>
+        <thead><tr><th style="width:24px"></th><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th><th>Tickets</th><th>Échéance</th><th>Statut</th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="8">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
     </div>`;
   },
