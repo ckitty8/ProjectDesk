@@ -8,7 +8,7 @@
   ],
   "headers": [
     {
-      "source": "/app/(.*)",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
