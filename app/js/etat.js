@@ -75,21 +75,48 @@ const CLES_UNIQUES = { absences: 'ressource_id,jour', objectifsTravail: 'equipe_
   notes: 'user_id,jour', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
-async function chargerTable(cle) {
+// Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
+async function lireTable(cle) {
   const filtres = { order: ordreDe(cle), ...(FILTRES[cle] ? FILTRES[cle]() : {}) };
   const lignes = await Api.lire(TABLES[cle], filtres);
   lignes.forEach(l => { if ('couleur' in l) l.couleur = couleurSure(l.couleur); });
+  return lignes;
+}
+function appliquerTable(cle, lignes) {
   etat.d[cle] = lignes;
   if (cle === 'valeurs') synchroniserLibellesSysteme();
 }
+async function chargerTable(cle) { appliquerTable(cle, await lireTable(cle)); }
 // Libellés système (config.js) = libellés actuels en base, retrouvés par leur clé technique
 function synchroniserLibellesSysteme() {
   etat.d.valeurs.filter(v => v.cle && LIBELLES_SYSTEME[v.referentielId]).forEach(v => {
     LIBELLES_SYSTEME[v.referentielId][v.cle.toUpperCase()] = v.libelle;
   });
 }
+/* Chargement de toutes les tables, sans jamais effacer ce qui est affiché.
+   Incident du 2026-09-26 (« les congés ont disparu », alors que la base était intacte) :
+   une seule lecture en échec (ex. table ajoutée mais pas encore connue de la Data API, jeton
+   expiré) ne doit ni bloquer les autres tables ni vider l'écran. Règles :
+   - chaque table est lue indépendamment ; une table en échec garde ses données précédentes
+     (ou une liste vide au premier chargement) et un message prévient l'utilisateur ;
+   - si la lecture renvoie tout vide alors que des équipes étaient chargées, c'est une session
+     ou des droits momentanément perdus (la base filtre les lignes sans erreur) : on garde tout. */
 async function chargerDonnees() {
-  await Promise.all(Object.keys(TABLES).map(chargerTable));
+  const cles = Object.keys(TABLES);
+  const resultats = await Promise.allSettled(cles.map(lireTable));
+  const echecs = cles.filter((cle, i) => resultats[i].status === 'rejected');
+  if (echecs.length === cles.length) throw resultats[0].reason;      // rien de lisible : réseau ou session
+  const lu = cle => resultats[cles.indexOf(cle)];
+  const toutVide = cles.every((cle, i) => resultats[i].status === 'rejected' || !resultats[i].value.length);
+  if (toutVide && (etat.d.equipes || []).length) return;              // lecture suspecte : on garde l'affichage
+  cles.forEach(cle => {
+    if (lu(cle).status === 'fulfilled') appliquerTable(cle, lu(cle).value);
+    else if (!etat.d[cle]) appliquerTable(cle, []);
+  });
+  if (echecs.length) {
+    console.warn('Tables non lues :', echecs.map(c => TABLES[c]).join(', '), lu(echecs[0]).reason);
+    notifier('Certaines données n’ont pas pu être relues (' + echecs.map(c => TABLES[c]).join(', ') + ') : affichage précédent conservé.', 'erreur');
+  }
 }
 // Recharge des tables après une écriture, puis redessine
 async function recharger(...cles) {

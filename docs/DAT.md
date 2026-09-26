@@ -50,6 +50,7 @@
 | 1.35    | 2026-09-26 | Récap annuel = jours travaillés / congés / reste à prendre (onglet « Jours de congés » du porteur) ; objectif client par équipe et par année (migration 011) (§ 3.3, § 4, § 5.2, § 6) |
 | 1.36    | 2026-09-26 | Capacité par sprint : calcul type Scrum à titre d’information (`Calculs.capaciteScrum`) ; menu Aide › « Trucs et astuces · KPI Agile » (Scrum et Kanban) (§ 2.1, § 3.3, § 6) |
 | 1.37    | 2026-09-26 | KPI Agile déplacés du menu Aide vers Mon dashboard › Administration › **Trucs et astuces**, avec exemples chiffrés sur un projet (CDO par défaut) (§ 3.3, § 6) |
+| 1.38    | 2026-09-26 | Incident « congés perdus » (base intacte, 155 absences) : une table illisible (ex. `objectifs_jours_travail` inconnue de la Data API) bloquait tout le chargement. Chargement tolérant (`chargerDonnees`) : l'affichage précédent est conservé, message d'alerte ; cache Data API rechargé (§ 2) |
 
 ---
 
@@ -106,6 +107,11 @@ Principes :
 - Toutes les données sont **relues en arrière-plan** à chaque changement d'écran et au retour sur
   l'onglet du navigateur (`rafraichirDonnees()`), sans redessiner pendant une saisie : les changements
   faits ailleurs (autre utilisateur, import en base) apparaissent sans F5.
+- **Chargement tolérant** (`chargerDonnees()`, incident du 2026-09-26) : chaque table est lue
+  indépendamment ; une table en échec **garde ses données précédentes** (liste vide au premier
+  chargement) et un message d'alerte s'affiche ; une relecture entièrement vide alors que des équipes
+  étaient chargées (session ou droits momentanément perdus) est ignorée. Une lecture ne peut donc
+  jamais vider l'écran — les données, elles, ne sont modifiées que par une action de l'utilisateur.
 
 ### 2.1 Fichiers de l'application
 

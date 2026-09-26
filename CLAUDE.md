@@ -6,7 +6,7 @@ sauf consigne contraire explicite du porteur du projet.
 
 ## Les règles
 
-> Numérotation reprise des instructions du porteur du projet (pas de règle n°6 à ce jour).
+> Numérotation reprise des instructions du porteur du projet (pas de règle n°6 à ce jour ; règle n°8 ajoutée le 2026-09-26).
 
 1. **Code lisible et modifiable par un tech lead humain.**
    - Pas de framework, de build ou de dépendance ajoutés sans nécessité démontrée.
@@ -46,10 +46,20 @@ sauf consigne contraire explicite du porteur du projet.
      activé : `git config core.hooksPath .githooks`).
    - Tout écart signalé est corrigé dans un commit suivant, avant de passer à autre chose.
 
+8. **Les évolutions ne touchent jamais aux données** (consigne du porteur, 2026-09-26).
+   - Une évolution demandée ne modifie, ne supprime ni ne déplace aucune donnée existante
+     (absences, ressources, projets, affectations…). Toute écriture en base autre qu'une
+     migration de structure additive demande l'accord explicite du porteur.
+   - Après une migration : recharger le cache de la Data API (DAT § 10) puis vérifier que
+     l'application affiche toujours les données (ex. nombre d'absences inchangé).
+   - Le chargement de l'application ne doit jamais vider l'écran si une lecture échoue
+     (`chargerDonnees()` dans `app/js/etat.js`, DAT § 2).
+
 ## Check-list avant chaque commit
 
 - [ ] Maquette PNG faite et validée (si changement d'écran)
 - [ ] Code commenté, lisible
+- [ ] Aucune donnée existante modifiée (règle n°8)
 - [ ] Référentiels / calculs centralisés (pas de duplication)
 - [ ] `docs/DAT.md` à jour + ligne d'historique
 - [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
