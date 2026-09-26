@@ -57,8 +57,8 @@ const Calendrier = {
     const ligneGroupe = (contenu, niveau, secondaire) => `<tr class="groupe"><td colspan="${jours.length + (editable ? 2 : 1)}">
       <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
 
-    // Composition comme dans Liste des ressources : direction → équipe → projet → membres,
-    // puis les personnes de l'unité sans projet. Une personne sur plusieurs projets apparaît sous chacun.
+    // Composition comme dans Liste des ressources : direction → (responsable) → équipe → projet →
+    // membres, puis les personnes de l'unité sans projet. Une personne sur plusieurs projets apparaît sous chacun.
     const unite = (e, niveau) => {
       const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
       const projets = etat.d.projets.filter(p => p.equipeId === e.id);
@@ -69,8 +69,11 @@ const Calendrier = {
         membres.forEach(r => affectees.add(r.id));
         return membres.length ? ligneGroupe(`${C.icone('projet', 14)}${C.code(p.code)} ${esc(p.nom)}`, niveau + 1, true) + membres.map(r => lignePersonne(r, niveau + 2)).join('') : '';
       }).join('');
-      const sansProjet = personnes.filter(r => !affectees.has(r.id));
-      const contenu = sousEquipes.map(x => unite(x, niveau + 1)).join('') + blocsProjets
+      // Le responsable de l'unité (sans affectation) est affiché en tête, pas dans « Sans projet »
+      const responsables = personnes.filter(r => r.id === e.responsableId && !affectees.has(r.id));
+      const sansProjet = personnes.filter(r => !affectees.has(r.id) && r.id !== e.responsableId);
+      const contenu = responsables.map(r => lignePersonne(r, niveau + 1)).join('')
+        + sousEquipes.map(x => unite(x, niveau + 1)).join('') + blocsProjets
         + (sansProjet.length && projets.length ? ligneGroupe('Sans projet', niveau + 1, true) : '')
         + sansProjet.map(r => lignePersonne(r, niveau + (projets.length ? 2 : 1))).join('');
       if (!contenu) return '';
