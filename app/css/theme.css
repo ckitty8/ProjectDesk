@@ -177,3 +177,12 @@ table.tableau { width: 100%; border-collapse: collapse; }
   text-align: left; white-space: normal; text-transform: none; letter-spacing: 0; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
 .aide:hover .bulle, .aide:focus .bulle { display: block; }
 .menu-titre .aide .bulle { left: 0; transform: none; }
+
+/* Bouton et menu Aide (en-tête) */
+.menu-aide { position: relative; }
+.menu-aide-icone { display: inline-flex; width: 18px; justify-content: center; font-weight: 600; color: var(--primaire); }
+.menu-aide-liste { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; width: 260px; padding: 6px; background: #fff;
+  border: 1px solid var(--bordure); border-radius: 10px; box-shadow: 0 10px 30px rgba(20,26,38,.14); }
+.menu-aide-entree { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; color: var(--texte); cursor: pointer; text-decoration: none; }
+.menu-aide-entree:hover { background: var(--fond-doux); }
+.menu-aide-sep { height: 1px; background: var(--bordure-fine); margin: 4px 0; }

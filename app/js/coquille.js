@@ -79,8 +79,22 @@ const Coquille = (() => {
       <div class="fil"><span class="discret">${general ? 'Général' : 'Mon dashboard'}</span><span class="sep">/</span>
         <b>${esc(ecran.titre)}</b>
         ${general ? C.badge('Lecture seule', '#4A5363', '#F1F3F7') : C.badge('Édition', '#0033AD', '#E8EEFF')}</div>
-      <div class="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, un ticket…<span>⌘K</span></div>
+      <div class="ligne-flex">
+        <div class="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, un ticket…<span>⌘K</span></div>
+        ${menuAide()}</div>
     </header>`;
+  }
+
+  // Bouton « Aide » et son menu (guides : config.js, GUIDE_ECRANS et GUIDES)
+  function menuAide() {
+    const ouvert = ui('menuAide', { ouvert: false }).ouvert;
+    const entree = (sujet, icone, libelle) => `<a class="menu-aide-entree" data-action="ouvrirAide" data-sujet="${sujet}"><span class="menu-aide-icone">${icone}</span>${libelle}</a>`;
+    return `<div class="menu-aide">
+      <button class="btn" data-action="basculerMenuAide" aria-expanded="${ouvert}"><span class="menu-aide-icone">?</span> Aide</button>
+      ${ouvert ? `<div class="menu-aide-liste">
+        ${entree('ecran', '▶', 'Aide sur cet écran')}${entree('premiersPas', '⚑', 'Premiers pas')}${entree('roles', '⛨', 'Rôles et droits')}
+        ${CONFIG.CONTACT_AIDE ? `<div class="menu-aide-sep"></div><a class="menu-aide-entree" href="mailto:${esc(CONFIG.CONTACT_AIDE)}?subject=ProjectDesk"><span class="menu-aide-icone">✉</span>Contacter l’administrateur</a>` : ''}
+      </div>` : ''}</div>`;
   }
 
   // « Mon dashboard » demande une équipe ouverte (cas d'un administrateur sans équipe)
@@ -123,5 +137,14 @@ Object.assign(Actions, {
   async deconnexion() {
     await Api.deconnecter().catch(() => {});
     majEtat({ session: null, equipeCourante: null, ecran: 'connexion', d: {} });
+  }
+});
+
+/* Bouton Aide : ouverture du menu, affichage d'un guide dans une fenêtre */
+Object.assign(Actions, {
+  basculerMenuAide: () => majUi('menuAide', { ouvert: !ui('menuAide', { ouvert: false }).ouvert }),
+  ouvrirAide(d) {
+    majUi('menuAide', { ouvert: false }, { rendre: false });
+    majEtat({ modale: { type: 'aide', sujet: d.sujet } });
   }
 });

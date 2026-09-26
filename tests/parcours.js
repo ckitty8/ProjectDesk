@@ -155,6 +155,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');
     await page.click('.fermer');
 
+    // Bouton Aide : menu, guide de l'écran courant, fermeture
+    await aller('dashboard'); await page.click('[data-action="basculerMenuAide"]');
+    await page.click('[data-action="ouvrirAide"][data-sujet="ecran"]'); await page.waitForTimeout(150);
+    verifier('Bouton Aide : guide de l’écran affiché', (await page.textContent('.modale')).includes('Vue d’ensemble') && !(await page.$('.menu-aide-liste')));
+    await page.click('.modale .fermer');
+    await page.click('[data-action="basculerMenuAide"]'); await page.click('[data-action="ouvrirAide"][data-sujet="roles"]'); await page.waitForTimeout(150);
+    verifier('Bouton Aide : guide « Rôles et droits »', (await page.textContent('.modale')).includes('Lecteur'));
+    await page.click('.modale .fermer');
     // Bulles d'information : présentes et lisibles au survol
     await aller('dashboard'); await page.hover('.kpi .aide'); await page.waitForTimeout(100);
     verifier('Bulles d’information : texte affiché au survol', await page.$eval('.kpi .aide .bulle', b => getComputedStyle(b).display !== 'none' && b.textContent.length > 20)

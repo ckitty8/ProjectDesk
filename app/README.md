@@ -49,6 +49,12 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
    « + Membre » (avec l'email : le lien avec le compte se fait automatiquement à la connexion),
    enfin sur le projet « + Membre ». Ajuster si besoin les onglets **Postes** et **Types de contrat**.
 
+## Aide
+
+Le bouton **Aide** (en-tête) affiche l'aide de l'écran courant, les premiers pas et les rôles.
+Pour afficher l'entrée « Contacter l'administrateur », renseigner `CONTACT_AIDE` (adresse email) dans
+`app/js/config.js`.
+
 ## Rôles
 
 | Qui | Peut |

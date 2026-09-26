@@ -240,6 +240,8 @@ function declencher(nom, element, evenement) {
   Actions[nom](element.dataset, element, evenement);
 }
 document.addEventListener('click', e => {
+  // Menu Aide ouvert : un clic en dehors le referme
+  if ((etat.ui.menuAide || {}).ouvert && !e.target.closest('.menu-aide')) majUi('menuAide', { ouvert: false });
   const el = e.target.closest('[data-action]');
   if (el) { e.preventDefault(); declencher(el.dataset.action, el, e); }
 });

@@ -12,7 +12,7 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -111,6 +111,17 @@ const Modale = {
     const valeurs = valeursDe(refId).map(v => v.libelle);
     if (valeur && !valeurs.includes(valeur)) valeurs.unshift(valeur);
     return C.liste([{ valeur: '', libelle: '—' }, ...valeurs], valeur || '', `class="champ" name="${nom}"`);
+  },
+
+  /* ---------- Guide d'aide (bouton Aide de l'en-tête) ---------- */
+  aide(m) {
+    const esc = C.esc, ecran = Ecrans[etat.ecran] || {};
+    const guide = m.sujet === 'ecran'
+      ? { titre: 'Aide · ' + (ecran.titre || ''), paragraphes: GUIDE_ECRANS[etat.ecran] || ['Pas encore d’aide pour cet écran.'] }
+      : GUIDES[m.sujet];
+    return `<div style="display:flex;flex-direction:column">${this.entete(guide.titre)}
+      <div class="panneau-corps">${guide.paragraphes.map(p => `<p style="margin:0">${esc(p)}</p>`).join('')}
+        <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
   },
 
   /* ---------- Objectifs (OKR) de l'équipe courante ---------- */
