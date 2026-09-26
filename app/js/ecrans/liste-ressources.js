@@ -120,9 +120,12 @@ Ecrans.listeRessources = {
          <td>${nomRessource(e.responsableId)}</td><td>${C.badgeActif(e.actif !== false)}</td>
          <td class="num"><span class="ligne-flex" style="justify-content:flex-end">${boutons}</span></td>`);
       const sousChemin = [...chemin, e.id], sousMasquee = masquee || !ouvert;
+      // Ordre : responsable de l'unité (sans projet) juste sous l'unité, puis équipes, projets, autres personnes
+      const estResponsable = r => r.id === e.responsableId;
+      sansProjet.filter(estResponsable).forEach(r => lignePersonne(r, null, niveau + 1, sousChemin, sousMasquee));
       sesEquipes.forEach(x => ligneUnite(x, niveau + 1, sousChemin, sousMasquee));
       sesProjets.forEach(p => ligneProjet(p, niveau + 1, sousChemin, sousMasquee));
-      sansProjet.forEach(r => lignePersonne(r, null, niveau + 1, sousChemin, sousMasquee));
+      sansProjet.filter(r => !estResponsable(r)).forEach(r => lignePersonne(r, null, niveau + 1, sousChemin, sousMasquee));
     };
 
     // Racines : directions, puis équipes non rattachées (ordre alphabétique)

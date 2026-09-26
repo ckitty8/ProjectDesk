@@ -43,6 +43,7 @@
 | 1.28    | 2026-09-26 | Liste des ressources : une personne sans projet qui dirige une unité est affichée « Responsable de l’unité » (et non « sans projet ») (§ 3.3) |
 | 1.29    | 2026-09-26 | `no-cache` étendu à tout le site : à l'ouverture (sans F5) le navigateur resservait d'anciennes copies (page et données) (§ 8) |
 | 1.30    | 2026-09-26 | Calendrier des congés : le responsable d'une unité sans affectation est affiché en tête de l'unité (et non sous « Sans projet ») (§ 3.3) |
+| 1.31    | 2026-09-26 | Liste des ressources : le responsable d'une unité (sans projet) est affiché juste sous l'unité, avant ses équipes et projets (§ 3.3) |
 
 ---
 
