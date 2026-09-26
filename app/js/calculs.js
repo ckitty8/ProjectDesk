@@ -129,6 +129,15 @@ const Calculs = (() => {
     return { mois, travailles, conges, reste: travailles - objectif };
   }
 
+  // Capacité « type » Scrum d'une équipe pour un sprint (information) :
+  // engageable = (disponible − cérémonies) × facteur de focus, avec cérémonies = Σ capacité × jours de
+  // cérémonie par sprint. Paramètres : CONFIG.CEREMONIES_JOURS_SPRINT, CONFIG.FACTEUR_FOCUS.
+  function capaciteScrum(ressources, disponible) {
+    const ceremonies = ressources.reduce((s, r) => s + (r.capacite ?? 100) / 100 * CONFIG.CEREMONIES_JOURS_SPRINT, 0);
+    const engageable = Math.max(0, disponible - ceremonies) * CONFIG.FACTEUR_FOCUS;
+    return { disponible, ceremonies, engageable, heures: engageable * CONFIG.HEURES_PAR_JOUR };
+  }
+
   // Absents d'un groupe (membres d'un projet) un jour donné, en personnes (demi-journée = 0,5).
   // Niveau : 'aucun' | 'partiel' (au moins un absent) | 'critique' (plus de la moitié absente).
   function absentsDuJour(ressourceIds, jour, absences) {
@@ -212,7 +221,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    capacitePeriode, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();

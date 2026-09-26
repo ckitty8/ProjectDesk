@@ -163,6 +163,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="basculerMenuAide"]'); await page.click('[data-action="ouvrirAide"][data-sujet="roles"]'); await page.waitForTimeout(150);
     verifier('Bouton Aide : guide « Rôles et droits »', (await page.textContent('.modale')).includes('Lecteur'));
     await page.click('.modale .fermer');
+    await page.click('[data-action="basculerMenuAide"]'); await page.click('[data-action="ouvrirAide"][data-sujet="kpiAgile"]'); await page.waitForTimeout(150);
+    verifier('Bouton Aide : KPI Scrum et Kanban', await page.$eval('.modale', m => ['Vélocité', 'Burndown', 'Lead time', 'Cycle time', 'WIP'].every(k => m.textContent.includes(k))));
+    await page.click('.modale .fermer');
     // Bulles d'information : présentes et lisibles au survol
     await aller('dashboard'); await page.hover('.kpi .aide'); await page.waitForTimeout(100);
     verifier('Bulles d’information : texte affiché au survol', await page.$eval('.kpi .aide .bulle', b => getComputedStyle(b).display !== 'none' && b.textContent.length > 20)
@@ -191,6 +194,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.inputValue('input.objectif-client >> nth=0')) === '220');
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
+    verifier('Capacité : calcul type Scrum (information)', (await page.textContent('.info-scrum')).includes('Capacité engageable')
+      && await page.evaluate(() => { const c = Calculs.capaciteScrum([{ capacite: 100 }, { capacite: 50 }], 15); return Math.abs(c.engageable - (15 - 1.5 * CONFIG.CEREMONIES_JOURS_SPRINT) * CONFIG.FACTEUR_FOCUS) < 1e-9; }));
     await page.click('[data-action="ongletConges"][data-id="grille"]');
     verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
     verifier('Congés : demi-journée affichée « ½ »', (await page.textContent('tr:has-text("Léa Moreau")')).includes('½'));

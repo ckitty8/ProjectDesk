@@ -13,7 +13,9 @@ const Modale = {
   rendre() {
     const m = etat.modale;
     const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide }[m.type].call(this, m);
-    return `<div class="modale">${corps}</div>`;
+    // Fenêtre large pour les guides en tableaux (KPI Agile)
+    const large = m.type === 'aide' && (GUIDES[m.sujet] || {}).sections;
+    return `<div class="modale${large ? ' modale-large' : ''}">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
 
@@ -120,7 +122,10 @@ const Modale = {
       ? { titre: 'Aide · ' + (ecran.titre || ''), paragraphes: GUIDE_ECRANS[etat.ecran] || ['Pas encore d’aide pour cet écran.'] }
       : GUIDES[m.sujet];
     return `<div style="display:flex;flex-direction:column">${this.entete(guide.titre)}
-      <div class="panneau-corps">${guide.paragraphes.map(p => `<p style="margin:0">${esc(p)}</p>`).join('')}
+      <div class="panneau-corps">${(guide.paragraphes || []).map(p => `<p style="margin:0">${esc(p)}</p>`).join('')}
+        ${(guide.sections || []).map(sec => `<div><div class="libelle">${esc(sec.titre)}</div>
+          <table class="tableau"><thead><tr><th>Indicateur</th><th>Définition / formule</th><th>Comment le lire</th></tr></thead>
+          <tbody>${sec.kpi.map(([nom, def, lecture]) => `<tr><td><b>${esc(nom)}</b></td><td>${esc(def)}</td><td class="discret">${esc(lecture)}</td></tr>`).join('')}</tbody></table></div>`).join('')}
         <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
   },
 

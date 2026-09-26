@@ -31,6 +31,13 @@ const CONFIG = {
 
   // Timesheet : journée de référence et cible d'occupation (dashboard)
   HEURES_PAR_JOUR: 7.5,
+
+  // Calcul type Scrum (affiché à titre d'information dans Capacité par sprint) :
+  // temps des cérémonies par personne et par sprint de 2 semaines (planning 4 h, daily 10 × 15 min,
+  // revue 2 h, rétrospective 1,5 h, affinage du backlog ~1,5 h ≈ 11,5 h ≈ 1,5 j) et facteur de
+  // focus (part du temps restant réellement consacrée au sprint : interruptions, support, réunions).
+  CEREMONIES_JOURS_SPRINT: 1.5,
+  FACTEUR_FOCUS: 0.8,
   CIBLE_OCCUPATION: 85,
 
   // Projets « à surveiller » : échéance dans moins de N jours
@@ -84,6 +91,7 @@ const AIDES = {
   tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
   projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
   pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
+  calculScrum: `Méthode usuelle d’estimation de la capacité d’un sprint Scrum, donnée à titre indicatif : elle ne remplace pas la vélocité observée de l’équipe. Paramètres (config.js) : ${CONFIG.CEREMONIES_JOURS_SPRINT} j de cérémonies par personne, facteur de focus ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} %.`,
   recapTravail: 'Pour chaque mois, sur les jours de semaine (fériés compris) : T = jours travaillés ; C = jours non travaillés (jours fériés et absences de tout type, une demi-journée compte 0,5).',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   capaciteSprint: 'Par sprint de 2 semaines : jours-homme disponibles / théoriques. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences.',
@@ -128,6 +136,31 @@ const GUIDE_ECRANS = {
   demandeur: ['Déposez une demande auprès d’une équipe et suivez son traitement.']
 };
 const GUIDES = {
+  // Guide en sections : chaque KPI = [nom, définition / formule, lecture]
+  kpiAgile: { titre: 'Trucs et astuces · KPI Agile', sections: [
+    { titre: 'Scrum', kpi: [
+      ['Vélocité', 'Points (ou tickets) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
+      ['Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Capacité par sprint ; calcul type : (disponible − cérémonies) × focus.'],
+      ['Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
+      ['Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = tickets trop gros.'],
+      ['Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
+      ['Objectif de sprint atteint', 'Part des sprints dont l’objectif est atteint.', 'Plus parlant que la vélocité pour le métier.'],
+      ['Facteur de focus', 'Vélocité ÷ jours-homme disponibles.', 'Stable = prévisions fiables.'],
+      ['Débordement (carry-over)', 'Points non terminés reportés au sprint suivant.', 'Doit rester faible.'],
+      ['Défauts échappés', 'Anomalies trouvées après la livraison (par sprint ou par release).', 'Indicateur de qualité.'],
+      ['Dette et imprévus', 'Part du sprint consacrée aux anomalies et demandes non planifiées.', 'Au-delà de 20 %, prévoir une marge dans la capacité.'],
+      ['Bonheur de l’équipe', 'Note de 1 à 5 recueillie en rétrospective.', 'Signal précoce de surcharge.'] ] },
+    { titre: 'Kanban', kpi: [
+      ['Lead time', 'Délai entre la demande et la livraison.', 'Ce que vit le demandeur ; à suivre en médiane et 85e centile.'],
+      ['Cycle time', 'Délai entre le début du travail et la livraison.', 'Ce que maîtrise l’équipe ; base des engagements de délai.'],
+      ['Débit (throughput)', 'Nombre d’éléments terminés par semaine.', 'Sert aux prévisions (méthode Monte-Carlo).'],
+      ['Travail en cours (WIP)', 'Nombre d’éléments en cours, par colonne.', 'Loi de Little : cycle time moyen = WIP ÷ débit ; limiter le WIP raccourcit les délais.'],
+      ['Diagramme de flux cumulé (CFD)', 'Nombre d’éléments par état, cumulé dans le temps.', 'Une bande qui s’élargit = goulet d’étranglement.'],
+      ['Âge du travail en cours', 'Depuis combien de jours chaque élément est en cours.', 'Repère les éléments qui s’enlisent avant qu’ils ne dépassent le délai.'],
+      ['Efficacité du flux', 'Temps de travail actif ÷ lead time.', 'Souvent 15–40 % ; le reste est de l’attente.'],
+      ['Temps bloqué', 'Durée et nombre de blocages par élément.', 'À croiser avec les « Blocages » du daily.'],
+      ['Engagement de délai (SLE)', 'Ex. : « 85 % des éléments livrés en moins de 10 jours ».', 'Se déduit de l’historique des cycle times.'] ] } ] },
+
   premiersPas: { titre: 'Premiers pas', paragraphes: [
     '1. Mon dashboard › Liste des ressources : « + Ajouter une direction », puis sur la direction « + Équipe ».',
     '2. Sur l’équipe : « + Membre » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',

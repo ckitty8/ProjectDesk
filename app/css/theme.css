@@ -208,3 +208,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .recap-travail tr.total td { font-weight: 600; background: var(--fond-entete); }
 .recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
 .reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }
+
+/* Guide d'aide à sections (KPI Agile) : fenêtre plus large, tableaux lisibles */
+.modale.modale-large { width: min(980px, 94vw); overflow: auto; }
+.modale .tableau td { white-space: normal; vertical-align: top; }

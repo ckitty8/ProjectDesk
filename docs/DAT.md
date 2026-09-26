@@ -48,6 +48,7 @@
 | 1.33    | 2026-09-26 | Bouton **Aide** dans l'en-tête : aide sur l'écran courant, premiers pas, rôles et droits, contact de l'administrateur (paramètre `CONTACT_AIDE`) (§ 2.1, § 10) |
 | 1.34    | 2026-09-26 | Calendriers des congés : vues « Par équipe » (une ligne par personne + synthèse absents / membres par projet) et « Par projet » ; calcul `absentsDuJour` (§ 3, § 6) |
 | 1.35    | 2026-09-26 | Récap annuel = jours travaillés / congés / reste à prendre (onglet « Jours de congés » du porteur) ; objectif client par équipe et par année (migration 011) (§ 3.3, § 4, § 5.2, § 6) |
+| 1.36    | 2026-09-26 | Capacité par sprint : calcul type Scrum à titre d’information (`Calculs.capaciteScrum`) ; menu Aide › « Trucs et astuces · KPI Agile » (Scrum et Kanban) (§ 2.1, § 3.3, § 6) |
 
 ---
 
@@ -114,7 +115,7 @@ Principes :
 | `app/js/calculs.js` | **Seul endroit des règles de calcul** (§ 6) : fonctions pures |
 | `app/js/etat.js` | État global, chargement, navigation, délégation d'événements (`data-action`, `data-action-change`, `data-action-saisie`, `data-action-envoi`), droits d'affichage |
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js`) (échappement HTML `esc`) |
-| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
+| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, trucs et astuces · KPI Agile Scrum et Kanban, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition) et « Nouveau projet » |
 | `app/js/modale.js` | Fenêtres : affectations, fiche ressource, équipe (membres, invitations), objectifs |
 | `app/js/ecrans/*.js` | Un fichier par écran (§ 3) |
@@ -149,7 +150,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 |-------|---------|---------|---------|
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
-| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = non travaillés, totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`), Capacité par sprint | `11-conges.png` |
+| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = non travaillés, totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`), Capacité par sprint, et encadré « Calcul type Scrum — à titre d’information » pour le sprint en cours | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
@@ -276,6 +277,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Atteinte trimestrielle d'une équipe = moyenne des objectifs du trimestre | `Calculs.atteinteTrimestre` |
 | Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
 | Jours travaillés (mois) : sur les jours de semaine (fériés compris), C = fériés + absences de tout type (demi-journée = 0,5), T = le reste ; reste à prendre = Σ T − objectif client | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
+| Capacité type Scrum (information) : engageable = (disponible − Σ capacité × `CEREMONIES_JOURS_SPRINT`) × `FACTEUR_FOCUS` | `Calculs.capaciteScrum` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |
 | Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |
@@ -343,7 +345,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (59 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (61 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
