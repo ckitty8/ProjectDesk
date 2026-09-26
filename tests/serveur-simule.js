@@ -113,6 +113,7 @@ function amorcer() {
   for (let d = new Date(Date.UTC(2026, 0, 5)); d < new Date(Date.UTC(2026, 3, 1)); d.setUTCDate(d.getUTCDate() + 1))
     if (d.getUTCDay() % 6) bd.absences.push({ ressource_id: idP.pl, jour: d.toISOString().slice(0, 10), type: 'Congés validé', duree: 1 });
   bd.temps_saisis = []; bd.feuilles_temps = [];
+  bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
   bd.ressources.forEach((r, i) => {
     const sesProjets = bd.affectations.filter(a => a.ressource_id === r.id && a.role !== 'Lecteur').map(a => a.projet_id);
@@ -265,7 +266,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'] };
+const CLES = { absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'] };
 function filtrer(lignes, params) {
   let r = lignes;
   params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;

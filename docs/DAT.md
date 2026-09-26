@@ -47,6 +47,7 @@
 | 1.32    | 2026-09-26 | Bulles d'information « ⓘ » (composant `C.aide`, textes `AIDES`) : sections, KPI, congés, liste des ressources, timesheet, daily, administration, projets (§ 2.1, § 10) |
 | 1.33    | 2026-09-26 | Bouton **Aide** dans l'en-tête : aide sur l'écran courant, premiers pas, rôles et droits, contact de l'administrateur (paramètre `CONTACT_AIDE`) (§ 2.1, § 10) |
 | 1.34    | 2026-09-26 | Calendriers des congés : vues « Par équipe » (une ligne par personne + synthèse absents / membres par projet) et « Par projet » ; calcul `absentsDuJour` (§ 3, § 6) |
+| 1.35    | 2026-09-26 | Récap annuel = jours travaillés / congés / reste à prendre (onglet « Jours de congés » du porteur) ; objectif client par équipe et par année (migration 011) (§ 3.3, § 4, § 5.2, § 6) |
 
 ---
 
@@ -148,7 +149,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 |-------|---------|---------|---------|
 | `daily` | `daily.js` | Ma note du jour (enregistrement auto après 0,8 s ; lisible par mes coéquipiers), modèle, historique | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
-| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (mêmes personnes que la grille), Capacité par sprint | `11-conges.png` |
+| `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = non travaillés, totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`), Capacité par sprint | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
 | `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
@@ -170,7 +171,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -189,6 +190,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
 | `affectations` | `projet_id`, `ressource_id`, `role` (Chef de projet / Membre / Lecteur) | unique (projet, ressource) |
 | `tickets` | `projet_id`, `numero` (ex. PF-14.3), `titre`, `statut`, `priorite`, `assigne_id` | → `projets` |
+| `objectifs_jours_travail` | Jours de travail attendus par le client : `equipe_id`, `annee`, `jours` (défaut `JOURS_TRAVAIL_CLIENT_DEFAUT` = 218 si absent) | clé (équipe, année) |
 | `absences` | `ressource_id`, `jour`, `type`, `duree` (1 = journée, 0,5 = demi-journée ; migration 009) | clé (ressource, jour) |
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
 | `feuilles_temps` | `ressource_id`, `semaine` (lundi), `statut` (en_saisie / soumise / validee / a_completer), `commentaire` | clé (ressource, semaine) |
@@ -240,6 +242,7 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
 | `projets` | membres, administrateurs | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
 | `affectations`, `tickets` | membres, administrateurs | `peut_editer_projet` |
+| `objectifs_jours_travail` | membres, administrateurs | administrateurs, responsables de l'équipe |
 | `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
 | `notes_daily` | auteur, personnes partageant une équipe avec lui, administrateurs | auteur |
 | `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
@@ -272,6 +275,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Progression d'un objectif = moyenne de ses résultats clés | `Calculs.progressionObjectif` |
 | Atteinte trimestrielle d'une équipe = moyenne des objectifs du trimestre | `Calculs.atteinteTrimestre` |
 | Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
+| Jours travaillés (mois) : sur les jours de semaine (fériés compris), C = fériés + absences de tout type (demi-journée = 0,5), T = le reste ; reste à prendre = Σ T − objectif client | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |
 | Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |
@@ -339,7 +343,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (58 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (59 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

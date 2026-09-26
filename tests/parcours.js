@@ -183,7 +183,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.$$('.calendrier tr.ligne-synthese')).length === 1);
     await page.click('[data-action="vueCalendrier"][data-mode="equipe"]'); await page.waitForTimeout(150);
     await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
-    verifier('Congés : onglet Récap annuel (personnes de la grille)', (await texte()).includes('Solde') && !(await texte()).includes('Aucune ressource') && !(await page.$('td[data-action="basculerAbsence"]')));
+    // Récap annuel : T / C par mois et reste à prendre = total travaillé − objectif client de l'équipe
+    verifier('Congés : récap annuel (travaillés, congés, reste à prendre)', (await texte()).includes('Reste à') && !(await page.$('td[data-action="basculerAbsence"]'))
+      && await page.evaluate(() => { const r = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218); return r.travailles === 261 && r.reste === 43; }));
+    await page.fill('input.objectif-client >> nth=0', '220'); await page.press('input.objectif-client >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    verifier('Congés : objectif client modifiable par équipe et par année', await page.evaluate(() => etat.d.objectifsTravail.some(o => Number(o.jours) === 220 && Number(o.annee) === 2026))
+      && (await page.inputValue('input.objectif-client >> nth=0')) === '220');
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
     await page.click('[data-action="ongletConges"][data-id="grille"]');

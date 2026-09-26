@@ -196,3 +196,15 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .calendrier td.synthese-vide { color: #C9CFD9; }
 .calendrier td.synthese.partiel { background: #FFF4E0; color: #8A4B00; font-weight: 600; }
 .calendrier td.synthese.critique { background: #FDECEC; color: #B42318; font-weight: 600; }
+
+/* Récap annuel : jours travaillés (T) / congés (C) / reste à prendre */
+.recap-travail { border-collapse: collapse; width: 100%; }
+.recap-travail th, .recap-travail td { border-bottom: 1px solid var(--bordure-fine); border-left: 1px solid var(--bordure-fine); text-align: center; font-size: 11.5px; height: 32px; padding: 0 4px; white-space: nowrap; }
+.recap-travail th { background: var(--fond-entete); color: var(--discret); font-weight: 500; }
+.recap-travail th.nom, .recap-travail td.nom { text-align: left; min-width: 170px; border-left: 0; font-size: 13px; padding: 0 12px; }
+.recap-travail .conge { color: #0F8A6B; background: #F4FBF8; }
+.recap-travail .tot { background: #F3F6FF; font-weight: 600; }
+.recap-travail tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; }
+.recap-travail tr.total td { font-weight: 600; background: var(--fond-entete); }
+.recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
+.reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }

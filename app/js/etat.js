@@ -36,7 +36,7 @@ const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   tickets: 'tickets', objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', champs: 'champs_formulaire', joursFeries: 'jours_feries',
-  absences: 'absences', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
+  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
@@ -71,7 +71,7 @@ function rendre() {
 const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
-const CLES_UNIQUES = { absences: 'ressource_id,jour', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
+const CLES_UNIQUES = { absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notes: 'user_id,jour', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
@@ -199,6 +199,11 @@ const valeursDe = (refId, avecInactives = false) =>
 // Couleur associée à un libellé de référentiel
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
+// Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
+const objectifJoursTravail = (equipeId, annee) => {
+  const o = (etat.d.objectifsTravail || []).find(x => x.equipeId === equipeId && Number(x.annee) === annee);
+  return o ? Number(o.jours) : CONFIG.JOURS_TRAVAIL_CLIENT_DEFAUT;
+};
 
 /* ---------- Mémoire locale (préférences du poste uniquement) ---------- */
 function lireMemoire(cle) { try { return localStorage.getItem('pp_' + cle); } catch (e) { return null; } }

@@ -21,6 +21,10 @@ const CONFIG = {
   // Congés : droit annuel de congés payés (jours ouvrés)
   DROIT_CP_ANNUEL: 25,
 
+  // Jours de travail attendus par le client par personne et par an, si l'équipe n'a pas
+  // d'objectif saisi pour l'année (table objectifs_jours_travail ; valeur du fichier du porteur)
+  JOURS_TRAVAIL_CLIENT_DEFAUT: 218,
+
   // Sprints de 2 semaines : un sprint de référence sert à numéroter tous les autres
   SPRINT_REFERENCE: { numero: 19, debut: '2026-09-14' },
   DUREE_SPRINT_JOURS: 14,
@@ -80,8 +84,8 @@ const AIDES = {
   tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
   projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
   pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
-  // Fonction : le libellé du type décompté est administrable (lu au moment de l'affichage)
-  droitAnnuel: () => `Solde = droit annuel (${CONFIG.DROIT_CP_ANNUEL} j) − jours de « ${ABSENCES.CP} ». Les autres types ne sont pas décomptés. Une demi-journée compte 0,5.`,
+  recapTravail: 'Pour chaque mois, sur les jours de semaine (fériés compris) : T = jours travaillés ; C = jours non travaillés (jours fériés et absences de tout type, une demi-journée compte 0,5).',
+  objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   capaciteSprint: 'Par sprint de 2 semaines : jours-homme disponibles / théoriques. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences.',
   ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
   responsableRole: 'Unité : son responsable. Projet : son chef. Personne : son rôle sur le projet (Chef de projet et Membre peuvent le modifier, Lecteur le consulte).',

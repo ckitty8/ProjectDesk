@@ -112,6 +112,23 @@ const Calculs = (() => {
     return { parType, total: sommeDurees(siennes), cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
   }
 
+  // Jours travaillés / non travaillés d'une personne sur un mois — reprise de l'onglet « Jours de congés »
+  // du fichier du porteur (Calendrier_2026.xlsx) : sur les jours de semaine du mois (fériés compris),
+  // non travaillé = jour férié ou absence de tout type (demi-journée = 0,5) ; travaillé = le reste.
+  function joursTravaillesMois(ressourceId, annee, mois, absences, feries) {
+    const semaine = joursDuMois(annee, mois).filter(j => !estWeekend(j));
+    const absent = new Map(absences.filter(a => a.ressourceId === ressourceId).map(a => [a.jour, dureeAbsence(a)]));
+    const conges = semaine.reduce((s, j) => s + (feries.has(j) ? 1 : (absent.get(j) || 0)), 0);
+    return { ouvres: semaine.length, travailles: semaine.length - conges, conges };
+  }
+  // Récap annuel d'une personne : 12 mois, totaux, et « reste à prendre » = total travaillé − objectif
+  // (jours de travail attendus par le client pour l'équipe et l'année ; négatif = jours pris en trop)
+  function recapJoursTravailles(ressourceId, annee, absences, feries, objectif) {
+    const mois = Array.from({ length: 12 }, (_, m) => joursTravaillesMois(ressourceId, annee, m, absences, feries));
+    const travailles = mois.reduce((s, m) => s + m.travailles, 0), conges = mois.reduce((s, m) => s + m.conges, 0);
+    return { mois, travailles, conges, reste: travailles - objectif };
+  }
+
   // Absents d'un groupe (membres d'un projet) un jour donné, en personnes (demi-journée = 0,5).
   // Niveau : 'aucun' | 'partiel' (au moins un absent) | 'critique' (plus de la moitié absente).
   function absentsDuJour(ressourceIds, jour, absences) {
@@ -195,7 +212,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    capacitePeriode, absentsDuJour, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    capacitePeriode, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();

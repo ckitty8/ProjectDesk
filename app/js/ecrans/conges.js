@@ -5,7 +5,8 @@
    Onglets :
    - Grille mensuelle : choisir un type d'absence (« pinceau ») puis
      cliquer sur les jours pour l'appliquer ou le retirer ;
-   - Récap annuel : mêmes personnes que la grille (droit CP : config.js) ;
+   - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux
+     jours attendus par le client (par équipe et par année ; maquette recap-jours-travailles) ;
    - Capacité par sprint et par équipe, en jours-homme.
    Modifiable : sa propre ligne et celles de ses équipes (règle RLS).
    ============================================================ */
@@ -15,6 +16,56 @@ Ecrans.conges = {
   titre: 'Gestion des ressources · Congés & capacité',
   section: 'moi',
   pinceau: () => ui('conges', { pinceau: ABSENCES.CP }).pinceau,
+
+  /* ---------- Onglet Récap annuel : jours travaillés / congés / reste à prendre ----------
+     Reprise de l'onglet « Jours de congés » du fichier du porteur (maquette
+     recap-jours-travailles). Calculs : Calculs.recapJoursTravailles ; objectif client
+     par équipe et par année : objectifJoursTravail (table objectifs_jours_travail). */
+  recap(annee) {
+    const esc = C.esc, fer = feries(), n = Calculs.nombre;
+    const MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+    const ouvres = MOIS.map((_, m) => Calculs.joursDuMois(annee, m).filter(j => !Calculs.estWeekend(j)).length);
+    const reste = v => `<b class="${v < 0 ? 'reste-negatif' : 'reste-positif'}">${v > 0 ? '+' : ''}${n(v)}</b>`;
+
+    const lignePersonne = (r, objectif, niveau) => {
+      const rc = Calculs.recapJoursTravailles(r.id, annee, etat.d.absences, fer, objectif);
+      return { rc, html: `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
+        ${rc.mois.map(m => `<td>${n(m.travailles)}</td><td class="conge">${m.conges ? n(m.conges) : '·'}</td>`).join('')}
+        <td class="tot">${n(rc.travailles)}</td><td class="tot conge">${n(rc.conges)}</td><td class="tot">${reste(rc.reste)}</td></tr>` };
+    };
+    // Unité : ligne de groupe avec son objectif (modifiable par un admin ou le responsable), ses personnes, son total
+    const unite = (e, niveau) => {
+      const objectif = objectifJoursTravail(e.id, annee), modifiable = etat.estAdmin || estResponsableDe(e.id);
+      const personnes = etat.d.ressources.filter(r => r.equipeId === e.id).map(r => lignePersonne(r, objectif, niveau + 1));
+      const sous = etat.d.equipes.filter(x => x.parentId === e.id).map(x => unite(x, niveau + 1)).join('');
+      if (!personnes.length && !sous) return '';
+      const champObjectif = modifiable
+        ? `<input type="number" min="1" max="366" step="0.5" class="champ objectif-client" value="${objectif}" data-action-change="objectifTravail" data-equipe="${e.id}" data-annee="${annee}">`
+        : `<b>${n(objectif)}</b>`;
+      const somme = f => personnes.reduce((s, p) => s + f(p.rc), 0);
+      const total = personnes.length ? `<tr class="total"><td class="nom" style="padding-left:${(niveau + 1) * 16 + 12}px">Total ${esc(e.nom)}</td>
+        ${MOIS.map((_, m) => `<td>${n(somme(rc => rc.mois[m].travailles))}</td><td class="conge">${n(somme(rc => rc.mois[m].conges))}</td>`).join('')}
+        <td class="tot">${n(somme(rc => rc.travailles))}</td><td class="tot conge">${n(somme(rc => rc.conges))}</td><td class="tot"></td></tr>` : '';
+      return `<tr class="groupe"><td colspan="${MOIS.length * 2 + 4}"><span class="ligne-flex" style="padding-left:${niveau * 16}px">
+          ${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${esc(e.nom)}
+          <span class="discret" style="font-weight:400;margin-left:14px">Jours attendus par le client</span>${champObjectif}
+          <span class="discret" style="font-weight:400">jours / personne</span>${C.aide('objectifClient')}</span></td></tr>`
+        + personnes.map(p => p.html).join('') + total + sous;
+    };
+    const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
+    const lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
+
+    return `<div class="carte"><div class="carte-titre"><div class="ligne-flex">
+        <button class="btn" data-action="anneePrecedente">‹</button><b style="min-width:60px;text-align:center">${annee}</b><button class="btn" data-action="anneeSuivante">›</button>
+        <h2 style="margin-left:14px">Jours travaillés et congés ${C.aide('recapTravail')}</h2></div></div>
+      <div style="overflow:auto"><table class="recap-travail">
+        <thead><tr><th class="nom" rowspan="2">Personne</th>${MOIS.map(m => `<th colspan="2">${m}</th>`).join('')}
+          <th rowspan="2">Total<br>travaillé</th><th rowspan="2">Total<br>congés</th><th rowspan="2">Reste à<br>prendre</th></tr>
+          <tr>${MOIS.map(() => '<th>T</th><th class="conge">C</th>').join('')}</tr>
+          <tr><td class="nom discret">Jours de semaine du mois</td>${ouvres.map(v => `<td colspan="2" class="discret">${v}</td>`).join('')}
+            <td class="discret">${ouvres.reduce((a, b) => a + b, 0)}</td><td></td><td></td></tr></thead>
+        <tbody>${lignes || `<tr><td colspan="${MOIS.length * 2 + 4}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div></div>`;
+  },
   onglet: () => ui('conges', { onglet: 'grille' }).onglet,
 
   rendre() {
@@ -22,17 +73,6 @@ Ecrans.conges = {
     const pinceaux = [...valeursDe('abs').map(t => ({ id: t.libelle, libelle: t.libelle, couleur: t.couleur })), { id: 'effacer', libelle: 'Effacer', couleur: '#B3BAC7' }]
       .map(p => `<button class="puce${p.id === pinceau ? ' active' : ''}" data-action="choisirPinceau" data-id="${esc(p.id)}">
         <span class="pastille" style="background:${C.teinte(p.couleur, .2)};border:1px solid ${p.couleur}"></span>${esc(p.libelle)}</button>`).join('');
-
-    // Récap annuel : mêmes personnes que la grille (toutes les équipes, groupées)
-    const types = valeursDe('abs', true);
-    const personnes = etat.d.equipes.flatMap(e => etat.d.ressources.filter(r => r.equipeId === e.id));
-    const recap = personnes.map(r => {
-      const rc = Calculs.recapConges(r.id, annee, etat.d.absences, types);
-      return `<tr><td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(r.nom)}</span></td>
-        <td><span class="ligne-flex"><span style="width:60px">${C.barre(rc.cpPris / CONFIG.DROIT_CP_ANNUEL * 100, '#003CC8', 'fine')}</span>${Calculs.nombre(rc.cpPris)}</span></td>
-        ${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<td class="num">${Calculs.nombre(rc.parType[t.libelle] || 0)}</td>`).join('')}
-        <td class="num"><b>${Calculs.nombre(rc.total)}</b></td><td class="num"><b>${Calculs.nombre(rc.soldeCp)}</b></td></tr>`;
-    }).join('');
 
     // Capacité par sprint et par équipe
     const sprints = Calculs.sprintsAutour(Calculs.aujourdhui());
@@ -50,12 +90,7 @@ Ecrans.conges = {
     const onglet = this.onglet();
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
     const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div><div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
-    // Type d'absence décompté du droit annuel (clé « cp ») : son libellé est administrable
-    const typeDecompte = esc(ABSENCES.CP);
-    const recapAnnuel = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}<h2>Récap annuel ${annee} ${C.aide('droitAnnuel')}</h2></div><span class="discret">en jours · droit annuel (${typeDecompte}) : ${CONFIG.DROIT_CP_ANNUEL} j</span></div>
-      <table class="tableau"><thead><tr><th>Personne</th><th>${typeDecompte}</th>${types.filter(t => t.libelle !== ABSENCES.CP).map(t => `<th class="num">${esc(t.abrege || t.libelle)}</th>`).join('')}
-        <th class="num">Total</th><th class="num">Solde</th></tr></thead>
-        <tbody>${recap || `<tr><td colspan="8">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
+    const recapAnnuel = this.recap(annee);
     const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint ${C.aide('capaciteSprint')}</h2><span class="discret">jours-homme disponibles / théoriques</span></div>
       <table class="tableau"><thead><tr><th>Équipe</th>${sprints.map(s => `<th ${s.numero === courant ? 'style="background:#F3F6FF;color:var(--primaire)"' : ''}>Sprint ${s.numero}${s.numero === courant ? ' · en cours' : ''}
         <div style="text-transform:none;letter-spacing:0">${Calculs.formatCourt(s.debut)} – ${Calculs.formatCourt(s.fin)}</div></th>`).join('')}</tr></thead>
@@ -77,6 +112,14 @@ Ecrans.conges = {
 
 Object.assign(Actions, {
   ongletConges: d => majUi('conges', { onglet: d.id }),
+  anneePrecedente: () => majUi('calendrier', { annee: Calendrier.moisCourant().annee - 1 }),
+  anneeSuivante: () => majUi('calendrier', { annee: Calendrier.moisCourant().annee + 1 }),
+  // Objectif client d'une équipe pour l'année (upsert sur la clé équipe + année)
+  objectifTravail(d, el) {
+    const jours = Number(el.value);
+    if (!(jours > 0 && jours <= 366)) return notifier('Nombre de jours invalide', 'erreur');
+    executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
+  },
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
 
   // Clic sur un jour : applique le type choisi, ou retire l'absence si c'est le même type (ou « Effacer »)
