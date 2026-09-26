@@ -92,7 +92,7 @@ const Coquille = (() => {
     return `<div class="menu-aide">
       <button class="btn" data-action="basculerMenuAide" aria-expanded="${ouvert}"><span class="menu-aide-icone">?</span> Aide</button>
       ${ouvert ? `<div class="menu-aide-liste">
-        ${entree('ecran', '▶', 'Aide sur cet écran')}${entree('premiersPas', '⚑', 'Premiers pas')}${entree('roles', '⛨', 'Rôles et droits')}${entree('kpiAgile', '✦', 'Trucs et astuces · KPI Agile')}
+        ${entree('ecran', '▶', 'Aide sur cet écran')}${entree('premiersPas', '⚑', 'Premiers pas')}${entree('roles', '⛨', 'Rôles et droits')}
         ${CONFIG.CONTACT_AIDE ? `<div class="menu-aide-sep"></div><a class="menu-aide-entree" href="mailto:${esc(CONFIG.CONTACT_AIDE)}?subject=ProjectDesk"><span class="menu-aide-icone">✉</span>Contacter l’administrateur</a>` : ''}
       </div>` : ''}</div>`;
   }

@@ -131,36 +131,12 @@ const GUIDE_ECRANS = {
     'Onglets Postes et Types de contrat : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures par projet et par jour, puis soumettez la semaine.', 'Le responsable d’équipe valide ou renvoie la feuille ; une feuille validée n’est plus modifiable.'],
   monAdmin: ['Demandes adressées à votre équipe (à traiter, accepter, refuser, transformer en projet), formulaire de demande,',
-    'et pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.'],
+    'et pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
+    'Onglet Trucs et astuces : les KPI Agile (Scrum, Kanban) expliqués, avec des exemples calculés sur un projet (CDO par défaut).'],
   choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).'],
   demandeur: ['Déposez une demande auprès d’une équipe et suivez son traitement.']
 };
 const GUIDES = {
-  // Guide en sections : chaque KPI = [nom, définition / formule, lecture]
-  kpiAgile: { titre: 'Trucs et astuces · KPI Agile', sections: [
-    { titre: 'Scrum', kpi: [
-      ['Vélocité', 'Points (ou tickets) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
-      ['Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Capacité par sprint ; calcul type : (disponible − cérémonies) × focus.'],
-      ['Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
-      ['Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = tickets trop gros.'],
-      ['Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
-      ['Objectif de sprint atteint', 'Part des sprints dont l’objectif est atteint.', 'Plus parlant que la vélocité pour le métier.'],
-      ['Facteur de focus', 'Vélocité ÷ jours-homme disponibles.', 'Stable = prévisions fiables.'],
-      ['Débordement (carry-over)', 'Points non terminés reportés au sprint suivant.', 'Doit rester faible.'],
-      ['Défauts échappés', 'Anomalies trouvées après la livraison (par sprint ou par release).', 'Indicateur de qualité.'],
-      ['Dette et imprévus', 'Part du sprint consacrée aux anomalies et demandes non planifiées.', 'Au-delà de 20 %, prévoir une marge dans la capacité.'],
-      ['Bonheur de l’équipe', 'Note de 1 à 5 recueillie en rétrospective.', 'Signal précoce de surcharge.'] ] },
-    { titre: 'Kanban', kpi: [
-      ['Lead time', 'Délai entre la demande et la livraison.', 'Ce que vit le demandeur ; à suivre en médiane et 85e centile.'],
-      ['Cycle time', 'Délai entre le début du travail et la livraison.', 'Ce que maîtrise l’équipe ; base des engagements de délai.'],
-      ['Débit (throughput)', 'Nombre d’éléments terminés par semaine.', 'Sert aux prévisions (méthode Monte-Carlo).'],
-      ['Travail en cours (WIP)', 'Nombre d’éléments en cours, par colonne.', 'Loi de Little : cycle time moyen = WIP ÷ débit ; limiter le WIP raccourcit les délais.'],
-      ['Diagramme de flux cumulé (CFD)', 'Nombre d’éléments par état, cumulé dans le temps.', 'Une bande qui s’élargit = goulet d’étranglement.'],
-      ['Âge du travail en cours', 'Depuis combien de jours chaque élément est en cours.', 'Repère les éléments qui s’enlisent avant qu’ils ne dépassent le délai.'],
-      ['Efficacité du flux', 'Temps de travail actif ÷ lead time.', 'Souvent 15–40 % ; le reste est de l’attente.'],
-      ['Temps bloqué', 'Durée et nombre de blocages par élément.', 'À croiser avec les « Blocages » du daily.'],
-      ['Engagement de délai (SLE)', 'Ex. : « 85 % des éléments livrés en moins de 10 jours ».', 'Se déduit de l’historique des cycle times.'] ] } ] },
-
   premiersPas: { titre: 'Premiers pas', paragraphes: [
     '1. Mon dashboard › Liste des ressources : « + Ajouter une direction », puis sur la direction « + Équipe ».',
     '2. Sur l’équipe : « + Membre » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',
@@ -175,3 +151,32 @@ const GUIDES = {
     'Administrateur : crée les directions et équipes, gère les listes (référentiels), le formulaire de demande et les jours fériés.',
     'Demandeur (compte sans équipe) : dépose des demandes et suit uniquement les siennes.'] }
 };
+
+/* ============================================================
+   Mon dashboard › Administration › Trucs et astuces : KPI Agile.
+   Chaque KPI = [clé, nom, définition / formule, lecture] ; l'exemple chiffré
+   est calculé par l'écran (mon-admin.js) à partir du projet choisi.
+   ============================================================ */
+const KPI_AGILE = [
+    { titre: 'Scrum', kpi: [
+      ['velocite', 'Vélocité', 'Points (ou tickets) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
+      ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Capacité par sprint ; calcul type : (disponible − cérémonies) × focus.'],
+      ['engagement', 'Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
+      ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = tickets trop gros.'],
+      ['burnup', 'Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
+      ['objectif', 'Objectif de sprint atteint', 'Part des sprints dont l’objectif est atteint.', 'Plus parlant que la vélocité pour le métier.'],
+      ['focus', 'Facteur de focus', 'Vélocité ÷ jours-homme disponibles.', 'Stable = prévisions fiables.'],
+      ['debordement', 'Débordement (carry-over)', 'Points non terminés reportés au sprint suivant.', 'Doit rester faible.'],
+      ['defauts', 'Défauts échappés', 'Anomalies trouvées après la livraison (par sprint ou par release).', 'Indicateur de qualité.'],
+      ['imprevus', 'Dette et imprévus', 'Part du sprint consacrée aux anomalies et demandes non planifiées.', 'Au-delà de 20 %, prévoir une marge dans la capacité.'],
+      ['bonheur', 'Bonheur de l’équipe', 'Note de 1 à 5 recueillie en rétrospective.', 'Signal précoce de surcharge.'] ] },
+    { titre: 'Kanban', kpi: [
+      ['leadTime', 'Lead time', 'Délai entre la demande et la livraison.', 'Ce que vit le demandeur ; à suivre en médiane et 85e centile.'],
+      ['cycleTime', 'Cycle time', 'Délai entre le début du travail et la livraison.', 'Ce que maîtrise l’équipe ; base des engagements de délai.'],
+      ['debit', 'Débit (throughput)', 'Nombre d’éléments terminés par semaine.', 'Sert aux prévisions (méthode Monte-Carlo).'],
+      ['wip', 'Travail en cours (WIP)', 'Nombre d’éléments en cours, par colonne.', 'Loi de Little : cycle time moyen = WIP ÷ débit ; limiter le WIP raccourcit les délais.'],
+      ['cfd', 'Diagramme de flux cumulé (CFD)', 'Nombre d’éléments par état, cumulé dans le temps.', 'Une bande qui s’élargit = goulet d’étranglement.'],
+      ['age', 'Âge du travail en cours', 'Depuis combien de jours chaque élément est en cours.', 'Repère les éléments qui s’enlisent avant qu’ils ne dépassent le délai.'],
+      ['efficacite', 'Efficacité du flux', 'Temps de travail actif ÷ lead time.', 'Souvent 15–40 % ; le reste est de l’attente.'],
+      ['bloque', 'Temps bloqué', 'Durée et nombre de blocages par élément.', 'À croiser avec les « Blocages » du daily.'],
+      ['sle', 'Engagement de délai (SLE)', 'Ex. : « 85 % des éléments livrés en moins de 10 jours ».', 'Se déduit de l’historique des cycle times.'] ] } ];

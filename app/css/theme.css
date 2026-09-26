@@ -209,6 +209,9 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
 .reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }
 
-/* Guide d'aide à sections (KPI Agile) : fenêtre plus large, tableaux lisibles */
-.modale.modale-large { width: min(980px, 94vw); overflow: auto; }
-.modale .tableau td { white-space: normal; vertical-align: top; }
+
+/* Trucs et astuces : tableau des KPI et badges d'exemple */
+.tableau-kpi td { white-space: normal; vertical-align: top; font-size: 12.5px; }
+.tableau-kpi td:first-child { width: 170px; } .tableau-kpi td:last-child { width: 32%; }
+.badge-reel, .badge-illustratif { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 0 5px; margin-right: 4px; text-transform: uppercase; letter-spacing: .03em; }
+.badge-reel { color: #0B6B4F; background: #E3F5EC; } .badge-illustratif { color: #6B7485; background: #F1F3F7; }

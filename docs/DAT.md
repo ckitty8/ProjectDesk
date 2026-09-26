@@ -49,6 +49,7 @@
 | 1.34    | 2026-09-26 | Calendriers des congés : vues « Par équipe » (une ligne par personne + synthèse absents / membres par projet) et « Par projet » ; calcul `absentsDuJour` (§ 3, § 6) |
 | 1.35    | 2026-09-26 | Récap annuel = jours travaillés / congés / reste à prendre (onglet « Jours de congés » du porteur) ; objectif client par équipe et par année (migration 011) (§ 3.3, § 4, § 5.2, § 6) |
 | 1.36    | 2026-09-26 | Capacité par sprint : calcul type Scrum à titre d’information (`Calculs.capaciteScrum`) ; menu Aide › « Trucs et astuces · KPI Agile » (Scrum et Kanban) (§ 2.1, § 3.3, § 6) |
+| 1.37    | 2026-09-26 | KPI Agile déplacés du menu Aide vers Mon dashboard › Administration › **Trucs et astuces**, avec exemples chiffrés sur un projet (CDO par défaut) (§ 3.3, § 6) |
 
 ---
 
@@ -115,7 +116,7 @@ Principes :
 | `app/js/calculs.js` | **Seul endroit des règles de calcul** (§ 6) : fonctions pures |
 | `app/js/etat.js` | État global, chargement, navigation, délégation d'événements (`data-action`, `data-action-change`, `data-action-saisie`, `data-action-envoi`), droits d'affichage |
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js`) (échappement HTML `esc`) |
-| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, trucs et astuces · KPI Agile Scrum et Kanban, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
+| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition) et « Nouveau projet » |
 | `app/js/modale.js` | Fenêtres : affectations, fiche ressource, équipe (membres, invitations), objectifs |
 | `app/js/ecrans/*.js` | Un fichier par écran (§ 3) |
@@ -153,7 +154,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = non travaillés, totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`), Capacité par sprint, et encadré « Calcul type Scrum — à titre d’information » pour le sprint en cours | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, statut ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
-| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
+| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année) ; **Trucs et astuces** (tous : KPI Agile Scrum et Kanban de `KPI_AGILE`, avec un exemple chiffré par KPI calculé sur un projet choisi, CDO par défaut — « réel » si les données existent, sinon « illustratif »). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
 
 ### 3.4 Éléments ajoutés par rapport à la maquette
 
@@ -278,6 +279,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
 | Jours travaillés (mois) : sur les jours de semaine (fériés compris), C = fériés + absences de tout type (demi-journée = 0,5), T = le reste ; reste à prendre = Σ T − objectif client | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
 | Capacité type Scrum (information) : engageable = (disponible − Σ capacité × `CEREMONIES_JOURS_SPRINT`) × `FACTEUR_FOCUS` | `Calculs.capaciteScrum` |
+| Statistiques de tickets (exemples KPI) : terminés, en cours, délai moyen création → dernière modification des tickets terminés | `Calculs.statsTickets` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |
 | Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |

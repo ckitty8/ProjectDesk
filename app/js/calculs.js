@@ -138,6 +138,18 @@ const Calculs = (() => {
     return { disponible, ceremonies, engageable, heures: engageable * CONFIG.HEURES_PAR_JOUR };
   }
 
+  // Tickets d'un projet : total, terminés, en cours (ni « À faire » ni « Terminé »), et délai moyen
+  // de livraison en jours des tickets terminés (approximation : création → dernière modification,
+  // faute de date de livraison dédiée). Utilisé par les exemples des KPI Agile.
+  function statsTickets(tickets) {
+    const termines = tickets.filter(t => t.statut === STATUTS_TICKET.TERMINE);
+    const enCours = tickets.filter(t => ![STATUTS_TICKET.TERMINE, STATUTS_TICKET.A_FAIRE].includes(t.statut));
+    const delais = termines.filter(t => t.creeLe && t.modifieLe)
+      .map(t => (new Date(t.modifieLe) - new Date(t.creeLe)) / 86400000);
+    return { total: tickets.length, termines: termines.length, enCours: enCours.length,
+      delaiMoyen: delais.length ? delais.reduce((a, b) => a + b, 0) / delais.length : null };
+  }
+
   // Absents d'un groupe (membres d'un projet) un jour donné, en personnes (demi-journée = 0,5).
   // Niveau : 'aucun' | 'partiel' (au moins un absent) | 'critique' (plus de la moitié absente).
   function absentsDuJour(ressourceIds, jour, absences) {
@@ -221,7 +233,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    capacitePeriode, capaciteScrum, statsTickets, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();
