@@ -40,6 +40,7 @@
 | 1.25    | 2026-09-25 | Rafraîchissement des données en arrière-plan (changement d'écran, retour sur l'onglet) (§ 2) |
 | 1.26    | 2026-09-25 | Lecture paginée de toutes les tables (plafond de lignes de la Data API : les absences d'été importées n'étaient pas chargées) ; serveur simulé plafonné à 50 lignes (§ 2, § 9) |
 | 1.27    | 2026-09-26 | Incident « permission denied for schema auth » à chaque modification : `tracer_modification()` passe en `SECURITY DEFINER` (migration 010) ; calendrier des congés groupé comme Liste des ressources (§ 3.3, § 5) |
+| 1.28    | 2026-09-26 | Liste des ressources : une personne sans projet qui dirige une unité est affichée « Responsable de l’unité » (et non « sans projet ») (§ 3.3) |
 
 ---
 

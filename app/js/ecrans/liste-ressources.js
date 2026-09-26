@@ -69,13 +69,15 @@ Ecrans.listeRessources = {
     const chevron = (id, ouvert, action) => `<button class="chevron" data-action="${action}" data-id="${id}">${ouvert ? '▾' : '▸'}</button>`;
     const sansChevron = '<span style="width:16px;display:inline-block"></span>';
 
+    // Une personne sans projet qui dirige son unité n'est pas « sans projet » : on affiche son rôle
+    const responsableUnite = r => equipes.some(e => e.responsableId === r.id);
     // Personne : membre d'un projet (rôle) ou personne de l'unité sans projet
     const lignePersonne = (r, a, niveau, chemin, masquee) => {
       const editable = a ? peutEditerProjet(projet(a.projetId)) : estMembreDe(r.equipeId) || admin;
       const detail = [r.poste, r.typeContrat].filter(Boolean).join(' · ');
       ajouter((a ? a.projetId + ':' : 'r:') + r.id, chemin, masquee, `${r.nom} ${r.poste || ''}`,
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${sansChevron}${C.avatar(r.nom)}<span>${esc(r.nom)}</span> <span class="discret">${esc(detail)}</span></span></td>
-         <td></td><td>${a ? C.badgeRef('role', a.role) : '<span class="pale">sans projet</span>'}</td><td></td>
+         <td></td><td>${a ? C.badgeRef('role', a.role) : responsableUnite(r) ? '<span class="discret">Responsable de l’unité</span>' : '<span class="pale">sans projet</span>'}</td><td></td>
          <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}
            ${a && editable ? ` &nbsp; <a data-action="assigner" data-ressource="${r.id}">Modifier</a>` : ''}</td>`);
     };
