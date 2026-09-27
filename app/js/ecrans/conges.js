@@ -126,10 +126,18 @@ Ecrans.conges = {
     const courant = Calculs.sprintDe(Calculs.aujourdhui()).numero, fer = feries();
     const cellule = cap => `<td><b>${Calculs.nombre(cap.disponible)} j</b> <span class="pale">/ ${Calculs.nombre(cap.theorique)}</span>
       <div style="width:70px">${C.barre(cap.theorique ? cap.disponible / cap.theorique * 100 : 0, '#003CC8', 'fine')}</div></td>`;
+    // Flèche ▸ / ▾ sur chaque projet : détail par personne (demande du porteur 2026-09-27),
+    // même composant que l'arborescence de Liste des ressources (classe .chevron)
+    const ouverts = ui('conges', { capaciteOuverte: {} }).capaciteOuverte;
     const lignesCap = this.projetsCapacite().map(p => {
       const pers = membresProjet(p.id);
       if (!pers.length) return '';
-      return `<tr><td><span class="ligne-flex">${C.icone('projet', 14)}${esc(p.nom)}<span class="discret" style="font-size:11px">${pers.length} membre${pers.length > 1 ? 's' : ''}</span></span></td>${sprints.map(s => cellule(Calculs.capacitePeriode(pers, s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`;
+      const ouvert = !!ouverts[p.id];
+      const ligneProjet = `<tr><td><span class="ligne-flex"><button class="chevron" data-action="deplierCapacite" data-id="${p.id}" title="${ouvert ? 'Masquer' : 'Voir'} le détail par personne">${ouvert ? '▾' : '▸'}</button>
+        ${C.icone('projet', 14)}${esc(p.nom)}<span class="discret" style="font-size:11px">${pers.length} membre${pers.length > 1 ? 's' : ''}</span></span></td>${sprints.map(s => cellule(Calculs.capacitePeriode(pers, s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`;
+      const detail = ouvert ? pers.map(r => `<tr class="detail-personne"><td><span class="ligne-flex" style="padding-left:34px">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
+        ${sprints.map(s => cellule(Calculs.capacitePeriode([r], s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`).join('') : '';
+      return ligneProjet + detail;
     }).join('');
 
     // Contenu de chaque onglet
@@ -165,6 +173,11 @@ Object.assign(Actions, {
     const jours = Number(el.value);
     if (!(jours > 0 && jours <= 366)) return notifier('Nombre de jours invalide', 'erreur');
     executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
+  },
+  deplierCapacite(d) {
+    const capaciteOuverte = { ...ui('conges', { capaciteOuverte: {} }).capaciteOuverte };
+    capaciteOuverte[d.id] = !capaciteOuverte[d.id];
+    majUi('conges', { capaciteOuverte });
   },
   basculerExplicationScrum: () => majUi('conges', { explicationScrum: !ui('conges').explicationScrum }),
   projetCapacite: (_, el) => majUi('conges', { projetCapacite: el.value }),

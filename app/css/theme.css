@@ -166,7 +166,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .arbre-enfant { display: flex; align-items: center; gap: 8px; padding-left: 34px; position: relative; }
 .arbre-enfant::before { content: ''; position: absolute; left: 14px; top: -10px; bottom: -10px; border-left: 1px solid var(--bordure); }
 .arbre-parent { display: flex; align-items: center; gap: 8px; }
-.arbre-parent .chevron { width: 16px; color: var(--pale); background: none; border: 0; cursor: pointer; padding: 0; }
+.arbre-parent .chevron, .tableau .chevron { width: 16px; color: var(--pale); background: none; border: 0; cursor: pointer; padding: 0; }
 
 /* Bulle d'information (C.aide) */
 .aide { position: relative; display: inline-flex; margin-left: 4px; color: var(--pale); cursor: help; font-size: 12px; font-weight: 400;
@@ -215,3 +215,4 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .tableau-kpi td:first-child { width: 170px; } .tableau-kpi td:last-child { width: 32%; }
 .badge-reel, .badge-illustratif { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 0 5px; margin-right: 4px; text-transform: uppercase; letter-spacing: .03em; }
 .badge-reel { color: #0B6B4F; background: #E3F5EC; } .badge-illustratif { color: #6B7485; background: #F1F3F7; }
+.tableau tr.detail-personne td { background: #FBFCFE; }

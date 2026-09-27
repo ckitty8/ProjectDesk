@@ -212,6 +212,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const lignesCapacite = () => page.$$eval('.carte:not(.info-scrum) table.tableau tbody tr', l => l.length);
     const tousProjets = await lignesCapacite();
     await page.selectOption('select[data-action-change="projetCapacite"]', { index: 1 }); await page.waitForTimeout(200);
+    // Flèche du projet : détail par personne (une ligne par membre), puis repli
+    await page.click('[data-action="deplierCapacite"]'); await page.waitForTimeout(150);
+    const detailOuvert = await page.$$eval('tr.detail-personne', l => l.length);
+    await page.click('[data-action="deplierCapacite"]'); await page.waitForTimeout(150);
+    verifier('Capacité : détail par personne sous la flèche du projet', detailOuvert > 0 && (await page.$$eval('tr.detail-personne', l => l.length)) === 0);
     verifier('Capacité : par projet, un projet ou tous', tousProjets > 1 && (await lignesCapacite()) === 1 && (await page.$$eval('.info-scrum tbody tr', l => l.length)) === 1);
     await page.selectOption('select[data-action-change="projetCapacite"]', 'tous'); await page.waitForTimeout(200);
     // Explication masquée par défaut, affichée par le bouton « Voir le calcul »
