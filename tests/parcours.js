@@ -214,7 +214,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption('select[data-action-change="projetCapacite"]', { index: 1 }); await page.waitForTimeout(200);
     verifier('Capacité : par projet, un projet ou tous', tousProjets > 1 && (await lignesCapacite()) === 1 && (await page.$$eval('.info-scrum tbody tr', l => l.length)) === 1);
     await page.selectOption('select[data-action-change="projetCapacite"]', 'tous'); await page.waitForTimeout(200);
-    verifier('Capacité : calcul type Scrum (information)', (await page.textContent('.info-scrum')).includes('Capacité engageable')
+    // Explication masquée par défaut, affichée par le bouton « Voir le calcul »
+    const explicationMasquee = !(await page.textContent('.info-scrum')).includes('Capacité engageable');
+    await page.click('[data-action="basculerExplicationScrum"]'); await page.waitForTimeout(150);
+    verifier('Capacité : calcul type Scrum (information)', explicationMasquee && (await page.textContent('.info-scrum')).includes('Capacité engageable')
       && await page.evaluate(() => { const c = Calculs.capaciteScrum([{ capacite: 100 }, { capacite: 50 }], 15); return Math.abs(c.engageable - (15 - 1.5 * CONFIG.CEREMONIES_JOURS_SPRINT) * CONFIG.FACTEUR_FOCUS) < 1e-9; }));
     await page.click('[data-action="ongletConges"][data-id="grille"]');
     verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
