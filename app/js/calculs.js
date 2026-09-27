@@ -62,12 +62,6 @@ const Calculs = (() => {
     // Le sprint se termine le vendredi de sa 2e semaine
     return { numero: ref.numero + index, debut, fin: ajouterJours(debut, CONFIG.DUREE_SPRINT_JOURS - 3) };
   }
-  // Sprints à afficher : le précédent, le courant et les suivants
-  function sprintsAutour(iso, avant = 1, apres = 4) {
-    const courant = sprintDe(iso); const liste = [];
-    for (let i = -avant; i <= apres; i++) liste.push(sprintDe(ajouterJours(courant.debut, i * CONFIG.DUREE_SPRINT_JOURS)));
-    return liste;
-  }
 
   /* ---------- Projets ---------- */
   const estTermine = p => p.statut === STATUTS_PROJET.TERMINE;
@@ -231,7 +225,7 @@ const Calculs = (() => {
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre,
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
-    trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
+    trimestreDe, nombre, pourcent, moyenne, sprintDe, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
     estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily

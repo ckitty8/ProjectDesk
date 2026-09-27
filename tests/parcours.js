@@ -206,26 +206,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
-    await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
-    verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
-    // Par projet : « Tous les projets » par défaut, puis un seul projet choisi dans la liste
-    const lignesCapacite = () => page.$$eval('.carte:not(.info-scrum) table.tableau tbody tr', l => l.length);
-    const tousProjets = await lignesCapacite();
-    await page.selectOption('select[data-action-change="projetCapacite"]', { index: 1 }); await page.waitForTimeout(200);
-    // Flèche du projet : détail par personne (une ligne par membre), puis repli
-    await page.click('[data-action="deplierCapacite"]'); await page.waitForTimeout(150);
-    const detailOuvert = await page.$$eval('tr.detail-personne', l => l.length);
-    await page.click('[data-action="deplierCapacite"]'); await page.waitForTimeout(150);
-    verifier('Capacité : détail par personne sous la flèche du projet', detailOuvert > 0 && (await page.$$eval('tr.detail-personne', l => l.length)) === 0);
-    verifier('Capacité : par projet, un projet ou tous', tousProjets > 1 && (await lignesCapacite()) === 1 && (await page.$$eval('.info-scrum tbody tr', l => l.length)) === 1);
-    await page.selectOption('select[data-action-change="projetCapacite"]', 'tous'); await page.waitForTimeout(200);
-    // Formule absente de la page, affichée dans une pop-in avec un exemple chiffré (bouton en haut à droite)
-    const formuleHorsPage = !(await page.textContent('.info-scrum')).includes('Capacité engageable');
-    await page.click('[data-action="ouvrirCalculScrum"]'); await page.waitForTimeout(150);
-    const popin = (await page.textContent('.modale')) || '';
-    await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
-    verifier('Capacité : calcul type Scrum (information)', formuleHorsPage && popin.includes('Capacité engageable') && popin.includes('Exemple')
-      && await page.evaluate(() => { const c = Calculs.capaciteScrum([{ capacite: 100 }, { capacite: 50 }], 15); return Math.abs(c.engageable - (15 - 1.5 * CONFIG.CEREMONIES_JOURS_SPRINT) * CONFIG.FACTEUR_FOCUS) < 1e-9; }));
+    // Onglet « Capacité par sprint » retiré (2026-09-27, à reprendre) : deux onglets seulement
+    verifier('Congés : onglet Capacité par sprint retiré', !(await page.$('[data-action="ongletConges"][data-id="capacite"]'))
+      && (await page.$$eval('[data-action="ongletConges"]', l => l.length)) === 2);
     await page.click('[data-action="ongletConges"][data-id="grille"]');
     verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
     verifier('Congés : demi-journée affichée « ½ »', (await page.textContent('tr:has-text("Léa Moreau")')).includes('½'));

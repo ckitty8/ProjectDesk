@@ -225,8 +225,6 @@ const valeursDe = (refId, avecInactives = false) =>
   (etat.d.valeurs || []).filter(v => v.referentielId === refId && (avecInactives || v.actif));
 // Couleur associée à un libellé de référentiel
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
-// Membres d'un projet (fiches des personnes affectées, tous rôles confondus)
-const membresProjet = projetId => etat.d.affectations.filter(a => a.projetId === projetId).map(a => ressource(a.ressourceId)).filter(Boolean);
 // Référentiels affichés dans l'application (hors REFERENTIELS_MASQUES, config.js)
 const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
