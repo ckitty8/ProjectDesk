@@ -90,10 +90,8 @@ Ecrans.conges = {
       { id: 'recap', libelle: `Récap annuel ${annee}` },
       { id: 'capacite', libelle: 'Capacité' }
     ], onglet, 'ongletConges');
-    // Onglet Capacité : vide pour le moment, seul le bouton de la méthode de calcul est présent
-    const capacite = `<div class="carte"><div class="carte-titre"><h2>Capacité</h2>
-        <button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button></div>
-      ${C.vide('Page en cours de construction.')}</div>`;
+    // Onglet Capacité : écran dédié (ecrans/capacite.js)
+    const capacite = onglet === 'capacite' ? Capacite.rendre() : '';
 
     return `
     <div class="ecran">

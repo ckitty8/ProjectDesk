@@ -36,7 +36,7 @@ const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', champs: 'champs_formulaire', joursFeries: 'jours_feries',
-  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
+  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
@@ -71,7 +71,7 @@ function rendre() {
 const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
-const CLES_UNIQUES = { absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
+const CLES_UNIQUES = { absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notes: 'user_id,jour', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 

@@ -209,7 +209,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Onglet « Capacité par sprint » retiré (2026-09-27, à reprendre) : deux onglets seulement
     // Onglet Capacité (vide pour le moment) : bouton « Méthode de calcul Scrum » → pop-in des formules
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
-    verifier('Congés : onglet Capacité (vide)', (await texte()).includes('Page en cours de construction'));
+    verifier('Capacité : indicateurs et capacité des membres calculée', (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
+    // Saisie : points terminés d'un sprint précédent → vélocité ; jours réels d'une catégorie → écart
+    // (sur un projet modifiable par l'utilisateur ; ailleurs les champs sont désactivés)
+    const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
+    await page.selectOption('select[data-action-change="projetCapaciteSaisie"]', projetEditable); await page.waitForTimeout(200);
+    await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=2', '21');
+    await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=2', 'Tab'); await page.waitForTimeout(400);
+    await page.fill('input[data-action-change="saisirRepartition"] >> nth=0', '11');
+    await page.press('input[data-action-change="saisirRepartition"] >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    verifier('Capacité : saisie des points (vélocité) et des jours réels enregistrée', await page.evaluate(() =>
+      etat.d.sprintsProjet.some(s => Number(s.pointsTermines) === 21) && etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.jours) === 11))
+      && (await page.textContent('.grille-kpi')).includes('21 pts'));
     await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
     const methode = (await page.textContent('.modale')) || '';
     await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
