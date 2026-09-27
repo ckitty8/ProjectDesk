@@ -113,13 +113,17 @@ const Calculs = (() => {
   }
 
   // Jours travaillés / non travaillés d'une personne sur un mois — reprise de l'onglet « Jours de congés »
-  // du fichier du porteur (Calendrier_2026.xlsx) : sur les jours de semaine du mois (fériés compris),
-  // non travaillé = jour férié ou absence de tout type (demi-journée = 0,5) ; travaillé = le reste.
+  // du fichier du porteur (Calendrier_2026.xlsx), sur les jours de semaine du mois :
+  // - congés = absences de tout type posées sur ces jours (demi-journée = 0,5), fériés NON compris
+  //   (demande du porteur 2026-09-27 : la colonne C doit correspondre aux congés du calendrier) ;
+  // - fériés = jours fériés tombant en semaine (non travaillés, mais ce ne sont pas des congés) ;
+  // - travaillés = jours de semaine − fériés − congés.
   function joursTravaillesMois(ressourceId, annee, mois, absences, feries) {
     const semaine = joursDuMois(annee, mois).filter(j => !estWeekend(j));
     const absent = new Map(absences.filter(a => a.ressourceId === ressourceId).map(a => [a.jour, dureeAbsence(a)]));
-    const conges = semaine.reduce((s, j) => s + (feries.has(j) ? 1 : (absent.get(j) || 0)), 0);
-    return { ouvres: semaine.length, travailles: semaine.length - conges, conges };
+    const nbFeries = semaine.filter(j => feries.has(j)).length;
+    const conges = semaine.filter(j => !feries.has(j)).reduce((s, j) => s + (absent.get(j) || 0), 0);
+    return { ouvres: semaine.length, feries: nbFeries, travailles: semaine.length - nbFeries - conges, conges };
   }
   // Récap annuel d'une personne : 12 mois, totaux, et « reste à prendre » = total travaillé − objectif
   // (jours de travail attendus par le client pour l'équipe et l'année ; négatif = jours pris en trop)

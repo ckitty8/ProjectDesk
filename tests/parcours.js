@@ -194,6 +194,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('input.objectif-client >> nth=0', '220'); await page.press('input.objectif-client >> nth=0', 'Tab'); await page.waitForTimeout(400);
     verifier('Congés : objectif client modifiable par équipe et par année', await page.evaluate(() => etat.d.objectifsTravail.some(o => Number(o.jours) === 220 && Number(o.annee) === 2026))
       && (await page.inputValue('input.objectif-client >> nth=0')) === '220');
+    // Colonne C = congés seuls : novembre 2026 a 2 fériés en semaine (le 11 ; le 1er est un dimanche → 1)
+    // et une demi-journée le 13 → C = 0,5, fériés comptés à part, T = 21 − 1 − 0,5
+    verifier('Récap : les jours fériés ne sont pas comptés comme congés', await page.evaluate(() => {
+      const m = Calculs.joursTravaillesMois('x', 2026, 10, [{ ressourceId: 'x', jour: '2026-11-13', type: 'Congés validé', duree: 0.5 }], new Set(['2026-11-01', '2026-11-11']));
+      return m.conges === 0.5 && m.feries === 1 && m.travailles === 19.5;
+    }));
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
     verifier('Capacité : calcul type Scrum (information)', (await page.textContent('.info-scrum')).includes('Capacité engageable')

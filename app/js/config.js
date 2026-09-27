@@ -92,7 +92,7 @@ const AIDES = {
   projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
   pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
   calculScrum: `Méthode usuelle d’estimation de la capacité d’un sprint Scrum, donnée à titre indicatif : elle ne remplace pas la vélocité observée de l’équipe. Paramètres (config.js) : ${CONFIG.CEREMONIES_JOURS_SPRINT} j de cérémonies par personne, facteur de focus ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} %.`,
-  recapTravail: 'Pour chaque mois, sur les jours de semaine (fériés compris) : T = jours travaillés ; C = jours non travaillés (jours fériés et absences de tout type, une demi-journée compte 0,5).',
+  recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   capaciteSprint: 'Par sprint de 2 semaines : jours-homme disponibles / théoriques. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences.',
   ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
