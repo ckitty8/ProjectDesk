@@ -207,6 +207,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
     // Onglet « Capacité par sprint » retiré (2026-09-27, à reprendre) : deux onglets seulement
+    // Bouton « Méthode de calcul Scrum » (en-tête) : pop-in des formules (capacité, vélocité, répartition)
+    await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
+    const methode = (await page.textContent('.modale')) || '';
+    await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
+    verifier('Congés : pop-in « Méthode de calcul Scrum »', ['Capacité engageable', 'Vélocité', 'Répartition idéale', 'Incidents (prod)', 'Cérémonies / réunions'].every(t => methode.includes(t)));
     verifier('Congés : onglet Capacité par sprint retiré', !(await page.$('[data-action="ongletConges"][data-id="capacite"]'))
       && (await page.$$eval('[data-action="ongletConges"]', l => l.length)) === 2);
     await page.click('[data-action="ongletConges"][data-id="grille"]');

@@ -7,7 +7,9 @@
      cliquer sur les jours pour l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux
      jours attendus par le client (par équipe et par année ; maquette recap-jours-travailles).
-   (Onglet « Capacité par sprint » retiré le 2026-09-27, à reprendre.)
+   Bouton « Méthode de calcul » (en-tête, à droite) : pop-in des formules Scrum (capacité,
+   vélocité, répartition idéale d'un sprint) — maquette capacite-scrum/methode-de-calcul.png.
+   (Onglet de capacité par projet et par sprint : à reprendre.)
    Modifiable : sa propre ligne et celles de ses équipes (règle RLS).
    ============================================================ */
 'use strict';
@@ -90,7 +92,8 @@ Ecrans.conges = {
 
     return `
     <div class="ecran">
-      ${C.entete('Congés & capacité', onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences et récapitulatif annuel des équipes')}
+      ${C.entete('Congés & capacité', onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences et récapitulatif annuel des équipes',
+        '<button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button>')}
       ${onglets}
       ${{ grille, recap: recapAnnuel }[onglet] || grille}
     </div>`;
@@ -107,6 +110,7 @@ Object.assign(Actions, {
     if (!(jours > 0 && jours <= 366)) return notifier('Nombre de jours invalide', 'erreur');
     executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
   },
+  ouvrirMethodeCapacite: () => majEtat({ modale: { type: 'methodeCapacite' } }),
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
 
   // Clic sur un jour : applique le type choisi, ou retire l'absence si c'est le même type (ou « Effacer »)

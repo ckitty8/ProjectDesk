@@ -38,6 +38,8 @@ const CONFIG = {
   // focus (part du temps restant réellement consacrée au sprint : interruptions, support, réunions).
   CEREMONIES_JOURS_SPRINT: 1.5,
   FACTEUR_FOCUS: 0.8,
+  // Vélocité : moyenne glissante sur les N derniers sprints terminés (pratique Scrum usuelle : 3)
+  SPRINTS_MOYENNE_VELOCITE: 3,
   CIBLE_OCCUPATION: 85,
 
   // Projets « à surveiller » : échéance dans moins de N jours
@@ -59,6 +61,21 @@ const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : dé
 // Référentiels conservés en base mais masqués dans l'application : « Statuts ticket » (stt),
 // la notion de ticket ayant été retirée de l'application (demande du porteur, 2026-09-27).
 const REFERENTIELS_MASQUES = ['stt'];
+/* Répartition idéale du temps d'un sprint par catégorie de travail (demande du porteur 2026-09-27).
+   Source : pratiques Scrum usuelles, à ajuster par le porteur. Total = 100 %. La part
+   « Cérémonies / réunions » (15 %) correspond à CEREMONIES_JOURS_SPRINT (1,5 j) sur un sprint
+   de 10 jours ouvrés : les deux règles restent cohérentes. */
+const REPARTITION_SPRINT = [
+  { categorie: 'User stories', part: 40, couleur: '#003CC8', aide: 'Fonctionnalités à valeur métier (le cœur du sprint).' },
+  { categorie: 'Incidents (prod)', part: 10, couleur: '#D14343', aide: 'Réserve pour les incidents de production non planifiables.' },
+  { categorie: 'Bugs (qualif)', part: 10, couleur: '#D98A1C', aide: 'Corrections des anomalies trouvées en qualification.' },
+  { categorie: 'Tests', part: 10, couleur: '#0F8A6B', aide: 'Tests, recette, automatisation.' },
+  { categorie: 'Technique (serveur, cache, API)', part: 8, couleur: '#7A3FC2', aide: 'Socle technique, dette, performance.' },
+  { categorie: 'Documentation', part: 5, couleur: '#4A5363', aide: 'Documentation fonctionnelle et technique.' },
+  { categorie: 'Autres sujets', part: 2, couleur: '#8A93A3', aide: 'Imprévus divers.' },
+  { categorie: 'Cérémonies / réunions', part: 15, couleur: '#B25E09', aide: 'Planning, daily, revue, rétrospective, affinage.' }
+];
+
 const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
