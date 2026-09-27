@@ -52,10 +52,14 @@ Ecrans.conges = {
     const reste = v => `<b class="${v < 0 ? 'reste-negatif' : 'reste-positif'}">${v > 0 ? '+' : ''}${n(v)}</b>`;
 
     const lignePersonne = (r, objectif, niveau) => {
-      const rc = Calculs.recapJoursTravailles(r.id, annee, etat.d.absences, fer, objectif);
-      return { rc, html: `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
-        ${rc.mois.map(m => `<td>${n(m.travailles)}</td><td class="conge">${m.conges ? n(m.conges) : '·'}</td>`).join('')}
-        <td class="tot">${n(rc.travailles)}</td><td class="tot conge">${n(rc.conges)}</td><td class="tot">${reste(rc.reste)}</td></tr>` };
+      // Arrivée / départ dans l'année : mention sous le nom ; mois hors présence affichés « — »
+      const rc = Calculs.recapJoursTravailles(r.id, annee, etat.d.absences, fer, objectif, r);
+      const dansAnnee = d => d && d.startsWith(String(annee));
+      const mentions = [dansAnnee(r.dateArrivee) ? 'arrivée le ' + Calculs.formatCourt(r.dateArrivee) : '', dansAnnee(r.dateDepart) ? 'départ le ' + Calculs.formatCourt(r.dateDepart) : '']
+        .filter(Boolean).map(t => `<span class="discret" style="font-size:11px">${t}</span>`).join('');
+      return { rc, html: `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}${mentions}</span></td>
+        ${rc.mois.map(m => m.ouvres ? `<td>${n(m.travailles)}</td><td class="conge">${m.conges ? n(m.conges) : '·'}</td>` : '<td class="pale">—</td><td class="conge pale">—</td>').join('')}
+        <td class="tot">${n(rc.travailles)}</td><td class="tot conge">${n(rc.conges)}</td><td class="tot">${reste(rc.reste)}${rc.objectif !== objectif ? `<div class="discret" style="font-size:10px;font-weight:400">sur ${n(rc.objectif)} j</div>` : ''}</td></tr>` };
     };
     // Unité : ligne de groupe avec son objectif (modifiable par un admin ou le responsable), ses personnes, son total
     const unite = (e, niveau) => {

@@ -118,8 +118,10 @@ const Calculs = (() => {
   //   (demande du porteur 2026-09-27 : la colonne C doit correspondre aux congés du calendrier) ;
   // - fériés = jours fériés tombant en semaine (non travaillés, mais ce ne sont pas des congés) ;
   // - travaillés = jours de semaine − fériés − congés.
-  function joursTravaillesMois(ressourceId, annee, mois, absences, feries) {
-    const semaine = joursDuMois(annee, mois).filter(j => !estWeekend(j));
+  // - presence (fiche de la personne : dateArrivee / dateDepart, facultatives) : les jours hors
+  //   présence ne comptent ni en travaillés ni en congés (voir estPresent).
+  function joursTravaillesMois(ressourceId, annee, mois, absences, feries, presence = {}) {
+    const semaine = joursDuMois(annee, mois).filter(j => !estWeekend(j) && estPresent(presence, j));
     const absent = new Map(absences.filter(a => a.ressourceId === ressourceId).map(a => [a.jour, dureeAbsence(a)]));
     const nbFeries = semaine.filter(j => feries.has(j)).length;
     const conges = semaine.filter(j => !feries.has(j)).reduce((s, j) => s + (absent.get(j) || 0), 0);
@@ -127,10 +129,15 @@ const Calculs = (() => {
   }
   // Récap annuel d'une personne : 12 mois, totaux, et « reste à prendre » = total travaillé − objectif
   // (jours de travail attendus par le client pour l'équipe et l'année ; négatif = jours pris en trop)
-  function recapJoursTravailles(ressourceId, annee, absences, feries, objectif) {
-    const mois = Array.from({ length: 12 }, (_, m) => joursTravaillesMois(ressourceId, annee, m, absences, feries));
+  // Arrivée ou départ en cours d'année (décision du porteur 2026-09-27) : objectif proratisé =
+  // objectif × jours de semaine de présence ÷ jours de semaine de l'année, arrondi à la demi-journée.
+  function recapJoursTravailles(ressourceId, annee, absences, feries, objectif, presence = {}) {
+    const mois = Array.from({ length: 12 }, (_, m) => joursTravaillesMois(ressourceId, annee, m, absences, feries, presence));
     const travailles = mois.reduce((s, m) => s + m.travailles, 0), conges = mois.reduce((s, m) => s + m.conges, 0);
-    return { mois, travailles, conges, reste: travailles - objectif };
+    const ouvresAnnee = Array.from({ length: 12 }, (_, m) => joursDuMois(annee, m).filter(j => !estWeekend(j)).length).reduce((a, b) => a + b, 0);
+    const ouvresPresence = mois.reduce((s, m) => s + m.ouvres, 0);
+    const objectifPersonne = Math.round(objectif * ouvresPresence / ouvresAnnee * 2) / 2;
+    return { mois, travailles, conges, objectif: objectifPersonne, reste: travailles - objectifPersonne };
   }
 
   // Capacité « type » Scrum d'une équipe pour un sprint (information) :
@@ -164,12 +171,19 @@ const Calculs = (() => {
 
   // Capacité d'une liste de personnes sur une période, en jours-homme.
   // théorique = Σ jours ouvrés × capacité ; disponible = idem, moins les absences (demi-journée = 0,5).
+  // Présence d'une personne un jour donné : entre sa date d'arrivée et sa date de départ
+  // (incluses, toutes deux facultatives ; dates ISO comparables comme des chaînes).
+  function estPresent(r, jour) {
+    return (!r.dateArrivee || jour >= r.dateArrivee) && (!r.dateDepart || jour <= r.dateDepart);
+  }
+
+  // Les jours hors présence (avant l'arrivée, après le départ) ne comptent pas dans la capacité.
   function capacitePeriode(ressources, debut, fin, absences, feries) {
     let theorique = 0, disponible = 0;
     const absent = new Map(absences.map(a => [a.ressourceId + '|' + a.jour, dureeAbsence(a)]));
     for (let jour = debut; jour <= fin; jour = ajouterJours(jour, 1)) {
       if (!estJourOuvre(jour, feries)) continue;
-      ressources.forEach(r => {
+      ressources.filter(r => estPresent(r, jour)).forEach(r => {
         const part = (r.capacite ?? 100) / 100;
         theorique += part;
         disponible += part * (1 - (absent.get(r.id + '|' + jour) || 0));
@@ -237,7 +251,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    capacitePeriode, capaciteScrum, statsTickets, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    estPresent, capacitePeriode, capaciteScrum, statsTickets, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();

@@ -52,6 +52,7 @@
 | 1.37    | 2026-09-26 | KPI Agile déplacés du menu Aide vers Mon dashboard › Administration › **Trucs et astuces**, avec exemples chiffrés sur un projet (CDO par défaut) (§ 3.3, § 6) |
 | 1.38    | 2026-09-26 | Incident « congés perdus » (base intacte, 155 absences) : une table illisible (ex. `objectifs_jours_travail` inconnue de la Data API) bloquait tout le chargement. Chargement tolérant (`chargerDonnees`) : l'affichage précédent est conservé, message d'alerte ; cache Data API rechargé (§ 2) |
 | 1.39    | 2026-09-27 | Récap annuel : la colonne C ne compte plus les jours fériés (elle affichait congés + fériés, soit 9 jours de trop en 2026) ; T = jours de semaine − fériés − congés (§ 6) |
+| 1.40    | 2026-09-27 | **Dates d'arrivée et de départ** (facultatives) sur la fiche d'une personne (migration 012, additive) : jours hors présence exclus du récap annuel et de la capacité, objectif client proratisé ; maquettes `date-arrivee/` (§ 3.3, § 3.4, § 4, § 6) |
 
 ---
 
@@ -125,7 +126,7 @@ Principes :
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js`) (échappement HTML `esc`) |
 | `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition) et « Nouveau projet » |
-| `app/js/modale.js` | Fenêtres : affectations, fiche ressource, équipe (membres, invitations), objectifs |
+| `app/js/modale.js` | Fenêtres : affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs |
 | `app/js/ecrans/*.js` | Un fichier par écran (§ 3) |
 | `app/css/theme.css` | Jetons de la maquette (couleurs, typographie) et composants |
 
@@ -180,7 +181,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -193,7 +194,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
 | `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
-| `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié) | → `equipes` |
+| `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012) | → `equipes` |
 | `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
 | `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
@@ -284,11 +285,11 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Progression d'un objectif = moyenne de ses résultats clés | `Calculs.progressionObjectif` |
 | Atteinte trimestrielle d'une équipe = moyenne des objectifs du trimestre | `Calculs.atteinteTrimestre` |
 | Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
-| Jours travaillés (mois) : sur les jours de semaine, C = absences de tout type hors jours fériés (demi-journée = 0,5), T = jours de semaine − fériés − C ; reste à prendre = Σ T − objectif client | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
+| Jours travaillés (mois) : sur les jours de semaine, C = absences de tout type hors jours fériés (demi-journée = 0,5), T = jours de semaine − fériés − C ; jours hors présence (avant `date_arrivee`, après `date_depart`) exclus, mois entièrement hors présence affichés « — » ; reste à prendre = Σ T − objectif client proratisé (objectif × jours de semaine de présence ÷ jours de semaine de l'année, arrondi à 0,5) | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
 | Capacité type Scrum (information) : engageable = (disponible − Σ capacité × `CEREMONIES_JOURS_SPRINT`) × `FACTEUR_FOCUS` | `Calculs.capaciteScrum` |
 | Statistiques de tickets (exemples KPI) : terminés, en cours, délai moyen création → dernière modification des tickets terminés | `Calculs.statsTickets` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |
-| Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) | `Calculs.capacitePeriode` |
+| Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) ; jours hors présence de la personne exclus (`Calculs.estPresent`) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |
 | Heures attendues = (jours ouvrés − absences, demi-journée = 0,5) × `HEURES_PAR_JOUR` × capacité | `Calculs.heuresAttendues` |
 | Taux d'occupation = heures saisies / heures attendues (semaine courante) | `Calculs.tauxOccupation` |
@@ -354,7 +355,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (62 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (63 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

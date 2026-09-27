@@ -60,6 +60,8 @@ const Modale = {
         <div class="deux-colonnes"><div><label class="libelle">Poste</label>${this.listeReferentiel('poste', r.poste, 'poste')}</div>
           <div><label class="libelle">Type de contrat</label>${this.listeReferentiel('contrat', r.typeContrat, 'typeContrat')}</div></div>
         <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
+        <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label><input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
+          <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
         <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
         ${r.userId ? '<div class="discret">Compte de connexion lié.</div>' : ''}
       </div>
@@ -172,7 +174,8 @@ Object.assign(Actions, {
 
   /* Ressources */
   enregistrerRessource(d, form) {
-    const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite);
+    const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
+    if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
     executer(async () => {
       if (d.id) { await Api.modifier('ressources', { id: 'eq.' + d.id }, f); etat.modale = null; return; }
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });

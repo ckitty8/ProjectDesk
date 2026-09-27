@@ -200,6 +200,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const m = Calculs.joursTravaillesMois('x', 2026, 10, [{ ressourceId: 'x', jour: '2026-11-13', type: 'Congés validé', duree: 0.5 }], new Set(['2026-11-01', '2026-11-11']));
       return m.conges === 0.5 && m.feries === 1 && m.travailles === 19.5;
     }));
+    // Arrivée le 1er avril 2026 : janvier à mars hors présence, objectif 218 proratisé (197 / 261 jours de semaine)
+    verifier('Récap : date d’arrivée — mois hors présence et objectif proratisé', await page.evaluate(() => {
+      const rc = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218, { dateArrivee: '2026-04-01' });
+      const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
+      return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
+    }));
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
     verifier('Capacité : calcul type Scrum (information)', (await page.textContent('.info-scrum')).includes('Capacité engageable')
