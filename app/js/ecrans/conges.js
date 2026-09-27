@@ -7,7 +7,7 @@
      cliquer sur les jours pour l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux
      jours attendus par le client (par équipe et par année ; maquette recap-jours-travailles).
-   - Capacité par projet et par sprint : page vide pour le moment (contenu à définir avec le
+   - Capacité : page vide pour le moment (contenu à définir avec le
      porteur), avec le bouton « Méthode de calcul Scrum » en haut à droite qui ouvre la pop-in
      des formules (capacité, vélocité, répartition idéale d'un sprint) — maquette capacite-scrum/.
    Modifiable : sa propre ligne et celles de ses équipes (règle RLS).
@@ -88,10 +88,10 @@ Ecrans.conges = {
     const onglets = C.onglets([
       { id: 'grille', libelle: 'Grille mensuelle' },
       { id: 'recap', libelle: `Récap annuel ${annee}` },
-      { id: 'capacite', libelle: 'Capacité par projet et par sprint' }
+      { id: 'capacite', libelle: 'Capacité' }
     ], onglet, 'ongletConges');
     // Onglet Capacité : vide pour le moment, seul le bouton de la méthode de calcul est présent
-    const capacite = `<div class="carte"><div class="carte-titre"><h2>Capacité par projet et par sprint</h2>
+    const capacite = `<div class="carte"><div class="carte-titre"><h2>Capacité</h2>
         <button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button></div>
       ${C.vide('Page en cours de construction.')}</div>`;
 

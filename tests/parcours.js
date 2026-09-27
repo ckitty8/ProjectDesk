@@ -209,7 +209,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Onglet « Capacité par sprint » retiré (2026-09-27, à reprendre) : deux onglets seulement
     // Onglet Capacité (vide pour le moment) : bouton « Méthode de calcul Scrum » → pop-in des formules
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
-    verifier('Congés : onglet Capacité par projet et par sprint (vide)', (await texte()).includes('Page en cours de construction'));
+    verifier('Congés : onglet Capacité (vide)', (await texte()).includes('Page en cours de construction'));
     await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
     const methode = (await page.textContent('.modale')) || '';
     await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);

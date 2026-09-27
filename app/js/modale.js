@@ -126,7 +126,7 @@ const Modale = {
         <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
   },
 
-  /* ---------- Méthode de calcul de l'onglet Capacité par projet et par sprint ----------
+  /* ---------- Méthode de calcul de l'onglet Capacité ----------
      Formules seules (les chiffres du projet sont dans l'onglet) ; paramètres lus dans CONFIG. */
   methodeCapacite() {
     const n = Calculs.nombre, focus = Math.round(CONFIG.FACTEUR_FOCUS * 100);

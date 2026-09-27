@@ -142,7 +142,7 @@ const GUIDE_ECRANS = {
   dailyEquipes: ['Les notes de daily des personnes de vos équipes pour un jour donné, et les blocages signalés.', 'Filtrez par équipe ; changez de jour avec les flèches.'],
   daily: ['Votre note de daily : tapez, elle s’enregistre automatiquement.', 'Le modèle propose les rubriques Hier / Aujourd’hui / Blocages. Vos coéquipiers la lisent dans Général › Daily des équipes.'],
   mesProjets: ['Planning (Gantt) des projets où vous êtes affecté(e), avec votre rôle.', '« + Nouveau projet » crée un projet dans votre équipe ; un clic sur une barre ouvre le projet (nom, description, chef, membres).'],
-  conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, congés, reste à prendre) et la capacité par projet et par sprint (en construction ; bouton « Méthode de calcul Scrum »).',
+  conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, congés, reste à prendre) et la capacité (en construction ; bouton « Méthode de calcul Scrum »).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   listeRessources: ['L’organisation complète : directions → équipes → projets → membres.',
     '« + Ajouter une direction », puis sur chaque ligne « + Équipe », « + Projet », « + Membre ». Le crayon modifie ; la corbeille supprime une unité vide.',
