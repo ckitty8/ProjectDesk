@@ -7,7 +7,7 @@
      cliquer sur les jours pour l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux
      jours attendus par le client (par équipe et par année ; maquette recap-jours-travailles) ;
-   - Capacité par sprint et par équipe, en jours-homme.
+   - Capacité par sprint et par projet (un projet ou tous), en jours-homme.
    Modifiable : sa propre ligne et celles de ses équipes (règle RLS).
    ============================================================ */
 'use strict';
@@ -18,14 +18,15 @@ Ecrans.conges = {
   pinceau: () => ui('conges', { pinceau: ABSENCES.CP }).pinceau,
 
   /* ---------- Capacité par sprint : calcul « type » Scrum, à titre d'information ----------
-     Appliqué au sprint en cours pour chaque équipe (Calculs.capaciteScrum). */
+     Appliqué au sprint en cours pour chaque projet (Calculs.capaciteScrum) — capacité par projet,
+     demande du porteur 2026-09-27. */
   calculScrum(sprint, fer) {
     const esc = C.esc, n = Calculs.nombre;
-    const lignes = etat.d.equipes.map(e => {
-      const pers = etat.d.ressources.filter(r => r.equipeId === e.id);
+    const lignes = this.projetsCapacite().map(p => {
+      const pers = membresProjet(p.id);
       if (!pers.length) return '';
       const c = Calculs.capaciteScrum(pers, Calculs.capacitePeriode(pers, sprint.debut, sprint.fin, etat.d.absences, fer).disponible);
-      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td><td class="num">${n(c.disponible)} j</td>
+      return `<tr><td><span class="ligne-flex">${C.icone('projet', 14)}${esc(p.nom)}</span></td><td class="num">${n(c.disponible)} j</td>
         <td class="num">− ${n(c.ceremonies)} j</td><td class="num">× ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} %</td>
         <td class="num"><b>${n(c.engageable)} j</b></td><td class="num">${n(c.heures)} h</td></tr>`;
     }).join('');
@@ -37,8 +38,21 @@ Ecrans.conges = {
         · cérémonies : ${n(CONFIG.CEREMONIES_JOURS_SPRINT)} j par personne et par sprint (planning, daily, revue, rétrospective, affinage) ;<br>
         · facteur de focus : ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % (interruptions, support, réunions hors sprint).<br>
         En points : engagement ≈ vélocité moyenne des 3 derniers sprints × (capacité de ce sprint ÷ capacité habituelle).</div>
-      <table class="tableau"><thead><tr><th>Équipe</th><th class="num">Disponible</th><th class="num">Cérémonies</th><th class="num">Focus</th><th class="num">Engageable</th><th class="num">Soit</th></tr></thead>
+      <table class="tableau"><thead><tr><th>Projet</th><th class="num">Disponible</th><th class="num">Cérémonies</th><th class="num">Focus</th><th class="num">Engageable</th><th class="num">Soit</th></tr></thead>
         <tbody>${lignes}</tbody></table></div>`;
+  },
+
+  /* Projets affichés dans l'onglet Capacité : celui choisi dans la liste, ou tous (défaut).
+     Choix du porteur 2026-09-27 : « un projet ou tous », pas de ligne de total. */
+  projetsCapacite() {
+    const choix = ui('conges', { projetCapacite: 'tous' }).projetCapacite;
+    const projets = Calendrier.projetsAvecMembres();
+    return choix === 'tous' ? projets : projets.filter(p => p.id === choix);
+  },
+  selecteurProjetCapacite() {
+    const choix = ui('conges', { projetCapacite: 'tous' }).projetCapacite;
+    const options = [{ valeur: 'tous', libelle: 'Tous les projets' }, ...Calendrier.projetsAvecMembres().map(p => ({ valeur: p.id, libelle: `${p.code} · ${p.nom}` }))];
+    return C.liste(options, choix, 'class="champ" style="width:auto;height:30px;margin-left:14px" data-action-change="projetCapacite"');
   },
 
   /* ---------- Onglet Récap annuel : jours travaillés / congés / reste à prendre ----------
@@ -102,27 +116,26 @@ Ecrans.conges = {
       .map(p => `<button class="puce${p.id === pinceau ? ' active' : ''}" data-action="choisirPinceau" data-id="${esc(p.id)}">
         <span class="pastille" style="background:${C.teinte(p.couleur, .2)};border:1px solid ${p.couleur}"></span>${esc(p.libelle)}</button>`).join('');
 
-    // Capacité par sprint et par équipe
+    // Capacité par sprint et par projet (membres affectés au projet ; demande du porteur 2026-09-27)
     const sprints = Calculs.sprintsAutour(Calculs.aujourdhui());
     const courant = Calculs.sprintDe(Calculs.aujourdhui()).numero, fer = feries();
     const cellule = cap => `<td><b>${Calculs.nombre(cap.disponible)} j</b> <span class="pale">/ ${Calculs.nombre(cap.theorique)}</span>
       <div style="width:70px">${C.barre(cap.theorique ? cap.disponible / cap.theorique * 100 : 0, '#003CC8', 'fine')}</div></td>`;
-    const lignesCap = etat.d.equipes.map(e => {
-      const pers = etat.d.ressources.filter(r => r.equipeId === e.id);
+    const lignesCap = this.projetsCapacite().map(p => {
+      const pers = membresProjet(p.id);
       if (!pers.length) return '';
-      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td>${sprints.map(s => cellule(Calculs.capacitePeriode(pers, s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`;
+      return `<tr><td><span class="ligne-flex">${C.icone('projet', 14)}${esc(p.nom)}<span class="discret" style="font-size:11px">${pers.length} membre${pers.length > 1 ? 's' : ''}</span></span></td>${sprints.map(s => cellule(Calculs.capacitePeriode(pers, s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`;
     }).join('');
-    const ligneTotal = `<tr class="groupe"><td>Total</td>${sprints.map(s => cellule(Calculs.capacitePeriode(etat.d.ressources, s.debut, s.fin, etat.d.absences, fer))).join('')}</tr>`;
 
     // Contenu de chaque onglet
     const onglet = this.onglet();
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
     const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div><div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     const recapAnnuel = this.recap(annee);
-    const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><h2>Capacité par sprint ${C.aide('capaciteSprint')}</h2><span class="discret">jours-homme disponibles / théoriques</span></div>
-      <table class="tableau"><thead><tr><th>Équipe</th>${sprints.map(s => `<th ${s.numero === courant ? 'style="background:#F3F6FF;color:var(--primaire)"' : ''}>Sprint ${s.numero}${s.numero === courant ? ' · en cours' : ''}
+    const capacite = `<div class="carte" style="overflow:auto"><div class="carte-titre"><div class="ligne-flex"><h2>Capacité par sprint ${C.aide('capaciteSprint')}</h2>${this.selecteurProjetCapacite()}</div><span class="discret">jours-homme disponibles / théoriques</span></div>
+      <table class="tableau"><thead><tr><th>Projet</th>${sprints.map(s => `<th ${s.numero === courant ? 'style="background:#F3F6FF;color:var(--primaire)"' : ''}>Sprint ${s.numero}${s.numero === courant ? ' · en cours' : ''}
         <div style="text-transform:none;letter-spacing:0">${Calculs.formatCourt(s.debut)} – ${Calculs.formatCourt(s.fin)}</div></th>`).join('')}</tr></thead>
-        <tbody>${lignesCap}${ligneTotal}</tbody></table></div>${this.calculScrum(sprints.find(s => s.numero === courant), fer)}`;
+        <tbody>${lignesCap || `<tr><td colspan="${sprints.length + 1}">${C.vide('Aucun projet avec des membres.')}</td></tr>`}</tbody></table></div>${this.calculScrum(sprints.find(s => s.numero === courant), fer)}`;
     const onglets = C.onglets([
       { id: 'grille', libelle: 'Grille mensuelle' },
       { id: 'recap', libelle: `Récap annuel ${annee}` },
@@ -148,6 +161,7 @@ Object.assign(Actions, {
     if (!(jours > 0 && jours <= 366)) return notifier('Nombre de jours invalide', 'erreur');
     executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
   },
+  projetCapacite: (_, el) => majUi('conges', { projetCapacite: el.value }),
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
 
   // Clic sur un jour : applique le type choisi, ou retire l'absence si c'est le même type (ou « Effacer »)

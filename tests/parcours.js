@@ -208,6 +208,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Congés : onglet Capacité par sprint', (await texte()).includes('jours-homme') && !(await texte()).includes('Solde'));
+    // Par projet : « Tous les projets » par défaut, puis un seul projet choisi dans la liste
+    const lignesCapacite = () => page.$$eval('.carte:not(.info-scrum) table.tableau tbody tr', l => l.length);
+    const tousProjets = await lignesCapacite();
+    await page.selectOption('select[data-action-change="projetCapacite"]', { index: 1 }); await page.waitForTimeout(200);
+    verifier('Capacité : par projet, un projet ou tous', tousProjets > 1 && (await lignesCapacite()) === 1 && (await page.$$eval('.info-scrum tbody tr', l => l.length)) === 1);
+    await page.selectOption('select[data-action-change="projetCapacite"]', 'tous'); await page.waitForTimeout(200);
     verifier('Capacité : calcul type Scrum (information)', (await page.textContent('.info-scrum')).includes('Capacité engageable')
       && await page.evaluate(() => { const c = Calculs.capaciteScrum([{ capacite: 100 }, { capacite: 50 }], 15); return Math.abs(c.engageable - (15 - 1.5 * CONFIG.CEREMONIES_JOURS_SPRINT) * CONFIG.FACTEUR_FOCUS) < 1e-9; }));
     await page.click('[data-action="ongletConges"][data-id="grille"]');

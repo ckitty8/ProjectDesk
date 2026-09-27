@@ -95,7 +95,7 @@ const AIDES = {
   datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',
   recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
-  capaciteSprint: 'Par sprint de 2 semaines : jours-homme disponibles / théoriques. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences.',
+  capaciteSprint: 'Par projet (liste : un projet ou tous) et par sprint de 2 semaines : jours-homme disponibles / théoriques des membres du projet. Théorique = jours ouvrés × capacité (%) de chaque personne ; disponible = théorique moins les absences. Une personne sur plusieurs projets compte entièrement dans chacun.',
   ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
   responsableRole: 'Unité : son responsable. Projet : son chef. Personne : son rôle sur le projet (Chef de projet et Membre peuvent le modifier, Lecteur le consulte).',
   statutUnite: 'Une unité inactive reste visible mais n’est plus proposée dans le formulaire de demande. Une unité ne peut être supprimée que vide.',
