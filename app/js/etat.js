@@ -34,7 +34,7 @@ const etat = {
 // Tables chargées et nom de la clé dans etat.d
 const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
-  tickets: 'tickets', objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
+  objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', champs: 'champs_formulaire', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
   notes: 'notes_daily', administrateurs: 'administrateurs'
@@ -227,6 +227,8 @@ const valeursDe = (refId, avecInactives = false) =>
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
 // Membres d'un projet (fiches des personnes affectées, tous rôles confondus)
 const membresProjet = projetId => etat.d.affectations.filter(a => a.projetId === projetId).map(a => ressource(a.ressourceId)).filter(Boolean);
+// Référentiels affichés dans l'application (hors REFERENTIELS_MASQUES, config.js)
+const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
 // Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
 const objectifJoursTravail = (equipeId, annee) => {

@@ -87,14 +87,10 @@ function amorcer() {
     ['MO-23', 'Notifications push', 'mo', 'KR4.2', 'mf', 100, '2026-07-01', '2026-09-30', 'Terminé', 'Service de notifications push.', ['Service d’envoi', 'Préférences utilisateur', 'Suivi des ouvertures']],
     ['PR-03', 'Refonte du parcours de demande', 'pr', 'KR5.1', 'nb', 55, '2026-08-01', '2026-11-28', 'En cours', 'Nouveau formulaire et circuit de validation des demandes.', ['Entretiens demandeurs', 'Nouveau formulaire', 'Circuit de validation', 'Notifications de suivi']],
     ['PR-06', 'Design system interne', 'pr', 'KR6.1', 'pl', 30, '2026-10-01', '2027-01-15', 'Planifié', 'Bibliothèque de composants partagée.', ['Inventaire des composants', 'Tokens de couleur', 'Documentation', 'Kit Figma']]];
-  const idPr = {}; bd.projets = []; bd.tickets = [];
-  PROJ.forEach(([code, nom, eq, kr, chef, avancement, debut, fin, statut, description, tickets]) => {
+  const idPr = {}; bd.projets = []; bd.tickets = [];   // tickets : notion retirée de l'application (2026-09-27)
+  PROJ.forEach(([code, nom, eq, kr, chef, avancement, debut, fin, statut, description]) => {
     const id = uuid(); idPr[code] = id;
     bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, resultat_cle_id: idKr[kr], chef_id: idP[chef], debut, fin, statut, avancement });
-    const faits = Math.round(avancement / 100 * tickets.length);
-    tickets.forEach((titre, i) => bd.tickets.push({ id: uuid(), projet_id: id, numero: `${code}.${i + 1}`, titre,
-      statut: i < faits ? 'Terminé' : i === faits ? 'En revue' : i === faits + 1 ? 'En cours' : 'À faire',
-      priorite: ['Haute', 'Moyenne', 'Critique', 'Basse'][i % 4], assigne_id: idP[chef] }));
   });
   const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Lecteur'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
     ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Lecteur'],

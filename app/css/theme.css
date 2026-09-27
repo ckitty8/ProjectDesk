@@ -78,7 +78,7 @@ textarea.champ { height: auto; padding: 8px 10px; resize: vertical; }
 .puces { display: flex; gap: 6px; flex-wrap: wrap; }
 .puce { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 14px; background: #fff; cursor: pointer; }
 .puce.active { background: var(--primaire-clair); color: var(--primaire-texte); border-color: #B7C8F5; }
-.grille-kpi { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.grille-kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .grille-kpi.q3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grille-kpi.q4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .kpi { padding: 14px 16px; } .kpi-libelle { color: var(--discret); } .kpi-valeur { font-size: 24px; font-weight: 600; margin-top: 6px; }
 .kpi-complement { font-size: 12px; font-weight: 400; color: var(--discret); margin-left: 8px; }

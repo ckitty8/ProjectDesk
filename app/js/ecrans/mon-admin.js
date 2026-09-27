@@ -32,7 +32,7 @@ Ecrans.monAdmin = {
       { id: 'demandes', libelle: 'Demandes entrantes', compte: miennes.filter(dm => ['nouvelle', 'analyse'].includes(dm.statut)).length },
       { id: 'formulaire', libelle: 'Formulaire de demande', compte: etat.d.champs.length },
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
-      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
+      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length },
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
       { id: 'astuces', libelle: 'Trucs et astuces' }
     ], u.onglet, 'ongletMonAdmin');
@@ -55,9 +55,9 @@ Ecrans.monAdmin = {
 
   /* ---------- Trucs et astuces : KPI Agile (Scrum, Kanban) avec exemples chiffrés ----------
      Textes : KPI_AGILE (config.js). Exemples : calculés sur le projet choisi (par défaut CDO) —
-     équipe, capacité et absences du sprint en cours sont réels ; les KPI qui reposent sur des
-     tickets passent sur les chiffres du projet dès qu'il en a, sinon l'exemple est illustratif
-     (signalé comme tel) et dimensionné sur la taille de l'équipe. */
+     équipe, capacité et absences du sprint en cours sont réels ; les autres KPI (vélocité, flux…)
+     sont illustratifs (signalés comme tels) et dimensionnés sur la taille de l'équipe, la notion
+     de ticket ayant été retirée de l'application (2026-09-27). */
   astuces() {
     const esc = C.esc, n = Calculs.nombre;
     const projets = etat.d.projets.filter(p => etat.d.affectations.some(a => a.projetId === p.id));
@@ -72,7 +72,7 @@ Ecrans.monAdmin = {
         <td>${ex[cle] || ''}</td></tr>`).join('')}</tbody></table></div>`).join('');
     return `<div class="carte" style="padding:14px 16px"><div class="ligne-flex" style="justify-content:space-between">
         <div><b>KPI Agile — Scrum et Kanban</b><div class="discret" style="font-size:12.5px">Les exemples sont calculés sur le projet choisi.
-          <span class="badge-reel">réel</span> = données du projet ; <span class="badge-illustratif">illustratif</span> = exemple à défaut de données (tickets, sprints passés).</div></div>
+          <span class="badge-reel">réel</span> = données du projet ; <span class="badge-illustratif">illustratif</span> = exemple à défaut de données suivies dans l’application.</div></div>
         <div class="ligne-flex"><span class="discret">Projet d’exemple</span>${selecteur}</div></div></div>${sections}`;
   },
 
@@ -86,11 +86,9 @@ Ecrans.monAdmin = {
     const cap = Calculs.capacitePeriode(membres, sprint.debut, sprint.fin, etat.d.absences, fer);
     const scrum = Calculs.capaciteScrum(membres, cap.disponible);
     const absents = n(cap.theorique - cap.disponible);
-    const t = Calculs.statsTickets(etat.d.tickets.filter(x => x.projetId === p.id));
     const velo = Math.round(nb * 6.5);                       // hypothèse illustrative : ~6,5 points par personne et par sprint
     return {
-      velocite: t.termines ? reel(`${t.termines} ticket(s) terminé(s) sur ${t.total} depuis le début du projet.`)
-        : illu(`${nb} personnes (${noms}) terminent ${velo - 3}, ${velo + 2} puis ${velo + 1} points sur 3 sprints → vélocité ≈ ${velo} points.`),
+      velocite: illu(`${nb} personnes (${noms}) terminent ${velo - 3}, ${velo + 2} puis ${velo + 1} points sur 3 sprints → vélocité ≈ ${velo} points.`),
       capacite: reel(`Sprint ${sprint.numero} : ${n(cap.theorique)} j théoriques pour ${nb} personnes, ${absents} j d’absence → <b>${n(cap.disponible)} j</b> disponibles.`),
       engagement: illu(`L’équipe engage ${velo} points et en termine ${velo - 2} → say/do = ${Math.round((velo - 2) / velo * 100)} %.`),
       burndown: illu(`${velo} points sur 10 jours ouvrés → pente idéale ${n(velo / 10)} point/jour ; au jour 5, il devrait rester ≈ ${n(velo / 2)} points.`),
@@ -102,14 +100,12 @@ Ecrans.monAdmin = {
       defauts: illu('2 anomalies remontées en recette après la livraison du sprint.'),
       imprevus: illu(`${n(cap.disponible * 0.15)} j de support sur ${n(cap.disponible)} j disponibles → 15 % d’imprévus.`),
       bonheur: illu(`Notes de rétrospective de ${noms} : 4, 3 et 4 → 3,7 / 5.`),
-      leadTime: t.delaiMoyen !== null ? reel(`Délai moyen des tickets terminés : ${n(t.delaiMoyen)} j (création → dernière modification).`)
-        : illu('Demande déposée le 1er septembre, livrée le 19 → lead time = 18 jours.'),
+      leadTime: illu('Demande déposée le 1er septembre, livrée le 19 → lead time = 18 jours.'),
       cycleTime: illu('Travail commencé le 12 septembre, livré le 19 → cycle time = 7 jours.'),
-      debit: t.termines ? reel(`${t.termines} ticket(s) terminé(s) au total sur le projet.`) : illu(`${nb} personnes livrent 4 éléments par semaine.`),
-      wip: t.total ? reel(`${t.enCours} ticket(s) en cours aujourd’hui sur ${t.total}.`) + `<br>${illu(`WIP 6 ÷ débit 4 / semaine → cycle time moyen ≈ 1,5 semaine (loi de Little).`)}`
-        : illu(`WIP 6 ÷ débit 4 / semaine → cycle time moyen ≈ 1,5 semaine (loi de Little) ; limite conseillée ≈ ${nb * 2} (2 par personne).`),
+      debit: illu(`${nb} personnes livrent 4 éléments par semaine.`),
+      wip: illu(`WIP 6 ÷ débit 4 / semaine → cycle time moyen ≈ 1,5 semaine (loi de Little) ; limite conseillée ≈ ${nb * 2} (2 par personne).`),
       cfd: illu('La bande « En revue » passe de 2 à 6 éléments en 2 semaines → goulet d’étranglement en revue.'),
-      age: illu('Un ticket « En cours » depuis 12 jours alors que 85 % sont livrés en 10 jours → à regarder au daily.'),
+      age: illu('Un élément « En cours » depuis 12 jours alors que 85 % sont livrés en 10 jours → à regarder au daily.'),
       efficacite: illu('3 jours de travail actif sur 12 jours de lead time → 25 % d’efficacité de flux.'),
       bloque: illu('2 blocages cette semaine (identifiants de recette, attente d’arbitrage), 3 jours bloqués au total.'),
       sle: illu('Sur les 20 derniers éléments, 17 livrés en moins de 10 jours → « 85 % en moins de 10 jours ».')

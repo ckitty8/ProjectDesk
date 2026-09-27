@@ -56,6 +56,7 @@
 | 1.41    | 2026-09-27 | Capacité par sprint et calcul type Scrum **par projet** (sélecteur « Tous les projets » / un projet), ligne de total retirée ; maquette `capacite-par-projet/` (§ 3.3) |
 | 1.42    | 2026-09-27 | Calcul type Scrum : explication de la formule masquée par défaut, bouton « Voir le calcul » / « Masquer le calcul » en haut à droite (§ 3.3) |
 | 1.43    | 2026-09-27 | Capacité par sprint : flèche ▸ / ▾ sur chaque projet pour afficher le détail par personne (§ 3.3) |
+| 1.45    | 2026-09-27 | **Notion de ticket retirée** : l'application pilote des projets, pas des tickets. Colonne et dépliage des tickets (Projets et Roadmap), KPI « Tickets ouverts » (dashboard), calculs `compteTickets` / `ticketsOuverts` / `statsTickets`, chargement de la table et référentiel « Statuts ticket » (masqué : `REFERENTIELS_MASQUES`) retirés ; exemples KPI Agile illustratifs. Base inchangée (table `tickets` vide conservée) (§ 1, § 3, § 4, § 6) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -64,7 +65,7 @@
 
 **ProjectDesk** (nom affiché dans l'application, paramètre `NOM_APPLICATION` de `config.js`) :
 application web **multi-projets, multi-équipes** de pilotage : objectifs (OKR), projets et
-roadmap, tickets, ressources, congés et capacité, feuilles de temps, notes de daily, demandes
+roadmap, ressources, congés et capacité, feuilles de temps, notes de daily, demandes
 entrantes (formulaire administrable). Maquette de référence :
 `docs/maquettes/pilotage-projet/source/Pilotage_Projet.dc.html`.
 
@@ -151,7 +152,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | Écran | Fichier | Contenu | Capture |
 |-------|---------|---------|---------|
 | `dashboard` | `dashboard.js` | KPI, objectifs du trimestre (T1–T4), progression par trimestre et par équipe, projets à surveiller | `03-dashboard.png` |
-| `projets` | `projets.js` | Projets groupés par équipe, filtre d'équipe, tickets dépliables, panneau en lecture | `04-projets.png` |
+| `projets` | `projets.js` | Projets groupés par équipe, filtre d'équipe, panneau en lecture | `04-projets.png` |
 | `ressources` | `ressources.js` | Calendrier mensuel des absences (composant `Calendrier`) + annuaire | `05-ressources.png` |
 | `administration` | `administration.js` | Onglets Équipes / Référentiels / Champs, **consultation** (lien vers Mon dashboard › Administration pour les administrateurs) | `06-administration.png` |
 | `timesheet` | `timesheet.js` | Heures par personne et par jour d'une semaine, complétude, statut des feuilles | `07-timesheet.png` |
@@ -203,7 +204,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
 | `affectations` | `projet_id`, `ressource_id`, `role` (Chef de projet / Membre / Lecteur) | unique (projet, ressource) |
-| `tickets` | `projet_id`, `numero` (ex. PF-14.3), `titre`, `statut`, `priorite`, `assigne_id` | → `projets` |
+| `tickets` | **Non utilisée** : la notion de ticket est retirée de l'application (2026-09-27) ; table vide conservée en base en attendant l'accord du porteur pour la supprimer | → `projets` |
 | `objectifs_jours_travail` | Jours de travail attendus par le client : `equipe_id`, `annee`, `jours` (défaut `JOURS_TRAVAIL_CLIENT_DEFAUT` = 218 si absent) | clé (équipe, année) |
 | `absences` | `ressource_id`, `jour`, `type`, `duree` (1 = journée, 0,5 = demi-journée ; migration 009) | clé (ressource, jour) |
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
@@ -217,14 +218,14 @@ Historique : la migration `001_schema_initial.sql` (Roadmap PM) créait `demande
 005 créait une table `directions` (regroupement sans espace de travail) ; la migration 006 l'a
 remplacée par `equipes.type` / `equipes.parent_id` (table vide, accord du porteur).
 
-Les **libellés système** (statuts de projet et de ticket, rôles, « Congés payés ») sont
+Les **libellés système** (statuts de projet, rôles, « Congés payés ») sont
 utilisés par les calculs et les droits. Depuis la migration 007 ils sont **renommables** par un
 administrateur : chaque valeur système porte une clé technique `cle` (non modifiable), l'app
 remplace au chargement les constantes de `config.js` par les libellés actuels
 (`synchroniserLibellesSysteme()` dans `etat.js`, table `LIBELLES_SYSTEME`), la fonction
 `peut_editer_projet` reconnaît les rôles par leur clé, les valeurs par défaut des colonnes passent
 par `libelle_systeme(referentiel, cle)`, et le trigger `propager_renommage_valeur()` recopie le
-nouveau libellé dans les données (projets, tickets, affectations, absences, demandes, ressources).
+nouveau libellé dans les données (projets, affectations, absences, demandes, ressources).
 Une valeur système reste non supprimable (trigger `proteger_valeur_systeme()`) ; on peut la désactiver.
 Le type d'absence de clé `ferie` (« Jours férié », migration 008) sert à afficher **par défaut** les
 jours de la table `jours_feries` dans les calendriers (couleur et abrégé du type ; « F » gris s'il est
@@ -291,7 +292,6 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Récap congés : jours par type (demi-journée = 0,5), solde CP = `DROIT_CP_ANNUEL` − CP pris | `Calculs.recapConges` |
 | Jours travaillés (mois) : sur les jours de semaine, C = absences de tout type hors jours fériés (demi-journée = 0,5), T = jours de semaine − fériés − C ; jours hors présence (avant `date_arrivee`, après `date_depart`) exclus, mois entièrement hors présence affichés « — » ; reste à prendre = Σ T − objectif client proratisé (objectif × jours de semaine de présence ÷ jours de semaine de l'année, arrondi à 0,5) | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
 | Capacité type Scrum (information) : engageable = (disponible − Σ capacité × `CEREMONIES_JOURS_SPRINT`) × `FACTEUR_FOCUS` | `Calculs.capaciteScrum` |
-| Statistiques de tickets (exemples KPI) : terminés, en cours, délai moyen création → dernière modification des tickets terminés | `Calculs.statsTickets` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |
 | Capacité (j-h) : Σ jours ouvrés × capacité, disponible = hors absences (demi-journée = 0,5) ; jours hors présence de la personne exclus (`Calculs.estPresent`) | `Calculs.capacitePeriode` |
 | Sprints de 14 jours numérotés depuis `SPRINT_REFERENCE` (fin = vendredi de la 2e semaine) | `Calculs.sprintDe`, `Calculs.sprintsAutour` |

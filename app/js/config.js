@@ -53,11 +53,13 @@ const CONFIG = {
 // nom de la propriété en minuscules, ex. EN_COURS → 'en_cours') : un administrateur peut donc
 // les renommer (migration 007) sans casser les calculs.
 const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 'À risque', EN_RETARD: 'En retard', TERMINE: 'Terminé' };
-const STATUTS_TICKET = { A_FAIRE: 'À faire', EN_COURS: 'En cours', EN_REVUE: 'En revue', TERMINE: 'Terminé' };
 const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
 const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés
 // Référentiel en base → objet de libellés système ci-dessus
-const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, stt: STATUTS_TICKET, role: ROLES_PROJET, abs: ABSENCES };
+// Référentiels conservés en base mais masqués dans l'application : « Statuts ticket » (stt),
+// la notion de ticket ayant été retirée de l'application (demande du porteur, 2026-09-27).
+const REFERENTIELS_MASQUES = ['stt'];
+const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
 const STATUTS_DEMANDE = {
@@ -107,7 +109,7 @@ const AIDES = {
   joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
   rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
   syntheseProjets: 'Pour chaque projet de l’unité : nombre de membres absents ce jour / nombre de membres. Orange = au moins un absent ; rouge = plus de la moitié.',
-  avancementProjet: 'Avancement (%) du projet ; « x/y » = tickets terminés sur le total.'
+  avancementProjet: 'Avancement (%) du projet.'
 };
 
 /* ============================================================
@@ -118,7 +120,7 @@ const AIDES = {
 const GUIDE_ECRANS = {
   dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés, objectifs (OKR) du trimestre, progression par trimestre et projets à surveiller.',
     'Choisissez le trimestre avec les boutons T1 à T4. Survolez les ⓘ pour le détail des calculs.'],
-  projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; la flèche ▸ déplie les tickets ; un clic sur une ligne ouvre le détail du projet.'],
+  projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
   ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.', 'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés & capacité.'],
   administration: ['Consultation des équipes, référentiels et champs du formulaire de demande.', 'Pour les modifier (administrateurs) : Mon dashboard › Administration.'],
   timesheet: ['Heures déclarées par personne et par jour sur une semaine, avec le statut de chaque feuille.', 'Changez de semaine avec les flèches.'],
@@ -160,10 +162,10 @@ const GUIDES = {
    ============================================================ */
 const KPI_AGILE = [
     { titre: 'Scrum', kpi: [
-      ['velocite', 'Vélocité', 'Points (ou tickets) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
+      ['velocite', 'Vélocité', 'Points (ou éléments du backlog) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
       ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Capacité par sprint ; calcul type : (disponible − cérémonies) × focus.'],
       ['engagement', 'Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
-      ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = tickets trop gros.'],
+      ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = éléments trop gros.'],
       ['burnup', 'Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
       ['objectif', 'Objectif de sprint atteint', 'Part des sprints dont l’objectif est atteint.', 'Plus parlant que la vélocité pour le métier.'],
       ['focus', 'Facteur de focus', 'Vélocité ÷ jours-homme disponibles.', 'Stable = prévisions fiables.'],

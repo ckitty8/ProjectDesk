@@ -12,7 +12,7 @@ Ecrans.dashboard = {
     const esc = C.esc, jour = Calculs.aujourdhui(), annee = Number(jour.slice(0, 4));
     const trimestreCourant = Calculs.trimestreDe(jour);
     const t = ui('dashboard', { trimestre: trimestreCourant }).trimestre;
-    const { projets, tickets, objectifs, resultatsCles, ressources, temps, absences } = etat.d;
+    const { projets, objectifs, resultatsCles, ressources, temps, absences } = etat.d;
     const actifs = Calculs.projetsActifs(projets);
 
     // Indicateurs
@@ -22,7 +22,6 @@ Ecrans.dashboard = {
       C.kpi('Projets actifs', actifs.length, `${projets.length - actifs.length} terminés`),
       C.kpi('Avancement moyen', Calculs.pourcent(Calculs.avancementMoyen(actifs)), 'projets actifs', 'avancementMoyen'),
       C.kpi('Projets à risque ou en retard', aRisque, '', 'projetsRisque'),
-      C.kpi('Tickets ouverts', Calculs.ticketsOuverts(tickets), `sur ${tickets.length}`),
       C.kpi('Taux d’occupation', Calculs.pourcent(occupation), `cible ${CONFIG.CIBLE_OCCUPATION} %`, 'tauxOccupation')
     ].join('');
 

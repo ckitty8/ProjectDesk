@@ -1,6 +1,6 @@
 # ProjectDesk — application
 
-Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap, tickets,
+Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap,
 ressources, congés et capacité, timesheet, daily, demandes entrantes.
 Architecture, écrans, tables et droits : [`docs/DAT.md`](../docs/DAT.md).
 

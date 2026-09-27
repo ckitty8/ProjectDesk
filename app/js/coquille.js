@@ -80,7 +80,7 @@ const Coquille = (() => {
         <b>${esc(ecran.titre)}</b>
         ${general ? C.badge('Lecture seule', '#4A5363', '#F1F3F7') : C.badge('Édition', '#0033AD', '#E8EEFF')}</div>
       <div class="ligne-flex">
-        <div class="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, un ticket…<span>⌘K</span></div>
+        <div class="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, une personne…<span>⌘K</span></div>
         ${menuAide()}</div>
     </header>`;
   }

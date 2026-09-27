@@ -63,8 +63,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="choisirTrimestre"][data-t="4"]'); await page.waitForTimeout(200);
     verifier('Dashboard : 6 objectifs au T4', (await texte()).includes('6 objectifs'));
     await aller('projets'); await capture('04-projets');
-    await page.click('tr:has-text("PF-12") [data-action="deplierProjet"]'); await page.waitForTimeout(200);
-    verifier('Projets : tickets dépliés', (await texte()).includes('PF-12.1'));
+    verifier('Projets : aucune notion de ticket (pilotage de projets uniquement)', !/ticket/i.test(await page.textContent('body'))
+      && !(await page.$('[data-action="deplierProjet"]')));
     await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue générale en lecture seule'));
     await page.click('.fermer');

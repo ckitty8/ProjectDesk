@@ -83,8 +83,8 @@ Object.assign(Actions, {
     executer(() => Api.modifier('projets', { id: 'eq.' + d.id }, { [d.champ]: valeur }), 'projets');
   },
   supprimerProjet(d) {
-    if (!confirm('Supprimer ce projet ? Ses tickets, affectations et heures saisies seront supprimés.')) return;
-    executer(async () => { await Api.supprimer('projets', { id: 'eq.' + d.id }); etat.panneau = null; }, 'projets', 'tickets', 'affectations', 'temps', 'demandes');
+    if (!confirm('Supprimer ce projet ? Ses affectations et heures saisies seront supprimées.')) return;
+    executer(async () => { await Api.supprimer('projets', { id: 'eq.' + d.id }); etat.panneau = null; }, 'projets', 'affectations', 'temps', 'demandes');
   },
   // Création : projet, affectation du chef, rattachement à la demande d'origine
   async creerProjet(_, form) {

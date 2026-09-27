@@ -81,12 +81,6 @@ const Calculs = (() => {
       (p.fin && ecartJours(dateIso, p.fin) <= CONFIG.ALERTE_ECHEANCE_JOURS && ecartJours(dateIso, p.fin) >= 0));
   }
 
-  // Tickets d'un projet : total, terminés
-  function compteTickets(tickets) {
-    return { total: tickets.length, termines: tickets.filter(t => t.statut === STATUTS_TICKET.TERMINE).length };
-  }
-  const ticketsOuverts = tickets => tickets.filter(t => t.statut !== STATUTS_TICKET.TERMINE).length;
-
   /* ---------- Objectifs (OKR) ---------- */
   // Progression d'un objectif = moyenne des progressions de ses résultats clés
   const progressionObjectif = resultatsCles => moyenne(resultatsCles.map(k => k.progression || 0));
@@ -147,18 +141,6 @@ const Calculs = (() => {
     const ceremonies = ressources.reduce((s, r) => s + (r.capacite ?? 100) / 100 * CONFIG.CEREMONIES_JOURS_SPRINT, 0);
     const engageable = Math.max(0, disponible - ceremonies) * CONFIG.FACTEUR_FOCUS;
     return { disponible, ceremonies, engageable, heures: engageable * CONFIG.HEURES_PAR_JOUR };
-  }
-
-  // Tickets d'un projet : total, terminés, en cours (ni « À faire » ni « Terminé »), et délai moyen
-  // de livraison en jours des tickets terminés (approximation : création → dernière modification,
-  // faute de date de livraison dédiée). Utilisé par les exemples des KPI Agile.
-  function statsTickets(tickets) {
-    const termines = tickets.filter(t => t.statut === STATUTS_TICKET.TERMINE);
-    const enCours = tickets.filter(t => ![STATUTS_TICKET.TERMINE, STATUTS_TICKET.A_FAIRE].includes(t.statut));
-    const delais = termines.filter(t => t.creeLe && t.modifieLe)
-      .map(t => (new Date(t.modifieLe) - new Date(t.creeLe)) / 86400000);
-    return { total: tickets.length, termines: termines.length, enCours: enCours.length,
-      delaiMoyen: delais.length ? delais.reduce((a, b) => a + b, 0) / delais.length : null };
   }
 
   // Absents d'un groupe (membres d'un projet) un jour donné, en personnes (demi-journée = 0,5).
@@ -250,8 +232,8 @@ const Calculs = (() => {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre,
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, sprintsAutour, estTermine, projetsActifs, avancementMoyen,
-    projetsASurveiller, compteTickets, ticketsOuverts, progressionObjectif, atteinteTrimestre, recapConges,
-    estPresent, capacitePeriode, capaciteScrum, statsTickets, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
+    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
   };
 })();
