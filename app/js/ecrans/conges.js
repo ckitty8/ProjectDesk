@@ -30,19 +30,10 @@ Ecrans.conges = {
         <td class="num">− ${n(c.ceremonies)} j</td><td class="num">× ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} %</td>
         <td class="num"><b>${n(c.engageable)} j</b></td><td class="num">${n(c.heures)} h</td></tr>`;
     }).join('');
-    // Explication de la formule : masquée par défaut, affichée par le bouton en haut à droite
-    // (demande du porteur 2026-09-27 : visible seulement quand on en a besoin)
-    const ouverte = ui('conges', { explicationScrum: false }).explicationScrum;
-    const explication = ouverte ? `<div style="padding:0 16px 12px" class="discret explication-scrum">
-        <b style="color:var(--texte)">Capacité engageable</b> = (jours-homme disponibles − cérémonies) × facteur de focus<br>
-        · jours disponibles : jours ouvrés du sprint × capacité (%) de chaque personne, moins absences et fériés (tableau ci-dessus) ;<br>
-        · cérémonies : ${n(CONFIG.CEREMONIES_JOURS_SPRINT)} j par personne et par sprint (planning, daily, revue, rétrospective, affinage) ;<br>
-        · facteur de focus : ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % (interruptions, support, réunions hors sprint).<br>
-        En points : engagement ≈ vélocité moyenne des 3 derniers sprints × (capacité de ce sprint ÷ capacité habituelle).</div>` : '';
+    // Formule et exemple chiffré : dans une pop-in (bouton en haut à droite, demande du porteur 2026-09-27)
     return `<div class="carte info-scrum"><div class="carte-titre"><h2>Calcul type Scrum — à titre d’information ${C.aide('calculScrum')}</h2>
         <div class="ligne-flex"><span class="discret">Sprint ${sprint.numero} en cours</span>
-          <button class="btn" data-action="basculerExplicationScrum">${ouverte ? 'Masquer le calcul' : 'Voir le calcul'}</button></div></div>
-      ${explication}
+          <button class="btn" data-action="ouvrirCalculScrum">Comment est-ce calculé ?</button></div></div>
       <table class="tableau"><thead><tr><th>Projet</th><th class="num">Disponible</th><th class="num">Cérémonies</th><th class="num">Focus</th><th class="num">Engageable</th><th class="num">Soit</th></tr></thead>
         <tbody>${lignes}</tbody></table></div>`;
   },
@@ -179,7 +170,7 @@ Object.assign(Actions, {
     capaciteOuverte[d.id] = !capaciteOuverte[d.id];
     majUi('conges', { capaciteOuverte });
   },
-  basculerExplicationScrum: () => majUi('conges', { explicationScrum: !ui('conges').explicationScrum }),
+  ouvrirCalculScrum: () => majEtat({ modale: { type: 'calculScrum' } }),
   projetCapacite: (_, el) => majUi('conges', { projetCapacite: el.value }),
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
 

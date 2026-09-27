@@ -12,7 +12,7 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, calculScrum: this.calculScrum }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -124,6 +124,41 @@ const Modale = {
     return `<div style="display:flex;flex-direction:column">${this.entete(guide.titre)}
       <div class="panneau-corps">${guide.paragraphes.map(p => `<p style="margin:0">${esc(p)}</p>`).join('')}
         <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
+  },
+
+  /* ---------- Calcul type Scrum : formule + exemple chiffré ----------
+     Pop-in ouverte par le bouton « Calcul type Scrum » de l'onglet Capacité (demande du porteur
+     2026-09-27) ; exemple sur le projet CDO (sinon le premier projet avec des membres), pour le
+     sprint en cours. Calculs : Calculs.capacitePeriode et Calculs.capaciteScrum (aucun recalcul ici). */
+  calculScrum() {
+    const esc = C.esc, n = Calculs.nombre, fer = feries();
+    const projets = Calendrier.projetsAvecMembres();
+    const p = projets.find(x => x.nom === 'CDO') || projets[0];
+    const sprint = Calculs.sprintDe(Calculs.aujourdhui());
+    const formule = `<p style="margin:0"><b>Capacité engageable</b> = (jours-homme disponibles − cérémonies) × facteur de focus</p>
+      <ul style="margin:0;padding-left:18px" class="discret">
+        <li>jours disponibles : jours ouvrés du sprint × capacité (%) de chaque personne, moins absences et fériés ;</li>
+        <li>cérémonies : ${n(CONFIG.CEREMONIES_JOURS_SPRINT)} j par personne et par sprint (planning, daily, revue, rétrospective, affinage) ;</li>
+        <li>facteur de focus : ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % (interruptions, support, réunions hors sprint) ;</li>
+        <li>en points : engagement ≈ vélocité moyenne des 3 derniers sprints × (capacité de ce sprint ÷ capacité habituelle).</li></ul>`;
+    if (!p) return `<div style="display:flex;flex-direction:column">${this.entete('Calcul type Scrum')}<div class="panneau-corps">${formule}</div></div>`;
+    const membres = membresProjet(p.id);
+    const parPersonne = membres.map(r => ({ r, cap: Calculs.capacitePeriode([r], sprint.debut, sprint.fin, etat.d.absences, fer) }));
+    const disponible = parPersonne.reduce((s, x) => s + x.cap.disponible, 0);
+    const c = Calculs.capaciteScrum(membres, disponible);
+    const lignes = parPersonne.map(({ r, cap }) => `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
+      <td class="num">${r.capacite ?? 100} %</td><td class="num">${n(cap.theorique)} j</td><td class="num">${cap.theorique - cap.disponible ? '− ' + n(cap.theorique - cap.disponible) + ' j' : '—'}</td>
+      <td class="num"><b>${n(cap.disponible)} j</b></td></tr>`).join('');
+    return `<div style="display:flex;flex-direction:column">${this.entete('Calcul type Scrum — à titre d’information')}
+      <div class="panneau-corps">${formule}
+        <h3 style="margin:6px 0 0">Exemple : ${esc(p.nom)}, sprint ${sprint.numero} (${Calculs.formatCourt(sprint.debut)} – ${Calculs.formatCourt(sprint.fin)})</h3>
+        <table class="tableau"><thead><tr><th>Membre</th><th class="num">Capacité</th><th class="num">Jours ouvrés</th><th class="num">Absences</th><th class="num">Disponible</th></tr></thead>
+          <tbody>${lignes}<tr class="groupe"><td colspan="4">1. Jours-homme disponibles</td><td class="num"><b>${n(c.disponible)} j</b></td></tr></tbody></table>
+        <div class="calcul-etapes">
+          <div>2. Cérémonies : ${membres.length} membre${membres.length > 1 ? 's' : ''} × ${n(CONFIG.CEREMONIES_JOURS_SPRINT)} j = <b>${n(c.ceremonies)} j</b></div>
+          <div>3. Capacité engageable : (${n(c.disponible)} − ${n(c.ceremonies)}) × ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % = <b>${n(c.engageable)} j</b></div>
+          <div>4. Soit : ${n(c.engageable)} j × ${n(CONFIG.HEURES_PAR_JOUR)} h = <b>${n(c.heures)} h</b></div>
+        </div></div></div>`;
   },
 
   /* ---------- Objectifs (OKR) de l'équipe courante ---------- */
