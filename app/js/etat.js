@@ -146,6 +146,12 @@ function notifier(message, type = 'info') {
 async function demarrer() {
   majEtat({ chargement: true, erreur: null });
   try {
+    // Retour du lien « Mot de passe oublié » (?token=…) : choix du nouveau mot de passe
+    const jeton = Api.lireJetonReinitialisation();
+    if (jeton) {
+      etat.ui.connexion = { onglet: 'nouveau', jeton, erreur: null, envoye: false };
+      return majEtat({ chargement: false, session: null, ecran: 'connexion' });
+    }
     const erreurRetour = Api.lireErreurRetour();          // échec de la connexion Google (?error=…)
     const session = await Api.lireSession();
     if (!session || !session.user) {

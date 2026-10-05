@@ -23,6 +23,7 @@ const maintenant = () => new Date().toISOString();
 /* ---------- Données de démonstration (maquette) ---------- */
 const bd = {};
 const utilisateurs = [];      // { id, name, email, password }
+const jetonsReinit = {}; let dernierLienReinit = null;   // mot de passe oublié (simulé)
 const membres = [];           // { id, organizationId, userId, role }
 const organisations = [];     // { id, name, slug }
 const invitations = [];       // { id, organizationId, email, role, status }
@@ -202,6 +203,19 @@ async function auth(req, res, chemin, url) {
       if (utilisateurs.some(x => x.email === corps.email)) return envoyer(res, 422, { message: 'Email déjà utilisé' });
       const u = { id: uuid(), name: corps.name, email: corps.email, password: corps.password }; utilisateurs.push(u);
       return envoyer(res, 200, { user: vueUtilisateur(u) }, ouvrirSession(res, u));
+    }
+    // Mot de passe oublié : le « mail » est simulé par /auth/dernier-lien-simule (lien du dernier email envoyé)
+    case '/request-password-reset': {
+      const u = utilisateurs.find(x => x.email === corps.email);
+      if (u) { const jeton = uuid(); jetonsReinit[jeton] = u.id; dernierLienReinit = `${corps.redirectTo}?token=${jeton}`; }
+      return envoyer(res, 200, { status: true });
+    }
+    case '/dernier-lien-simule': return envoyer(res, 200, { lien: dernierLienReinit });
+    case '/reset-password': {
+      const id = jetonsReinit[corps.token]; delete jetonsReinit[corps.token];
+      if (!id) return envoyer(res, 400, { message: 'INVALID_TOKEN' });
+      utilisateurs.find(x => x.id === id).password = corps.newPassword;
+      return envoyer(res, 200, { status: true });
     }
     case '/sign-out': return envoyer(res, 200, { success: true }, { 'Set-Cookie': 'sim_session=; Path=/; Max-Age=0' });
     // Google simulé : /sign-in/social renvoie l'adresse du « fournisseur », qui redirige vers

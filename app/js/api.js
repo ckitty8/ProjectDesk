@@ -98,6 +98,26 @@ const Api = (() => {
   }
 
   // Erreur renvoyée par Neon Auth dans l'adresse après un échec Google (?error=…), puis retirée
+  /* Mot de passe oublié (Better Auth) : Neon Auth envoie un email avec un lien ; ce lien
+     revient sur l'application avec ?token=… ; l'utilisateur y choisit son nouveau mot de passe.
+     Personne d'autre (ni l'administrateur) ne voit ni ne choisit le mot de passe. */
+  async function demanderReinitialisation(email) {
+    const corps = { email, redirectTo: adresseRetour() };
+    try { await appeler(auth('/request-password-reset'), json('POST', corps)); }
+    catch (e) { if (!/404|not found/i.test(e.message || '')) throw e;
+      await appeler(auth('/forget-password'), json('POST', corps)); }      // ancienne route Better Auth
+  }
+  const reinitialiserMotDePasse = (token, motDePasse) =>
+    appeler(auth('/reset-password'), json('POST', { token, newPassword: motDePasse }));
+  // Jeton de réinitialisation présent dans l'adresse (retour du lien de l'email), retiré de l'adresse
+  function lireJetonReinitialisation() {
+    const adresse = new URL(location.href), token = adresse.searchParams.get('token');
+    if (!token) return null;
+    adresse.searchParams.delete('token');
+    history.replaceState(history.state, '', adresse.href);
+    return token;
+  }
+
   function lireErreurRetour() {
     const adresse = new URL(location.href), erreur = adresse.searchParams.get('error');
     if (!erreur) return null;
@@ -206,6 +226,7 @@ const Api = (() => {
 
   return {
     inscrire, connecter, connecterGoogle, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
+    demanderReinitialisation, reinitialiserMotDePasse, lireJetonReinitialisation,
     listerOrganisations, creerOrganisation, activerOrganisation, lireOrganisation, inviterMembre,
     listerMesInvitations, accepterInvitation, refuserInvitation, supprimerOrganisation,
     lire, creer, modifier, supprimer, executer

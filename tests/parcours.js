@@ -49,6 +49,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('input[name=email]', 'camille@test.fr'); await page.fill('input[name=motDePasse]', 'faux-mdp');
     await page.click('form button'); await page.waitForTimeout(300);
     verifier('Connexion refusée avec un mauvais mot de passe', (await texte()).includes('incorrect'));
+    // Mot de passe oublié : demande, lien reçu par email (simulé), nouveau mot de passe, connexion
+    await page.click('[data-action="motDePasseOublie"]');
+    await page.fill('form[data-action-envoi="envoyerReinitialisation"] input[name=email]', 'camille@test.fr');
+    await page.click('form[data-action-envoi="envoyerReinitialisation"] button'); await page.waitForTimeout(300);
+    const emailEnvoye = (await texte()).includes('email de réinitialisation');
+    const lien = (await (await page.request.get(BASE + '/auth/dernier-lien-simule')).json()).lien;
+    await page.goto(lien); await page.waitForSelector('form[data-action-envoi="choisirMotDePasse"]');
+    const jetonRetire = !page.url().includes('token=');
+    await page.fill('input[name=motDePasse]', 'motdepasse'); await page.fill('input[name=confirmation]', 'motdepasse');
+    await page.click('form[data-action-envoi="choisirMotDePasse"] button'); await page.waitForTimeout(300);
+    verifier('Mot de passe oublié : email, lien, nouveau mot de passe enregistré', emailEnvoye && jetonRetire
+      && (await texte()).includes('Mot de passe enregistré') && !!(await page.$('form[data-action-envoi="seConnecter"]')));
+    await page.fill('input[name=email]', 'camille@test.fr');
     await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
     await page.waitForSelector('.laterale');
     verifier('Une seule équipe : ouverture directe de l’outil (dashboard)', (await texte()).includes('Dashboard général'));

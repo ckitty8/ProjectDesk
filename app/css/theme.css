@@ -100,6 +100,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .boite .marque { padding: 0 0 22px; border: 0; } .boite .marque-nom { color: var(--texte); font-size: 17px; }
 .pile { display: flex; flex-direction: column; gap: 12px; }
 .message-erreur { background: #FDE8E8; color: var(--danger); border-radius: 7px; padding: 8px 10px; }
+.message-info { background: #E3F5EC; color: #0B6B4F; border-radius: 7px; padding: 8px 10px; }
 .chargement { color: #fff; }
 .carte-choix { display: flex; align-items: center; gap: 12px; border: 1px solid var(--bordure); border-radius: 8px; padding: 12px 14px; }
 .carte-choix.invitation { border-color: #F3D9A8; background: #FFF8EC; }
