@@ -244,13 +244,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');
-    // Colonnes Début / Fin / Statut : une personne partie (date de départ passée) est « Inactif »
-    verifier('Liste des ressources : colonnes Début, Fin et Statut (Actif / Inactif) des personnes', await page.evaluate(() => {
-      const entetes = [...document.querySelectorAll('#table-unites thead th')].map(t => t.textContent.trim());
-      return ['Début', 'Fin', 'Statut'].every(t => entetes.some(e => e.startsWith(t)))
-        && C.badgeActif(Calculs.estPresent({ dateDepart: '2020-01-31' }, Calculs.aujourdhui()), ['Actif', 'Inactif']).includes('Inactif')
-        && [...document.querySelectorAll('#table-unites tbody tr')].some(tr => tr.textContent.includes('Actif'));
-    }));
+    // Début / Fin saisis sur la ligne ; une date de fin rend la personne inactive et la masque
+    verifier('Liste des ressources : colonnes Début, Fin et Statut', await page.evaluate(() =>
+      ['Début', 'Fin', 'Statut'].every(t => [...document.querySelectorAll('#table-unites thead th')].some(e => e.textContent.trim().startsWith(t)))));
+    await page.click('[data-action="toutDeplier"]'); await page.waitForTimeout(150);
+    const champFin = 'input[data-action-change="dateRessource"][data-champ="dateDepart"]';
+    const idFin = await page.getAttribute(champFin + ' >> nth=0', 'data-id');
+    await page.fill(champFin + ' >> nth=0', '2026-09-30'); await page.press(champFin + ' >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    const masquee = !(await page.$(`${champFin}[data-id="${idFin}"]`));
+    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
+    const revue = !!(await page.$(`${champFin}[data-id="${idFin}"]`)) && (await page.textContent(`tr:has(${champFin}[data-id="${idFin}"])`)).includes('Inactif');
+    verifier('Liste des ressources : date de fin saisie → Inactif et masquée (visible via « Afficher les ressources inactives »)',
+      masquee && revue && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
+    await page.fill(`${champFin}[data-id="${idFin}"]`, ''); await page.press(`${champFin}[data-id="${idFin}"]`, 'Tab'); await page.waitForTimeout(400);
+    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
     verifier('Liste des ressources : direction → équipe → projet', await ligneVisible('Plateforme') && await ligneVisible('Data')

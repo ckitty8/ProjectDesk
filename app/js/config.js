@@ -115,7 +115,7 @@ const AIDES = {
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
   responsableRole: 'Unité : son responsable. Projet : son chef. Personne : son rôle sur le projet (Chef de projet et Membre peuvent le modifier, Lecteur le consulte).',
-  statutUnite: 'Unité : une unité inactive reste visible mais n’est plus proposée dans le formulaire de demande ; elle ne peut être supprimée que vide. Personne : « Actif » si elle est présente aujourd’hui, « Inactif » avant sa date d’arrivée ou après sa date de départ (dates de sa fiche).',
+  statutUnite: 'Unité : une unité inactive reste visible mais n’est plus proposée dans le formulaire de demande ; elle ne peut être supprimée que vide. Personne : « Inactif » dès qu’une date de fin est saisie ; elle n’apparaît plus dans la liste (bouton « Afficher les ressources inactives » pour la revoir).',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: 'Heures saisies ÷ heures attendues de la semaine, toutes personnes confondues.',
   aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',

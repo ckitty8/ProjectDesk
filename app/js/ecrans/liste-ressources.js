@@ -31,7 +31,8 @@ Ecrans.listeRessources = {
       { id: 'contrats', libelle: 'Types de contrat', compte: valeursDe('contrat', true).length }
     ], onglet, 'ongletListeRessources');
     const actions = {
-      organisation: '<button class="btn" data-action="toutDeplier">Tout déplier</button>'
+      organisation: `<button class="btn" data-action="basculerInactifs">${ui('listeRessources', { inactifs: false }).inactifs ? 'Masquer' : 'Afficher'} les ressources inactives (${etat.d.ressources.filter(estInactive).length})</button>`
+        + '<button class="btn" data-action="toutDeplier">Tout déplier</button>'
         + (admin ? '<button class="btn primaire" data-action="nouvelleUnite" data-type="direction">+ Ajouter une direction</button>' : ''),
       postes: admin ? '<button class="btn primaire" data-action="ajouterValeurListe" data-ref="poste">+ Ajouter un poste</button>' : '',
       contrats: admin ? '<button class="btn primaire" data-action="ajouterValeurListe" data-ref="contrat">+ Ajouter un type de contrat</button>' : ''
@@ -55,8 +56,11 @@ Ecrans.listeRessources = {
      État d'ouverture (ui listeRessources) : unités ouvertes par défaut (replies),
      projets fermés par défaut (projetsOuverts). */
   organisation() {
-    const esc = C.esc, admin = etat.estAdmin, { equipes, ressources, projets, affectations } = etat.d;
-    const etatUi = ui('listeRessources', { replies: {}, projetsOuverts: {} });
+    const esc = C.esc, admin = etat.estAdmin, { equipes, projets } = etat.d;
+    const etatUi = ui('listeRessources', { replies: {}, projetsOuverts: {}, inactifs: false });
+    // Ressources inactives (date de fin saisie) : masquées, sauf « Afficher les ressources inactives »
+    const ressources = etat.d.ressources.filter(r => etatUi.inactifs || !estInactive(r));
+    const affectations = etat.d.affectations.filter(a => ressources.some(r => r.id === a.ressourceId));
     const nbRessources = id => ressources.filter(r => r.equipeId === id).length;
     const enfants = id => equipes.filter(e => e.parentId === id);
     const nomRessource = id => { const r = ressource(id); return r ? esc(r.nom) : '<span class="pale">—</span>'; };
@@ -72,16 +76,21 @@ Ecrans.listeRessources = {
     // Une personne sans projet qui dirige son unité n'est pas « sans projet » : on affiche son rôle
     const responsableUnite = r => equipes.some(e => e.responsableId === r.id);
     // Personne : membre d'un projet (rôle) ou personne de l'unité sans projet.
-    // Début / fin = dates d'arrivée et de départ de sa fiche ; statut calculé : « Actif » si la
-    // personne est présente aujourd'hui (Calculs.estPresent), « Inactif » sinon (pas encore arrivée ou partie).
-    const date = iso => iso ? Calculs.formatAvecAnnee(iso) : '<span class="pale">—</span>';
+    // Début / fin : saisis directement sur la ligne (mêmes champs que la fiche : date_arrivee,
+    // date_depart). Statut : « Inactif » dès qu'une date de fin est saisie (règle du porteur,
+    // 2026-10-05), « Actif » sinon.
+    const champDate = (r, champ, editable) => editable
+      ? `<input type="date" class="champ champ-date" value="${esc(r[champ] || '')}" data-action-change="dateRessource" data-id="${r.id}" data-champ="${champ}">`
+      : (r[champ] ? Calculs.formatAvecAnnee(r[champ]) : '<span class="pale">—</span>');
     const lignePersonne = (r, a, niveau, chemin, masquee) => {
       const editable = a ? peutEditerProjet(projet(a.projetId)) : estMembreDe(r.equipeId) || admin;
       const detail = [r.poste, r.typeContrat].filter(Boolean).join(' · ');
+      // Dates : modifiables par l'équipe de la personne (droits de la table ressources), quel que soit le projet
+      const datesModifiables = estMembreDe(r.equipeId) || admin;
       ajouter((a ? a.projetId + ':' : 'r:') + r.id, chemin, masquee, `${r.nom} ${r.poste || ''}`,
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${sansChevron}${C.avatar(r.nom)}<span>${esc(r.nom)}</span> <span class="discret">${esc(detail)}</span></span></td>
          <td></td><td>${a ? C.badgeRef('role', a.role) : responsableUnite(r) ? '<span class="discret">Responsable de l’unité</span>' : '<span class="pale">sans projet</span>'}</td>
-         <td>${date(r.dateArrivee)}</td><td>${date(r.dateDepart)}</td><td>${C.badgeActif(Calculs.estPresent(r, Calculs.aujourdhui()), ['Actif', 'Inactif'])}</td>
+         <td>${champDate(r, 'dateArrivee', datesModifiables)}</td><td>${champDate(r, 'dateDepart', datesModifiables)}</td><td>${C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</td>
          <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}
            ${a && editable ? ` &nbsp; <a data-action="assigner" data-ressource="${r.id}">Modifier</a>` : ''}</td>`);
     };
@@ -217,5 +226,13 @@ Object.assign(Actions, {
   // Fenêtre d'affectation : pour une personne (data-ressource) ou pré-remplie sur un projet (data-projet)
   assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null } }),
   nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe } }),
-  modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } })
+  modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } }),
+  basculerInactifs: () => majUi('listeRessources', { inactifs: !ui('listeRessources', { inactifs: false }).inactifs }),
+  // Date de début ou de fin saisie sur la ligne d'une personne (champ vidé = date retirée)
+  dateRessource(d, el) {
+    const r = ressource(d.id), valeur = el.value || null;
+    const debut = d.champ === 'dateArrivee' ? valeur : r.dateArrivee, fin = d.champ === 'dateDepart' ? valeur : r.dateDepart;
+    if (debut && fin && fin < debut) { el.value = r[d.champ] || ''; return notifier('La date de fin précède la date de début', 'erreur'); }
+    executer(() => Api.modifier('ressources', { id: 'eq.' + d.id }, { [d.champ]: valeur }), 'ressources');
+  }
 });

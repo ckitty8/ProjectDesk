@@ -227,6 +227,8 @@ const valeursDe = (refId, avecInactives = false) =>
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
 // Référentiels affichés dans l'application (hors REFERENTIELS_MASQUES, config.js)
 const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
+// Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
+const estInactive = r => !!r.dateDepart;
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
 // Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
 const objectifJoursTravail = (equipeId, annee) => {
