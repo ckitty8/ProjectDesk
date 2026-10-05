@@ -62,6 +62,7 @@ sauf consigne contraire explicite du porteur du projet.
 - [ ] Aucune donnée existante modifiée (règle n°8)
 - [ ] Référentiels / calculs centralisés (pas de duplication)
 - [ ] `docs/DAT.md` à jour + ligne d'historique
+- [ ] Version `?v=` des fichiers de `app/index.html` alignée sur la version du DAT (sinon le navigateur garde l'ancien code)
 - [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
 
 ## Après chaque commit

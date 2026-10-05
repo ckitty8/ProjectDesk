@@ -64,6 +64,7 @@
 | 1.50    | 2026-09-27 | **Onglet Capacité construit** (maquette `capacite-saisie/` validée) : indicateurs, capacité des membres, vélocité avec saisie des points engagés / terminés, répartition du sprint avec saisie des jours réels ; tables `sprints_projet` et `repartitions_sprint` (migration 013, additive) ; `Calculs.velocite`, `Calculs.repartitionSprint` (§ 3.3, § 4, § 5, § 6) |
 | 1.51    | 2026-10-05 | Liste des ressources : colonnes **Début / Fin** (dates d'arrivée et de départ) et statut **Actif / Inactif** des personnes (calculé, aucune donnée ajoutée). Tests rendus indépendants de la date du jour (mois du calendrier fixé ; défaut `confiance` des objectifs dans le serveur simulé, comme en base) (§ 3.3, § 9) |
 | 1.52    | 2026-10-05 | Liste des ressources : dates de début et de fin **saisissables sur la ligne** de chaque personne ; une date de fin rend la ressource **Inactive** et la **masque** de la liste (bouton « Afficher les ressources inactives ») (§ 3.3) |
+| 1.53    | 2026-10-05 | Rechargement forcé du code après une livraison : version `?v=` sur chaque fichier JS/CSS de `index.html` (= version du DAT, à changer à chaque livraison) — la Liste des ressources (début, fin, statut) restait invisible chez le porteur avec l'ancienne copie (§ 8) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
