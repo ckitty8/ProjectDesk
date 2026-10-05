@@ -249,7 +249,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.fill('input[form="ajout-sprint"][name=debut]', dates[i][0]); await page.fill('input[form="ajout-sprint"][name=fin]', dates[i][1]);
       await page.click('button[form="ajout-sprint"]'); await page.waitForTimeout(300);
     }
-    verifier('Administration › Sprints : sprints du projet saisis (version, début, fin)', sansSprint && await page.evaluate(id => sprintsDuProjet(id).map(s => s.nom).join() === 'V1,V2,V3,V4', projetEditable)
+    // Numéro (« Sprint 1 ») et année pré-remplis ; affichage par année (puces)
+    const anneeCourante = Number(dates[2][0].slice(0, 4));
+    await page.click(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`).catch(() => {});
+    const autreAnneeVide = await page.evaluate(() => !document.querySelector('input[data-action-change="majSprint"][data-champ="numeroSprint"]'));
+    await page.evaluate(a => majUi('monAdmin', { anneeSprints: a }), anneeCourante); await page.waitForTimeout(150);
+    verifier('Administration › Sprints : numéro « Sprint N », année, version, début, fin ; affichage par année', sansSprint
+      && await page.evaluate(id => sprintsDuProjet(id).map(s => `${s.numeroSprint}/${s.nom}`).join() === '1/V1,2/V2,3/V3,4/V4', projetEditable)
+      && await page.evaluate(id => sprintsDuProjet(id).every(s => anneeSprint(s) === Number(s.debut.slice(0, 4))), projetEditable)
+      && (await page.$$('input[data-action-change="majSprint"][data-champ="numeroSprint"]')).length === 4
+      && (!(await page.$(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`)) || autreAnneeVide)
       && await page.evaluate(() => etat.ecran === 'monAdmin' && ui('monAdmin').onglet === 'sprints'));
     await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);

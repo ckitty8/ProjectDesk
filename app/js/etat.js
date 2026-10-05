@@ -242,7 +242,13 @@ const estInactive = r => !!r.dateDepart;
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));
-const nomSprint = s => s.nom || 'Sprint ' + s.numero;
+// Un projet n'a qu'un « Sprint N » par année (règle aussi garantie en base, migration 015)
+const sprintDejaPris = (projetId, annee, numeroSprint, saufNumero = null) => (etat.d.sprintsProjet || [])
+  .some(s => s.projetId === projetId && s.numero !== saufNumero && Number(s.numeroSprint) === numeroSprint && anneeSprint(s) === annee);
+// Année d'un sprint : saisie (migration 015), sinon celle de sa date de début
+const anneeSprint = s => Number(s.annee) || Number((s.debut || '').slice(0, 4));
+// Libellé d'un sprint : « Sprint 3 · V3.2 » (numéro saisi et version), à défaut l'un des deux
+const nomSprint = s => [s.numeroSprint ? 'Sprint ' + s.numeroSprint : '', s.nom || ''].filter(Boolean).join(' · ') || 'Sprint ' + s.numero;
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
 // Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
 const objectifJoursTravail = (equipeId, annee) => {
