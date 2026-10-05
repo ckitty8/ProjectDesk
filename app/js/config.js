@@ -152,7 +152,8 @@ const GUIDE_ECRANS = {
   monTimesheet: ['Saisissez vos heures par projet et par jour, puis soumettez la semaine.', 'Le responsable d’équipe valide ou renvoie la feuille ; une feuille validée n’est plus modifiable.'],
   monAdmin: ['Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
-    'Onglet Trucs et astuces : les KPI Agile (Scrum, Kanban) expliqués, avec des exemples calculés sur un projet (CDO par défaut).'],
+    'Les KPI Agile sont dans le menu Mon dashboard › Trucs et astuces.'],
+  astuces: ['Les KPI Agile (Scrum et Kanban) : définition, formule, comment les lire.', 'Choisissez un projet en haut : chaque KPI est illustré par un exemple calculé sur ce projet (« réel » si les données existent, sinon « illustratif »).'],
   choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).']
 };
 const GUIDES = {
@@ -172,14 +173,14 @@ const GUIDES = {
 };
 
 /* ============================================================
-   Mon dashboard › Administration › Trucs et astuces : KPI Agile.
+   Mon dashboard › Trucs et astuces : KPI Agile.
    Chaque KPI = [clé, nom, définition / formule, lecture] ; l'exemple chiffré
    est calculé par l'écran (mon-admin.js) à partir du projet choisi.
    ============================================================ */
 const KPI_AGILE = [
     { titre: 'Scrum', kpi: [
       ['velocite', 'Vélocité', 'Points (ou éléments du backlog) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
-      ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Capacité par sprint ; calcul type : (disponible − cérémonies) × focus.'],
+      ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Congés & capacité › Capacité ; calcul type : (disponible − cérémonies) × focus.'],
       ['engagement', 'Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
       ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = éléments trop gros.'],
       ['burnup', 'Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],

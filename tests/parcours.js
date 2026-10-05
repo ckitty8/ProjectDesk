@@ -132,13 +132,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Référentiels : valeur système renommée et propagée', (await page.evaluate(() => ROLES_PROJET.MEMBRE)) === 'Contributeur'
       && (await page.evaluate(() => etat.d.affectations.some(a => a.role === 'Contributeur') && !etat.d.affectations.some(a => a.role === 'Membre'))));
     await renommerRole('Contributeur', 'Membre');
-    // Trucs et astuces : KPI Scrum et Kanban avec exemples calculés sur un projet
-    await page.click('[data-action="ongletMonAdmin"][data-id="astuces"]'); await page.waitForTimeout(200);
-    verifier('Administration › Trucs et astuces : KPI Scrum et Kanban avec exemples', await page.$$eval('.tableau-kpi', t => t.map(x => x.textContent).join(' '))
+    // Trucs et astuces : menu à part dans Mon dashboard (plus un onglet d'Administration)
+    const ongletAstucesAdmin = !!(await page.$('[data-action="ongletMonAdmin"][data-id="astuces"]'));
+    await aller('astuces'); await capture('19-astuces');
+    verifier('Mon dashboard › Trucs et astuces : menu à part, KPI Scrum et Kanban avec exemples', !ongletAstucesAdmin && await page.$$eval('.tableau-kpi', t => t.map(x => x.textContent).join(' '))
       .then(txt => ['Vélocité', 'Burndown', 'Lead time', 'Cycle time', 'WIP'].every(k => txt.includes(k)))
       && (await page.$$('.tableau-kpi .badge-reel')).length > 0 && (await page.$$('.tableau-kpi .badge-illustratif')).length > 0);
     // Jours fériés administrables : ajout, renommage, suppression
-    await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
+    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterFerie"] input[name=jour]', '2026-05-25');
     await page.fill('form[data-action-envoi="ajouterFerie"] input[name=libelle]', 'Lundi de Pentecôte');
     await page.click('form[data-action-envoi="ajouterFerie"] button'); await page.waitForTimeout(300);
