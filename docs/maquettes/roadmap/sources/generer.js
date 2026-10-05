@@ -56,7 +56,11 @@ function entete(sousTitre, actions = '') {
       <div class="carte kpi"><div class="kpi-libelle">Complexité à saisir</div><div class="kpi-valeur" style="color:#D98A1C">${aSaisir}<span class="kpi-complement">rang provisoire</span></div></div></div>`;
 }
 const ecran = corps => `<div style="padding:24px;display:flex;flex-direction:column;gap:16px">${corps}</div>`;
-const filtres = `<div class="ligne-flex" style="gap:10px"><div class="puces">
+// Version retenue par le porteur (2026-10-05) : vue Liste + vue Kanban, bascule à gauche des filtres
+let vueActive = null;
+const bascule = () => !vueActive ? '' : `<div class="ligne-flex" style="border:1px solid #E3E7EE;border-radius:8px;padding:2px;gap:2px;background:#fff">
+    ${[['liste', '☰ Liste'], ['kanban', '▦ Kanban']].map(([v, l]) => `<button class="btn petit" style="border:0;${v === vueActive ? 'background:#E8EEFF;color:#0033AD' : ''}">${l}</button>`).join('')}</div>`;
+const filtres = () => `<div class="ligne-flex" style="gap:10px">${bascule()}<div class="puces">
     <span class="puce active">Tous les statuts</span><span class="puce">Nouveau</span><span class="puce">Prêt pour dév</span>
     <span class="puce">En recette</span><span class="puce">En attente</span></div><span style="flex:1"></span>
     <select class="champ" style="height:30px;width:170px"><option>Tous les parcours</option></select>
@@ -71,7 +75,7 @@ function piste1(selection) {
       <td style="text-align:center">${d.impactClient ?? '—'} / ${d.impactCollab ?? '—'}</td><td style="text-align:center">${d.complexite ?? '—'}</td>
       <td>${valScore(d)}</td><td>${badge(d.statut)}</td><td>${esc(d.sprint) || '<span class="pale">—</span>'}</td>
       <td style="text-align:right">${d.chiffrage ? nb(d.chiffrage) + ' j' : '<span class="pale">—</span>'}</td></tr>`).join('');
-  return ecran(entete('Roadmap fonctionnelle du projet · demandes classées par rang de traitement DSI') + filtres +
+  return ecran(entete('Roadmap fonctionnelle du projet · demandes classées par rang de traitement DSI') + filtres() +
     `<div class="carte" style="overflow:hidden"><table class="tableau"><thead><tr><th style="width:48px">Rang</th><th style="width:16px"></th><th style="width:36%">Demande</th><th>Demandeur</th>
       <th>Prio.</th><th title="Impact client / impact collaborateur">Impacts</th><th>Cplx.</th><th>Score</th><th>Statut</th><th>Sprint</th><th style="text-align:right">J-h</th></tr></thead>
       <tbody>${lignes}</tbody></table>
@@ -110,7 +114,7 @@ function piste2() {
   const cols = colonnes.map(s => { const l = demandes.filter(d => d.statut === s);
     return `<div class="colonne"><div class="colonne-titre">${badge(s)}<span class="discret">${l.length}</span></div>${l.slice(0, 5).map(carte).join('')}
       ${l.length > 5 ? `<div class="discret" style="text-align:center;font-size:12px">+ ${l.length - 5} autres</div>` : ''}</div>`; }).join('');
-  return ecran(entete('Roadmap fonctionnelle du projet · suivi par statut (glisser une carte pour changer son statut)') + filtres +
+  return ecran(entete('Roadmap fonctionnelle du projet · suivi par statut (glisser une carte pour changer son statut)') + filtres() +
     `<div class="kanban" style="grid-template-columns:repeat(5,minmax(0,1fr))">${cols}</div>`);
 }
 
@@ -172,6 +176,9 @@ function piste4() {
   await p.waitForSelector('.laterale'); await p.click('[data-action="aller"][data-ecran="mesProjets"]'); await p.waitForTimeout(300);
   const pistes = [['piste-1-liste-priorisee', piste1()], ['piste-1b-fiche-demande', piste1(demandes[7]), fiche(demandes[7])],
     ['piste-2-kanban-statuts', piste2()], ['piste-3-planification-sprints', piste3()], ['piste-4-matrice-valeur-effort', piste4()]];
+  // Version retenue : vue Liste, fiche, vue Kanban (avec la bascule)
+  vueActive = 'liste'; pistes.push(['retenu-1-vue-liste', piste1()], ['retenu-2-fiche-demande', piste1(demandes[7]), fiche(demandes[7])]);
+  vueActive = 'kanban'; pistes.push(['retenu-3-vue-kanban', piste2()]);
   for (const [nom, html, panneau] of pistes) {
     await p.evaluate(([h, pan]) => { document.querySelector('.contenu').innerHTML = h; document.querySelectorAll('.maquette-panneau').forEach(e => e.remove());
       if (pan) { const d = document.createElement('div'); d.className = 'maquette-panneau'; d.innerHTML = pan; document.body.appendChild(d); } }, [html, panneau]);
