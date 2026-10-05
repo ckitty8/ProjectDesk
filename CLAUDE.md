@@ -55,6 +55,13 @@ sauf consigne contraire explicite du porteur du projet.
    - Le chargement de l'application ne doit jamais vider l'écran si une lecture échoue
      (`chargerDonnees()` dans `app/js/etat.js`, DAT § 2).
 
+## Spécifications validées (fonctionnalités à venir)
+
+Décisions du porteur à respecter lors du développement des fonctionnalités concernées :
+
+- **Roadmap** : `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
+  déroulante alimentée par Administration).
+
 ## Check-list avant chaque commit
 
 - [ ] Maquette PNG faite et validée (si changement d'écran)
