@@ -74,5 +74,7 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
 
 ## Après chaque commit
 
+- [ ] Livraison : pousser la branche de travail puis **`main`** (mise en ligne Vercel) **et la branche `roadmap`**, qui doivent rester identiques (consigne du porteur, 2026-10-05)
+
 - [ ] `node scripts/verifier-docs.js` → « ✔ Documents vérifiés »
 - [ ] Relecture humaine des documents : README, DAT, CLAUDE.md cohérents entre eux

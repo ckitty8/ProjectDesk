@@ -68,6 +68,7 @@
 | 1.54    | 2026-10-05 | Connexion : **« Mot de passe oublié ? »** — email de réinitialisation envoyé par Neon Auth (`/request-password-reset`), retour sur l'application avec `?token=`, choix du nouveau mot de passe (`/reset-password`). Personne d'autre ne voit ni ne choisit le mot de passe (§ 7) |
 | 1.55    | 2026-10-05 | Ouverture : un **administrateur** n'a plus d'écran de choix d'équipe — équipe mémorisée, sinon sa première équipe (hors direction) ; « Changer » reste disponible (§ 7) |
 | 1.56    | 2026-10-05 | **Daily** : saisie en trois champs — Hier (la veille), Aujourd’hui, Blocages (`Calculs.decouperDaily` / `composerDaily`, stockage inchangé : un texte par jour au format des rubriques). **Liste des ressources** : statut retiré des unités (gardé sur les projets) ; statut des personnes cliquable (Actif → date de fin = aujourd’hui ; Inactif → date de fin retirée) (§ 3.3, § 6) |
+| 1.57    | 2026-10-05 | Branche `roadmap` (spécifications de la roadmap) fusionnée ; chaque livraison met à jour `main` **et** `roadmap` (CLAUDE.md) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
