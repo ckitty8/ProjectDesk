@@ -180,7 +180,11 @@ async function demarrer() {
         ecran: ecranArrivee(etat.d.equipes.length ? 'dashboard' : 'monAdmin') });
     }
     // Équipe ouverte : celle mémorisée sur ce poste, ou la seule équipe de l'utilisateur
-    const choix = equipesReconnues.find(e => e.id === memorisee) || (equipesReconnues.length === 1 ? equipesReconnues[0] : null);
+    // Un administrateur voit tout : il n'a pas à choisir une équipe à l'ouverture (demande du porteur,
+    // 2026-10-05). On ouvre l'équipe mémorisée, sinon sa première équipe (de préférence une équipe,
+    // pas une direction) ; « Changer » reste disponible en bas de la barre latérale.
+    const parDefautAdmin = etat.estAdmin ? (equipesReconnues.find(e => e.type !== 'direction') || equipesReconnues[0]) : null;
+    const choix = equipesReconnues.find(e => e.id === memorisee) || (equipesReconnues.length === 1 ? equipesReconnues[0] : parDefautAdmin);
     if (choix) ecrireMemoire('equipe', choix.id);
     majEtat({ chargement: false, equipeCourante: choix ? choix.id : null, ecran: choix ? ecranArrivee('dashboard') : 'choixEquipe' });
   } catch (e) {

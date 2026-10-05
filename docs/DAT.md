@@ -66,6 +66,7 @@
 | 1.52    | 2026-10-05 | Liste des ressources : dates de début et de fin **saisissables sur la ligne** de chaque personne ; une date de fin rend la ressource **Inactive** et la **masque** de la liste (bouton « Afficher les ressources inactives ») (§ 3.3) |
 | 1.53    | 2026-10-05 | Rechargement forcé du code après une livraison : version `?v=` sur chaque fichier JS/CSS de `index.html` (= version du DAT, à changer à chaque livraison) — la Liste des ressources (début, fin, statut) restait invisible chez le porteur avec l'ancienne copie (§ 8) |
 | 1.54    | 2026-10-05 | Connexion : **« Mot de passe oublié ? »** — email de réinitialisation envoyé par Neon Auth (`/request-password-reset`), retour sur l'application avec `?token=`, choix du nouveau mot de passe (`/reset-password`). Personne d'autre ne voit ni ne choisit le mot de passe (§ 7) |
+| 1.55    | 2026-10-05 | Ouverture : un **administrateur** n'a plus d'écran de choix d'équipe — équipe mémorisée, sinon sa première équipe (hors direction) ; « Changer » reste disponible (§ 7) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -373,7 +374,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (67 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (68 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

@@ -65,6 +65,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
     await page.waitForSelector('.laterale');
     verifier('Une seule équipe : ouverture directe de l’outil (dashboard)', (await texte()).includes('Dashboard général'));
+    // Administrateur membre de plusieurs équipes : pas d'écran de choix, ouverture directe (équipe par défaut)
+    verifier('Administrateur avec plusieurs équipes : ouverture directe, sans choix d’équipe', await page.evaluate(async () => {
+      const original = Api.listerOrganisations, memo = localStorage.getItem('pp_equipe');
+      Api.listerOrganisations = async () => etat.d.equipes.slice(0, 2).map(e => ({ id: e.id, name: e.nom }));
+      localStorage.removeItem('pp_equipe'); etat.ecran = 'connexion';
+      await demarrer();
+      const ok = etat.estAdmin && etat.ecran !== 'choixEquipe' && !!etat.equipeCourante;
+      Api.listerOrganisations = original; if (memo) localStorage.setItem('pp_equipe', memo);
+      await demarrer();
+      return ok;
+    }));
     await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
     await capture('02-choix-equipe');
     verifier('Choix d’équipe : invitation reçue affichée', (await texte()).includes('Produit'));
