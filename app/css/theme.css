@@ -219,3 +219,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .champ.saisie-points { width: 80px; height: 28px; text-align: right; }
 .tableau td.nowrap { white-space: nowrap; }
 .champ.champ-date { width: 118px; height: 26px; padding: 0 4px; font-size: 12px; }
+.champs-daily { display: flex; flex-direction: column; }
+.champ-daily { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px 0; }
+.champ-daily .note-daily { min-height: 110px; border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 10px 12px; }

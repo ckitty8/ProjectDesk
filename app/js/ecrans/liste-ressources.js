@@ -90,7 +90,9 @@ Ecrans.listeRessources = {
       ajouter((a ? a.projetId + ':' : 'r:') + r.id, chemin, masquee, `${r.nom} ${r.poste || ''}`,
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${sansChevron}${C.avatar(r.nom)}<span>${esc(r.nom)}</span> <span class="discret">${esc(detail)}</span></span></td>
          <td></td><td>${a ? C.badgeRef('role', a.role) : responsableUnite(r) ? '<span class="discret">Responsable de l’unité</span>' : '<span class="pale">sans projet</span>'}</td>
-         <td>${champDate(r, 'dateArrivee', datesModifiables)}</td><td>${champDate(r, 'dateDepart', datesModifiables)}</td><td>${C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</td>
+         <td>${champDate(r, 'dateArrivee', datesModifiables)}</td><td>${champDate(r, 'dateDepart', datesModifiables)}</td><td>${datesModifiables
+           ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}" title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">${C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</button>`
+           : C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</td>
          <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}
            ${a && editable ? ` &nbsp; <a data-action="assigner" data-ressource="${r.id}">Modifier</a>` : ''}</td>`);
     };
@@ -123,14 +125,14 @@ Ecrans.listeRessources = {
         membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Membre</a>` : '',
         admin || estResponsableDe(e.id) ? C.boutonIcone('modifier', 'modifierEquipe', `data-id="${e.id}"`, 'Modifier ' + libelle) : '',
         admin ? C.boutonIcone('supprimer', 'supprimerEquipe', `data-id="${e.id}"`, vide ? 'Supprimer ' + libelle
-          : sesEquipes.length ? 'Direction non vide : rattachez ses équipes ailleurs' : 'Unité non vide : passez-la en Inactive', !vide) : ''
+          : sesEquipes.length ? 'Direction non vide : rattachez ses équipes ailleurs' : 'Unité non vide : retirez d’abord ses projets et ses membres', !vide) : ''
       ].filter(Boolean).join(' &nbsp; ');
       ajouter(e.id, chemin, masquee, e.nom,
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${aDesEnfants ? chevron(e.id, ouvert, 'replierDirection') : sansChevron}
             ${C.icone(direction ? 'direction' : 'equipe')}<b style="font-weight:500">${esc(e.nom)}</b> ${C.code(e.prefixe)}
             <span class="pale" style="font-size:11px">${direction ? 'direction' : 'équipe'}</span></span></td>
          <td class="num" style="text-align:center">${total}${sesEquipes.length ? ` <span class="pale" style="font-size:11px">(dont ${nbRessources(e.id)} en direct)</span>` : ''}</td>
-         <td>${nomRessource(e.responsableId)}</td><td></td><td></td><td>${C.badgeActif(e.actif !== false)}</td>
+         <td>${nomRessource(e.responsableId)}</td><td></td><td></td><td></td>
          <td class="num"><span class="ligne-flex" style="justify-content:flex-end">${boutons}</span></td>`);
       const sousChemin = [...chemin, e.id], sousMasquee = masquee || !ouvert;
       // Ordre : responsable de l'unité (sans projet) juste sous l'unité, puis équipes, projets, autres personnes
@@ -227,6 +229,13 @@ Object.assign(Actions, {
   assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null } }),
   nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe } }),
   modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } }),
+  // Statut d'une personne : « Inactif » = date de fin saisie (règle du porteur) ; le bouton pose la date
+  // de fin à aujourd'hui, ou la retire pour réactiver la personne
+  basculerActifRessource(d) {
+    const r = ressource(d.id), inactive = estInactive(r);
+    if (!inactive && !confirm(`Rendre ${r.nom} inactive ? Sa date de fin sera aujourd’hui ; elle n’apparaîtra plus dans la liste.`)) return;
+    executer(() => Api.modifier('ressources', { id: 'eq.' + d.id }, { dateDepart: inactive ? null : Calculs.aujourdhui() }), 'ressources');
+  },
   basculerInactifs: () => majUi('listeRessources', { inactifs: !ui('listeRessources', { inactifs: false }).inactifs }),
   // Date de début ou de fin saisie sur la ligne d'une personne (champ vidé = date retirée)
   dateRessource(d, el) {

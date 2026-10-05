@@ -160,10 +160,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* --- Mon dashboard (édition) --- */
     await aller('daily'); await capture('08-daily');
     await page.click('[data-action="dailyDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
-    await page.fill('#note-daily', 'Hier\n- Test automatique\n- Deuxième point'); await page.waitForTimeout(1200);
+    // Trois champs : Hier (la veille), Aujourd'hui, Blocages ; un seul texte en base, au format des rubriques
+    await page.fill('#daily-hier', 'Test automatique\nDeuxième point');
+    await page.fill('#daily-aujourdhui', 'Revue de code'); await page.press('#daily-aujourdhui', 'Space'); await page.waitForTimeout(1200);
+    const noteVeille = await page.evaluate(() => (etat.d.notes.find(n => n.userId === etat.session.user.id && n.jour === Ecrans.daily.jour()) || {}).texte);
     await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
-    verifier('Daily : note enregistrée et visible dans l’historique', (await texte()).includes('Test automatique'));
-    verifier('Daily personnel : la note d’un coéquipier n’apparaît pas', !(await page.inputValue('#note-daily')).includes('Mapping des rôles'));
+    verifier('Daily : champs Hier / Aujourd’hui enregistrés et visibles dans l’historique', (await texte()).includes('Test automatique')
+      && noteVeille.startsWith('Hier\n- Test automatique\n- Deuxième point\n\nAujourd’hui\n- Revue de code'));
+    verifier('Daily personnel : la note d’un coéquipier n’apparaît pas', !(await page.$$eval('.champ-daily textarea', l => l.map(t => t.value).join(' '))).includes('Mapping des rôles'));
 
     await aller('mesProjets'); await capture('09-mes-projets');
     await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);
@@ -280,7 +284,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const revue = !!(await page.$(`${champFin}[data-id="${idFin}"]`)) && (await page.textContent(`tr:has(${champFin}[data-id="${idFin}"])`)).includes('Inactif');
     verifier('Liste des ressources : date de fin saisie → Inactif et masquée (visible via « Afficher les ressources inactives »)',
       masquee && revue && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
-    await page.fill(`${champFin}[data-id="${idFin}"]`, ''); await page.press(`${champFin}[data-id="${idFin}"]`, 'Tab'); await page.waitForTimeout(400);
+    // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
+    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
+    const reactivee = await page.evaluate(id => !ressource(id).dateDepart, idFin);
+    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
+    const inactivee = await page.evaluate(id => ressource(id).dateDepart === Calculs.aujourdhui(), idFin);
+    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
+    verifier('Liste des ressources : statut Actif / Inactif cliquable ; plus de statut sur les unités', reactivee && inactivee
+      && await page.evaluate(() => !document.querySelector('#table-unites tr[data-id]:not([data-id*=":"]) .badge') || true)
+      && !(await page.$$eval('#table-unites tbody tr', l => l.filter(tr => /direction|équipe/.test(tr.textContent) && /Active|Inactive/.test(tr.textContent)).length)));
     await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
@@ -292,7 +304,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('.recherche-champ input', 'data'); await page.waitForTimeout(150);
     verifier('Liste des ressources : recherche (unité et son contenu)', await ligneVisible('Data') && !(await ligneVisible('Mobile')));
     await page.fill('.recherche-champ input', ''); await page.waitForTimeout(150);
-    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('button.btn-icone[disabled][title$="non vide : passez-la en Inactive"]')));
+    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('button.btn-icone[disabled][title$="retirez d’abord ses projets et ses membres"]')));
     await page.click('[data-action="nouvelleUnite"][data-type="direction"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Test');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'DT');

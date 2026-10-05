@@ -232,6 +232,31 @@ const Calculs = (() => {
     return rubriquesDaily(texte).filter(r => estRubriqueBlocages(r.titre)).flatMap(r => r.lignes)
       .filter(l => l && !/^(aucun|aucune|ras|néant|rien)\.?$/i.test(l));
   }
+  /* Daily en trois champs (demande du porteur, 2026-10-05) : « Hier » (la veille), « Aujourd'hui »,
+     « Blocages ». La note reste un seul texte en base (notes_daily.texte), au format des rubriques :
+     titre de rubrique puis une ligne « - … » par point (lu par rubriquesDaily et blocagesDaily).
+     Un texte hors rubrique (ancienne note) est rangé dans « Aujourd'hui » : rien n'est perdu. */
+  const RUBRIQUES_DAILY = [['hier', 'Hier'], ['aujourdhui', 'Aujourd’hui'], ['blocages', 'Blocages']];
+  const cleRubriqueDaily = ligne => {
+    const t = ligne.trim().toLowerCase().replace(/[’']/g, '').replace(/\s*:$/, '');
+    return t === 'hier' ? 'hier' : t === 'aujourdhui' ? 'aujourdhui' : /^blocages?$/.test(t) ? 'blocages' : null;
+  };
+  function decouperDaily(texte) {
+    const champs = { hier: [], aujourdhui: [], blocages: [] }; let courante = 'aujourdhui';
+    (texte || '').split('\n').forEach(l => {
+      const cle = cleRubriqueDaily(l);
+      if (cle) { courante = cle; return; }
+      const point = l.replace(/^\s*-\s?/, '');
+      if (point.trim()) champs[courante].push(point);
+    });
+    return { hier: champs.hier.join('\n'), aujourdhui: champs.aujourdhui.join('\n'), blocages: champs.blocages.join('\n') };
+  }
+  function composerDaily(champs) {
+    return RUBRIQUES_DAILY.map(([cle, titre]) => {
+      const points = (champs[cle] || '').split('\n').filter(l => l.trim()).map(l => '- ' + l.replace(/^\s*-\s?/, ''));
+      return points.length ? titre + '\n' + points.join('\n') : '';
+    }).filter(Boolean).join('\n\n');
+  }
   const nbMots = texte => (texte || '').split(/\s+/).filter(Boolean).length;
 
   return {
@@ -240,6 +265,6 @@ const Calculs = (() => {
     trimestreDe, nombre, pourcent, moyenne, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
     estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
-    nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily
+    nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
   };
 })();

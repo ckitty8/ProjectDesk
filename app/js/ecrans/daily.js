@@ -1,11 +1,10 @@
 /* ============================================================
    Mon dashboard › Daily (maquette 06-mDaily.png)
-   Note de stand-up du jour (privée), enregistrée automatiquement,
-   modèle Hier / Aujourd'hui / Blocages, historique des jours ouvrés.
+   Note de stand-up du jour, enregistrée automatiquement, saisie en trois champs :
+   Hier (la veille), Aujourd'hui, Blocages (demande du porteur, 2026-10-05 ; stockage
+   inchangé : un texte par jour, Calculs.decouperDaily / composerDaily). Historique des jours ouvrés.
    ============================================================ */
 'use strict';
-
-const MODELE_DAILY = 'Hier\n- \n\nAujourd’hui\n- \n\nBlocages\n- ';
 
 Ecrans.daily = {
   titre: 'Daily',
@@ -23,6 +22,9 @@ Ecrans.daily = {
 
   rendre() {
     const esc = C.esc, jour = this.jour(), texte = this.texte(jour), estAujourdhui = jour === Calculs.aujourdhui();
+    const champs = Calculs.decouperDaily(texte);
+    const champsDaily = [['hier', 'Hier (la veille)', 'Ce que j’ai fait hier…'], ['aujourdhui', 'Aujourd’hui', 'Ce que je fais aujourd’hui…'],
+      ['blocages', 'Blocages', 'Ce qui me bloque (laisser vide si rien)…']];
     // Historique : 12 derniers jours ouvrés jusqu'à aujourd'hui
     const historique = []; let j = Calculs.aujourdhui();
     if (Calculs.estWeekend(j)) j = this.decaler(j, -1);
@@ -38,10 +40,12 @@ Ecrans.daily = {
         <div class="carte">
           <div class="carte-titre"><span class="ligne-flex"><h2 style="font-size:16px">${Calculs.formatLong(jour)}</h2>
             ${estAujourdhui ? C.badge('Aujourd’hui', '#0033AD', '#E8EEFF') : ''}</span>
-            <a data-action="insererModele">Insérer le modèle Hier / Aujourd’hui / Blocages</a></div>
-          <textarea class="note-daily" id="note-daily" data-action-saisie="saisirNote" placeholder="Vos notes du jour…">${esc(texte)}</textarea>
+            <span class="discret">Un point par ligne</span></div>
+          <div class="champs-daily">${champsDaily.map(([cle, titre, aide]) => `<label class="champ-daily">
+            <span class="libelle">${titre}</span>
+            <textarea class="note-daily" id="daily-${cle}" data-action-saisie="saisirNote" placeholder="${aide}">${esc(champs[cle])}</textarea></label>`).join('')}</div>
           <div class="carte-titre" style="border-top:1px solid var(--bordure-fine);border-bottom:0">
-            <span class="discret" id="nb-mots">${Calculs.nbMots(texte)} mots</span>
+            <span class="discret" id="nb-mots">${Calculs.nbMots(Object.values(champs).join(' '))} mots</span>
             <span class="discret" id="etat-sauvegarde"><span style="color:var(--succes)">●</span> Enregistré automatiquement</span></div>
         </div>
       </div>
@@ -75,18 +79,14 @@ async function enregistrerNote(jour, texte) {
 
 Object.assign(Actions, {
   // Frappe : pas de nouveau rendu (on garderait mal le curseur), mise à jour ciblée du compteur
-  saisirNote(_, el) {
-    document.getElementById('nb-mots').textContent = Calculs.nbMots(el.value) + ' mots';
+  saisirNote() {
+    const valeur = cle => document.getElementById('daily-' + cle).value;
+    const texte = Calculs.composerDaily({ hier: valeur('hier'), aujourdhui: valeur('aujourdhui'), blocages: valeur('blocages') });
+    document.getElementById('nb-mots').textContent = Calculs.nbMots(['hier', 'aujourdhui', 'blocages'].map(valeur).join(' ')) + ' mots';
     document.getElementById('etat-sauvegarde').textContent = 'Enregistrement…';
-    const jour = Ecrans.daily.jour(), texte = el.value;
+    const jour = Ecrans.daily.jour();
     clearTimeout(minuteurDaily);
     minuteurDaily = setTimeout(() => enregistrerNote(jour, texte), 800);
-  },
-  async insererModele() {
-    const zone = document.getElementById('note-daily');
-    zone.value = zone.value.trim() ? zone.value + '\n\n' + MODELE_DAILY : MODELE_DAILY;
-    await enregistrerNote(Ecrans.daily.jour(), zone.value);
-    rendre();
   },
   dailyAujourdhui: () => majUi('daily', { jour: Calculs.aujourdhui() }),
   dailyAller: d => majUi('daily', { jour: d.jour }),
