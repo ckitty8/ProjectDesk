@@ -8,6 +8,8 @@
 |------------|----------|
 | 2026-10-05 | Règle de classement des demandes (rang de traitement DSI) — § 1 |
 | 2026-10-05 | Sprint : liste déroulante alimentée par Administration — § 2 |
+| 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
+| 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 
 ## 1. Rang de traitement DSI (règle reprise du fichier Excel)
 
@@ -52,9 +54,27 @@ concernées).
 - Le champ **Sprint** est une **liste déroulante** (pas de saisie libre).
 - Ses valeurs sont **celles configurées dans Administration** : un seul endroit pour la liste
   des sprints, qu'utilisent la roadmap et les autres écrans (règle n°4).
-- **Existant à compléter** : aujourd'hui Administration ne contient pas de liste de sprints ;
-  l'application les calcule (`SPRINT_REFERENCE` et `DUREE_SPRINT_JOURS` dans `app/js/config.js`,
-  `Calculs.sprintDe`). La liste administrable est donc à créer avec la roadmap.
+- Liste utilisée : les **sprints du projet** saisis dans Mon dashboard › Administration › Sprints
+  (nom de la version, début, fin — table `sprints_projet`, migration 014), affichés
+  « nom · début → fin ».
 - À l'import, chaque nom de sprint du fichier (Acrux, Alcor, 1.15.0, « Sprint 64 - 2025 »…)
   doit correspondre à une valeur de cette liste ; une valeur inconnue est signalée, pas créée
   en silence.
+
+## 3. Écran retenu : vue Liste et vue Kanban
+
+Maquettes : `docs/maquettes/roadmap/retenu-1-vue-liste.png`, `retenu-2-fiche-demande.png`,
+`retenu-3-vue-kanban.png` (pistes 1 et 2 ; les pistes 3 « planification par sprint » et
+4 « matrice valeur / effort » ne sont pas retenues).
+
+- Emplacement : Mon dashboard › Projets et Roadmap, onglet **« Roadmap fonctionnelle »** à côté
+  du Gantt des projets ; choix du projet (CDO par défaut) ; même vue en lecture seule dans Général.
+- Indicateurs : demandes ouvertes, en recette (DSI / PO), chiffrage restant (j-h), complexité à saisir.
+- Bascule **☰ Liste / ▦ Kanban**, puis filtres communs aux deux vues : statut, parcours, demandeur.
+- **Vue Liste** : tableau trié par rang (§ 1) — rang, ★ stratégique, demande et parcours,
+  demandeur, priorité, impacts client / collaborateur, complexité, score (ou « complexité à
+  saisir »), statut, sprint, chiffrage.
+- **Vue Kanban** : une colonne par statut ouvert, cartes triées par rang (rang, score, demande,
+  parcours, sprint) ; glisser une carte change son statut.
+- Clic sur une ligne ou une carte : **fiche** dans le panneau latéral (identification,
+  priorisation, développement et recette ; sprint en liste déroulante — § 2 ; score et rang calculés).
