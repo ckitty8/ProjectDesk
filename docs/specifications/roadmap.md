@@ -8,6 +8,7 @@
 |------------|----------|
 | 2026-10-05 | Règle de classement des demandes (rang de traitement DSI) — § 1 |
 | 2026-10-05 | Sprint : liste déroulante alimentée par Administration — § 2 |
+| 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 
 ## 1. Rang de traitement DSI (règle reprise du fichier Excel)
 
@@ -52,9 +53,9 @@ concernées).
 - Le champ **Sprint** est une **liste déroulante** (pas de saisie libre).
 - Ses valeurs sont **celles configurées dans Administration** : un seul endroit pour la liste
   des sprints, qu'utilisent la roadmap et les autres écrans (règle n°4).
-- **Existant à compléter** : aujourd'hui Administration ne contient pas de liste de sprints ;
-  l'application les calcule (`SPRINT_REFERENCE` et `DUREE_SPRINT_JOURS` dans `app/js/config.js`,
-  `Calculs.sprintDe`). La liste administrable est donc à créer avec la roadmap.
+- Liste utilisée : les **sprints du projet** saisis dans Mon dashboard › Administration › Sprints
+  (nom de la version, début, fin — table `sprints_projet`, migration 014), affichés
+  « nom · début → fin ».
 - À l'import, chaque nom de sprint du fichier (Acrux, Alcor, 1.15.0, « Sprint 64 - 2025 »…)
   doit correspondre à une valeur de cette liste ; une valeur inconnue est signalée, pas créée
   en silence.
