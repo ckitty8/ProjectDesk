@@ -1,6 +1,7 @@
 /* ============================================================
    Général › Administration (maquette 04-gAdmin.png) — LECTURE SEULE
-   Onglets Équipes, Référentiels, Champs du formulaire.
+   Onglets Équipes, Référentiels (champs du formulaire de demande retirés le 2026-10-05 :
+   demandes gérées dans Azure DevOps).
    Règle : la section « Général » ne modifie jamais rien. Les
    modifications se font dans Mon dashboard › Administration
    (administrateurs globaux ; contrôlé aussi par la base).
@@ -28,7 +29,7 @@ const Administration = {
 
   // Référentiels et leurs valeurs ; modifiable = renommer, recolorer, activer, ajouter
   referentiels(modifiable) {
-    const esc = C.esc, refId = ui('referentiels', { id: 'type' }).id;
+    const esc = C.esc, refId = ui('referentiels', { id: 'stp' }).id;
     const ref = referentielsVisibles().find(r => r.id === refId) || referentielsVisibles()[0];
     const gauche = referentielsVisibles().map(r => `<a class="menu-lien" style="color:var(--texte);justify-content:space-between;${r.id === ref.id ? 'background:#F3F6FF' : ''}"
       data-action="choisirReferentiel" data-id="${r.id}"><span>${esc(r.nom)}</span><span class="pale">${valeursDe(r.id, true).length}</span></a>`).join('');
@@ -44,17 +45,6 @@ const Administration = {
         <table class="tableau"><thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead><tbody>${valeurs}</tbody></table>
         ${modifiable ? `<form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterValeur" data-ref="${ref.id}">
           <input class="champ" name="libelle" placeholder="Nouvelle valeur" required><button class="btn">Ajouter</button></form>` : ''}</div></div>`;
-  },
-
-  // Champs du formulaire (lecture ; l'édition est dans Mon admin › Formulaire de demande)
-  champs() {
-    const esc = C.esc;
-    const lignes = etat.d.champs.map(c => `<tr><td>${esc(c.libelle)}</td><td>${esc(c.type)}</td>
-      <td>${c.type === 'Liste' ? esc(c.referentielId === 'equipes' ? 'Équipes' : (parId('referentiels', c.referentielId) || {}).nom || '—') : '<span class="pale">—</span>'}</td>
-      <td>${c.systeme ? 'Système' : 'Ajouté'}</td><td>${c.obligatoire ? 'Oui' : 'Non'}</td></tr>`).join('');
-    return `<div class="carte"><div class="carte-titre"><h2>Champs du formulaire de demandes</h2>
-      <span class="discret">L’ordre et la prévisualisation se gèrent dans Mon dashboard › Administration</span></div>
-      <table class="tableau"><thead><tr><th>Libellé</th><th>Type</th><th>Référentiel</th><th>Origine</th><th>Obligatoire</th></tr></thead><tbody>${lignes}</tbody></table></div>`;
   }
 };
 
@@ -65,14 +55,13 @@ Ecrans.administration = {
     const onglet = ui('administration', { onglet: 'equipes' }).onglet;
     const onglets = C.onglets([
       { id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length },
-      { id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length },
-      { id: 'champs', libelle: 'Champs du formulaire', compte: etat.d.champs.length }
+      { id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length }
     ], onglet, 'ongletAdministration');
-    const corps = onglet === 'equipes' ? Administration.equipes(false) : onglet === 'referentiels' ? Administration.referentiels(false) : Administration.champs();
+    const corps = onglet === 'referentiels' ? Administration.referentiels(false) : Administration.equipes(false);
     const lienEdition = etat.estAdmin ? `<button class="btn" data-action="aller" data-ecran="monAdmin">Modifier (Mon dashboard › Administration)</button>` : '';
     return `
     <div class="ecran">
-      ${C.entete('Administration', 'Équipes, référentiels et champs du formulaire de demandes · consultation', lienEdition)}
+      ${C.entete('Administration', 'Équipes et référentiels · consultation', lienEdition)}
       ${onglets}${corps}
     </div>`;
   }
@@ -86,7 +75,7 @@ Object.assign(Actions, {
 
   // Renommer : la base propage le nouveau libellé aux données (projets, affectations…)
   renommerValeur: (d, el) => executer(() => Api.modifier('valeurs_referentiel', { id: 'eq.' + d.id }, { libelle: el.value.trim() }),
-    'valeurs', 'projets', 'affectations', 'absences', 'demandes', 'ressources'),
+    'valeurs', 'projets', 'affectations', 'absences', 'ressources'),
   colorerValeur: (d, el) => executer(() => Api.modifier('valeurs_referentiel', { id: 'eq.' + d.id }, { couleur: el.value }), 'valeurs'),
   basculerValeur(d) {
     const v = parId('valeurs', d.id);

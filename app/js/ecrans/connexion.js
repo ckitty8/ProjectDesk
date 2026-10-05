@@ -28,8 +28,8 @@ Ecrans.connexion = {
       </form>
       <div style="text-align:center;color:var(--pale);margin:14px 0;font-size:12px">ou</div>
       <button class="btn" style="width:100%;height:38px;justify-content:center" data-action="connexionGoogle">Continuer avec Google</button>
-      <p class="discret" style="font-size:12px;text-align:center;margin:18px 0 0">Un nouveau compte peut déposer des demandes ;
-        l’accès aux équipes se fait sur invitation.</p>
+      <p class="discret" style="font-size:12px;text-align:center;margin:18px 0 0">Après la création d’un compte, l’accès aux équipes se fait
+        sur invitation d’un administrateur.</p>
     </div></div>`;
   },
 

@@ -58,9 +58,10 @@ const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 
 const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
 const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés
 // Référentiel en base → objet de libellés système ci-dessus
-// Référentiels conservés en base mais masqués dans l'application : « Statuts ticket » (stt),
-// la notion de ticket ayant été retirée de l'application (demande du porteur, 2026-09-27).
-const REFERENTIELS_MASQUES = ['stt'];
+// Référentiels conservés en base mais masqués dans l'application : « Statuts ticket » (stt,
+// tickets retirés le 2026-09-27) ; « Types de demande » (type) et « Priorités » (prio), les
+// demandes étant gérées dans Azure DevOps (retrait du 2026-10-05).
+const REFERENTIELS_MASQUES = ['stt', 'type', 'prio'];
 /* Répartition idéale du temps d'un sprint par catégorie de travail (demande du porteur 2026-09-27).
    Source : pratiques Scrum usuelles, à ajuster par le porteur. Total = 100 %. La part
    « Cérémonies / réunions » (15 %) correspond à CEREMONIES_JOURS_SPRINT (1,5 j) sur un sprint
@@ -104,7 +105,7 @@ if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);
    ============================================================ */
 const AIDES = {
   sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule : rien ne s’y modifie, même pour un administrateur.',
-  sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les demandes de votre équipe.',
+  sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les sprints des projets.',
   avancementMoyen: 'Moyenne de l’avancement (%) des projets non terminés.',
   projetsRisque: 'Projets au statut « À risque » ou « En retard ».',
   tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
@@ -138,7 +139,7 @@ const GUIDE_ECRANS = {
     'Choisissez le trimestre avec les boutons T1 à T4. Survolez les ⓘ pour le détail des calculs.'],
   projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
   ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.', 'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés & capacité.'],
-  administration: ['Consultation des équipes, référentiels et champs du formulaire de demande.', 'Pour les modifier (administrateurs) : Mon dashboard › Administration.'],
+  administration: ['Consultation des équipes et des référentiels.', 'Pour les modifier (administrateurs) : Mon dashboard › Administration.'],
   timesheet: ['Heures déclarées par personne et par jour sur une semaine, avec le statut de chaque feuille.', 'Changez de semaine avec les flèches.'],
   dailyEquipes: ['Les notes de daily des personnes de vos équipes pour un jour donné, et les blocages signalés.', 'Filtrez par équipe ; changez de jour avec les flèches.'],
   daily: ['Votre note de daily : tapez, elle s’enregistre automatiquement.', 'Le modèle propose les rubriques Hier / Aujourd’hui / Blocages. Vos coéquipiers la lisent dans Général › Daily des équipes.'],
@@ -149,11 +150,10 @@ const GUIDE_ECRANS = {
     '« + Ajouter une direction », puis sur chaque ligne « + Équipe », « + Projet », « + Membre ». Le crayon modifie ; la corbeille supprime une unité vide.',
     'Onglets Postes et Types de contrat : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures par projet et par jour, puis soumettez la semaine.', 'Le responsable d’équipe valide ou renvoie la feuille ; une feuille validée n’est plus modifiable.'],
-  monAdmin: ['Demandes adressées à votre équipe (à traiter, accepter, refuser, transformer en projet), formulaire de demande,',
-    'et pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
+  monAdmin: ['Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
+    'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
     'Onglet Trucs et astuces : les KPI Agile (Scrum, Kanban) expliqués, avec des exemples calculés sur un projet (CDO par défaut).'],
-  choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).'],
-  demandeur: ['Déposez une demande auprès d’une équipe et suivez son traitement.']
+  choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).']
 };
 const GUIDES = {
   premiersPas: { titre: 'Premiers pas', paragraphes: [
@@ -167,8 +167,8 @@ const GUIDES = {
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
-    'Administrateur : crée les directions et équipes, gère les listes (référentiels), le formulaire de demande et les jours fériés.',
-    'Demandeur (compte sans équipe) : dépose des demandes et suit uniquement les siennes.'] }
+    'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés.',
+    'Compte sans équipe : attend une invitation d’un administrateur (les demandes sont gérées dans Azure DevOps).'] }
 };
 
 /* ============================================================

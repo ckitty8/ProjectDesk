@@ -8,7 +8,7 @@
      projet par un membre de son équipe (règle RLS).
      Depuis la section « Général », le panneau reste en lecture.
    - Création : formulaire « Nouveau projet » (bouton de Mes projets,
-     de la Liste des ressources, ou depuis une demande acceptée).
+     ou de la Liste des ressources).
    ============================================================ */
 'use strict';
 
@@ -50,8 +50,8 @@ const Panneau = {
     </aside>`;
   },
 
-  // Formulaire de création ; valeurs pré-remplies possibles (depuis une demande, ou l'équipe
-  // choisie dans Liste des ressources : v.equipeId ; sinon l'équipe ouverte).
+  // Formulaire de création ; équipe pré-remplie possible (choisie dans Liste des ressources :
+  // v.equipeId ; sinon l'équipe ouverte).
   // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef.
   // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
@@ -67,7 +67,6 @@ const Panneau = {
         <div><label class="libelle">Description</label><textarea class="champ" name="description" rows="3">${esc(v.description || '')}</textarea></div>
         <div><label class="libelle">Chef de projet</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], moi && moi.equipeId === eqId ? moi.id : '', 'class="champ" name="chefId"')}</div>
         <input type="hidden" name="equipeId" value="${eqId}">
-        ${v.demandeId ? `<input type="hidden" name="demandeId" value="${v.demandeId}"><div class="discret">Le projet sera rattaché à la demande d’origine.</div>` : ''}
       </div>
       <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Créer le projet</button></div>
     </form></aside>`;
@@ -84,18 +83,16 @@ Object.assign(Actions, {
   },
   supprimerProjet(d) {
     if (!confirm('Supprimer ce projet ? Ses affectations et heures saisies seront supprimées.')) return;
-    executer(async () => { await Api.supprimer('projets', { id: 'eq.' + d.id }); etat.panneau = null; }, 'projets', 'affectations', 'temps', 'demandes');
+    executer(async () => { await Api.supprimer('projets', { id: 'eq.' + d.id }); etat.panneau = null; }, 'projets', 'affectations', 'temps');
   },
-  // Création : projet, affectation du chef, rattachement à la demande d'origine
+  // Création : projet et affectation du chef
   async creerProjet(_, form) {
     const f = Object.fromEntries(new FormData(form));
-    const demandeId = f.demandeId; delete f.demandeId;
     const ok = await executer(async () => {
       const [cree] = await Api.creer('projets', f);
       if (f.chefId) await Api.creer('affectations', { projetId: cree.id, ressourceId: f.chefId, role: ROLES_PROJET.CHEF });
-      if (demandeId) await Api.modifier('demandes', { id: 'eq.' + demandeId }, { projetId: cree.id });
       etat.panneau = { type: 'projet', id: cree.id };
-    }, 'projets', 'affectations', 'demandes');
+    }, 'projets', 'affectations');
     if (ok) notifier('Projet créé');
   }
 });

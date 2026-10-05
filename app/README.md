@@ -1,7 +1,7 @@
 # ProjectDesk — application
 
 Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap,
-ressources, congés et capacité, timesheet, daily, demandes entrantes.
+ressources, congés et capacité, timesheet, daily (les demandes sont gérées dans Azure DevOps).
 Architecture, écrans, tables et droits : [`docs/DAT.md`](../docs/DAT.md).
 
 ## Lancer en local
@@ -62,7 +62,7 @@ Pour afficher l'entrée « Contacter l'administrateur », renseigner `CONTACT_AI
 | Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels (dont postes et types de contrat) et champs du formulaire |
 | Responsable d'équipe (rôle `owner` / `admin` de l'organisation) | Inviter des membres, valider les feuilles de temps |
 | Membre d'une équipe | Tout lire (section Général) ; modifier son équipe et ses projets (sauf rôle projet « Lecteur ») |
-| Demandeur (compte sans équipe) | Déposer des demandes et suivre les siennes |
+| Compte sans équipe | Attendre une invitation d'un administrateur |
 
 ## Structure
 

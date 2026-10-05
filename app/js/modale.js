@@ -91,7 +91,7 @@ const Modale = {
             <div><label class="libelle">Rattachée à (équipe seulement)</label>${C.liste([{ valeur: '', libelle: '— aucune direction —' }, ...directions], e.parentId || '', 'class="champ" name="parentId"')}</div></div>
           <div class="deux-colonnes"><div><label class="libelle">Statut</label>${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div>
             <div>${m.id ? `<label class="libelle">Responsable</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}` : ''}</div></div>
-          <div class="discret" style="font-size:12px">Direction et équipe sont des espaces de travail (membres, projets, demandes) ; une direction peut en plus regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
+          <div class="discret" style="font-size:12px">Direction et équipe sont des espaces de travail (membres, projets) ; une direction peut en plus regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
           ${etat.estAdmin ? `<div style="text-align:right"><button class="btn primaire">${m.id ? 'Enregistrer' : 'Créer'}</button></div>`
             : '<div class="discret" style="font-size:12px">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
           </fieldset>

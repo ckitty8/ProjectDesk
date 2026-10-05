@@ -109,7 +109,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes', 'administration']) {
       await aller(ecran);
       if (ecran === 'administration') {
-        for (const onglet of ['equipes', 'referentiels', 'champs']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+        for (const onglet of ['equipes', 'referentiels']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else interdites.push(...await ecritures());
     }
     await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
@@ -150,7 +150,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && !(await page.evaluate(() => etat.d.joursFeries.some(f => f.jour === '2026-05-25'))));
     await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
     verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
-    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]');
+    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
 
     await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
@@ -250,7 +250,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }
     verifier('Administration › Sprints : sprints du projet saisis (version, début, fin)', sansSprint && await page.evaluate(id => sprintsDuProjet(id).map(s => s.nom).join() === 'V1,V2,V3,V4', projetEditable)
       && await page.evaluate(() => etat.ecran === 'monAdmin' && ui('monAdmin').onglet === 'sprints'));
-    await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
+    await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
       && (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
@@ -371,39 +371,22 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Mon timesheet : semaine soumise', (await texte()).includes('Soumise'));
 
     await aller('monAdmin'); await capture('14-mon-admin');
-    await page.click('.fiche >> nth=0'); await page.click('[data-action="statutDemande"][data-statut="analyse"]'); await page.waitForTimeout(300);
-    await page.click('[data-action="statutDemande"][data-statut="acceptee"]'); await page.waitForTimeout(300);
-    await page.click('[data-action="projetDepuisDemande"]'); await page.waitForTimeout(200);
-    await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
-    await page.click('.fermer');
-    verifier('Demande acceptée et projet créé depuis la demande', (await texte()).includes('Projet créé'));
-    await page.click('[data-action="ongletMonAdmin"][data-id="formulaire"]'); await page.waitForTimeout(200);
-    await page.click('[data-action="choisirTypeChamp"][data-type="Date"]'); await page.click('[data-action="ajouterChamp"]'); await page.waitForTimeout(300);
-    await capture('15-formulaire');
-    verifier('Formulaire : champ ajouté', (await texte()).includes('Nouveau champ'));
+    // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
+    verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
+      && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));
 
-    /* --- Espace demandeur (compte sans équipe) --- */
+    /* --- Compte sans équipe : écran de choix d'équipe, en attente d'invitation --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
     await page.fill('input[name=email]', 'elodie@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('form[data-action-envoi="deposerDemande"]');
-    const form = 'form[data-action-envoi="deposerDemande"]';
-    const champs = await page.$$(`${form} [name]`);
-    for (const c of champs) {
-      const tag = await c.evaluate(e => e.tagName); const type = await c.getAttribute('type');
-      if (tag === 'SELECT') await c.selectOption({ index: 1 });
-      else if (type === 'date') await c.fill('2026-12-15');
-      else if (type === 'number') await c.fill('10');
-      else await c.fill('Demande automatique');
-    }
-    await page.click(`${form} .btn.primaire`); await page.waitForTimeout(400);
-    await capture('16-espace-demandeur');
-    verifier('Demandeur : demande déposée et suivie', ((await texte()).match(/Demande automatique/g) || []).length >= 1 && (await texte()).includes('Nouvelle'));
+    await page.waitForSelector('.boite'); await page.waitForTimeout(300);
+    verifier('Compte sans équipe : invité à demander une invitation (plus d’espace demandeur)', (await texte()).includes('Demandez une invitation')
+      && !(await page.$('form[data-action-envoi="deposerDemande"]')));
 
     /* --- Administratrice sans équipe : entrée directe dans l'outil, création d'équipe --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
     await page.fill('input[name=email]', 'admin@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
     await page.waitForSelector('.laterale');
-    verifier('Admin sans équipe : arrive dans l’outil (pas l’espace demandeur)', !(await texte()).includes('Espace demandeur') && (await texte()).includes('Dashboard général'));
+    verifier('Admin sans équipe : arrive dans l’outil', (await texte()).includes('Dashboard général'));
     await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
     verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
     await page.click('[data-action="aller"][data-ecran="listeRessources"]'); await page.waitForTimeout(200);
@@ -418,9 +401,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
     await page.click('[data-action="connexionGoogle"]');
-    await page.waitForSelector('form[data-action-envoi="deposerDemande"]');
+    await page.waitForSelector('.boite'); await page.waitForTimeout(300);
     verifier('Google : session ouverte au retour, vérificateur retiré de l’adresse',
-      (await texte()).includes('Gaëlle Google') && !page.url().includes('neon_auth_session_verifier'));
+      (await texte()).includes('Gaëlle') && !page.url().includes('neon_auth_session_verifier'));
     await page.goto(BASE + '/app/?error=access_denied'); await page.waitForTimeout(500);
     await page.click('[data-action="deconnexion"]').catch(() => {});
     await page.goto(BASE + '/app/?error=access_denied'); await page.waitForSelector('[data-action="connexionGoogle"]');

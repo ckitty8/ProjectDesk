@@ -70,6 +70,7 @@
 | 1.56    | 2026-10-05 | **Daily** : saisie en trois champs — Hier (la veille), Aujourd’hui, Blocages (`Calculs.decouperDaily` / `composerDaily`, stockage inchangé : un texte par jour au format des rubriques). **Liste des ressources** : statut retiré des unités (gardé sur les projets) ; statut des personnes cliquable (Actif → date de fin = aujourd’hui ; Inactif → date de fin retirée) (§ 3.3, § 6) |
 | 1.57    | 2026-10-05 | Branche `roadmap` (spécifications de la roadmap) fusionnée ; chaque livraison met à jour `main` **et** `roadmap` (CLAUDE.md) |
 | 1.58    | 2026-10-05 | **Sprints par projet** saisis dans Mon dashboard › Administration › **Sprints** (version, début, fin ; migration 014, additive : colonnes `nom`, `debut`, `fin` de `sprints_projet`) ; l'onglet Capacité navigue dans les sprints du projet (bouton « Sprints du projet »). Calendrier global `SPRINT_REFERENCE` conservé pour les exemples des KPI Agile (§ 3.3, § 4, § 6) |
+| 1.59    | 2026-10-05 | **Demandes retirées** (gérées dans Azure DevOps) : onglets Demandes entrantes et Formulaire de demande (Mon dashboard › Administration), Champs du formulaire (Général › Administration), espace demandeur, création d'un projet depuis une demande ; référentiels « Types de demande » et « Priorités » masqués. Tables `demandes` et `champs_formulaire` et leurs données conservées en base (§ 3, § 4, § 7) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -157,8 +158,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | Écran (`etat.ecran`) | Fichier | Rôle | Capture |
 |------|---------|------|---------|
 | `connexion` | `connexion.js` | Connexion / création de compte (email + mot de passe), Google | `01-connexion.png` |
-| `choixEquipe` | `choix-equipe.js` | Équipes de l'utilisateur, invitations reçues, accès demandeur | `02-choix-equipe.png` |
-| `demandeur` | `espace-demandeur.js` | Formulaire de demande (champs administrés) + « Mes demandes » | `16-espace-demandeur.png` |
+| `choixEquipe` | `choix-equipe.js` | Équipes de l'utilisateur, invitations reçues ; compte sans équipe : invité à demander une invitation | `02-choix-equipe.png` |
 
 ### 3.2 Section « Général » (lecture)
 
@@ -180,13 +180,13 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = congés (fériés exclus), totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`). Onglet **Capacité** (fichier `capacite.js`, objet `Capacite`, maquette `capacite-saisie/`) : projet (CDO par défaut) et sprint parmi **les sprints saisis du projet** (‹ ›, sprint en cours par défaut ; bouton « Sprints du projet » → Administration › Sprints ; maquette `sprints-projet/`) ; indicateurs disponible / engageable / vélocité moyenne / prévision ; capacité des membres (calculée) ; **vélocité** : points engagés et terminés **saisis** par sprint, say/do ; **répartition du sprint** : idéal par catégorie (calculé) et jours réels **saisis**, écart. Champs désactivés si le projet n'est pas modifiable. Bouton **« Méthode de calcul Scrum »** en haut à droite : pop-in des formules (`Modale.methodeCapacite`, maquette `capacite-scrum/`) | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, **début / fin** des personnes **saisis directement sur la ligne** (`date_arrivee`, `date_depart`, modifiables par l'équipe de la personne), statut (projets : statut ; personnes : **Inactif dès qu'une date de fin est saisie**, `estInactive`, badge cliquable pour rendre inactive ou réactiver ; plus de statut affiché sur les unités) ; les ressources inactives sont **masquées**, bouton « Afficher les ressources inactives (n) » pour les revoir ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Saisie de mes heures, soumission ; validation/renvoi par le responsable d'équipe | `13-mon-timesheet.png` |
-| `monAdmin` | `mon-admin.js` | Demandes adressées à mon équipe (colonnes + fiche de traitement) ; formulaire de demande + aperçu ; **Sprints** (sprints de chaque projet : version, début, fin) ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année) ; **Trucs et astuces** (tous : KPI Agile Scrum et Kanban de `KPI_AGILE`, avec un exemple chiffré par KPI calculé sur un projet choisi, CDO par défaut — « réel » si les données existent, sinon « illustratif »). Ouvert sans équipe pour un administrateur | `14-mon-admin.png`, `15-formulaire.png` |
+| `monAdmin` | `mon-admin.js` | **Sprints** (sprints de chaque projet : version, début, fin) ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année) ; **Trucs et astuces** (tous : KPI Agile Scrum et Kanban de `KPI_AGILE`, avec un exemple chiffré par KPI calculé sur un projet choisi, CDO par défaut — « réel » si les données existent, sinon « illustratif »). Ouvert sans équipe pour un administrateur. (Demandes entrantes et formulaire de demande retirés le 2026-10-05 : gérés dans Azure DevOps.) | `14-mon-admin.png` |
 
 ### 3.4 Éléments ajoutés par rapport à la maquette
 
 Nécessaires au fonctionnement, dans le style de la maquette (maquettes des compléments
 validées : `docs/maquettes/pilotage-projet/complements/`) :
-- écrans connexion, choix d'équipe, espace demandeur, Mon timesheet, bloc utilisateur ;
+- écrans connexion, choix d'équipe, Mon timesheet, bloc utilisateur ;
 - fenêtre **Objectifs de l'équipe** (saisie des OKR et de la progression des résultats clés) ;
 - panneau **Nouveau projet** (aussi ouvert par « Créer le projet » sur une demande acceptée) : code, nom,
   description, chef de projet ; résultat clé, dates et statut ne sont pas demandés à la création
@@ -207,10 +207,10 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | Table | Contenu | Clé / liens |
 |-------|---------|-------------|
 | `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
-| `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets, demandes) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
+| `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
-| `champs_formulaire` | Formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
+| `champs_formulaire` | **Non utilisée depuis le 2026-10-05** (demandes gérées dans Azure DevOps ; table conservée en base) — formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
 | `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012) | → `equipes` |
 | `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
@@ -225,7 +225,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
 | `feuilles_temps` | `ressource_id`, `semaine` (lundi), `statut` (en_saisie / soumise / validee / a_completer), `commentaire` | clé (ressource, semaine) |
 | `notes_daily` | `user_id`, `jour`, `texte` | clé (user, jour) |
-| `demandes` | `numero` (DEM-047), `titre`, `type`, `description`, `equipe_id`, `priorite`, `date_souhaitee`, `budget`, `valeurs` (jsonb des champs ajoutés), `statut` (nouvelle / analyse / acceptee / refusee), `commentaire`, `demandeur_id`, `demandeur_nom`, `service`, `projet_id` | → `equipes`, `projets` |
+| `demandes` | **Non utilisée depuis le 2026-10-05** (demandes gérées dans Azure DevOps ; table et données conservées en base) — `numero` (DEM-047), `titre`, `type`, `description`, `equipe_id`, `priorite`, `date_souhaitee`, `budget`, `valeurs` (jsonb des champs ajoutés), `statut` (nouvelle / analyse / acceptee / refusee), `commentaire`, `demandeur_id`, `demandeur_nom`, `service`, `projet_id` | → `equipes`, `projets` |
 | `neon_auth.*` | Utilisateurs, sessions, organisations, membres, invitations | gérées par Neon Auth — **ne pas modifier** |
 
 Historique : la migration `001_schema_initial.sql` (Roadmap PM) créait `demandes` (backlog) et
@@ -337,12 +337,11 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
    - administrateur sans équipe → directement dans l'outil (dashboard, ou Administration si
      aucune équipe n'existe, Mon dashboard › Administration) ; les autres écrans « Mon dashboard »
      l'invitent à ouvrir/créer une équipe ;
-   - compte sans équipe ni droit d'administration → espace demandeur.
+   - compte sans équipe ni droit d'administration → écran de choix d'équipe (attente d'une invitation).
 3. **Création d'équipe** (administrateur) : organisation Neon Auth (le créateur en devient
    `owner`) puis ligne `equipes` ; si aucune équipe n'était ouverte, la nouvelle s'ouvre. Invitation de membres par email (fenêtre équipe) ; la personne
    accepte depuis l'écran de choix d'équipe.
-4. **Demande** : dépôt (demandeur) → Nouvelle → En analyse → Acceptée / Refusée (équipe) →
-   « Créer le projet » (lien `demandes.projet_id`).
+4. **Demande** : retiré le 2026-10-05 — les demandes sont gérées dans Azure DevOps.
 5. **Temps** : saisie (`temps_saisis`) → « Soumettre » (`feuilles_temps.statut = soumise`)
    → Valider / Renvoyer (responsable).
 
@@ -377,7 +376,7 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (70 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (69 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

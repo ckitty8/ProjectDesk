@@ -35,11 +35,11 @@ const etat = {
 const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
-  valeurs: 'valeurs_referentiel', champs: 'champs_formulaire', joursFeries: 'jours_feries',
-  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps', demandes: 'demandes',
+  valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
+  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notes: 'notes_daily', administrateurs: 'administrateurs'
 };
-const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', champs: 'ordre', referentiels: 'ordre', demandes: 'numero.desc', projets: 'code' };
+const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
 // Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;
@@ -171,11 +171,11 @@ async function demarrer() {
     const equipesReconnues = mesEquipes();
     const memorisee = lireMemoire('equipe');
     // Écran d'arrivée : on reste sur l'écran courant s'il y en avait un (ex. rechargement)
-    const ecranArrivee = defaut => (['connexion', 'choixEquipe', 'demandeur'].includes(etat.ecran) ? defaut : etat.ecran);
+    const ecranArrivee = defaut => (['connexion', 'choixEquipe'].includes(etat.ecran) ? defaut : etat.ecran);
     if (!equipesReconnues.length) {
       // Sans équipe : l'administrateur entre dans l'outil (Administration s'il faut créer la
-      // première équipe, sinon le dashboard) ; les autres comptes sont des demandeurs.
-      if (!etat.estAdmin) return majEtat({ chargement: false, equipeCourante: null, ecran: 'demandeur' });
+      // première équipe, sinon le dashboard) ; les autres comptes attendent une invitation (écran Choix d'équipe).
+      if (!etat.estAdmin) return majEtat({ chargement: false, equipeCourante: null, ecran: 'choixEquipe' });
       return majEtat({ chargement: false, equipeCourante: null,
         ecran: ecranArrivee(etat.d.equipes.length ? 'dashboard' : 'monAdmin') });
     }

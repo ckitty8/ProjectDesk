@@ -4,7 +4,7 @@
    Barre latérale (sections « Général » en lecture et « Mon dashboard »
    en édition), en-tête (fil d'Ariane + badge de mode), zone d'écran,
    panneau latéral et fenêtre modale. Les écrans plein écran
-   (connexion, choix d'équipe, espace demandeur) n'ont pas de coquille.
+   (connexion, choix d'équipe) n'ont pas de coquille.
    ============================================================ */
 'use strict';
 
@@ -38,7 +38,7 @@ const Coquille = (() => {
     { id: 'monTimesheet', libelle: 'Mon timesheet', icone: 'time' },
     { id: 'monAdmin', libelle: 'Administration', icone: 'admin' }
   ];
-  const PLEIN_ECRAN = ['connexion', 'choixEquipe', 'demandeur'];
+  const PLEIN_ECRAN = ['connexion', 'choixEquipe'];
 
   function lienMenu(item) {
     const actif = etat.ecran === item.id && !item.enfants;
