@@ -239,6 +239,10 @@ function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => 
 const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
+// Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
+const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
+  .sort((a, b) => a.debut.localeCompare(b.debut));
+const nomSprint = s => s.nom || 'Sprint ' + s.numero;
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
 // Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
 const objectifJoursTravail = (equipeId, annee) => {

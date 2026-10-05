@@ -234,20 +234,33 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
-    // Onglet « Capacité par sprint » retiré (2026-09-27, à reprendre) : deux onglets seulement
-    // Onglet Capacité (vide pour le moment) : bouton « Méthode de calcul Scrum » → pop-in des formules
+    // Onglet Capacité : sans sprint saisi, message ; les sprints se saisissent dans Administration › Sprints
     await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
-    verifier('Capacité : indicateurs et capacité des membres calculée', (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
-    // Saisie : points terminés d'un sprint précédent → vélocité ; jours réels d'une catégorie → écart
-    // (sur un projet modifiable par l'utilisateur ; ailleurs les champs sont désactivés)
     const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
     await page.selectOption('select[data-action-change="projetCapaciteSaisie"]', projetEditable); await page.waitForTimeout(200);
-    await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=2', '21');
-    await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=2', 'Tab'); await page.waitForTimeout(400);
+    const sansSprint = (await texte()).includes('Aucun sprint saisi');
+    // 4 sprints de 2 semaines autour d'aujourd'hui (le 3e est le sprint en cours), saisis dans Administration › Sprints
+    const dates = await page.evaluate(() => { const l = Calculs.lundi(Calculs.aujourdhui());
+      return [-4, -2, 0, 2].map(k => [Calculs.ajouterJours(l, k * 7), Calculs.ajouterJours(l, k * 7 + 11)]); });
+    await page.click('[data-action="allerSprints"]'); await page.waitForTimeout(250);   // Administration › Sprints, sur ce projet
+    for (let i = 0; i < dates.length; i++) {
+      await page.fill('input[form="ajout-sprint"][name=nom]', 'V' + (i + 1));
+      await page.fill('input[form="ajout-sprint"][name=debut]', dates[i][0]); await page.fill('input[form="ajout-sprint"][name=fin]', dates[i][1]);
+      await page.click('button[form="ajout-sprint"]'); await page.waitForTimeout(300);
+    }
+    verifier('Administration › Sprints : sprints du projet saisis (version, début, fin)', sansSprint && await page.evaluate(id => sprintsDuProjet(id).map(s => s.nom).join() === 'V1,V2,V3,V4', projetEditable)
+      && await page.evaluate(() => etat.ecran === 'monAdmin' && ui('monAdmin').onglet === 'sprints'));
+    await page.click('[data-action="ongletMonAdmin"][data-id="demandes"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
+    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
+    verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
+      && (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
+    // Saisie : points terminés du sprint précédent (V2) → vélocité ; jours réels d'une catégorie
+    await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', '21');
+    await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', 'Tab'); await page.waitForTimeout(400);
     await page.fill('input[data-action-change="saisirRepartition"] >> nth=0', '11');
     await page.press('input[data-action-change="saisirRepartition"] >> nth=0', 'Tab'); await page.waitForTimeout(400);
     verifier('Capacité : saisie des points (vélocité) et des jours réels enregistrée', await page.evaluate(() =>
-      etat.d.sprintsProjet.some(s => Number(s.pointsTermines) === 21) && etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.jours) === 11))
+      etat.d.sprintsProjet.some(s => s.nom === 'V2' && Number(s.pointsTermines) === 21) && etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.jours) === 11))
       && (await page.textContent('.grille-kpi')).includes('21 pts'));
     await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
     const methode = (await page.textContent('.modale')) || '';

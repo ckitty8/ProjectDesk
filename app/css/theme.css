@@ -222,3 +222,4 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .champs-daily { display: flex; flex-direction: column; }
 .champ-daily { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px 0; }
 .champ-daily .note-daily { min-height: 110px; border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 10px 12px; }
+.tableau-sprints td { padding: 4px 6px; } .tableau-sprints .champ { height: 28px; }
