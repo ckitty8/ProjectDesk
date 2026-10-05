@@ -226,6 +226,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
     verifier('Congés : pop-in « Méthode de calcul Scrum »', ['Capacité engageable', 'Vélocité', 'Répartition idéale', 'Incidents (prod)', 'Cérémonies / réunions'].every(t => methode.includes(t)));
     await page.click('[data-action="ongletConges"][data-id="grille"]');
+    // Novembre 2026 (Armistice, demi-journée de Léa le 13) : indépendant de la date du jour
+    await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10 })); await page.waitForTimeout(150);
     verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
     verifier('Congés : demi-journée affichée « ½ »', (await page.textContent('tr:has-text("Léa Moreau")')).includes('½'));
     verifier('Calculs : demi-journée comptée 0,5', await page.evaluate(() => {
@@ -242,6 +244,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');
+    // Colonnes Début / Fin / Statut : une personne partie (date de départ passée) est « Inactif »
+    verifier('Liste des ressources : colonnes Début, Fin et Statut (Actif / Inactif) des personnes', await page.evaluate(() => {
+      const entetes = [...document.querySelectorAll('#table-unites thead th')].map(t => t.textContent.trim());
+      return ['Début', 'Fin', 'Statut'].every(t => entetes.some(e => e.startsWith(t)))
+        && C.badgeActif(Calculs.estPresent({ dateDepart: '2020-01-31' }, Calculs.aujourdhui()), ['Actif', 'Inactif']).includes('Inactif')
+        && [...document.querySelectorAll('#table-unites tbody tr')].some(tr => tr.textContent.includes('Actif'));
+    }));
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
     verifier('Liste des ressources : direction → équipe → projet', await ligneVisible('Plateforme') && await ligneVisible('Data')

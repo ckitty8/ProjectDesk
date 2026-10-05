@@ -71,13 +71,17 @@ Ecrans.listeRessources = {
 
     // Une personne sans projet qui dirige son unité n'est pas « sans projet » : on affiche son rôle
     const responsableUnite = r => equipes.some(e => e.responsableId === r.id);
-    // Personne : membre d'un projet (rôle) ou personne de l'unité sans projet
+    // Personne : membre d'un projet (rôle) ou personne de l'unité sans projet.
+    // Début / fin = dates d'arrivée et de départ de sa fiche ; statut calculé : « Actif » si la
+    // personne est présente aujourd'hui (Calculs.estPresent), « Inactif » sinon (pas encore arrivée ou partie).
+    const date = iso => iso ? Calculs.formatAvecAnnee(iso) : '<span class="pale">—</span>';
     const lignePersonne = (r, a, niveau, chemin, masquee) => {
       const editable = a ? peutEditerProjet(projet(a.projetId)) : estMembreDe(r.equipeId) || admin;
       const detail = [r.poste, r.typeContrat].filter(Boolean).join(' · ');
       ajouter((a ? a.projetId + ':' : 'r:') + r.id, chemin, masquee, `${r.nom} ${r.poste || ''}`,
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${sansChevron}${C.avatar(r.nom)}<span>${esc(r.nom)}</span> <span class="discret">${esc(detail)}</span></span></td>
-         <td></td><td>${a ? C.badgeRef('role', a.role) : responsableUnite(r) ? '<span class="discret">Responsable de l’unité</span>' : '<span class="pale">sans projet</span>'}</td><td></td>
+         <td></td><td>${a ? C.badgeRef('role', a.role) : responsableUnite(r) ? '<span class="discret">Responsable de l’unité</span>' : '<span class="pale">sans projet</span>'}</td>
+         <td>${date(r.dateArrivee)}</td><td>${date(r.dateDepart)}</td><td>${C.badgeActif(Calculs.estPresent(r, Calculs.aujourdhui()), ['Actif', 'Inactif'])}</td>
          <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}
            ${a && editable ? ` &nbsp; <a data-action="assigner" data-ressource="${r.id}">Modifier</a>` : ''}</td>`);
     };
@@ -89,7 +93,7 @@ Ecrans.listeRessources = {
         `<td><span class="arbre-parent" style="${retrait(niveau)}">${membres.length ? chevron(p.id, ouvert, 'deplierProjetArbre') : sansChevron}
             ${C.icone('projet')}${C.code(p.code)} ${esc(p.nom)}</span></td>
          <td class="num" style="text-align:center">${membres.length}</td><td>Chef : ${nomRessource(p.chefId)}</td>
-         <td>${C.badgeRef('stp', p.statut)}</td>
+         <td></td><td></td><td>${C.badgeRef('stp', p.statut)}</td>
          <td class="num"><span class="ligne-flex" style="justify-content:flex-end">${peutEditerProjet(p) ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}
            ${C.boutonIcone('modifier', 'ouvrirProjet', `data-id="${p.id}"`, peutEditerProjet(p) ? 'Modifier le projet' : 'Voir le projet')}</span></td>`);
       membres.forEach(a => { const r = ressource(a.ressourceId); if (r) lignePersonne(r, a, niveau + 1, [...chemin, p.id], masquee || !ouvert); });
@@ -117,7 +121,7 @@ Ecrans.listeRessources = {
             ${C.icone(direction ? 'direction' : 'equipe')}<b style="font-weight:500">${esc(e.nom)}</b> ${C.code(e.prefixe)}
             <span class="pale" style="font-size:11px">${direction ? 'direction' : 'équipe'}</span></span></td>
          <td class="num" style="text-align:center">${total}${sesEquipes.length ? ` <span class="pale" style="font-size:11px">(dont ${nbRessources(e.id)} en direct)</span>` : ''}</td>
-         <td>${nomRessource(e.responsableId)}</td><td>${C.badgeActif(e.actif !== false)}</td>
+         <td>${nomRessource(e.responsableId)}</td><td></td><td></td><td>${C.badgeActif(e.actif !== false)}</td>
          <td class="num"><span class="ligne-flex" style="justify-content:flex-end">${boutons}</span></td>`);
       const sousChemin = [...chemin, e.id], sousMasquee = masquee || !ouvert;
       // Ordre : responsable de l'unité (sans projet) juste sous l'unité, puis équipes, projets, autres personnes
@@ -135,8 +139,8 @@ Ecrans.listeRessources = {
     return `<div class="carte">
       <div class="carte-titre"><h2>Directions, équipes, projets et membres</h2>
         <label class="recherche-champ">${C.icone('recherche')}<input placeholder="Rechercher (unité, projet, personne)" data-action-saisie="filtrerArbre"></label></div>
-      <table class="tableau" id="table-unites"><thead><tr><th>Nom</th><th style="text-align:center">Ressources ${C.aide('ressourcesUnite')}</th><th>Responsable / rôle ${C.aide('responsableRole')}</th><th>Statut ${C.aide('statutUnite')}</th><th class="num">Actions</th></tr></thead>
-        <tbody>${lignes.join('') || `<tr><td colspan="5">${C.vide(admin ? 'Aucune unité : « + Ajouter une direction » pour commencer.' : 'Aucune unité.')}</td></tr>`}</tbody></table></div>`;
+      <table class="tableau" id="table-unites"><thead><tr><th>Nom</th><th style="text-align:center">Ressources ${C.aide('ressourcesUnite')}</th><th>Responsable / rôle ${C.aide('responsableRole')}</th><th>Début ${C.aide('datesPresence')}</th><th>Fin</th><th>Statut ${C.aide('statutUnite')}</th><th class="num">Actions</th></tr></thead>
+        <tbody>${lignes.join('') || `<tr><td colspan="7">${C.vide(admin ? 'Aucune unité : « + Ajouter une direction » pour commencer.' : 'Aucune unité.')}</td></tr>`}</tbody></table></div>`;
   },
 
   /* ---------- Onglet Postes / Types de contrat ---------- */

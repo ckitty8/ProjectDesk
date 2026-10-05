@@ -91,7 +91,8 @@ const C = (() => {
   // Bouton-icône d'action ; desactive = bouton grisé avec l'explication en infobulle
   const boutonIcone = (nom, action, attributs, titre, desactive = false) =>
     `<button class="btn-icone" title="${esc(titre)}" ${desactive ? 'disabled' : `data-action="${action}" ${attributs}`}>${icone(nom)}</button>`;
-  const badgeActif = actif => actif ? badge('Active', '#0B6B4F', '#E3F5EC') : badge('Inactive', '#4A5363', '#F1F3F7');
+  // Statut actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne
+  const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badge(libelles[0], '#0B6B4F', '#E3F5EC') : badge(libelles[1], '#4A5363', '#F1F3F7');
 
   return { aide, esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();

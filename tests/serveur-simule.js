@@ -321,6 +321,7 @@ async function donnees(req, res, table, url) {
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
       if (table === 'equipes') { l.actif = l.actif ?? true; l.type = l.type || 'equipe'; l.parent_id = l.parent_id ?? null; }
+      if (table === 'objectifs') l.confiance = l.confiance || 'moyenne';   // défaut SQL de objectifs.confiance
       const cle = conflit || CLES[table];
       const existante = conflit && bd[table].find(x => cle.every(c => String(x[c]) === String(l[c])));
       if (existante) { Object.assign(existante, l); return existante; }
