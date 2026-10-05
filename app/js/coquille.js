@@ -37,7 +37,7 @@ const Coquille = (() => {
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
       enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
     { id: 'monTimesheet', libelle: 'Mon timesheet', icone: 'time',
-      enfants: [{ id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'mesTemps', libelle: 'Mon historique' }] },
+      enfants: [{ id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     { id: 'monAdmin', libelle: 'Administration', icone: 'admin' }
   ];

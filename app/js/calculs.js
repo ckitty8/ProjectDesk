@@ -197,26 +197,6 @@ const Calculs = (() => {
     return jours * CONFIG.HEURES_PAR_JOUR * (ressource.capacite ?? 100) / 100;
   }
 
-  /* Bilan du temps d'une personne sur un mois (écran « Mon historique »).
-     Une semaine appartient au mois de son lundi, pour qu'elle ne soit comptée qu'une fois.
-     Renvoie la liste des semaines (heures saisies, attendues, statut de la feuille) et le
-     total par projet sur ces semaines, trié du plus gros au plus petit. */
-  function bilanTempsMois(ressource, annee, mois, temps, absences, feries, feuilles) {
-    const lundis = [...new Set(joursDuMois(annee, mois).map(lundi))].filter(l => depuisIso(l).getMonth() === mois);
-    const semaines = lundis.map(l => {
-      const f = feuilles.find(x => x.ressourceId === ressource.id && x.semaine === l);
-      return { lundi: l, saisi: heuresSemaine(ressource.id, l, temps).total,
-        attendu: heuresAttendues(ressource, l, absences, feries), statut: f ? f.statut : 'en_saisie' };
-    });
-    const jours = new Set(lundis.flatMap(joursOuvresSemaine));
-    const parProjet = new Map();
-    temps.filter(t => t.ressourceId === ressource.id && jours.has(t.jour))
-      .forEach(t => parProjet.set(t.projetId, (parProjet.get(t.projetId) || 0) + Number(t.heures || 0)));
-    const projets = [...parProjet].map(([projetId, heures]) => ({ projetId, heures })).sort((a, b) => b.heures - a.heures);
-    const saisi = semaines.reduce((s, x) => s + x.saisi, 0), attendu = semaines.reduce((s, x) => s + x.attendu, 0);
-    return { semaines, projets, saisi, attendu };
-  }
-
   // Taux d'occupation = heures saisies / heures attendues (en %)
   function tauxOccupation(ressources, lundiIso, temps, absences, feries) {
     const attendu = ressources.reduce((s, r) => s + heuresAttendues(r, lundiIso, absences, feries), 0);
@@ -284,7 +264,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
-    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, bilanTempsMois, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
   };
 })();

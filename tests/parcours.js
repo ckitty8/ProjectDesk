@@ -365,18 +365,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     if (saisie) { await saisie.fill('3,5'); await saisie.press('Tab'); await page.waitForTimeout(300); }
     verifier('Mon timesheet : heure saisie', !!saisie && (await texte()).includes('3,5'));
     await capture('13-mon-timesheet');
-    const avant = (await page.$$('[data-action="validerFeuille"]')).length;
-    await page.click('[data-action="validerFeuille"] >> nth=0'); await page.waitForTimeout(300);
-    verifier('Mon timesheet : feuille validée par le responsable', (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
+    verifier('Saisir mes heures : plus de bloc « À valider »', !(await page.$('[data-action="validerFeuille"]')));
     await page.click('[data-action="soumettreSemaine"]'); await page.waitForTimeout(300);
     verifier('Mon timesheet : semaine soumise', (await texte()).includes('Soumise'));
-    // Sous-menu Mon historique (mois fixé : données simulées de septembre 2026), lien vers la saisie
-    await aller('mesTemps'); await page.evaluate(() => majUi('mesTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(250);
-    verifier('Mon historique : semaines et projets du mois', (await page.$$('[data-action="ouvrirSemaineTemps"]')).length === 4
-      && (await texte()).includes('Par projet') && (await texte()).includes('Semaines validées'));
-    await capture('20-mon-historique');
-    await page.click('[data-action="ouvrirSemaineTemps"] >> nth=2'); await page.waitForTimeout(250);
-    verifier('Mon historique : « Ouvrir la saisie » ouvre la semaine', await page.evaluate(() => etat.ecran === 'monTimesheet' && etat.ui.semaine.lundi === '2026-09-21'));
+    // Sous-menu Suivi de mes équipes (semaine fixée : feuilles soumises des données simulées)
+    await aller('suiviEquipes'); await page.evaluate(() => majUi('semaine', { lundi: '2026-09-21' })); await page.waitForTimeout(250);
+    verifier('Suivi de mes équipes : personnes de mes équipes seulement', (await texte()).includes('Feuilles à valider')
+      && await page.evaluate(() => { const mes = new Set(mesEquipes().map(e => e.id));
+        return [...document.querySelectorAll('.tableau tr.groupe')].length === mes.size; }));
+    await capture('20-suivi-equipes');
+    const avant = (await page.$$('[data-action="validerFeuille"]')).length;
+    await page.click('[data-action="validerFeuille"] >> nth=0'); await page.waitForTimeout(300);
+    verifier('Suivi de mes équipes : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
 
     await aller('monAdmin'); await capture('14-mon-admin');
     // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur

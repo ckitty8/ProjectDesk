@@ -1,19 +1,21 @@
 /* ============================================================
-   Mon dashboard › Mon timesheet (maquette complements/mon-timesheet.png)
-   - Saisie de ses heures par projet et par jour, puis « Soumettre ».
-   - Responsable d'équipe (owner/admin) : feuilles soumises à valider
-     ou à renvoyer. Les droits sont contrôlés en base (trigger).
+   Mon dashboard › Mon timesheet › Saisir mes heures
+   (maquette complements/mon-timesheet.png)
+   - Saisie de ses heures par jour sur les projets où l'on est affecté
+     (hors rôle Lecteur), puis « Soumettre ».
+   - Les actions Valider / Renvoyer (responsable d'équipe) servent à
+     l'écran Suivi de mes équipes. Droits contrôlés en base (trigger).
    ============================================================ */
 'use strict';
 
 Ecrans.monTimesheet = {
-  titre: 'Mon timesheet',
+  titre: 'Saisir mes heures',
   section: 'moi',
   rendre() {
     const esc = C.esc, moi = maRessource(), lundi = Semaine.lundi(), fer = feries();
-    const entete = C.entete('Mon timesheet', 'Saisissez vos heures par projet, puis soumettez la semaine à votre chef d’équipe', Semaine.navigation());
+    const entete = C.entete('Saisir mes heures', 'Votre temps sur les projets où vous êtes affecté(e), puis soumettez la semaine à votre chef d’équipe', Semaine.navigation());
     if (!moi) return `<div class="ecran">${entete}<div class="carte" style="padding:16px">Votre compte n’est lié à aucune fiche ressource :
-      demandez à votre équipe de créer votre fiche avec votre email (Liste des ressources).</div>${this.aValider()}</div>`;
+      renseignez l’email de votre compte sur votre fiche (Liste des ressources), puis reconnectez-vous.</div></div>`;
 
     const jours = Calculs.joursOuvresSemaine(lundi), statut = Semaine.statut(moi.id, lundi);
     const verrouille = ['soumise', 'validee'].includes(statut);
@@ -57,28 +59,7 @@ Ecrans.monTimesheet = {
           ${verrouille ? '' : '<button class="btn primaire" data-action="soumettreSemaine">Soumettre la semaine</button>'}
         </div>
       </div>
-      ${this.aValider()}
     </div>`;
-  },
-
-  // Feuilles soumises des équipes dont je suis responsable
-  aValider() {
-    const esc = C.esc;
-    const equipesResp = mesEquipes().filter(e => estResponsableDe(e.id));
-    if (!equipesResp.length) return '';
-    return equipesResp.map(e => {
-      const ids = new Set(etat.d.ressources.filter(r => r.equipeId === e.id).map(r => r.id));
-      const soumises = etat.d.feuilles.filter(f => ids.has(f.ressourceId) && f.statut === 'soumise');
-      const lignes = soumises.map(f => {
-        const r = ressource(f.ressourceId), total = Calculs.heuresSemaine(r.id, f.semaine, etat.d.temps).total;
-        return `<tr><td>${esc(r.nom)}</td><td>S${Calculs.numeroSemaine(f.semaine)} · ${Calculs.formatCourt(f.semaine)}</td><td class="num">${Calculs.nombre(total)} h</td>
-          <td>${C.badgeFeuille(f.statut)}</td><td class="num"><button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${f.semaine}">Renvoyer</button>
-          <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${f.semaine}">Valider</button></td></tr>`;
-      }).join('');
-      return `<div class="carte"><div class="carte-titre"><h2>À valider — équipe ${esc(e.nom)} ${C.aide('aValider')}</h2><span class="discret">visible par le chef d’équipe (owner/admin)</span></div>
-        <table class="tableau"><thead><tr><th>Personne</th><th>Semaine</th><th class="num">Heures</th><th>Statut</th><th></th></tr></thead>
-        <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune feuille en attente de validation.')}</td></tr>`}</tbody></table></div>`;
-    }).join('');
   }
 };
 
