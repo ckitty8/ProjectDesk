@@ -126,7 +126,8 @@ const AIDES = {
   joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
   rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
   syntheseProjets: 'Pour chaque projet de l’unité : nombre de membres absents ce jour / nombre de membres. Orange = au moins un absent ; rouge = plus de la moitié.',
-  avancementProjet: 'Avancement (%) du projet.'
+  avancementProjet: 'Avancement (%) du projet.',
+  heuresAttendues: `Somme, sur les semaines du mois (une semaine compte dans le mois de son lundi), des jours ouvrés hors fériés et absences × ${CONFIG.HEURES_PAR_JOUR} h × votre capacité.`
 };
 
 /* ============================================================
@@ -150,6 +151,8 @@ const GUIDE_ECRANS = {
     '« + Ajouter une direction », puis sur chaque ligne « + Équipe », « + Projet », « + Membre ». Le crayon modifie ; la corbeille supprime une unité vide.',
     'Onglets Postes et Types de contrat : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures par projet et par jour, puis soumettez la semaine.', 'Le responsable d’équipe valide ou renvoie la feuille ; une feuille validée n’est plus modifiable.'],
+  mesTemps: ['Votre historique d’un mois : heures saisies et attendues, statut de chaque semaine, répartition par projet.',
+    'Changez de mois avec les flèches ; « Ouvrir la saisie » ouvre la semaine dans « Saisir mes heures ».'],
   monAdmin: ['Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
     'Les KPI Agile sont dans le menu Mon dashboard › Trucs et astuces.'],

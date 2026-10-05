@@ -370,6 +370,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Mon timesheet : feuille validée par le responsable', (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
     await page.click('[data-action="soumettreSemaine"]'); await page.waitForTimeout(300);
     verifier('Mon timesheet : semaine soumise', (await texte()).includes('Soumise'));
+    // Sous-menu Mon historique (mois fixé : données simulées de septembre 2026), lien vers la saisie
+    await aller('mesTemps'); await page.evaluate(() => majUi('mesTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(250);
+    verifier('Mon historique : semaines et projets du mois', (await page.$$('[data-action="ouvrirSemaineTemps"]')).length === 4
+      && (await texte()).includes('Par projet') && (await texte()).includes('Semaines validées'));
+    await capture('20-mon-historique');
+    await page.click('[data-action="ouvrirSemaineTemps"] >> nth=2'); await page.waitForTimeout(250);
+    verifier('Mon historique : « Ouvrir la saisie » ouvre la semaine', await page.evaluate(() => etat.ecran === 'monTimesheet' && etat.ui.semaine.lundi === '2026-09-21'));
 
     await aller('monAdmin'); await capture('14-mon-admin');
     // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
