@@ -76,6 +76,7 @@
 | 1.62    | 2026-10-05 | **Mon timesheet** : sous-menus **« Saisir mes heures »** (écran `monTimesheet` : mon temps sur les projets où je suis affecté, sans le bloc « À valider ») et **« Suivi de mes équipes »** (écran `suiviEquipes`, fichier `suivi-equipes.js`, maquette `mon-timesheet-suivi-equipes/`) : feuilles de la semaine des personnes de mes équipes, indicateurs, Valider / Renvoyer pour le responsable. Tableau partagé avec Général › Timesheet (`tableauFeuilles`, colonne « Total / attendu »). « Mon historique » (`mesTemps` et son calcul du bilan mensuel) retiré. Aucune donnée modifiée (§ 3.2, § 3.3, § 6) |
 | 1.63    | 2026-10-05 | **Sprints : numéro et année** (migration 015, additive : colonnes `numero_sprint` et `annee` de `sprints_projet`, index d'unicité projet + année + numéro sur les lignes renseignées). Administration › Sprints : colonnes Sprint n° (affiché « Sprint N ») / Année / Version / Début / Fin, puces par année, numéro et année pré-remplis, doublon refusé ; libellé « Sprint N · version » partout (`nomSprint`) (§ 3.3, § 4) |
 | 1.64    | 2026-10-06 | **Saisie des heures mensuelle** : Saisir mes heures = grille du mois (une colonne par jour de semaine, JF / Abs / hors présence non saisissables), « Soumettre le mois » ; Suivi de mes équipes et Général › Timesheet au mois (saisi / attendu, complétude, statut ; `MoisTemps`, `tableauFeuilles`). Feuille mensuelle = `feuilles_temps.semaine` au 1er du mois. Migration 016 : `controler_temps_saisi()` verrouille les heures d'un mois validé (fonction seule, aucune table ni donnée modifiée). Heures attendues hors jours de non-présence (`Calculs.heuresAttenduesMois`, maquette `saisie-mensuelle/`) (§ 3.2, § 3.3, § 4, § 5, § 6, § 7) |
+| 1.65    | 2026-10-06 | **Envoi du daily par e-mail, réglé par équipe** (maquette `envoi-daily/`) : onglet Mon dashboard › Administration › **Envoi du daily** (administrateurs et responsables d'équipe) — mode (`MODES_ENVOI_DAILY` : Désactivé, Power Automate, Envoi direct), heure, jours, sauf fériés, destinataires ; fenêtre **« Configurer le flux »** (URI, corps avec la clé de l'équipe, pas-à-pas, aperçu, renouvellement de la clé). Migration 017 (additive) : tables `envois_daily`, `cles_envoi_daily`, fonctions `cle_envoi_daily`, `daily_equipe` (appelable sans compte avec la clé), `html_texte`. Envoi direct : réglable, envoi effectif à venir (étape 2) (§ 3.3, § 4, § 5, § 7, § 12) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -186,7 +187,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, **début / fin** des personnes **saisis directement sur la ligne** (`date_arrivee`, `date_depart`, modifiables par l'équipe de la personne), statut (projets : statut ; personnes : **Inactif dès qu'une date de fin est saisie**, `estInactive`, badge cliquable pour rendre inactive ou réactiver ; plus de statut affiché sur les unités) ; les ressources inactives sont **masquées**, bouton « Afficher les ressources inactives (n) » pour les revoir ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
 | `monTimesheet` | `mon-timesheet.js` | Sous-menu **Mon timesheet › Saisir mes heures** — saisie **mensuelle** (maquette `saisie-mensuelle/`) : une ligne par projet où je suis affecté (Chef de projet ou Membre), une colonne par jour de semaine du mois ; JF (férié), Abs (absence d'une journée), — (hors présence) non saisissables, demi-journée saisissable ; totaux par projet, par jour et du mois / attendu ; « Soumettre le mois » | `13-mon-timesheet.png` |
 | `suiviEquipes` | `suivi-equipes.js` | Sous-menu **Mon timesheet › Suivi de mes équipes** (maquettes `mon-timesheet-suivi-equipes/`, `saisie-mensuelle/`) : mois choisi (‹ ›) ; indicateurs heures saisies, complétude, feuilles à compléter, feuilles à valider ; personnes de mes équipes (projets, saisi / attendu, complétude, statut) avec **Valider / Renvoyer** des feuilles soumises pour le responsable d'équipe (owner/admin). Même tableau que Général › Timesheet (`tableauFeuilles`) | `20-suivi-equipes.png` |
-| `monAdmin` | `mon-admin.js` | **Sprints** (sprints de chaque projet : Sprint n°, année, version, début, fin ; affichage par année) ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur. (Demandes entrantes et formulaire de demande retirés le 2026-10-05 : gérés dans Azure DevOps.) | `14-mon-admin.png` |
+| `monAdmin` | `mon-admin.js` | **Envoi du daily** (administrateurs et responsables : une ligne par équipe — mode, heure, jours, sauf fériés, destinataires ; « Configurer le flux » Power Automate, fenêtre `Modale.envoiPowerAutomate`) ; **Sprints** (sprints de chaque projet : Sprint n°, année, version, début, fin ; affichage par année) ; **Équipes** (créer / modifier, membres, invitations — administrateurs et responsables) ; **Référentiels** et **Jours fériés** (administrateurs : ajout, date, libellé, suppression, par année). Ouvert sans équipe pour un administrateur. (Demandes entrantes et formulaire de demande retirés le 2026-10-05 : gérés dans Azure DevOps.) | `14-mon-admin.png` |
 | `astuces` | `astuces.js` | **Trucs et astuces** (menu à part de Mon dashboard depuis le 2026-10-05, auparavant onglet d'Administration) : KPI Agile Scrum et Kanban de `KPI_AGILE`, avec un exemple chiffré par KPI calculé sur un projet choisi, CDO par défaut — « réel » si les données existent, sinon « illustratif » ; lecture seule | `19-astuces.png` |
 
 ### 3.4 Éléments ajoutés par rapport à la maquette
@@ -206,7 +207,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -228,6 +229,8 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `objectifs_jours_travail` | Jours de travail attendus par le client : `equipe_id`, `annee`, `jours` (défaut `JOURS_TRAVAIL_CLIENT_DEFAUT` = 218 si absent) | clé (équipe, année) |
 | `sprints_projet` | **Sprints de chaque projet** : `projet_id`, `numero` (attribué à l'ajout), `nom` (version), `debut`, `fin` (saisis dans Administration › Sprints — migration 014), `numero_sprint` (affiché « Sprint N ») et `annee` (migration 015 ; un numéro par projet et par année), `points_engages`, `points_termines` (onglet Capacité — migration 013) | clé (projet, sprint) → `projets` |
 | `repartitions_sprint` | Jours réellement passés par catégorie (onglet Capacité) : `projet_id`, `numero`, `categorie` (libellé de `REPARTITION_SPRINT`), `jours` — migration 013 | clé (projet, sprint, catégorie) → `projets` |
+| `envois_daily` | **Envoi du daily par équipe** (migration 017) : `equipe_id` (clé), `mode` (aucun / power_automate / direct), `heure`, `jours` (« 1,2,3,4,5 », 1 = lundi), `sans_feries`, `destinataires` (adresses séparées par des virgules) | une ligne par équipe |
+| `cles_envoi_daily` | Clé secrète d'une équipe pour lire son daily sans compte (`equipe_id`, `cle`) ; **aucun droit direct** : lue seulement par `cle_envoi_daily` et `daily_equipe` | une ligne par équipe |
 | `absences` | `ressource_id`, `jour`, `type`, `duree` (1 = journée, 0,5 = demi-journée ; migration 009) | clé (ressource, jour) |
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
 | `feuilles_temps` | `ressource_id`, `semaine` (**1er jour du mois** : feuille mensuelle depuis 1.64 ; un lundi pour les anciennes feuilles hebdomadaires), `statut` (en_saisie / soumise / validee / a_completer), `commentaire` | clé (ressource, semaine) |
@@ -266,6 +269,8 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `mes_ressources()` | Fiches ressources liées au compte |
 | `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
+| `cle_envoi_daily(équipe, renouveler)` | Clé d'envoi du daily d'une équipe (créée au besoin, renouvelable) — administrateurs et responsable de l'équipe seulement |
+| `daily_equipe(équipe, clé, jour)` | Daily de l'équipe prêt à envoyer (`objet`, `html`, `texte`, `destinataires`, `a_envoyer`) ; exécutable par `anonymous` **avec la bonne clé** (flux Power Automate) ; mêmes règles que Daily des équipes |
 | `libelle_systeme(referentiel, cle)` | Libellé actuel d'une valeur système (valeurs par défaut des colonnes) |
 | `partage_une_equipe(user)` | L'utilisateur connecté partage au moins une équipe avec `user` (lecture des daily) |
 
@@ -281,6 +286,8 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `affectations`, `tickets` | membres, administrateurs | `peut_editer_projet` |
 | `objectifs_jours_travail` | membres, administrateurs | administrateurs, responsables de l'équipe |
 | `sprints_projet`, `repartitions_sprint` | membres, administrateurs | `peut_editer_projet`, administrateurs |
+| `envois_daily` | membres, administrateurs | responsable de l'équipe (`est_responsable_equipe`), administrateurs |
+| `cles_envoi_daily` | personne (fonctions seulement) | personne (fonctions seulement) |
 | `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
 | `notes_daily` | auteur, personnes partageant une équipe avec lui, administrateurs | auteur |
 | `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
@@ -351,6 +358,8 @@ refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
 4. **Demande** : retiré le 2026-10-05 — les demandes sont gérées dans Azure DevOps.
 5. **Temps** (mensuel) : saisie (`temps_saisis`) → « Soumettre le mois » (`feuilles_temps.statut = soumise`, semaine = 1er du mois)
    → Valider / Renvoyer (responsable).
+
+6. **Envoi du daily (Power Automate)** : Administration › Envoi du daily → mode « Power Automate » → « Configurer le flux » (clé de l'équipe) → flux planifié : HTTP POST `…/rpc/daily_equipe` {p_equipe, p_cle} → si `a_envoyer` → « Envoyer un e-mail (V2) » (objet, html, destinataires).
 
 ## 8. Déploiement
 
@@ -437,3 +446,4 @@ Activation du hook, une fois par poste : `git config core.hooksPath .githooks`.
 | O5 | Gestion des administrateurs globaux depuis l'application | Aujourd'hui par SQL (table `administrateurs`) |
 | O6 | Indicateurs « évolution vs trimestre précédent » de la maquette (+2 vs T3…) | Non calculés (pas d'historique figé) |
 | O7 | Recette réelle (connexion, RLS avec jetons réels) | À faire par le porteur (le conteneur de développement n'accède pas à Neon Auth) |
+| O8 | Envoi **direct** du daily (étape 2) | Réglable dans Administration › Envoi du daily ; envoi effectif à brancher (tâche planifiée Vercel + service d'envoi, clé saisie par le porteur dans Vercel) |

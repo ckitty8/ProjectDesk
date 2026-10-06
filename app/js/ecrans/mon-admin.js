@@ -29,12 +29,14 @@ Ecrans.monAdmin = {
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
       ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length },
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
+      ...(gereEquipes ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length }
     ], u.onglet, 'ongletMonAdmin');
     let corps;
     if (u.onglet === 'equipes') corps = Administration.equipes(true);
     else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
     else if (u.onglet === 'feries' && etat.estAdmin) corps = this.feries();
+    else if (u.onglet === 'envoiDaily' && gereEquipes) corps = this.envoiDaily();
     else corps = this.sprints();
     const sousTitre = `Sprints des projets${gereEquipes ? ', équipes' : ''}${etat.estAdmin ? ', référentiels et jours fériés' : ''}`;
     return `
@@ -94,6 +96,38 @@ Ecrans.monAdmin = {
   },
 
   /* Jours fériés (table jours_feries, clé = la date), par année */
+  /* ---------- Onglet Envoi du daily : réglage par équipe ----------
+     Demande du porteur (2026-10-06) : chaque équipe choisit son mode d'envoi (MODES_ENVOI_DAILY),
+     l'heure, les jours, l'exclusion des jours fériés et les destinataires. Modifiable par un
+     administrateur ou le responsable de l'équipe ; une ligne par équipe dans envois_daily. */
+  envoiDaily() {
+    const esc = C.esc;
+    const equipes = etat.d.equipes.filter(e => etat.estAdmin || estResponsableDe(e.id));
+    const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V']];
+    const ligne = e => {
+      const r = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.equipeId === e.id) || {}) };
+      const attr = champ => `data-action-change="majEnvoiDaily" data-equipe="${e.id}" data-champ="${champ}"`;
+      const actif = r.mode !== 'aucun', jours = String(r.jours || '').split(',');
+      const detail = r.mode === 'power_automate'
+        ? `<button class="btn petit" data-action="configurerPowerAutomate" data-equipe="${e.id}">Configurer le flux</button>
+           <div class="discret" style="font-size:12px;margin-top:4px">votre flux lit le daily puis l’envoie depuis votre boîte</div>`
+        : r.mode === 'direct' ? '<span class="discret" style="font-size:12px">L’application enverra l’e-mail à l’heure choisie — <b>à venir</b> (étape 2 : service d’envoi à créer)</span>'
+        : '<span class="pale">—</span>';
+      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}<b>${esc(e.nom)}</b></span></td>
+        <td>${C.liste(MODES_ENVOI_DAILY, r.mode, `class="champ" style="height:30px;width:150px" ${attr('mode')}`)}</td>
+        <td><input class="champ" type="time" style="height:30px;width:120px" value="${esc(r.heure)}" ${actif ? '' : 'disabled'} ${attr('heure')}></td>
+        <td><div class="puces" style="flex-wrap:nowrap;gap:4px">${JOURS.map(([n, l]) => `<button class="puce${jours.includes(String(n)) ? ' active' : ''}" ${actif ? '' : 'disabled'}
+          data-action="basculerJourEnvoi" data-equipe="${e.id}" data-jour="${n}" style="width:28px;justify-content:center;padding:0">${l}</button>`).join('')}</div></td>
+        <td style="white-space:nowrap"><label class="ligne-flex"><input type="checkbox" ${r.sansFeries ? 'checked' : ''} ${actif ? '' : 'disabled'} ${attr('sansFeries')}> sauf fériés</label></td>
+        <td><input class="champ" style="height:30px" placeholder="email1@…, email2@…" value="${esc(r.destinataires || '')}" ${actif ? '' : 'disabled'} ${attr('destinataires')}></td>
+        <td>${detail}</td></tr>`;
+    };
+    return `<div class="carte"><div class="carte-titre"><h2>Envoi du daily par e-mail ${C.aide('envoiDaily')}</h2>
+        <span class="discret">contenu : le daily de l’équipe du jour — blocages en tête, puis Hier / Aujourd’hui / Blocages de chacun, sans note, absents</span></div>
+      <table class="tableau"><thead><tr><th>Équipe</th><th>Mode</th><th>Heure</th><th>Jours</th><th>Fériés</th><th style="width:22%">Destinataires</th><th style="width:20%">Mise en place</th></tr></thead>
+      <tbody>${equipes.map(ligne).join('') || `<tr><td colspan="7">${C.vide('Aucune équipe.')}</td></tr>`}</tbody></table></div>`;
+  },
+
   feries() {
     const esc = C.esc, annees = [...new Set(etat.d.joursFeries.map(f => f.jour.slice(0, 4)))].sort();
     const annee = ui('feries', { annee: Calculs.aujourdhui().slice(0, 4) }).annee;
@@ -114,6 +148,17 @@ Ecrans.monAdmin = {
 
 };
 
+/* Fenêtre « Power Automate » d'une équipe : lit (ou crée, ou renouvelle) la clé de l'équipe,
+   puis l'aperçu du daily du jour avec cette clé (fonctions de la migration 017). */
+async function ouvrirPowerAutomate(equipeId, renouveler) {
+  try {
+    const cle = await Api.executer('cle_envoi_daily', { p_equipe: equipeId, p_renouveler: renouveler });
+    const apercu = await Api.executer('daily_equipe', { p_equipe: equipeId, p_cle: cle }).catch(() => null);
+    majEtat({ modale: { type: 'envoiPowerAutomate', equipeId, cle, apercu } });
+    if (renouveler) notifier('Nouvelle clé créée : mettez à jour le corps de l’action HTTP du flux');
+  } catch (e) { notifier(e.message, 'erreur'); }
+}
+
 Object.assign(Actions, {
   /* Jours fériés (administrateurs) */
   anneeFeries: d => majUi('feries', { annee: d.annee }),
@@ -133,6 +178,27 @@ Object.assign(Actions, {
   },
 
   ongletMonAdmin: d => majUi('monAdmin', { onglet: d.id }),
+  // Envoi du daily : écrit le réglage complet de l'équipe (valeurs par défaut si première saisie)
+  majEnvoiDaily(d, el) {
+    const actuel = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.equipeId === d.equipe) || {}) };
+    const valeur = el.type === 'checkbox' ? el.checked : el.value.trim();
+    const ligne = { equipeId: d.equipe, mode: actuel.mode, heure: actuel.heure, jours: actuel.jours, sansFeries: actuel.sansFeries, destinataires: actuel.destinataires, [d.champ]: valeur };
+    executer(() => Api.creer('envois_daily', ligne, 'equipe_id'), 'envoisDaily');
+  },
+  // Fenêtre de mise en place Power Automate (voir ouvrirPowerAutomate)
+  configurerPowerAutomate: d => ouvrirPowerAutomate(d.equipe, false),
+  renouvelerCleDaily(d) {
+    if (confirm('Renouveler la clé ? Le flux actuel cessera de fonctionner tant qu’il n’est pas mis à jour.')) ouvrirPowerAutomate(d.equipe, true);
+  },
+  copierTexte(d) {
+    navigator.clipboard.writeText(d.texte).then(() => notifier('Copié'), () => notifier('Copie impossible : sélectionnez le texte', 'erreur'));
+  },
+  basculerJourEnvoi(d) {
+    const actuel = (etat.d.envoisDaily || []).find(x => x.equipeId === d.equipe) || ENVOI_DAILY_DEFAUT;
+    const jours = new Set(String(actuel.jours || '').split(',').filter(Boolean));
+    jours.has(d.jour) ? jours.delete(d.jour) : jours.add(d.jour);
+    Actions.majEnvoiDaily({ equipe: d.equipe, champ: 'jours' }, { value: [...jours].sort().join(',') });
+  },
   projetSprints: (_, el) => majUi('monAdmin', { projetSprints: el.value }),
   // Depuis l'onglet Capacité : ouvre Administration › Sprints sur le projet affiché
   allerSprints: d => { majUi('monAdmin', { onglet: 'sprints', projetSprints: d.id }, { rendre: false }); allerA('monAdmin'); },

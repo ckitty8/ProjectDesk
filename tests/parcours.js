@@ -394,6 +394,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Suivi de mes équipes : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
 
     await aller('monAdmin'); await capture('14-mon-admin');
+    // Envoi du daily (migration 017) : réglage par équipe, mise en place Power Automate
+    await page.click('[data-action="ongletMonAdmin"][data-id="envoiDaily"]'); await page.waitForTimeout(200);
+    const idData = await page.evaluate(() => etat.d.equipes.find(e => e.nom === 'Data').id);
+    await page.selectOption(`select[data-action-change="majEnvoiDaily"][data-equipe="${idData}"]`, 'power_automate'); await page.waitForTimeout(300);
+    await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="5"]`); await page.waitForTimeout(300);
+    verifier('Envoi du daily : mode et jours enregistrés par équipe', await page.evaluate(id => {
+      const r = etat.d.envoisDaily.find(x => x.equipeId === id); return r && r.mode === 'power_automate' && r.jours === '1,2,3,4' && r.heure === '09:30'; }, idData));
+    await capture('21-envoi-daily');
+    await page.click(`[data-action="configurerPowerAutomate"][data-equipe="${idData}"]`); await page.waitForTimeout(400);
+    const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_equipe: etat.modale.equipeId, p_cle: etat.modale.cle }));
+    verifier('Envoi du daily : fenêtre Power Automate (URI, corps avec clé, aperçu)', !!corpsFlux && corpsFlux.includes('p_cle')
+      && await page.evaluate(() => { const m = document.querySelector('.modale'); return !!m && m.innerHTML.includes('/rpc/daily_equipe') && m.textContent.includes('Blocages du jour'); }));
+    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);
     // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
       && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));

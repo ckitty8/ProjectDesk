@@ -6,13 +6,14 @@
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
    - objectifs   : objectifs (OKR) et résultats clés de mon équipe
+   - envoiPowerAutomate : mise en place du flux qui envoie le daily d'une équipe
    ============================================================ */
 'use strict';
 
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -143,6 +144,34 @@ const Modale = {
           'ne se compare pas entre équipes : elle sert à prévoir'])}
         ${bloc('Répartition idéale d’un sprint', ['<b>Jours par catégorie</b> = jours disponibles du sprint × part de la catégorie',
           'parts proposées (pratiques Scrum usuelles, à ajuster) : ' + REPARTITION_SPRINT.map(c => `${C.esc(c.categorie)} ${c.part} %`).join(' · ')])}
+      </div></div>`;
+  },
+
+  /* ---------- Envoi du daily : mise en place du flux Power Automate ----------
+     Le flux appelle la fonction daily_equipe de la Data API (migration 017) avec l'id et la clé
+     de l'équipe, sans compte : la clé suffit. m = { equipeId, cle, apercu (réponse de la fonction) } */
+  envoiPowerAutomate(m) {
+    const esc = C.esc, e = equipe(m.equipeId);
+    const url = CONFIG.DATA_API_URL + '/rpc/daily_equipe';
+    const corps = JSON.stringify({ p_equipe: m.equipeId, p_cle: m.cle });
+    const champ = (libelle, valeur) => `<div><div class="libelle">${libelle}</div>
+      <div class="ligne-flex"><input class="champ" readonly value="${esc(valeur)}" style="font-family:monospace;font-size:12px">
+      <button type="button" class="btn petit" data-action="copierTexte" data-texte="${esc(valeur)}">Copier</button></div></div>`;
+    const etape = (n, texte) => `<li style="margin-bottom:6px">${texte}</li>`;
+    return `<div style="display:flex;flex-direction:column">${this.entete('Power Automate · daily ' + e.nom)}
+      <div class="panneau-corps">
+        <ol style="margin:0;padding-left:18px">
+          ${etape(1, 'Nouveau flux <b>planifié</b> : périodicité 1 jour, à l’heure réglée dans l’onglet (fuseau Paris).')}
+          ${etape(2, 'Action <b>HTTP</b> : méthode <b>POST</b>, l’URI et le corps ci-dessous, en-tête <span class="code">Content-Type</span> = <span class="code">application/json</span>.')}
+          ${etape(3, 'Action <b>Condition</b> : <span class="code">body(\'HTTP\')?[\'a_envoyer\']</span> est égal à <span class="code">true</span> (faux le week-end, un jour non coché ou un férié).')}
+          ${etape(4, 'Si oui : <b>Envoyer un e-mail (V2)</b> (Outlook pro ou perso, Gmail) — À : <span class="code">replace(body(\'HTTP\')?[\'destinataires\'], \',\', \';\')</span>, Objet : <span class="code">body(\'HTTP\')?[\'objet\']</span>, Corps : <span class="code">body(\'HTTP\')?[\'html\']</span>.')}
+        </ol>
+        ${champ('URI', url)}
+        ${champ('Corps (contient la clé secrète de l’équipe : ne pas la diffuser)', corps)}
+        <div class="ligne-flex"><button type="button" class="btn petit" data-action="renouvelerCleDaily" data-equipe="${m.equipeId}">Renouveler la clé</button>
+          <span class="discret" style="font-size:12px">l’ancienne clé cesse aussitôt de fonctionner : mettez le flux à jour</span></div>
+        <div><div class="libelle">Aperçu de l’e-mail du jour</div>
+          <div class="carte" style="padding:12px 14px;max-height:260px;overflow:auto">${m.apercu ? m.apercu.html : '<span class="pale">Aperçu indisponible</span>'}</div></div>
       </div></div>`;
   },
 
