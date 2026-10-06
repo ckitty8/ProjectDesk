@@ -102,7 +102,8 @@ Ecrans.monAdmin = {
      administrateur ou le responsable de l'équipe ; une ligne par équipe dans envois_daily. */
   envoiDaily() {
     const esc = C.esc;
-    const equipes = etat.d.equipes.filter(e => etat.estAdmin || estResponsableDe(e.id));
+    // Équipes seulement : une direction (ex. DSI) est un service qui regroupe des équipes, sans daily propre
+    const equipes = etat.d.equipes.filter(e => e.type !== 'direction' && (etat.estAdmin || estResponsableDe(e.id)));
     const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V']];
     const ligne = e => {
       const r = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.equipeId === e.id) || {}) };
@@ -183,7 +184,8 @@ Object.assign(Actions, {
     const actuel = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.equipeId === d.equipe) || {}) };
     const valeur = el.type === 'checkbox' ? el.checked : el.value.trim();
     const ligne = { equipeId: d.equipe, mode: actuel.mode, heure: actuel.heure, jours: actuel.jours, sansFeries: actuel.sansFeries, destinataires: actuel.destinataires, [d.champ]: valeur };
-    executer(() => Api.creer('envois_daily', ligne, 'equipe_id'), 'envoisDaily');
+    // destinataires et jours peuvent être vides (aucun destinataire, aucun jour) : on garde ''
+    executer(() => Api.creer('envois_daily', ligne, 'equipe_id', ['destinataires', 'jours']), 'envoisDaily');
   },
   // Fenêtre de mise en place Power Automate (voir ouvrirPowerAutomate)
   configurerPowerAutomate: d => ouvrirPowerAutomate(d.equipe, false),

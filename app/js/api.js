@@ -36,10 +36,13 @@ const Api = (() => {
   const versSnake = cle => cle.replace(/[A-Z]/g, l => '_' + l.toLowerCase());
   const versCamel = cle => cle.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
 
-  // Objet app -> ligne SQL. Les chaînes vides deviennent null (dates, nombres).
-  function versBdd(objet) {
+  // Objet app -> ligne SQL. Les chaînes vides deviennent null (dates, nombres), sauf pour les
+  // champs texte listés dans « garderVides » (colonnes texte non nulles, ex. destinataires vides).
+  function versBdd(objet, garderVides = []) {
     const ligne = {};
-    Object.entries(objet).forEach(([cle, valeur]) => { ligne[versSnake(cle)] = valeur === '' ? null : valeur; });
+    Object.entries(objet).forEach(([cle, valeur]) => {
+      ligne[versSnake(cle)] = valeur === '' && !garderVides.includes(cle) ? null : valeur;
+    });
     return ligne;
   }
   // Ligne SQL -> objet app. Les champs numeric arrivent parfois en texte : conversion.
@@ -195,8 +198,8 @@ const Api = (() => {
   }
 
   // Création d'une ou plusieurs lignes. « conflit » = colonnes d'unicité pour un upsert.
-  async function creer(table, lignes, conflit) {
-    const liste = (Array.isArray(lignes) ? lignes : [lignes]).map(versBdd);
+  async function creer(table, lignes, conflit, garderVides = []) {
+    const liste = (Array.isArray(lignes) ? lignes : [lignes]).map(l => versBdd(l, garderVides));
     const prefer = conflit ? 'return=representation,resolution=merge-duplicates' : 'return=representation';
     const filtres = conflit ? { on_conflict: conflit } : {};
     const resultat = await appeler(urlTable(table, filtres), {

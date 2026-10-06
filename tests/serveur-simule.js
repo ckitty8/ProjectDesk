@@ -344,6 +344,10 @@ async function donnees(req, res, table, url) {
     cibles.forEach(([t, champ]) => bd[t].filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; }));
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
+  // Colonnes NOT NULL de la vraie base (migration 017) : refusées si null, comme Postgres
+  const NON_NULLES = { envois_daily: ['mode', 'heure', 'jours', 'sans_feries', 'destinataires'] };
+  const manquante = (NON_NULLES[table] || []).find(c => (Array.isArray(corps) ? corps : [corps]).some(l => c in l && l[c] === null));
+  if (manquante) return envoyer(res, 400, { message: `null value in column "${manquante}" of relation "${table}" violates not-null constraint` });
   if (req.method === 'POST') {
     const conflit = p.get('on_conflict') ? p.get('on_conflict').split(',') : null;
     const resultat = corps.map(ligne => {

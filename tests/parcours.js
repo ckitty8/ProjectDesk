@@ -408,6 +408,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="5"]`); await page.waitForTimeout(300);
     verifier('Envoi du daily : mode et jours enregistrés par équipe', await page.evaluate(id => {
       const r = etat.d.envoisDaily.find(x => x.equipeId === id); return r && r.mode === 'power_automate' && r.jours === '1,2,3,4' && r.heure === '09:30'; }, idData));
+    // Liste vide et aucun jour : enregistrés tels quels (bug du 2026-10-06 : '' envoyé en null, refusé par la base)
+    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
+    verifier('Envoi du daily : destinataires vides et aucun jour acceptés', await page.evaluate(id => {
+      const r = etat.d.envoisDaily.find(x => x.equipeId === id); return r && r.jours === '' && r.destinataires === ''; }, idData)
+      && !(await page.textContent('body')).includes('violates not-null'));
+    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
+    verifier('Envoi du daily : équipes seulement (pas de direction, ex. DSI)', await page.evaluate(() => {
+      const lignes = [...document.querySelectorAll('select[data-action-change="majEnvoiDaily"]')].map(x => x.dataset.equipe);
+      return lignes.length > 0 && lignes.every(id => equipe(id).type !== 'direction') && etat.d.equipes.some(e => e.type === 'direction'); }));
     await capture('21-envoi-daily');
     await page.click(`[data-action="configurerPowerAutomate"][data-equipe="${idData}"]`); await page.waitForTimeout(400);
     const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_equipe: etat.modale.equipeId, p_cle: etat.modale.cle }));
