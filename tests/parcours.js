@@ -311,10 +311,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const champFin = 'input[data-action-change="dateRessource"][data-champ="dateDepart"]';
     const idFin = await page.getAttribute(champFin + ' >> nth=0', 'data-id');
     await page.fill(champFin + ' >> nth=0', '2026-09-30'); await page.press(champFin + ' >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    // Date de fin → la personne reste dans la liste, statut « Inactif » (demande du 2026-10-06) ;
+    // le bouton « Masquer les ressources inactives » la cache, puis « Afficher » la remontre
+    const revue = !!(await page.$(`${champFin}[data-id="${idFin}"]`)) && (await page.textContent(`tr:has(${champFin}[data-id="${idFin}"])`)).includes('Inactif');
+    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const masquee = !(await page.$(`${champFin}[data-id="${idFin}"]`));
     await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
-    const revue = !!(await page.$(`${champFin}[data-id="${idFin}"]`)) && (await page.textContent(`tr:has(${champFin}[data-id="${idFin}"])`)).includes('Inactif');
-    verifier('Liste des ressources : date de fin saisie → Inactif et masquée (visible via « Afficher les ressources inactives »)',
+    verifier('Liste des ressources : date de fin saisie → reste affichée « Inactif » (masquable avec le bouton)',
       masquee && revue && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
     // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
@@ -331,20 +334,31 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const nomFin = await page.evaluate(id => ressource(id).nom, idFin);
     const visibleDans = [];
     await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 9 }); majUi('moisTemps', { annee: 2026, mois: 9 }); });
-    for (const ecran of ['conges', 'ressources', 'timesheet', 'suiviEquipes']) { await aller(ecran); if ((await texte()).includes(nomFin)) visibleDans.push(ecran); }
+    // Texte de la zone d'écran seulement (le nom de la personne connectée figure aussi dans la barre latérale)
+    const contenu = () => page.textContent('.contenu');
+    for (const ecran of ['conges', 'timesheet', 'suiviEquipes']) { await aller(ecran); if ((await contenu()).includes(nomFin)) visibleDans.push(ecran); }
+    // Gestion des ressources : absent du calendrier d'octobre, présent « Inactif » dans l'annuaire
+    await aller('ressources');
+    const [dansCalendrier, ligneAnnuaire] = await page.evaluate(nom => {
+      const cartes = [...document.querySelectorAll('.contenu .carte')];
+      const annuaire = cartes.find(c => c.textContent.includes('Liste des ressources'));
+      const ligne = annuaire && [...annuaire.querySelectorAll('tbody tr')].find(tr => tr.textContent.includes(nom));
+      return [cartes[0].textContent.includes(nom), ligne ? ligne.textContent : ''];
+    }, nomFin);
+    if (dansCalendrier) visibleDans.push('calendrier ressources');
+    if (!ligneAnnuaire.includes('Inactif')) visibleDans.push('annuaire sans « Inactif »');
     await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 8 }); majUi('moisTemps', { annee: 2026, mois: 8 }); });
-    await aller('conges'); const avantDepart = (await texte()).includes(nomFin);
-    await aller('timesheet'); const avantDepartTs = (await texte()).includes(nomFin);
+    await aller('conges'); const avantDepart = (await contenu()).includes(nomFin);
+    await aller('timesheet'); const avantDepartTs = (await contenu()).includes(nomFin);
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="recap"]').catch(() => {}); await page.waitForTimeout(150);
-    const recapAnnee = (await texte()).includes(nomFin);   // présente une partie de l'année → dans le récap annuel
+    const recapAnnee = (await contenu()).includes(nomFin);   // présente une partie de l'année → dans le récap annuel
     await page.click('[data-action="ongletConges"][data-id="grille"]').catch(() => {});
     verifier('Personne partie le 30/09 : absente des écrans d’octobre, présente en septembre et dans le récap annuel',
-      visibleDans.length === 0 && avantDepart && avantDepartTs && recapAnnee, 'visible en octobre dans : ' + visibleDans.join(', '));
+      visibleDans.length === 0 && avantDepart && avantDepartTs && recapAnnee, 'visible en octobre dans : ' + visibleDans.join(', ') + ' · fin = ' + await page.evaluate(id => ressource(id).dateDepart, idFin) + ' · ' + nomFin);
     await page.evaluate(() => { const d = new Date(); majUi('calendrier', { annee: d.getFullYear(), mois: d.getMonth() }); });
     await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
-    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
     verifier('Liste des ressources : direction → équipe → projet', await ligneVisible('Plateforme') && await ligneVisible('Data')

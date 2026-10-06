@@ -142,19 +142,24 @@ Ecrans.ressources = {
   section: 'general',
   rendre() {
     const esc = C.esc;
-    const annuaire = ressourcesActives().map(r => {
-      const eq = equipe(r.equipeId);
+    // Annuaire : TOUTES les fiches, une personne avec une date de fin apparaît « Inactif » (grisée, en fin
+    // de liste) — demande du porteur 2026-10-06 ; les autres écrans suivent la présence (etat.js)
+    const fiches = [...etat.d.ressources].sort((a, b) => estInactive(a) - estInactive(b) || a.nom.localeCompare(b.nom));
+    const annuaire = fiches.map(r => {
+      const eq = equipe(r.equipeId), inactif = estInactive(r);
       const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
-      return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
-        <td>${esc(r.poste || '—')}</td><td>${codes || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td></tr>`;
+      const fin = inactif ? ` <span class="discret" style="font-size:11px">fin le ${Calculs.formatAvecAnnee(r.dateDepart)}</span>` : '';
+      return `<tr${inactif ? ' style="color:var(--discret)"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
+        <td>${esc(r.poste || '—')}</td><td>${codes || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td>
+        <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td></tr>`;
     }).join('');
     return `
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
       <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
-      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${ressourcesActives().length} personnes</span></div>
-        <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th></tr></thead>
-        <tbody>${annuaire || `<tr><td colspan="5">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
+      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${etat.d.ressources.length} personnes · ${etat.d.ressources.filter(estInactive).length} inactive(s)</span></div>
+        <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th><th>Statut</th></tr></thead>
+        <tbody>${annuaire || `<tr><td colspan="6">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
     </div>`;
   }
 };

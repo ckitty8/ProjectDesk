@@ -31,7 +31,7 @@ Ecrans.listeRessources = {
       { id: 'contrats', libelle: 'Types de contrat', compte: valeursDe('contrat', true).length }
     ], onglet, 'ongletListeRessources');
     const actions = {
-      organisation: `<button class="btn" data-action="basculerInactifs">${ui('listeRessources', { inactifs: false }).inactifs ? 'Masquer' : 'Afficher'} les ressources inactives (${etat.d.ressources.filter(estInactive).length})</button>`
+      organisation: `<button class="btn" data-action="basculerInactifs">${ui('listeRessources', { inactifs: true }).inactifs ? 'Masquer' : 'Afficher'} les ressources inactives (${etat.d.ressources.filter(estInactive).length})</button>`
         + '<button class="btn" data-action="toutDeplier">Tout déplier</button>'
         + (admin ? '<button class="btn primaire" data-action="nouvelleUnite" data-type="direction">+ Ajouter une direction</button>' : ''),
       postes: admin ? '<button class="btn primaire" data-action="ajouterValeurListe" data-ref="poste">+ Ajouter un poste</button>' : '',
@@ -57,7 +57,7 @@ Ecrans.listeRessources = {
      projets fermés par défaut (projetsOuverts). */
   organisation() {
     const esc = C.esc, admin = etat.estAdmin, { equipes, projets } = etat.d;
-    const etatUi = ui('listeRessources', { replies: {}, projetsOuverts: {}, inactifs: false });
+    const etatUi = ui('listeRessources', { replies: {}, projetsOuverts: {}, inactifs: true });
     // Ressources inactives (date de fin saisie) : masquées, sauf « Afficher les ressources inactives »
     const ressources = etat.d.ressources.filter(r => etatUi.inactifs || !estInactive(r));
     const affectations = etat.d.affectations.filter(a => ressources.some(r => r.id === a.ressourceId));
@@ -236,7 +236,7 @@ Object.assign(Actions, {
     if (!inactive && !confirm(`Rendre ${r.nom} inactive ? Sa date de fin sera aujourd’hui ; elle n’apparaîtra plus dans la liste.`)) return;
     executer(() => Api.modifier('ressources', { id: 'eq.' + d.id }, { dateDepart: inactive ? null : Calculs.aujourdhui() }), 'ressources');
   },
-  basculerInactifs: () => majUi('listeRessources', { inactifs: !ui('listeRessources', { inactifs: false }).inactifs }),
+  basculerInactifs: () => majUi('listeRessources', { inactifs: !ui('listeRessources', { inactifs: true }).inactifs }),
   // Date de début ou de fin saisie sur la ligne d'une personne (champ vidé = date retirée)
   dateRessource(d, el) {
     const r = ressource(d.id), valeur = el.value || null;
