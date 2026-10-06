@@ -61,6 +61,7 @@ const Capacite = {
     // En-tête : projet, sprint (‹ › parmi les sprints du projet), sprints du projet, bouton méthode
     const entete = `<div class="carte" style="padding:12px 16px"><div class="ligne-flex" style="justify-content:space-between">
       <div class="ligne-flex"><span class="discret">Projet</span>${selecteur}
+        <button class="btn" data-action="capaciteAujourdhui" title="Sprint en cours">Aujourd’hui</button>
         <button class="btn" data-action="sprintCapacite" data-numero="${(sprints[rang - 1] || sprint).numero}" ${rang ? '' : 'disabled'}>‹</button>
         <b style="min-width:230px;text-align:center">${esc(nomSprint(sprint))}${enCours ? ' · en cours' : ''}
           <span class="discret" style="font-weight:400">${Calculs.formatCourt(sprint.debut)} – ${Calculs.formatCourt(sprint.fin)}</span></b>
@@ -115,6 +116,8 @@ const Capacite = {
 Object.assign(Actions, {
   projetCapaciteSaisie: (_, el) => majUi('capacite', { projetId: el.value, numero: null }),
   sprintCapacite: d => majUi('capacite', { numero: Number(d.numero) }),
+  // Retour au sprint en cours (choix par défaut de sprintChoisi)
+  capaciteAujourdhui: () => majUi('capacite', { numero: null }),
 
   /* Saisie des points d'un sprint (engagés ou terminés) : upsert sur (projet, numéro) ;
      un champ vidé enregistre « non saisi » (null). */

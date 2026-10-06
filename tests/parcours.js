@@ -109,7 +109,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* --- Règle : la section « Général » est en lecture seule ---
        Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
-      'moisPrecedent', 'moisSuivant', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
+      'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier'];
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
@@ -210,7 +210,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('dashboard'); await page.hover('.kpi .aide'); await page.waitForTimeout(100);
     verifier('Bulles d’information : texte affiché au survol', await page.$eval('.kpi .aide .bulle', b => getComputedStyle(b).display !== 'none' && b.textContent.length > 20)
       && (await page.$$('.aide')).length >= 5);
-    await aller('conges'); await page.click('[data-action="moisSuivant"]');
+    // Bouton « Aujourd'hui » : retour au mois en cours après navigation
+    await aller('conges'); await page.click('[data-action="moisSuivant"]'); await page.click('[data-action="moisSuivant"]');
+    await page.click('[data-action="calendrierAujourdhui"]'); await page.waitForTimeout(150);
+    verifier('Congés : bouton « Aujourd’hui » → mois en cours', await page.evaluate(() => {
+      const j = Calculs.depuisIso(Calculs.aujourdhui()), m = Calendrier.moisCourant(); return m.annee === j.getFullYear() && m.mois === j.getMonth(); }));
+    await page.click('[data-action="moisSuivant"]');
     await page.click('[data-action="choisirPinceau"][data-id="Congés prévisionnel"]');
     await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);
     await capture('11-conges');
@@ -273,6 +278,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
     verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
       && (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
+    await page.click('[data-action="sprintCapacite"] >> nth=0'); await page.waitForTimeout(150);
+    const ailleurs = !(await texte()).includes('· en cours');
+    await page.click('[data-action="capaciteAujourdhui"]'); await page.waitForTimeout(150);
+    verifier('Capacité : bouton « Aujourd’hui » → sprint en cours', ailleurs && (await texte()).includes('· en cours'));
     // Saisie : points terminés du sprint précédent (V2) → vélocité ; jours réels d'une catégorie
     await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', '21');
     await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', 'Tab'); await page.waitForTimeout(400);

@@ -14,10 +14,11 @@ const Calendrier = {
     return ui('calendrier', { annee: j.getFullYear(), mois: j.getMonth() });
   },
 
-  // Navigation de mois : ‹ octobre 2026 ›
+  // Navigation de mois : [Aujourd'hui] ‹ octobre 2026 ›  (« Aujourd'hui » revient au mois en cours)
   navigation() {
     const { annee, mois } = this.moisCourant();
-    return `<div class="ligne-flex"><button class="btn" data-action="moisPrecedent">‹</button>
+    return `<div class="ligne-flex"><button class="btn" data-action="calendrierAujourdhui">Aujourd’hui</button>
+      <button class="btn" data-action="moisPrecedent">‹</button>
       <b style="min-width:130px;text-align:center">${Calculs.libelleMois(annee, mois)}</b>
       <button class="btn" data-action="moisSuivant">›</button></div>`;
   },
@@ -167,6 +168,11 @@ Ecrans.ressources = {
 Object.assign(Actions, {
   vueCalendrier: d => majUi('calendrier', { mode: d.mode }),
   projetCalendrier: (_, el) => majUi('calendrier', { projetId: el.value }),
+  // Retour au mois en cours (grille) et à l'année en cours (récap annuel, même réglage ui('calendrier'))
+  calendrierAujourdhui() {
+    const j = Calculs.depuisIso(Calculs.aujourdhui());
+    majUi('calendrier', { annee: j.getFullYear(), mois: j.getMonth() });
+  },
   moisPrecedent() { const m = Calendrier.moisCourant(); majUi('calendrier', m.mois === 0 ? { annee: m.annee - 1, mois: 11 } : { mois: m.mois - 1 }); },
   moisSuivant() { const m = Calendrier.moisCourant(); majUi('calendrier', m.mois === 11 ? { annee: m.annee + 1, mois: 0 } : { mois: m.mois + 1 }); }
 });

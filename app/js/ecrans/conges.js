@@ -62,6 +62,7 @@ Ecrans.conges = {
     const lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
 
     return `<div class="carte"><div class="carte-titre"><div class="ligne-flex">
+        <button class="btn" data-action="calendrierAujourdhui">Aujourd’hui</button>
         <button class="btn" data-action="anneePrecedente">‹</button><b style="min-width:60px;text-align:center">${annee}</b><button class="btn" data-action="anneeSuivante">›</button>
         <h2 style="margin-left:14px">Jours travaillés et congés ${C.aide('recapTravail')}</h2></div></div>
       <div style="overflow:auto"><table class="recap-travail">
