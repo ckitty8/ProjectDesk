@@ -164,6 +164,10 @@ const Calculs = (() => {
   function estPresent(r, jour) {
     return (!r.dateArrivee || jour >= r.dateArrivee) && (!r.dateDepart || jour <= r.dateDepart);
   }
+  // Présente au moins un jour de la période [debut, fin] : arrivée avant la fin ET départ après le début
+  function estPresentSur(r, debut, fin) {
+    return (!r.dateArrivee || r.dateArrivee <= fin) && (!r.dateDepart || r.dateDepart >= debut);
+  }
 
   // Les jours hors présence (avant l'arrivée, après le départ) ne comptent pas dans la capacité.
   function capacitePeriode(ressources, debut, fin, absences, feries) {
@@ -273,7 +277,7 @@ const Calculs = (() => {
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
-    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
   };
 })();

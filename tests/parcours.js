@@ -325,19 +325,25 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Liste des ressources : statut Actif / Inactif cliquable ; plus de statut sur les unités', reactivee && inactivee
       && await page.evaluate(() => !document.querySelector('#table-unites tr[data-id]:not([data-id*=":"]) .badge') || true)
       && !(await page.$$eval('#table-unites tbody tr', l => l.filter(tr => /direction|équipe/.test(tr.textContent) && /Active|Inactive/.test(tr.textContent)).length)));
-    // Menus liés (signalé le 2026-10-06) : une personne désactivée disparaît de TOUS les écrans
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
+    // Menus liés (signalé le 2026-10-06) : une personne partie le 30/09 disparaît des périodes APRÈS son
+    // départ (octobre : grille, timesheet, suivi, annuaire) mais reste visible AVANT (septembre)
+    await page.fill(`${champFin}[data-id="${idFin}"]`, '2026-09-30'); await page.press(`${champFin}[data-id="${idFin}"]`, 'Tab'); await page.waitForTimeout(400);
     const nomFin = await page.evaluate(id => ressource(id).nom, idFin);
     const visibleDans = [];
-    for (const [ecran, avant] of [['conges', null], ['ressources', null], ['timesheet', null], ['suiviEquipes', null]]) {
-      await aller(ecran); if ((await texte()).includes(nomFin)) visibleDans.push(ecran);
-    }
+    await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 9 }); majUi('moisTemps', { annee: 2026, mois: 9 }); });
+    for (const ecran of ['conges', 'ressources', 'timesheet', 'suiviEquipes']) { await aller(ecran); if ((await texte()).includes(nomFin)) visibleDans.push(ecran); }
+    await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 8 }); majUi('moisTemps', { annee: 2026, mois: 8 }); });
+    await aller('conges'); const avantDepart = (await texte()).includes(nomFin);
+    await aller('timesheet'); const avantDepartTs = (await texte()).includes(nomFin);
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="recap"]').catch(() => {}); await page.waitForTimeout(150);
-    if ((await texte()).includes(nomFin)) visibleDans.push('recap');
+    const recapAnnee = (await texte()).includes(nomFin);   // présente une partie de l'année → dans le récap annuel
     await page.click('[data-action="ongletConges"][data-id="grille"]').catch(() => {});
-    verifier('Personne désactivée absente de tous les écrans (congés, récap, ressources, timesheet, suivi)', visibleDans.length === 0, visibleDans.join(', '));
+    verifier('Personne partie le 30/09 : absente des écrans d’octobre, présente en septembre et dans le récap annuel',
+      visibleDans.length === 0 && avantDepart && avantDepartTs && recapAnnee, 'visible en octobre dans : ' + visibleDans.join(', '));
+    await page.evaluate(() => { const d = new Date(); majUi('calendrier', { annee: d.getFullYear(), mois: d.getMonth() }); });
     await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
+    verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
     await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));

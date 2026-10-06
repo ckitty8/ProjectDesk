@@ -38,7 +38,7 @@ const Capacite = {
     const p = this.projetChoisi(), modifiable = p && peutEditerProjet(p);
     const bouton = '<button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button>';
     if (!p) return `<div class="carte"><div class="carte-titre"><h2>Capacité</h2>${bouton}</div>${C.vide('Aucun projet avec des membres.')}</div>`;
-    const membres = etat.d.affectations.filter(a => a.projetId === p.id).filter(a => estActive(a.ressourceId)).map(a => ressource(a.ressourceId));
+    const membres = etat.d.affectations.filter(a => a.projetId === p.id).map(a => ressource(a.ressourceId)).filter(Boolean);
     const reglerSprints = `<button class="btn" data-action="allerSprints" data-id="${p.id}" title="Saisir les sprints (version, début, fin) dans Administration › Sprints">Sprints du projet</button>`;
     const selecteur = C.liste(Calendrier.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p.id,
       'class="champ" style="width:auto;height:30px" data-action-change="projetCapaciteSaisie"');
@@ -49,7 +49,9 @@ const Capacite = {
     const sprint = this.sprintChoisi(sprints), rang = sprints.indexOf(sprint), jour = Calculs.aujourdhui();
     const enCours = sprint.debut <= jour && jour <= sprint.fin;
     const cap = (pers, s) => Calculs.capacitePeriode(pers, s.debut, s.fin, etat.d.absences, fer);
-    const capSprint = cap(membres, sprint), scrum = Calculs.capaciteScrum(membres, capSprint.disponible);
+    // Membres présents sur le sprint affiché (arrivée / départ) ; l'historique de vélocité garde tous les membres (capacité proratisée)
+    const membresSprint = membres.filter(r => Calculs.estPresentSur(r, sprint.debut, sprint.fin));
+    const capSprint = cap(membresSprint, sprint), scrum = Calculs.capaciteScrum(membresSprint, capSprint.disponible);
 
     // Vélocité : sprints précédents dont les points terminés sont saisis
     const precedents = sprints.slice(Math.max(0, rang - CONFIG.SPRINTS_MOYENNE_VELOCITE), rang).map(s => ({ s, capacite: cap(membres, s).disponible, ...s }));
@@ -73,7 +75,7 @@ const Capacite = {
       ${C.kpi(`Prévision · ${esc(nomSprint(sprint))}`, v ? `≈ ${n(v.prevision)} pts` : '—', 'ajustée à la capacité')}</div>`;
 
     // Capacité des membres (calculée)
-    const lignesMembres = membres.map(r => { const c = cap([r], sprint);
+    const lignesMembres = membresSprint.map(r => { const c = cap([r], sprint);
       return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td class="num">${r.capacite ?? 100} %</td>
         <td class="num">${n(c.theorique)} j</td><td class="num">${c.theorique - c.disponible ? '− ' + n(c.theorique - c.disponible) + ' j' : '—'}</td><td class="num"><b>${n(c.disponible)} j</b></td></tr>`; }).join('');
     const carteMembres = `<div class="carte"><div class="carte-titre"><h2>Capacité des membres · ${esc(nomSprint(sprint))}</h2><span class="discret">calculée</span></div>

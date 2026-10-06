@@ -87,7 +87,7 @@ const Calendrier = {
       <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
 
     // Synthèse d'un projet : absents / membres pour chaque jour ouvré (Calculs.absentsDuJour)
-    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(estActive);
+    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(id => estPresenteSur(id, jours[0], jours[jours.length - 1]));   // présents sur le mois affiché
     const ligneSynthese = (p, niveau) => {
       const ids = membresDe(p);
       const cases = jours.map(j => {
@@ -104,7 +104,7 @@ const Calendrier = {
     const unite = (e, niveau) => {
       const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && membresDe(p).length);
-      const personnes = ressourcesActives().filter(r => r.equipeId === e.id)
+      const personnes = ressourcesPresentes(jours[0], jours[jours.length - 1]).filter(r => r.equipeId === e.id)
         .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
       const contenu = personnes.map(r => lignePersonne(r, niveau + 1,
           (r.id === e.responsableId ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')

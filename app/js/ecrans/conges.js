@@ -42,7 +42,7 @@ Ecrans.conges = {
     // Unité : ligne de groupe avec son objectif (modifiable par un admin ou le responsable), ses personnes, son total
     const unite = (e, niveau) => {
       const objectif = objectifJoursTravail(e.id, annee), modifiable = etat.estAdmin || estResponsableDe(e.id);
-      const personnes = ressourcesActives().filter(r => r.equipeId === e.id).map(r => lignePersonne(r, objectif, niveau + 1));
+      const personnes = ressourcesPresentes(`${annee}-01-01`, `${annee}-12-31`).filter(r => r.equipeId === e.id).map(r => lignePersonne(r, objectif, niveau + 1));
       const sous = etat.d.equipes.filter(x => x.parentId === e.id).map(x => unite(x, niveau + 1)).join('');
       if (!personnes.length && !sous) return '';
       const champObjectif = modifiable

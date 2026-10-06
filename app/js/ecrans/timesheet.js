@@ -39,7 +39,8 @@ function tableauFeuilles(equipes, avecValidation = false) {
   const nbColonnes = 6 + (avecValidation ? 1 : 0);
 
   const lignes = equipes.map(e => {
-    const personnes = ressourcesActives().filter(r => r.equipeId === e.id);
+    const jours = Calculs.joursDuMois(m.annee, m.mois);
+    const personnes = ressourcesPresentes(jours[0], jours[jours.length - 1]).filter(r => r.equipeId === e.id);   // présentes sur le mois
     if (!personnes.length) return '';
     return `<tr class="groupe"><td colspan="${nbColonnes}"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td></tr>` +
       personnes.map(r => {

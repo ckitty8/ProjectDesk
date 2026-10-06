@@ -15,10 +15,10 @@ Ecrans.dailyEquipes = {
 
   // Membres affichés : ceux de mes équipes (ou de l'équipe filtrée), sans doublon.
   // Chaque membre garde la première équipe trouvée pour l'étiquette.
-  // Un compte dont la fiche ressource est désactivée (date de fin) n'apparaît plus (ressourcesActives).
+  // Un compte dont la fiche ressource n'est pas présente ce jour-là (arrivée / date de fin) n'apparaît pas.
   membres(filtre) {
-    const vus = new Map();
-    const desactive = m => { const fiche = etat.d.ressources.find(r => r.userId === m.userId); return !!fiche && estInactive(fiche); };
+    const vus = new Map(), jour = this.jour();
+    const desactive = m => { const fiche = etat.d.ressources.find(r => r.userId === m.userId); return !!fiche && !Calculs.estPresentSur(fiche, jour, jour); };
     mesEquipes().filter(e => filtre === 'toutes' || e.id === filtre).forEach(e =>
       (etat.membresEquipe[e.id] || []).filter(m => !desactive(m)).forEach(m => { if (!vus.has(m.userId)) vus.set(m.userId, { ...m, equipe: e }); }));
     return [...vus.values()].sort((a, b) => a.nom.localeCompare(b.nom));

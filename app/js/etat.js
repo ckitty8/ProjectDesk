@@ -239,12 +239,17 @@ function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => 
 const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
-/* Personnes ACTIVES : seule source des listes de personnes de tous les écrans (congés, capacité,
-   timesheet, ressources, daily, sélecteurs…). Une personne désactivée dans Liste des ressources
-   n'apparaît donc plus nulle part ; ses données (absences, heures) restent en base.
-   Seule Liste des ressources peut encore l'afficher (bouton « Afficher les ressources inactives »). */
-const ressourcesActives = () => (etat.d.ressources || []).filter(r => !estInactive(r));
-const estActive = id => { const r = ressource(id); return !!r && !estInactive(r); };
+/* Listes de personnes de tous les écrans (menus liés, règle du porteur 2026-10-06) : une personne
+   apparaît sur une période si elle y est PRÉSENTE (entre sa date d'arrivée et sa date de fin) :
+   - écran sur une période (mois de la grille, année du récap, mois du timesheet, sprint, jour du
+     daily) → ressourcesPresentes(debut, fin) / estPresenteSur(id, debut, fin) ;
+   - écran « maintenant » (annuaire, sélecteurs, compteurs) → ressourcesActives() / estActive(id).
+   Une personne partie le 30/09 reste donc visible en septembre et disparaît à partir d'octobre.
+   Ses données restent en base. Liste des ressources garde son bouton « Afficher les inactifs ». */
+const ressourcesPresentes = (debut, fin = debut) => (etat.d.ressources || []).filter(r => Calculs.estPresentSur(r, debut, fin));
+const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); return !!r && Calculs.estPresentSur(r, debut, fin); };
+const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
+const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));

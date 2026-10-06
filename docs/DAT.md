@@ -80,6 +80,7 @@
 | 1.66    | 2026-10-06 | **Bulles ⓘ jamais coupées** : position calculée sur la fenêtre (`C.placerBulle`, `position: fixed`, au-dessus de l'icône s'il n'y a pas la place) — la bulle de la barre latérale était coupée par le menu qui défile (§ 2.1) |
 | 1.67    | 2026-10-06 | **Envoi du daily, corrections** : (1) enregistrement refusé par la base (« null value in column destinataires ») — les chaînes vides étaient envoyées en null ; `Api.creer` accepte une liste `garderVides` (destinataires, jours) ; le serveur simulé applique désormais les colonnes NOT NULL ; (2) l'onglet ne liste que les **équipes** : une direction (ex. DSI) est un service qui regroupe des équipes, sans daily propre (§ 2.1, § 3.3, § 9) |
 | 1.68    | 2026-10-06 | **Menus liés** : une personne désactivée (date de fin) disparaît de tous les écrans — Congés & capacité (grille, récap, synthèse par projet, capacité), Gestion des ressources (calendrier, annuaire), Timesheet et Suivi de mes équipes, Daily des équipes, panneau projet, sélecteurs, compteurs (`ressourcesActives`, `estActive`, etat.js) ; règle ajoutée au § 10 (point 7) ; test sur tous les écrans |
+| 1.69    | 2026-10-06 | **Menus liés, correction** : une personne n'est plus masquée sur toute la période mais seulement là où elle n'est pas présente — visible avant sa date de fin (ex. Lenaic, parti le 30/09 : présent jusqu'en septembre, absent à partir d'octobre), dans le récap de l'année de son départ, et au prorata dans la capacité (`Calculs.estPresentSur`, `ressourcesPresentes`, `estPresenteSur`) ; § 10 point 7 réécrit ; test avant / après départ |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -418,10 +419,13 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
 6. **Section Général = lecture seule** : un écran `section: 'general'` n'affiche aucun champ,
    formulaire ni action d'écriture ; toute modification va dans « Mon dashboard ». Une nouvelle
    action de lecture utilisée en Général doit être ajoutée à `ACTIONS_LECTURE` dans `tests/parcours.js`.
-7. **Menus liés : une personne désactivée disparaît partout.** Toute liste de personnes (écran,
-   sélecteur, compteur, synthèse) part de `ressourcesActives()` (ou `estActive(id)` pour une
-   affectation) — jamais de `etat.d.ressources` directement. Seule Liste des ressources montre les
-   inactifs, sur demande. Les données d'une personne désactivée restent en base (règle n°8).
+7. **Menus liés : une personne apparaît là où elle est présente.** Toute liste de personnes part de
+   `etat.js` — jamais de `etat.d.ressources` directement : écran sur une période (mois de la grille,
+   année du récap, mois du timesheet, sprint, jour du daily) → `ressourcesPresentes(debut, fin)` /
+   `estPresenteSur(id, debut, fin)` (`Calculs.estPresentSur` : arrivée ≤ fin et départ ≥ début) ;
+   écran « maintenant » (annuaire, sélecteurs, compteurs) → `ressourcesActives()` / `estActive(id)`.
+   Une personne partie le 30/09 reste visible en septembre et disparaît à partir d'octobre. Liste des
+   ressources montre les inactifs sur demande. Les données restent en base (règle n°8).
 - Explication d'un élément (règle de calcul, droit, statut) → bulle `C.aide('clé')`, texte ajouté à
   `AIDES` dans `config.js` (un seul endroit pour les textes d'aide). Nouvel écran → ajouter son guide
   dans `GUIDE_ECRANS` (bouton Aide › « Aide sur cet écran »).
