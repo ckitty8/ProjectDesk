@@ -94,13 +94,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.fermer');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     await aller('administration'); await capture('06-administration');
-    await aller('timesheet'); await page.click('[data-action="semainePrecedente"]'); await page.click('[data-action="semaineSuivante"]');
+    await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
+    await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
+    verifier('Timesheet (Général) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
     await capture('07-timesheet');
 
     /* --- Règle : la section « Général » est en lecture seule ---
        Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
-      'moisPrecedent', 'moisSuivant', 'semainePrecedente', 'semaineSuivante', 'ongletAdministration', 'choisirReferentiel',
+      'moisPrecedent', 'moisSuivant', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier'];
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
@@ -368,17 +370,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));
     await page.click('.panneau .fermer');
 
-    await aller('monTimesheet'); await page.click('[data-action="semainePrecedente"]'); await page.waitForTimeout(200);
-    await page.click('[data-action="semaineSuivante"]'); await page.waitForTimeout(200);
-    const saisie = await page.$('input.saisie-heure:not([disabled])');
+    // Saisie MENSUELLE : une colonne par jour de semaine du mois (septembre 2026 : 22 jours)
+    await aller('monTimesheet'); await page.click('[data-action="moisTempsSuivant"]'); await page.waitForTimeout(200);
+    await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(200);
+    verifier('Saisir mes heures : grille du mois (22 jours de semaine, absences repérées)',
+      (await page.$$('.grille-mois thead th')).length === 22 + 2 && (await page.$$('.grille-mois .jour-off')).length > 0);
+    const saisie = await page.$('input.saisie-mois:not([disabled])');
     if (saisie) { await saisie.fill('3,5'); await saisie.press('Tab'); await page.waitForTimeout(300); }
     verifier('Mon timesheet : heure saisie', !!saisie && (await texte()).includes('3,5'));
     await capture('13-mon-timesheet');
     verifier('Saisir mes heures : plus de bloc « À valider »', !(await page.$('[data-action="validerFeuille"]')));
-    await page.click('[data-action="soumettreSemaine"]'); await page.waitForTimeout(300);
-    verifier('Mon timesheet : semaine soumise', (await texte()).includes('Soumise'));
-    // Sous-menu Suivi de mes équipes (semaine fixée : feuilles soumises des données simulées)
-    await aller('suiviEquipes'); await page.evaluate(() => majUi('semaine', { lundi: '2026-09-21' })); await page.waitForTimeout(250);
+    await page.click('[data-action="soumettreMois"]'); await page.waitForTimeout(300);
+    verifier('Mon timesheet : mois soumis (feuille au 1er du mois)', (await texte()).includes('Soumise')
+      && await page.evaluate(() => etat.d.feuilles.some(f => f.ressourceId === maRessource().id && f.semaine === '2026-09-01' && f.statut === 'soumise')));
+    // Sous-menu Suivi de mes équipes (même mois : feuilles soumises des données simulées)
+    await aller('suiviEquipes'); await page.waitForTimeout(250);
     verifier('Suivi de mes équipes : personnes de mes équipes seulement', (await texte()).includes('Feuilles à valider')
       && await page.evaluate(() => { const mes = new Set(mesEquipes().map(e => e.id));
         return [...document.querySelectorAll('.tableau tr.groupe')].length === mes.size; }));

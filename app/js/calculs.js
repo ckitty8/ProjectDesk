@@ -181,21 +181,30 @@ const Calculs = (() => {
   }
 
   /* ---------- Temps ---------- */
-  // Heures d'une personne sur une semaine : total par jour et total général
-  function heuresSemaine(ressourceId, lundiIso, temps) {
-    const jours = joursOuvresSemaine(lundiIso);
+  // Jours de semaine (lundi → vendredi) d'un mois ; la saisie des heures est mensuelle
+  const joursSemaineMois = (annee, mois) => joursDuMois(annee, mois).filter(j => !estWeekend(j));
+  // Clé d'une feuille de temps mensuelle : 1er jour du mois (colonne `semaine` de feuilles_temps, migration 016)
+  const debutMois = (annee, mois) => `${annee}-${deux(mois + 1)}-01`;
+
+  // Heures d'une personne sur une liste de jours : total par jour et total général
+  function heuresJours(ressourceId, jours, temps) {
     const parJour = jours.map(j => temps.filter(t => t.ressourceId === ressourceId && t.jour === j)
       .reduce((s, t) => s + Number(t.heures || 0), 0));
     return { jours, parJour, total: parJour.reduce((a, b) => a + b, 0) };
   }
+  const heuresSemaine = (ressourceId, lundiIso, temps) => heuresJours(ressourceId, joursOuvresSemaine(lundiIso), temps);
+  const heuresMois = (ressourceId, annee, mois, temps) => heuresJours(ressourceId, joursSemaineMois(annee, mois), temps);
 
-  // Heures attendues d'une personne sur une semaine (jours ouvrés, moins les absences, × capacité)
-  function heuresAttendues(ressource, lundiIso, absences, feries) {
+  // Heures attendues d'une personne sur une liste de jours : jours ouvrés (hors fériés), moins
+  // les absences (demi-journée = 0,5) et les jours hors présence, × HEURES_PAR_JOUR × capacité
+  function heuresAttenduesJours(ressource, jours, absences, feries) {
     const absent = new Map(absences.filter(a => a.ressourceId === ressource.id).map(a => [a.jour, dureeAbsence(a)]));
-    const jours = joursOuvresSemaine(lundiIso).filter(j => estJourOuvre(j, feries))
+    const nb = jours.filter(j => estJourOuvre(j, feries) && estPresent(ressource, j))
       .reduce((s, j) => s + 1 - (absent.get(j) || 0), 0);
-    return jours * CONFIG.HEURES_PAR_JOUR * (ressource.capacite ?? 100) / 100;
+    return nb * CONFIG.HEURES_PAR_JOUR * (ressource.capacite ?? 100) / 100;
   }
+  const heuresAttendues = (ressource, lundiIso, absences, feries) => heuresAttenduesJours(ressource, joursOuvresSemaine(lundiIso), absences, feries);
+  const heuresAttenduesMois = (ressource, annee, mois, absences, feries) => heuresAttenduesJours(ressource, joursSemaineMois(annee, mois), absences, feries);
 
   // Taux d'occupation = heures saisies / heures attendues (en %)
   function tauxOccupation(ressources, lundiIso, temps, absences, feries) {
@@ -260,11 +269,11 @@ const Calculs = (() => {
   const nbMots = texte => (texte || '').split(/\s+/).filter(Boolean).length;
 
   return {
-    MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre,
+    MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
     lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, moyenne, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
-    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
+    estPresent, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
     nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
   };
 })();

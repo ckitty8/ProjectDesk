@@ -121,7 +121,7 @@ function amorcer() {
       if (i % 5 === 2 && j >= 3) return;                              // quelques feuilles incomplètes
       bd.temps_saisis.push({ id: uuid(), ressource_id: r.id, projet_id: sesProjets[j % sesProjets.length], jour, heures: [7, 7.5, 8, 7, 7.5][(i + j) % 5] * r.capacite / 100 });
     });
-    if (i % 3 === 1) bd.feuilles_temps.push({ ressource_id: r.id, semaine: '2026-09-21', statut: 'soumise', commentaire: null });
+    if (i % 3 === 1) bd.feuilles_temps.push({ ressource_id: r.id, semaine: '2026-09-01', statut: 'soumise', commentaire: null });   // feuille mensuelle (clé = 1er du mois)
   });
 
   // Référentiels et champs : identiques à la migration 002

@@ -153,6 +153,14 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .interrupteur.actif { background: var(--primaire); } .interrupteur.actif::after { left: 16px; }
 .saisie-heure { width: 64px; text-align: center; height: 30px; border: 1px solid var(--bordure); border-radius: 6px; background: #fff; }
 .saisie-heure:disabled { background: var(--fond-doux); color: var(--discret); }
+/* Saisie mensuelle des heures (Mon timesheet › Saisir mes heures) : une colonne par jour de semaine */
+.defilement-x { overflow-x: auto; }
+.grille-mois th, .grille-mois td { padding: 6px 2px; text-align: center; font-size: 12px; }
+.grille-mois .col-projet { text-align: left; padding-left: 12px; min-width: 190px; white-space: nowrap; }
+.grille-mois .debut-semaine { border-left: 1px solid var(--bordure); }
+.saisie-mois { width: 34px; height: 28px; text-align: center; font-size: 12px; border: 1px solid var(--bordure); border-radius: 5px; background: #fff; padding: 0; }
+.saisie-mois:disabled { background: var(--fond-doux); color: var(--discret); }
+.jour-off { display: inline-block; width: 34px; line-height: 28px; border-radius: 5px; background: var(--fond-doux); color: var(--discret); font-size: 10px; }
 .note-daily { width: 100%; min-height: 420px; border: 0; padding: 16px 20px; resize: vertical; font-size: 14px; line-height: 1.6; outline: none; }
 .historique a { display: block; padding: 10px 16px; border-bottom: 1px solid var(--bordure-fine); color: var(--texte); border-left: 3px solid transparent; }
 .historique a.actif { border-left-color: var(--primaire); background: #F3F6FF; } .historique a:hover { text-decoration: none; background: var(--fond-doux); }

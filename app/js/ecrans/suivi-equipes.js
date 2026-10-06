@@ -1,8 +1,8 @@
 /* ============================================================
    Mon dashboard › Mon timesheet › Suivi de mes équipes
    (maquette docs/maquettes/mon-timesheet-suivi-equipes/)
-   - Feuilles de la semaine des personnes de mes équipes : heures par
-     jour, total / attendu, statut de la feuille.
+   - Feuilles du mois des personnes de mes équipes (saisie mensuelle) :
+     projets, heures saisies / attendues, complétude, statut.
    - Responsable d'équipe (owner/admin) : Valider / Renvoyer les
      feuilles soumises (actions de mon-timesheet.js, droits en base).
    - Même tableau que Général › Timesheet (tableauFeuilles), limité
@@ -14,11 +14,11 @@ Ecrans.suiviEquipes = {
   titre: 'Suivi de mes équipes',
   section: 'moi',
   rendre() {
-    const entete = C.entete('Suivi de mes équipes', 'Feuilles de temps de la semaine des personnes de vos équipes', Semaine.navigation());
+    const entete = C.entete('Suivi de mes équipes', 'Feuilles de temps du mois des personnes de vos équipes', MoisTemps.navigation());
     const equipes = mesEquipes();
     if (!equipes.length) return `<div class="ecran">${entete}${C.vide('Vous n’êtes membre d’aucune équipe.')}</div>`;
 
-    const t = tableauFeuilles(equipes, Semaine.lundi(), true);
+    const t = tableauFeuilles(equipes, true);
     const completude = t.attendu ? t.saisi / t.attendu * 100 : 0;
     return `
     <div class="ecran">
