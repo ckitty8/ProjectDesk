@@ -325,6 +325,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Liste des ressources : statut Actif / Inactif cliquable ; plus de statut sur les unités', reactivee && inactivee
       && await page.evaluate(() => !document.querySelector('#table-unites tr[data-id]:not([data-id*=":"]) .badge') || true)
       && !(await page.$$eval('#table-unites tbody tr', l => l.filter(tr => /direction|équipe/.test(tr.textContent) && /Active|Inactive/.test(tr.textContent)).length)));
+    // Menus liés (signalé le 2026-10-06) : une personne désactivée disparaît de TOUS les écrans
+    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
+    const nomFin = await page.evaluate(id => ressource(id).nom, idFin);
+    const visibleDans = [];
+    for (const [ecran, avant] of [['conges', null], ['ressources', null], ['timesheet', null], ['suiviEquipes', null]]) {
+      await aller(ecran); if ((await texte()).includes(nomFin)) visibleDans.push(ecran);
+    }
+    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="recap"]').catch(() => {}); await page.waitForTimeout(150);
+    if ((await texte()).includes(nomFin)) visibleDans.push('recap');
+    await page.click('[data-action="ongletConges"][data-id="grille"]').catch(() => {});
+    verifier('Personne désactivée absente de tous les écrans (congés, récap, ressources, timesheet, suivi)', visibleDans.length === 0, visibleDans.join(', '));
+    await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
+    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
     const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
     const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));

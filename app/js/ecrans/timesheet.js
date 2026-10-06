@@ -39,7 +39,7 @@ function tableauFeuilles(equipes, avecValidation = false) {
   const nbColonnes = 6 + (avecValidation ? 1 : 0);
 
   const lignes = equipes.map(e => {
-    const personnes = etat.d.ressources.filter(r => r.equipeId === e.id);
+    const personnes = ressourcesActives().filter(r => r.equipeId === e.id);
     if (!personnes.length) return '';
     return `<tr class="groupe"><td colspan="${nbColonnes}"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td></tr>` +
       personnes.map(r => {

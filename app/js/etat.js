@@ -239,6 +239,12 @@ function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => 
 const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
+/* Personnes ACTIVES : seule source des listes de personnes de tous les écrans (congés, capacité,
+   timesheet, ressources, daily, sélecteurs…). Une personne désactivée dans Liste des ressources
+   n'apparaît donc plus nulle part ; ses données (absences, heures) restent en base.
+   Seule Liste des ressources peut encore l'afficher (bouton « Afficher les ressources inactives »). */
+const ressourcesActives = () => (etat.d.ressources || []).filter(r => !estInactive(r));
+const estActive = id => { const r = ressource(id); return !!r && !estInactive(r); };
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));

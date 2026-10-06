@@ -17,7 +17,7 @@ Ecrans.choixEquipe = {
         <button class="btn primaire" data-action="accepterInvitation" data-id="${i.id}">Accepter</button>
       </div>`).join('');
     const equipes = mesEquipes().map(e => {
-      const nbPers = etat.d.ressources.filter(r => r.equipeId === e.id).length;
+      const nbPers = ressourcesActives().filter(r => r.equipeId === e.id).length;
       const nbProj = etat.d.projets.filter(p => p.equipeId === e.id).length;
       const courante = e.id === etat.equipeCourante;
       return `

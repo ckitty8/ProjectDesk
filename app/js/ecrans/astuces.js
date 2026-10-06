@@ -46,7 +46,7 @@ Ecrans.astuces = {
   exemplesKpi(p) {
     const n = Calculs.nombre, esc = C.esc, fer = feries();
     const reel = t => `<span class="badge-reel">réel</span> ${t}`, illu = t => `<span class="badge-illustratif">illustratif</span> ${t}`;
-    const membres = etat.d.affectations.filter(a => a.projetId === p.id).map(a => ressource(a.ressourceId)).filter(Boolean);
+    const membres = etat.d.affectations.filter(a => a.projetId === p.id).filter(a => estActive(a.ressourceId)).map(a => ressource(a.ressourceId));
     const nb = membres.length, noms = membres.map(r => esc(r.nom.split(' ')[0])).join(', ');
     const sprint = Calculs.sprintDe(Calculs.aujourdhui());
     const cap = Calculs.capacitePeriode(membres, sprint.debut, sprint.fin, etat.d.absences, fer);

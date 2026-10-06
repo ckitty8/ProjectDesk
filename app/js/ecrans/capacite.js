@@ -38,7 +38,7 @@ const Capacite = {
     const p = this.projetChoisi(), modifiable = p && peutEditerProjet(p);
     const bouton = '<button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button>';
     if (!p) return `<div class="carte"><div class="carte-titre"><h2>Capacité</h2>${bouton}</div>${C.vide('Aucun projet avec des membres.')}</div>`;
-    const membres = etat.d.affectations.filter(a => a.projetId === p.id).map(a => ressource(a.ressourceId)).filter(Boolean);
+    const membres = etat.d.affectations.filter(a => a.projetId === p.id).filter(a => estActive(a.ressourceId)).map(a => ressource(a.ressourceId));
     const reglerSprints = `<button class="btn" data-action="allerSprints" data-id="${p.id}" title="Saisir les sprints (version, début, fin) dans Administration › Sprints">Sprints du projet</button>`;
     const selecteur = C.liste(Calendrier.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p.id,
       'class="champ" style="width:auto;height:30px" data-action-change="projetCapaciteSaisie"');

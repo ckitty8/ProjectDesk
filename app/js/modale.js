@@ -21,7 +21,7 @@ const Modale = {
   /* ---------- Affectations d'une ressource ---------- */
   affectation(m) {
     const esc = C.esc;
-    const personnes = etat.d.ressources.map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}` }));
+    const personnes = ressourcesActives().map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}` }));
     const rId = m.ressourceId || '';
     const actuelles = rId ? etat.d.affectations.filter(a => a.ressourceId === rId) : [];
     // Projets proposés : ceux que je peux modifier, groupés par équipe
@@ -76,7 +76,7 @@ const Modale = {
     const libelleType = e.type === 'direction' ? 'Direction' : 'Équipe';
     // Directions proposées pour le rattachement (sauf l'unité elle-même)
     const directions = etat.d.equipes.filter(x => x.type === 'direction' && x.id !== m.id).map(x => ({ valeur: x.id, libelle: x.nom }));
-    const personnes = m.id ? etat.d.ressources.filter(r => r.equipeId === m.id).map(r => ({ valeur: r.id, libelle: r.nom })) : [];
+    const personnes = m.id ? ressourcesActives().filter(r => r.equipeId === m.id).map(r => ({ valeur: r.id, libelle: r.nom })) : [];
     const membres = (m.organisation && m.organisation.members) || [];
     const invitations = ((m.organisation && m.organisation.invitations) || []).filter(i => i.status === 'pending');
     const peutInviter = m.id && (etat.estAdmin || estResponsableDe(m.id));

@@ -87,7 +87,7 @@ const Calendrier = {
       <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
 
     // Synthèse d'un projet : absents / membres pour chaque jour ouvré (Calculs.absentsDuJour)
-    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(id => ressource(id));
+    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(estActive);
     const ligneSynthese = (p, niveau) => {
       const ids = membresDe(p);
       const cases = jours.map(j => {
@@ -104,7 +104,7 @@ const Calendrier = {
     const unite = (e, niveau) => {
       const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && membresDe(p).length);
-      const personnes = etat.d.ressources.filter(r => r.equipeId === e.id)
+      const personnes = ressourcesActives().filter(r => r.equipeId === e.id)
         .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
       const contenu = personnes.map(r => lignePersonne(r, niveau + 1,
           (r.id === e.responsableId ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')
@@ -142,7 +142,7 @@ Ecrans.ressources = {
   section: 'general',
   rendre() {
     const esc = C.esc;
-    const annuaire = etat.d.ressources.map(r => {
+    const annuaire = ressourcesActives().map(r => {
       const eq = equipe(r.equipeId);
       const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
       return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
@@ -152,7 +152,7 @@ Ecrans.ressources = {
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
       <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
-      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${etat.d.ressources.length} personnes</span></div>
+      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${ressourcesActives().length} personnes</span></div>
         <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th></tr></thead>
         <tbody>${annuaire || `<tr><td colspan="5">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
     </div>`;

@@ -22,13 +22,13 @@ const Panneau = {
     const esc = C.esc, eq = equipe(p.equipeId), chef = ressource(p.chefId);
     const ecranGeneral = (Ecrans[etat.ecran] || {}).section === 'general';
     const editable = !ecranGeneral && peutEditerProjet(p);
-    const membres = etat.d.affectations.filter(a => a.projetId === p.id);
+    const membres = etat.d.affectations.filter(a => a.projetId === p.id && estActive(a.ressourceId));
     const note = ecranGeneral ? 'Vue générale en lecture seule. Modifiez ce projet depuis Mon dashboard.'
       : !editable ? 'Rôle Lecteur ou autre équipe : modification impossible.' : '';
 
     // Champ modifiable du projet (enregistré à la sortie du champ par majProjet)
     const champ = (nom, html) => editable ? html.replace('<CHAMP', `data-action-change="majProjet" data-champ="${nom}" data-id="${p.id}"`) : '';
-    const personnesEquipe = etat.d.ressources.filter(r => r.equipeId === p.equipeId).map(r => ({ valeur: r.id, libelle: r.nom }));
+    const personnesEquipe = ressourcesActives().filter(r => r.equipeId === p.equipeId).map(r => ({ valeur: r.id, libelle: r.nom }));
     return `<aside class="panneau">
       <div class="panneau-entete"><div style="flex:1"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
           ${editable ? champ('nom', `<input class="champ" style="font-size:16px;font-weight:600;margin-top:4px" value="${esc(p.nom)}" required <CHAMP>`)
@@ -56,7 +56,7 @@ const Panneau = {
   // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
     const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
-    const personnes = etat.d.ressources.filter(r => r.equipeId === eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
+    const personnes = ressourcesActives().filter(r => r.equipeId === eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
     const moi = maRessource();
     return `<aside class="panneau"><form class="pile" style="height:100%;gap:0" data-action-envoi="creerProjet">
       <div class="panneau-entete"><div><div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</div><h2 style="font-size:18px;margin-top:4px">Nouveau projet</h2></div>
