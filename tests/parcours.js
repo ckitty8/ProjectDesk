@@ -84,6 +84,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     /* --- Section Général (lecture) --- */
     await capture('03-dashboard');
+    // Bulle ⓘ de la barre latérale : affichée en entier, hors de la barre qui défile (signalé le 2026-10-06)
+    await page.hover('.menu-titre .aide >> nth=0'); await page.waitForTimeout(150);
+    verifier('Bulle ⓘ de la barre latérale entière (non coupée)', await page.evaluate(() => {
+      const b = document.querySelector('.menu-titre .aide .bulle').getBoundingClientRect();
+      return b.width >= 270 && b.left >= 0 && b.right <= innerWidth && b.bottom <= innerHeight
+        && document.elementFromPoint(b.right - 10, b.top + 10).closest('.bulle') !== null; }));
+    await page.mouse.move(700, 600);
     await page.click('[data-action="choisirTrimestre"][data-t="4"]'); await page.waitForTimeout(200);
     verifier('Dashboard : 6 objectifs au T4', (await texte()).includes('6 objectifs'));
     await aller('projets'); await capture('04-projets');

@@ -75,6 +75,20 @@ const C = (() => {
     return `<span class="aide" tabindex="0" role="note" aria-label="${esc(texte)}">ⓘ<span class="bulle">${esc(texte)}</span></span>`;
   };
 
+  /* Place la bulle d'une icône ⓘ sous l'icône (au-dessus s'il n'y a pas la place), sans
+     sortir de la fenêtre. Appelée au survol et au focus (écouteurs en bas de ce fichier). */
+  function placerBulle(icone) {
+    const bulle = icone.querySelector('.bulle'); if (!bulle) return;
+    const r = icone.getBoundingClientRect(), largeur = 280, marge = 8;
+    const gauche = Math.min(Math.max(r.left + r.width / 2 - largeur / 2, marge), window.innerWidth - largeur - marge);
+    // Dans une fenêtre modale (centrée par transform), « fixed » se repère sur la modale : on corrige
+    const modale = icone.closest('.modale'), origine = modale ? modale.getBoundingClientRect() : { left: 0, top: 0 };
+    const hauteur = bulle.offsetHeight;                      // la bulle est affichée (survol / focus)
+    const haut = r.bottom + 6 + hauteur > window.innerHeight - marge ? Math.max(marge, r.top - 6 - hauteur) : r.bottom + 6;
+    bulle.style.left = (gauche - origine.left) + 'px';
+    bulle.style.top = (haut - origine.top) + 'px';
+  }
+
   const vide = texte => `<div class="vide">${esc(texte)}</div>`;
 
   // Petites icônes (traits, couleur du texte) : direction, équipe, projet, modifier, supprimer, recherche
@@ -94,5 +108,11 @@ const C = (() => {
   // Statut actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne
   const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badge(libelles[0], '#0B6B4F', '#E3F5EC') : badge(libelles[1], '#4A5363', '#F1F3F7');
 
-  return { aide, esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
+  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();
+
+// Bulles ⓘ : positionnées à l'ouverture (voir C.placerBulle)
+['mouseover', 'focusin'].forEach(evt => document.addEventListener(evt, e => {
+  const icone = e.target.closest && e.target.closest('.aide');
+  if (icone) C.placerBulle(icone);
+}));
