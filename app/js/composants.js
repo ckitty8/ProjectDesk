@@ -22,7 +22,6 @@ const C = (() => {
     `<span class="badge" style="color:${couleur};background:${fond || teinte(couleur)}">${esc(texte)}</span>`;
   // Badge d'une valeur de référentiel (couleur administrée)
   const badgeRef = (refId, libelle) => libelle ? badge(libelle, couleurDe(refId, libelle)) : '';
-  const badgeDemande = statut => { const s = STATUTS_DEMANDE[statut]; return badge(s.libelle, s.texte, s.fond); };
   const badgeFeuille = statut => { const s = STATUTS_FEUILLE[statut] || STATUTS_FEUILLE.en_saisie; return badge(s.libelle, s.texte, s.fond); };
 
   const pastille = couleur => `<span class="pastille" style="background:${couleur}"></span>`;
@@ -108,7 +107,7 @@ const C = (() => {
   // Statut actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne
   const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badge(libelles[0], '#0B6B4F', '#E3F5EC') : badge(libelles[1], '#4A5363', '#F1F3F7');
 
-  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeDemande, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
+  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();
 
 // Bulles ⓘ : positionnées à l'ouverture (voir C.placerBulle)

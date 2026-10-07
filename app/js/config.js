@@ -18,9 +18,6 @@ const CONFIG = {
   NEON_AUTH_URL: 'https://ep-lucky-mud-b1gqp3gd.neonauth.c-5.eu-central-1.aws.neon.tech/neondb/auth',
   DATA_API_URL: 'https://ep-lucky-mud-b1gqp3gd.apirest.c-5.eu-central-1.aws.neon.tech/neondb/rest/v1',
 
-  // Congés : droit annuel de congés payés (jours ouvrés)
-  DROIT_CP_ANNUEL: 25,
-
   // Jours de travail attendus par le client par personne et par an, si l'équipe n'a pas
   // d'objectif saisi pour l'année (table objectifs_jours_travail ; valeur du fichier du porteur)
   JOURS_TRAVAIL_CLIENT_DEFAUT: 218,
@@ -91,12 +88,6 @@ const REPARTITION_SPRINT = [
 const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
-const STATUTS_DEMANDE = {
-  nouvelle: { libelle: 'Nouvelle', fond: '#E8EEFF', texte: '#0033AD', point: '#003CC8' },
-  analyse: { libelle: 'En analyse', fond: '#FFF1DC', texte: '#8A4B00', point: '#D98A1C' },
-  acceptee: { libelle: 'Acceptée', fond: '#E3F5EC', texte: '#0B6B4F', point: '#0F8A6B' },
-  refusee: { libelle: 'Refusée', fond: '#F1F3F7', texte: '#4A5363', point: '#8A93A3' }
-};
 const STATUTS_FEUILLE = {
   en_saisie: { libelle: 'En saisie', fond: '#E8EEFF', texte: '#0033AD' },
   soumise: { libelle: 'Soumise', fond: '#F1E9FB', texte: '#5E2CA5' },
@@ -104,7 +95,6 @@ const STATUTS_FEUILLE = {
   a_completer: { libelle: 'À compléter', fond: '#FFF1DC', texte: '#8A4B00' }
 };
 const CONFIANCES = { haute: ['#E3F5EC', '#0B6B4F'], moyenne: ['#FFF1DC', '#8A4B00'], faible: ['#FDE8E8', '#A32020'] };
-const TYPES_CHAMP = ['Texte court', 'Texte long', 'Liste', 'Date', 'Nombre', 'Fichier'];
 
 // Surcharge éventuelle (tests automatisés avec un serveur simulé)
 if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);

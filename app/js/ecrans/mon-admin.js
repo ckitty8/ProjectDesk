@@ -104,7 +104,7 @@ Ecrans.monAdmin = {
      un administrateur, le chef du projet ou un responsable de son unité (peutGererEnvoiProjet). */
   envoiDaily() {
     const esc = C.esc;
-    const projets = etat.d.projets.filter(p => projetEnCours(p) && peutGererEnvoiProjet(p)).sort((a, b) => a.code.localeCompare(b.code));
+    const projets = etat.d.projets.filter(p => projetEnCours(p) && peutGererEnvoiProjet(p)).sort(parCode);
     const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V']];
     const ligne = p => {
       const r = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.projetId === p.id) || {}) };

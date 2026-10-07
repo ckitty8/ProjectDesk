@@ -29,11 +29,6 @@ const Calculs = (() => {
   // Lundi de la semaine contenant la date
   function lundi(iso) { const d = depuisIso(iso); const decalage = (d.getDay() + 6) % 7; d.setDate(d.getDate() - decalage); return versIso(d); }
   // Numéro de semaine ISO 8601 (semaine du jeudi)
-  function numeroSemaine(iso) {
-    const d = depuisIso(iso); d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-    const premierJeudi = new Date(d.getFullYear(), 0, 4);
-    return 1 + Math.round(((d - premierJeudi) / 86400000 - 3 + ((premierJeudi.getDay() + 6) % 7)) / 7);
-  }
   const joursOuvresSemaine = lundiIso => [0, 1, 2, 3, 4].map(i => ajouterJours(lundiIso, i));
 
   function joursDuMois(annee, mois) {
@@ -102,15 +97,6 @@ const Calculs = (() => {
   // Durée d'une absence en jours : 1 (journée) ou 0,5 (demi-journée, migration 009)
   const dureeAbsence = a => Number(a.duree ?? 1);
   const sommeDurees = liste => liste.reduce((s, a) => s + dureeAbsence(a), 0);
-
-  // absences : liste { ressourceId, jour, type, duree } ; décompte d'une personne sur une année (en jours)
-  function recapConges(ressourceId, annee, absences, typesAbsence) {
-    const siennes = absences.filter(a => a.ressourceId === ressourceId && a.jour.startsWith(String(annee)));
-    const parType = {};
-    typesAbsence.forEach(t => { parType[t.libelle] = sommeDurees(siennes.filter(a => a.type === t.libelle)); });
-    const cpPris = parType[ABSENCES.CP] || 0;
-    return { parType, total: sommeDurees(siennes), cpPris, soldeCp: CONFIG.DROIT_CP_ANNUEL - cpPris };
-  }
 
   // Jours travaillés / non travaillés d'une personne sur un mois — reprise de l'onglet « Jours de congés »
   // du fichier du porteur (Calendrier_2026.xlsx), sur les jours de semaine du mois :
@@ -224,8 +210,6 @@ const Calculs = (() => {
     const numeros = projets.map(p => p.code).filter(c => c.startsWith(prefixe + '-')).map(c => Number(c.split('-')[1]) || 0);
     return `${prefixe}-${deux(Math.max(0, ...numeros) + 1)}`;
   }
-  const numeroDemande = n => 'DEM-' + String(n).padStart(3, '0');
-  const nbPoints = texte => (texte || '').split('\n').filter(l => l.trim().startsWith('-')).length;
 
   // Découpe une note de daily en rubriques (Hier / Aujourd'hui / Blocages / autre) :
   // [{ titre, lignes: [...] }] — un titre est une ligne sans tiret qui ne commence pas par « - ».
@@ -270,14 +254,13 @@ const Calculs = (() => {
       return points.length ? titre + '\n' + points.join('\n') : '';
     }).filter(Boolean).join('\n\n');
   }
-  const nbMots = texte => (texte || '').split(/\s+/).filter(Boolean).length;
 
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
-    lundi, numeroSemaine, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
-    trimestreDe, nombre, pourcent, moyenne, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
-    projetsASurveiller, progressionObjectif, atteinteTrimestre, recapConges,
-    estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresSemaine, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet, numeroDemande,
-    nbPoints, nbMots, rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
+    lundi, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
+    trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
+    projetsASurveiller, progressionObjectif, atteinteTrimestre,
+    estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
+    rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
   };
 })();

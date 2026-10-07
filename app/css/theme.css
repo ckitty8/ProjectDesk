@@ -138,15 +138,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .gantt-mois { display: grid; grid-template-columns: 300px minmax(0, 1fr); border-bottom: 1px solid var(--bordure); background: var(--fond-entete); }
 .gantt-mois .mois { display: flex; } .gantt-mois .mois div { border-left: 1px solid var(--bordure-fine); padding: 9px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); }
 
-/* ---------- Kanban (demandes) ---------- */
-.kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
-.colonne { background: #EEF1F5; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
-.colonne-titre { display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 4px 6px; }
-.fiche { background: #fff; border: 1px solid var(--bordure); border-radius: 8px; padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 5px; }
-.fiche.selection { border-color: var(--primaire); box-shadow: 0 0 0 2px #B7C8F5; }
-.etapes { display: flex; align-items: center; gap: 6px; } .etape { display: flex; flex-direction: column; gap: 4px; flex: 1; color: var(--pale); font-size: 12px; }
-.etape .rond { width: 10px; height: 10px; border-radius: 50%; background: #D5DAE3; } .etape.faite { color: var(--texte); } .etape.faite .rond { background: var(--primaire); }
-
 /* ---------- Divers ---------- */
 .interrupteur { width: 32px; height: 18px; border-radius: 9px; background: #D5DAE3; position: relative; border: 0; cursor: pointer; flex: 0 0 32px; }
 .interrupteur::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
@@ -172,8 +163,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .btn-icone[disabled] { opacity: .35; cursor: default; background: none; }
 .recherche-champ { display: flex; align-items: center; gap: 8px; width: 320px; height: 36px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 8px; background: #fff; color: var(--pale); }
 .recherche-champ input { border: 0; outline: none; flex: 1; background: none; }
-.arbre-enfant { display: flex; align-items: center; gap: 8px; padding-left: 34px; position: relative; }
-.arbre-enfant::before { content: ''; position: absolute; left: 14px; top: -10px; bottom: -10px; border-left: 1px solid var(--bordure); }
 .arbre-parent { display: flex; align-items: center; gap: 8px; }
 .arbre-parent .chevron { width: 16px; color: var(--pale); background: none; border: 0; cursor: pointer; padding: 0; }
 
@@ -228,7 +217,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .champ.saisie-points { width: 80px; height: 28px; text-align: right; }
 .tableau td.nowrap { white-space: nowrap; }
 .champ.champ-date { width: 118px; height: 26px; padding: 0 4px; font-size: 12px; }
-.champs-daily { display: flex; flex-direction: column; }
 .champ-daily { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px 0; }
 .champ-daily .note-daily { min-height: 110px; border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 10px 12px; }
 .tableau-sprints td { padding: 4px 6px; } .tableau-sprints .champ { height: 28px; }

@@ -320,7 +320,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : demi-journée affichée « ½ »', (await page.textContent('tr:has-text("Léa Moreau")')).includes('½'));
     verifier('Calculs : demi-journée comptée 0,5', await page.evaluate(() => {
       const lea = etat.d.ressources.find(r => r.nom === 'Léa Moreau');
-      return Calculs.recapConges(lea.id, 2026, [{ ressourceId: lea.id, jour: '2026-11-13', type: ABSENCES.CP, duree: 0.5 }], valeursDe('abs', true)).cpPris === 0.5
+      return Calculs.joursTravaillesMois(lea.id, 2026, 10, [{ ressourceId: lea.id, jour: '2026-11-13', type: ABSENCES.CP, duree: 0.5 }], new Set()).conges === 0.5
         && Calculs.heuresAttendues(lea, '2026-11-09', [{ ressourceId: lea.id, jour: '2026-11-13', duree: 0.5 }], new Set(['2026-11-11'])) === 3.5 * CONFIG.HEURES_PAR_JOUR * (lea.capacite ?? 100) / 100;
     }));
     // Changement fait « ailleurs » (écriture directe, sans rechargement) : visible au changement d'écran, sans F5

@@ -120,7 +120,7 @@ Object.assign(Actions, {
   basculerAbsence(d) {
     const pinceau = Ecrans.conges.pinceau();
     // (un clic pose toujours une journée entière ; les demi-journées viennent de l'import du planning)
-    const existante = etat.d.absences.find(a => a.ressourceId === d.ressource && a.jour === d.jour);
+    const existante = absenceDe(d.ressource, d.jour);
     const filtre = { ressource_id: 'eq.' + d.ressource, jour: 'eq.' + d.jour };
     if (pinceau === 'effacer' || (existante && existante.type === pinceau)) {
       if (existante) executer(() => Api.supprimer('absences', filtre), 'absences');

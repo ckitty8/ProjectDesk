@@ -25,13 +25,12 @@ Ecrans.monTimesheet = {
     etat.d.temps.filter(t => t.ressourceId === moi.id && jours.includes(t.jour)).forEach(t => ids.add(t.projetId));
     const mesProjets = [...ids].map(projet).filter(Boolean);
     const heure = (pId, j) => (etat.d.temps.find(t => t.ressourceId === moi.id && t.projetId === pId && t.jour === j) || {}).heures;
-    const absence = j => etat.d.absences.find(a => a.ressourceId === moi.id && a.jour === j);
     // Début de semaine : trait vertical pour repérer les semaines dans le mois
     const classe = j => Calculs.depuisIso(j).getDay() === 1 ? ' class="debut-semaine"' : '';
 
     // Case d'un jour : absence d'une journée, férié, hors présence → non saisissable
     const caseJour = (p, j) => {
-      const abs = absence(j);
+      const abs = absenceDe(moi.id, j);
       if (fer.has(j)) return `<td${classe(j)}><span class="jour-off" title="Jour férié">JF</span></td>`;
       if (!Calculs.estPresent(moi, j)) return `<td${classe(j)}><span class="jour-off" title="Hors période de présence">—</span></td>`;
       if (abs && Calculs.dureeAbsence(abs) >= 1) return `<td${classe(j)}><span class="jour-off" style="background:${C.teinte(couleurDe('abs', abs.type))}" title="${esc(abs.type)}">Abs</span></td>`;

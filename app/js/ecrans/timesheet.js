@@ -35,31 +35,37 @@ const MoisTemps = {
    Renvoie le HTML et les totaux du mois (pour les indicateurs). */
 function tableauFeuilles(equipes, avecValidation = false) {
   const esc = C.esc, fer = feries(), m = MoisTemps.courant(), cle = MoisTemps.cle();
+  const joursDuMois = Calculs.joursDuMois(m.annee, m.mois);
   const totaux = { saisi: 0, attendu: 0, aCompleter: 0, aValider: 0 };
-  const nbColonnes = 6 + (avecValidation ? 1 : 0);
+  const nbColonnes = avecValidation ? 7 : 6;
 
+  // Ligne d'une personne : ses projets, saisi / attendu du mois, complétude, statut, actions
+  const lignePersonne = (r, e) => {
+    const saisi = Calculs.heuresMois(r.id, m.annee, m.mois, etat.d.temps).total;
+    const attendu = Calculs.heuresAttenduesMois(r, m.annee, m.mois, etat.d.absences, fer);
+    const completude = attendu ? saisi / attendu * 100 : 0;
+    const statut = MoisTemps.statut(r.id, cle);
+    totaux.saisi += saisi; totaux.attendu += attendu;
+    if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
+    if (statut === 'soumise') totaux.aValider++;
+
+    const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
+    const boutons = statut === 'soumise' && estResponsableDe(e.id)
+      ? `<button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Renvoyer</button>
+         <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Valider</button>` : '';
+    return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td>${codes}</td>
+      <td class="num"><b>${Calculs.nombre(saisi)} h</b> <span class="discret">/ ${Calculs.nombre(attendu)} h</span></td>
+      <td style="width:18%">${C.barre(Math.min(100, completude))}</td>
+      <td class="num">${attendu ? Calculs.pourcent(completude) : '—'}</td><td>${C.badgeFeuille(statut)}</td>
+      ${avecValidation ? `<td class="num" style="white-space:nowrap">${boutons}</td>` : ''}</tr>`;
+  };
+
+  // Par équipe : les personnes présentes au moins un jour du mois (arrivée / date de fin)
   const lignes = equipes.map(e => {
-    const jours = Calculs.joursDuMois(m.annee, m.mois);
-    const personnes = ressourcesPresentes(jours[0], jours[jours.length - 1]).filter(r => r.equipeId === e.id);   // présentes sur le mois
+    const personnes = ressourcesPresentes(joursDuMois[0], joursDuMois[joursDuMois.length - 1]).filter(r => r.equipeId === e.id);
     if (!personnes.length) return '';
-    return `<tr class="groupe"><td colspan="${nbColonnes}"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td></tr>` +
-      personnes.map(r => {
-        const saisi = Calculs.heuresMois(r.id, m.annee, m.mois, etat.d.temps).total;
-        const attendu = Calculs.heuresAttenduesMois(r, m.annee, m.mois, etat.d.absences, fer);
-        const statut = MoisTemps.statut(r.id, cle);
-        totaux.saisi += saisi; totaux.attendu += attendu;
-        if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
-        if (statut === 'soumise') totaux.aValider++;
-        const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => (projet(a.projetId) || {}).code).filter(Boolean).join(' · ');
-        const boutons = statut === 'soumise' && estResponsableDe(e.id)
-          ? `<button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Renvoyer</button>
-             <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Valider</button>` : '';
-        return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td class="code">${esc(codes)}</td>
-          <td class="num"><b>${Calculs.nombre(saisi)} h</b> <span class="discret">/ ${Calculs.nombre(attendu)} h</span></td>
-          <td style="width:18%">${C.barre(attendu ? Math.min(100, saisi / attendu * 100) : 0)}</td>
-          <td class="num">${attendu ? Calculs.pourcent(saisi / attendu * 100) : '—'}</td><td>${C.badgeFeuille(statut)}</td>
-          ${avecValidation ? `<td class="num" style="white-space:nowrap">${boutons}</td>` : ''}</tr>`;
-      }).join('');
+    return `<tr class="groupe"><td colspan="${nbColonnes}"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}</span></td></tr>`
+      + personnes.map(r => lignePersonne(r, e)).join('');
   }).join('');
 
   const html = `<div class="carte"><table class="tableau"><thead><tr><th>Personne</th><th>Projets</th>

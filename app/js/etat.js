@@ -256,38 +256,43 @@ const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 // Absence d'une personne un jour donné (Congés & capacité), ou null
 const absenceDe = (ressourceId, jour) => (etat.d.absences || []).find(a => a.ressourceId === ressourceId && a.jour === jour) || null;
 // Projet en cours (non terminé) : seul un projet en cours attend un daily
-const projetEnCours = p => !!p && p.statut !== STATUTS_PROJET.TERMINE;
+const projetEnCours = p => !!p && !Calculs.estTermine(p);
+const parCode = (a, b) => a.code.localeCompare(b.code);
 // Projets où je saisis un daily : affecté(e) Chef de projet ou Membre, projet en cours
 const mesProjetsDaily = () => {
   const moi = maRessource(); if (!moi) return [];
   return etat.d.affectations.filter(a => a.ressourceId === moi.id && a.role !== ROLES_PROJET.LECTEUR)
-    .map(a => projet(a.projetId)).filter(projetEnCours).sort((a, b) => a.code.localeCompare(b.code));
+    .map(a => projet(a.projetId)).filter(projetEnCours).sort(parCode);
 };
-/* Projets dont je peux lire le daily (même règle que peut_lire_daily_projet en base) : administrateur ;
-   affecté(e) au projet ; responsable de l'unité du projet ou d'une unité parente (ex. Anne, Applications). */
-function peutLireDailyProjet(p) {
-  if (etat.estAdmin) return true;
+
+/* Suis-je responsable de l'unité du projet ou d'une unité au-dessus (ex. Anne, responsable
+   d'Applications) ? Responsable = fiche responsable_id de l'unité, ou owner/admin de son
+   organisation. On remonte les unités parentes (10 niveaux au plus, garde-fou contre une boucle). */
+function suisResponsableDuProjet(p) {
   const moi = maRessource();
-  if (moi && etat.d.affectations.some(a => a.projetId === p.id && a.ressourceId === moi.id)) return true;
-  for (let e = equipe(p.equipeId), garde = 0; e && e.id && garde < 10; e = equipe(e.parentId), garde++) {
+  let e = equipe(p.equipeId);
+  for (let niveau = 0; e.id && niveau < 10; niveau++) {
     if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
+    e = equipe(e.parentId);
   }
   return false;
 }
+// Mon affectation sur un projet (ou null)
+const monAffectation = p => { const moi = maRessource(); return moi ? etat.d.affectations.find(a => a.projetId === p.id && a.ressourceId === moi.id) || null : null; };
+
+/* Projets dont je peux lire le daily (même règle que peut_lire_daily_projet en base) :
+   administrateur, affecté(e) au projet, ou responsable de son unité ou d'une unité parente. */
+const peutLireDailyProjet = p => etat.estAdmin || !!monAffectation(p) || suisResponsableDuProjet(p);
+
 /* Qui règle l'envoi du daily d'un projet (même règle que peut_gerer_envoi_projet en base) :
-   administrateur, chef du projet (fiche chef ou affectation « Chef de projet »), responsable de
-   l'unité du projet ou d'une unité parente. */
+   administrateur, chef du projet (fiche « chef » ou affectation « Chef de projet »), ou responsable
+   de son unité ou d'une unité parente. */
 function peutGererEnvoiProjet(p) {
-  if (etat.estAdmin) return true;
-  const moi = maRessource();
-  if (moi && (p.chefId === moi.id || etat.d.affectations.some(a => a.projetId === p.id && a.ressourceId === moi.id && a.role === ROLES_PROJET.CHEF))) return true;
-  for (let e = equipe(p.equipeId), garde = 0; e && e.id && garde < 10; e = equipe(e.parentId), garde++) {
-    if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
-  }
-  return false;
+  const moi = maRessource(), aff = monAffectation(p);
+  const estChef = (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
+  return etat.estAdmin || estChef || suisResponsableDuProjet(p);
 }
-const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p))
-  .sort((a, b) => a.code.localeCompare(b.code));
+const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p)).sort(parCode);
 // Note d'une personne (compte) pour un projet et un jour
 const noteProjet = (userId, projetId, jour) =>
   (etat.d.notesProjet || []).find(n => n.userId === userId && n.projetId === projetId && n.jour === jour) || null;
@@ -371,8 +376,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && (etat.pann
 Object.assign(Actions, {
   aller: d => allerA(d.ecran),
   fermer: () => majEtat({ panneau: null, modale: null }),
-  ouvrirProjet: d => majEtat({ panneau: { type: 'projet', id: d.id } }),
-  rien: () => {}
+  ouvrirProjet: d => majEtat({ panneau: { type: 'projet', id: d.id } })
 });
 
 window.addEventListener('DOMContentLoaded', demarrer);
