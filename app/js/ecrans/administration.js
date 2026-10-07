@@ -30,8 +30,8 @@ const Administration = {
   // Référentiels et leurs valeurs ; modifiable = renommer, recolorer, activer, ajouter
   referentiels(modifiable) {
     const esc = C.esc, refId = ui('referentiels', { id: 'stp' }).id;
-    const ref = referentielsVisibles().find(r => r.id === refId) || referentielsVisibles()[0];
-    const gauche = referentielsVisibles().map(r => `<a class="menu-lien" style="color:var(--texte);justify-content:space-between;${r.id === ref.id ? 'background:#F3F6FF' : ''}"
+    const ref = etat.d.referentiels.find(r => r.id === refId) || etat.d.referentiels[0];
+    const gauche = etat.d.referentiels.map(r => `<a class="menu-lien" style="color:var(--texte);justify-content:space-between;${r.id === ref.id ? 'background:#F3F6FF' : ''}"
       data-action="choisirReferentiel" data-id="${r.id}"><span>${esc(r.nom)}</span><span class="pale">${valeursDe(r.id, true).length}</span></a>`).join('');
     const valeurs = valeursDe(ref.id, true).map((v, i) => `
       <tr><td class="pale">${i + 1}</td>
@@ -55,7 +55,7 @@ Ecrans.administration = {
     const onglet = ui('administration', { onglet: 'equipes' }).onglet;
     const onglets = C.onglets([
       { id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length },
-      { id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length }
+      { id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length }
     ], onglet, 'ongletAdministration');
     const corps = onglet === 'referentiels' ? Administration.referentiels(false) : Administration.equipes(false);
     const lienEdition = etat.estAdmin ? `<button class="btn" data-action="aller" data-ecran="monAdmin">Modifier (Mon dashboard › Administration)</button>` : '';

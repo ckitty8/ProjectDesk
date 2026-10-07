@@ -7,7 +7,6 @@
    - Lien avec les congés : un jour d'absence d'une journée (Congés & capacité), aucun
      daily n'est attendu (cartes repliées) ; une demi-journée laisse la saisie ouverte.
    - Aide à la saisie : « Hier » rappelle l'« Aujourd'hui » noté le jour ouvré précédent.
-   - Ancienne note unique du jour (notes_daily) : conservée, affichée en « note générale ».
    ============================================================ */
 'use strict';
 
@@ -15,11 +14,9 @@ Ecrans.daily = {
   titre: 'Daily',
   section: 'moi',
   jour: () => ui('daily', { jour: Calculs.aujourdhui() }).jour,
-  auChargement: () => recharger('notesProjet', 'notes'),
+  auChargement: () => recharger('notesProjet'),
   // Ma note d'un projet un jour donné (texte au format des rubriques)
   texte: (projetId, jour) => (noteProjet(etat.session.user.id, projetId, jour) || {}).texte || '',
-  // Ancienne note unique du jour (avant le daily par projet)
-  noteGenerale: jour => (etat.d.notes.find(n => n.jour === jour && n.userId === etat.session.user.id) || {}).texte || '',
 
   // Jour ouvré précédent / suivant (on saute les week-ends)
   decaler(jour, sens) {
@@ -71,9 +68,6 @@ Ecrans.daily = {
     const bandeau = b.absence ? `<div class="carte" style="padding:12px 16px;background:#FFF8EC;border-color:#F3D9A8">
       ${b.absentJournee ? `Vous êtes en <b>${esc(b.absence.type)}</b> ce jour : aucun daily attendu.`
         : `Demi-journée de <b>${esc(b.absence.type)}</b> ce jour : la saisie reste ouverte.`}</div>` : '';
-    const generale = this.noteGenerale(jour).trim() ? `<div class="carte"><div class="carte-titre"><h2 style="font-size:15px">Note générale</h2>
-      <span class="discret">ancienne note du jour, avant le daily par projet</span></div>
-      <div style="padding:0 16px 14px;line-height:1.55">${Ecrans.dailyEquipes.note(this.noteGenerale(jour))}</div></div>` : '';
 
     return `
     <div class="ecran" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:start;max-width:1280px">
@@ -85,7 +79,6 @@ Ecrans.daily = {
             <span class="discret" id="etat-sauvegarde">· enregistrement automatique</span></span></div></div>
         ${bandeau}
         ${projets.map(p => this.carteProjet(p, jour, b.absentJournee)).join('') || `<div class="carte">${C.vide('Aucun projet en cours : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur).')}</div>`}
-        ${generale}
       </div>
       <div class="carte historique" style="margin-top:58px">
         <div class="carte-titre"><h2>Historique ${C.aide('dailyVisibilite')}</h2></div>

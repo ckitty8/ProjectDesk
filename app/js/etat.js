@@ -37,14 +37,13 @@ const TABLES = {
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
-  notes: 'notes_daily', notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet'
+  notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
-// Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
+// Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;
-const FILTRES = { notes: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }),
-  notesProjet: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }) };
+const FILTRES = { notesProjet: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }) };
 
 /* ---------- Mise à jour et rendu ---------- */
 function majEtat(modifications, options = {}) {
@@ -73,7 +72,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notes: 'user_id,jour', notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id' };
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -236,8 +235,6 @@ const valeursDe = (refId, avecInactives = false) =>
   (etat.d.valeurs || []).filter(v => v.referentielId === refId && (avecInactives || v.actif));
 // Couleur associée à un libellé de référentiel
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
-// Référentiels affichés dans l'application (hors REFERENTIELS_MASQUES, config.js)
-const referentielsVisibles = () => (etat.d.referentiels || []).filter(r => !REFERENTIELS_MASQUES.includes(r.id));
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
 /* Listes de personnes de tous les écrans (menus liés, règle du porteur 2026-10-06) : une personne

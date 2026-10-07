@@ -55,10 +55,6 @@ const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 
 const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
 const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés
 // Référentiel en base → objet de libellés système ci-dessus
-// Référentiels conservés en base mais masqués dans l'application : « Statuts ticket » (stt,
-// tickets retirés le 2026-09-27) ; « Types de demande » (type) et « Priorités » (prio), les
-// demandes étant gérées dans Azure DevOps (retrait du 2026-10-05).
-const REFERENTIELS_MASQUES = ['stt', 'type', 'prio'];
 /* Envoi du daily par e-mail (demande du porteur, 2026-10-06) : mode choisi PAR PROJET depuis le
    2026-10-07 (Administration › Envoi du daily, table envois_daily_projet, migration 019).
    - power_automate : un flux Power Automate planifié lit le daily du projet à une adresse

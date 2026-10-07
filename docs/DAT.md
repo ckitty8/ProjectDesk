@@ -86,6 +86,7 @@
 | 1.72    | 2026-10-07 | **Daily par projet**, lié aux congés et aux projets (maquette `daily-par-projet/`) : Mon dashboard › Daily = une carte par projet affecté (Hier / Aujourd'hui / Blocages), jour de congé → aucun daily attendu ; Général › Daily des équipes = daily de **mes projets** seulement, le responsable d'une unité voit tous les projets de son unité et des unités rattachées. Migration 018 (additive) : table `notes_daily_projet`, fonction `peut_lire_daily_projet` (RLS), e-mail `daily_equipe` regroupé par projet et limité aux personnes présentes. Ancienne note unique conservée (« note générale ») (§ 3.2, § 3.3, § 4, § 5) |
 | 1.73    | 2026-10-07 | **Envoi du daily par projet** (maquette `envoi-daily-projet/`) : Administration › Envoi du daily = une ligne par **projet en cours** (mode, heure, jours, fériés, destinataires), réglable par un administrateur, le chef du projet ou un responsable de son unité (`peutGererEnvoiProjet`) ; « Configurer le flux » donne l'adresse et la clé **du projet**. Migration 019 (additive) : `envois_daily_projet`, `cles_envoi_daily_projet`, `peut_gerer_envoi_projet`, `cle_envoi_daily_projet`, `daily_projet` ; tables par équipe (`envois_daily`, `cles_envoi_daily`, vides) conservées, plus utilisées (§ 3.3, § 4, § 5, § 7) |
 | 1.74    | 2026-10-07 | **Revue de lisibilité, code mort retiré** (aucun changement visible, aucune donnée touchée) : le calcul du récap congés (recapConges) et `DROIT_CP_ANNUEL` (remplacés par le récap des jours travaillés), `numeroSemaine` (saisie au mois), `numeroDemande`, `badgeDemande`, `STATUTS_DEMANDE`, `TYPES_CHAMP` (demandes retirées), `nbMots`, `nbPoints` (ancien daily), action `rien`, styles kanban / étapes / arbre-enfant ; règles « responsable de l'unité » et « absence d'un jour » factorisées (`suisResponsableDuProjet`, `monAffectation`, `absenceDe`) ; `tableauFeuilles` découpé. Fonction en base `daily_equipe` / `cle_envoi_daily` (par équipe) conservée mais plus appelée depuis 1.73 (§ 2.1, § 6) |
+| 1.75    | 2026-10-07 | **Nettoyage de la base** (migration 020, accord du porteur, sauvegarde préalable : branche Neon « sauvegarde-avant-020-2026-10-07 ») : tables inutiles supprimées (`demandes`, `champs_formulaire`, `tickets`, `envois_daily`, `cles_envoi_daily`, `notes_daily`), référentiels des demandes et tickets, fonctions de l'envoi par équipe ; liaison `repartitions_sprint` → `sprints_projet` (répartition orpheline à 0 j supprimée). Application : « note générale » du daily et filtre des référentiels masqués retirés (§ 4, § 5) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -190,7 +191,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 
 | Écran | Fichier | Contenu | Capture |
 |-------|---------|---------|---------|
-| `daily` | `daily.js` | **Un daily par projet** où je suis affecté(e) (Chef de projet, Membre ; projet en cours) — maquette `daily-par-projet/` : par projet trois champs **Hier (la veille)**, **Aujourd’hui**, **Blocages** (enregistrement auto après 0,8 s), « Hier » rappelle l'« Aujourd'hui » de la veille ; « n / N projets renseignés » ; **lié aux congés** : jour d'absence d'une journée → « aucun daily attendu », cartes repliées (demi-journée : saisie ouverte) ; historique (projets renseignés ou congé) ; ancienne note unique affichée en « note générale » | `08-daily.png` |
+| `daily` | `daily.js` | **Un daily par projet** où je suis affecté(e) (Chef de projet, Membre ; projet en cours) — maquette `daily-par-projet/` : par projet trois champs **Hier (la veille)**, **Aujourd’hui**, **Blocages** (enregistrement auto après 0,8 s), « Hier » rappelle l'« Aujourd'hui » de la veille ; « n / N projets renseignés » ; **lié aux congés** : jour d'absence d'une journée → « aucun daily attendu », cartes repliées (demi-journée : saisie ouverte) ; historique (projets renseignés ou congé) | `08-daily.png` |
 | `mesProjets` | `mes-projets.js` | Gantt des projets où je suis affecté ; « + Nouveau projet », « Objectifs de l'équipe » | `09-mes-projets.png`, `10-panneau-projet.png` |
 | `conges` | `conges.js` | Trois **onglets** : Grille mensuelle éditable (« pinceau » par type d'absence ; sélecteur **Par équipe** (chaque personne une seule fois sous son unité, responsable en tête, étiquettes de ses projets, puis synthèse « absents / membres » par projet) / **Par projet** (membres du projet choisi + sa synthèse) — maquettes `conges-sans-doublon/`, pistes 2 et 3), Récap annuel (reprise de l'onglet « Jours de congés » du porteur : par mois T = travaillés / C = congés (fériés exclus), totaux, **reste à prendre** = total travaillé − jours attendus par le client, objectif modifiable par équipe et par année — maquette `recap-jours-travailles.png`). Onglet **Capacité** (fichier `capacite.js`, objet `Capacite`, maquette `capacite-saisie/`) : projet (CDO par défaut) et sprint parmi **les sprints saisis du projet** (‹ ›, sprint en cours par défaut ; bouton « Sprints du projet » → Administration › Sprints ; maquette `sprints-projet/`) ; indicateurs disponible / engageable / vélocité moyenne / prévision ; capacité des membres (calculée) ; **vélocité** : points engagés et terminés **saisis** par sprint, say/do ; **répartition du sprint** : idéal par catégorie (calculé) et jours réels **saisis**, écart. Champs désactivés si le projet n'est pas modifiable. Bouton **« Méthode de calcul Scrum »** en haut à droite : pop-in des formules (`Modale.methodeCapacite`, maquette `capacite-scrum/`) | `11-conges.png` |
 | `listeRessources` | `liste-ressources.js` | Onglets (maquettes `arborescence-ressources.png`, `direction-espace-travail.png`, `liste-ressources-board.png`) : **Organisation** — une seule arborescence **Direction → Équipe → Projet → Membres** (rôle sur le projet), plus les personnes sans projet de chaque unité ; colonnes ressources, responsable / rôle, **début / fin** des personnes **saisis directement sur la ligne** (`date_arrivee`, `date_depart`, modifiables par l'équipe de la personne), statut (projets : statut ; personnes : **Inactif dès qu'une date de fin est saisie**, `estInactive`, badge cliquable pour rendre inactive ou réactiver ; plus de statut affiché sur les unités) ; les ressources inactives restent **affichées « Inactif »** (depuis 1.70), bouton « Masquer les ressources inactives (n) » pour les cacher ; boutons « + Ajouter une direction », « + Équipe » (déjà rattachée), « + Projet », « + Membre » (sur une unité : nouvelle fiche ; sur un projet : affectation), modifier, supprimer (unité vide seulement) ; recherche sur unités, projets et personnes ; unités dépliées et projets repliés par défaut, « Tout déplier ». **Postes** et **Types de contrat** — valeurs, nombre de ressources, statut, renommage (propagé aux fiches), suppression si inutilisée. Ouvert **sans équipe** pour un administrateur | `12-liste-ressources.png`, `18-postes.png` |
@@ -216,7 +217,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`, `020_nettoyage_tables.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -227,28 +228,30 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `type`, `prio`, `stp`, `stt`, `role`, `abs`, `poste`, `contrat` | `id` |
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
-| `champs_formulaire` | **Non utilisée depuis le 2026-10-05** (demandes gérées dans Azure DevOps ; table conservée en base) — formulaire de demande : `ordre`, `libelle`, `type`, `obligatoire`, `referentiel_id`, `cle`, `systeme` | |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
 | `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012) | → `equipes` |
 | `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
 | `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement` | → `equipes`, `resultats_cles`, `ressources` |
 | `affectations` | `projet_id`, `ressource_id`, `role` (Chef de projet / Membre / Lecteur) | unique (projet, ressource) |
-| `tickets` | **Non utilisée** : la notion de ticket est retirée de l'application (2026-09-27) ; table vide conservée en base en attendant l'accord du porteur pour la supprimer | → `projets` |
 | `objectifs_jours_travail` | Jours de travail attendus par le client : `equipe_id`, `annee`, `jours` (défaut `JOURS_TRAVAIL_CLIENT_DEFAUT` = 218 si absent) | clé (équipe, année) |
 | `sprints_projet` | **Sprints de chaque projet** : `projet_id`, `numero` (attribué à l'ajout), `nom` (version), `debut`, `fin` (saisis dans Administration › Sprints — migration 014), `numero_sprint` (affiché « Sprint N ») et `annee` (migration 015 ; un numéro par projet et par année), `points_engages`, `points_termines` (onglet Capacité — migration 013) | clé (projet, sprint) → `projets` |
-| `repartitions_sprint` | Jours réellement passés par catégorie (onglet Capacité) : `projet_id`, `numero`, `categorie` (libellé de `REPARTITION_SPRINT`), `jours` — migration 013 | clé (projet, sprint, catégorie) → `projets` |
+| `repartitions_sprint` | Jours réellement passés par catégorie (onglet Capacité) : `projet_id`, `numero`, `categorie` (libellé de `REPARTITION_SPRINT`), `jours` — migration 013 ; liée au sprint du projet (`projet_id`, `numero` → `sprints_projet`, migration 020) | clé (projet, sprint, catégorie) → `projets` |
 | `envois_daily_projet` | **Envoi du daily par projet** (migration 019) : `projet_id` (clé), `mode`, `heure`, `jours`, `sans_feries`, `destinataires` | une ligne par projet |
 | `cles_envoi_daily_projet` | Clé secrète d'un projet pour lire son daily sans compte ; **aucun droit direct** (fonctions `cle_envoi_daily_projet`, `daily_projet`) | une ligne par projet |
-| `envois_daily` | (plus utilisée depuis 1.73, vide, conservée) **Envoi du daily par équipe** (migration 017) : `equipe_id` (clé), `mode` (aucun / power_automate / direct), `heure`, `jours` (« 1,2,3,4,5 », 1 = lundi), `sans_feries`, `destinataires` (adresses séparées par des virgules) | une ligne par équipe |
-| `cles_envoi_daily` | Clé secrète d'une équipe pour lire son daily sans compte (`equipe_id`, `cle`) ; **aucun droit direct** : lue seulement par `cle_envoi_daily` et `daily_equipe` | une ligne par équipe |
 | `absences` | `ressource_id`, `jour`, `type`, `duree` (1 = journée, 0,5 = demi-journée ; migration 009) | clé (ressource, jour) |
 | `temps_saisis` | `ressource_id`, `projet_id`, `jour`, `heures` | unique (ressource, projet, jour) |
 | `feuilles_temps` | `ressource_id`, `semaine` (**1er jour du mois** : feuille mensuelle depuis 1.64 ; un lundi pour les anciennes feuilles hebdomadaires), `statut` (en_saisie / soumise / validee / a_completer), `commentaire` | clé (ressource, semaine) |
-| `notes_daily` | `user_id`, `jour`, `texte` — ancienne note unique du jour (avant 1.72), conservée et affichée en « note générale » | clé (user, jour) |
 | `notes_daily_projet` | **Daily par projet** (migration 018) : `user_id`, `jour`, `projet_id`, `texte` (format des rubriques Hier / Aujourd'hui / Blocages) | clé (user, jour, projet) |
-| `demandes` | **Non utilisée depuis le 2026-10-05** (demandes gérées dans Azure DevOps ; table et données conservées en base) — `numero` (DEM-047), `titre`, `type`, `description`, `equipe_id`, `priorite`, `date_souhaitee`, `budget`, `valeurs` (jsonb des champs ajoutés), `statut` (nouvelle / analyse / acceptee / refusee), `commentaire`, `demandeur_id`, `demandeur_nom`, `service`, `projet_id` | → `equipes`, `projets` |
 | `neon_auth.*` | Utilisateurs, sessions, organisations, membres, invitations | gérées par Neon Auth — **ne pas modifier** |
+
+**Tables supprimées par la migration 020** (2026-10-07, accord du porteur ; sauvegarde : branche Neon
+« sauvegarde-avant-020-2026-10-07 ») : `demandes`, `champs_formulaire` (demandes gérées dans Azure
+DevOps), `tickets` (notion retirée), `envois_daily`, `cles_envoi_daily` (envoi du daily par équipe,
+remplacé par l'envoi par projet), `notes_daily` (ancien daily unique, remplacé par le daily par projet),
+ainsi que les référentiels « Types de demande », « Priorités », « Statuts ticket » et les fonctions
+`daily_equipe` et `cle_envoi_daily`. Liaison ajoutée : `repartitions_sprint` (projet, numéro) →
+`sprints_projet` (suppression d'un sprint → ses répartitions).
 
 Historique : la migration `001_schema_initial.sql` (Roadmap PM) créait `demandes` (backlog) et
 `capacites` ; toutes deux ont été supprimées par la migration 002 (tables vides). La migration
@@ -284,8 +287,6 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `peut_gerer_envoi_projet(projet)` | Qui règle l'envoi du daily d'un projet : administrateur, chef du projet, responsable de son unité ou d'une unité parente |
 | `cle_envoi_daily_projet(projet, renouveler)` | Clé d'envoi du daily d'un projet (créée au besoin, renouvelable) — personnes ci-dessus seulement |
 | `daily_projet(projet, clé, jour)` | Daily du projet prêt à envoyer (`objet`, `html`, `texte`, `destinataires`, `a_envoyer`) ; exécutable par `anonymous` avec la bonne clé (flux Power Automate) |
-| `cle_envoi_daily(équipe, renouveler)` | (plus utilisée depuis 1.73) Clé d'envoi du daily d'une équipe (créée au besoin, renouvelable) — administrateurs et responsable de l'équipe seulement |
-| `daily_equipe(équipe, clé, jour)` | Daily de l'équipe prêt à envoyer (`objet`, `html`, `texte`, `destinataires`, `a_envoyer`) ; exécutable par `anonymous` **avec la bonne clé** (flux Power Automate) ; depuis 1.72 **regroupé par projet** de l'équipe (projets en cours, membres hors Lecteur présents ce jour-là, sans daily / absents, blocages en tête) |
 | `peut_lire_daily_projet(projet)` | Règle de lecture du daily d'un projet (RLS de `notes_daily_projet`) |
 | `libelle_systeme(referentiel, cle)` | Libellé actuel d'une valeur système (valeurs par défaut des colonnes) |
 | `partage_une_equipe(user)` | L'utilisateur connecté partage au moins une équipe avec `user` (lecture des daily) |
@@ -294,22 +295,18 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 
 | Tables | Lecture | Écriture |
 |--------|---------|----------|
-| `equipes`, `referentiels`, `valeurs_referentiel`, `champs_formulaire`, `jours_feries` | tout utilisateur connecté | administrateurs |
+| `equipes`, `referentiels`, `valeurs_referentiel`, `jours_feries` | tout utilisateur connecté | administrateurs |
 | `administrateurs` | administrateurs (et sa propre ligne) | administrateurs |
 | `ressources` | membres, administrateurs | équipe concernée, administrateurs |
 | `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
 | `projets` | membres, administrateurs | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
-| `affectations`, `tickets` | membres, administrateurs | `peut_editer_projet` |
+| `affectations` | membres, administrateurs | `peut_editer_projet` |
 | `objectifs_jours_travail` | membres, administrateurs | administrateurs, responsables de l'équipe |
 | `sprints_projet`, `repartitions_sprint` | membres, administrateurs | `peut_editer_projet`, administrateurs |
 | `envois_daily_projet` | membres, administrateurs | `peut_gerer_envoi_projet` |
 | `cles_envoi_daily_projet` | personne (fonctions seulement) | personne (fonctions seulement) |
-| `envois_daily` | membres, administrateurs | responsable de l'équipe (`est_responsable_equipe`), administrateurs |
-| `cles_envoi_daily` | personne (fonctions seulement) | personne (fonctions seulement) |
 | `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
-| `notes_daily` | auteur, personnes partageant une équipe avec lui, administrateurs | auteur |
 | `notes_daily_projet` | auteur ; `peut_lire_daily_projet(projet)` : affectés au projet, responsable (fiche `responsable_id` ou owner/admin) de l'unité du projet ou d'une unité parente, administrateurs | auteur |
-| `demandes` | le demandeur (les siennes), les membres et les administrateurs | dépôt : tout connecté (en son nom, statut « nouvelle ») ; traitement : équipe destinataire |
 | toutes | — | rôle `anonymous` : aucun droit |
 
 Le trigger de traçabilité `tracer_modification()` est `SECURITY DEFINER` (migration 010) : le rôle
@@ -327,7 +324,7 @@ une direction n'est rattachée à rien et ne redevient « équipe » que sans é
 (poste / type de contrat utilisé non supprimable).
 
 Tests réalisés en base (bloc annulé, sans jeton) : aucune donnée métier lisible, insertion
-refusée sur `referentiels`, `administrateurs` et `demandes` (usurpation).
+refusée sur `referentiels` et `administrateurs` (usurpation).
 
 ## 6. Règles de calcul (`app/js/calculs.js`)
 

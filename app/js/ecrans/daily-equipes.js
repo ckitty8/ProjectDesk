@@ -13,7 +13,7 @@ Ecrans.dailyEquipes = {
   titre: 'Daily des équipes',
   section: 'general',
   jour: () => ui('dailyEquipes', { jour: Calculs.aujourdhui() }).jour,
-  auChargement: () => recharger('notesProjet', 'notes'),
+  auChargement: () => recharger('notesProjet'),
 
   // Membres d'un projet attendus au daily ce jour-là : affectés hors Lecteur et présents (arrivée / fin)
   membres(p, jour) {

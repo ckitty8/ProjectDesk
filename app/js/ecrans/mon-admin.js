@@ -1,7 +1,7 @@
 /* ============================================================
    Mon dashboard › Administration (maquette 10-mAdmin.png)
    (Demandes entrantes et formulaire de demande retirés le 2026-10-05 : les
-   demandes sont gérées dans Azure DevOps ; tables conservées en base.)
+   demandes sont gérées dans Azure DevOps ; tables supprimées par la migration 020.)
    - Sprints (tous ; modification selon peutEditerProjet) : sprints de chaque
      projet — version, début, fin.
    - Jours fériés (administrateurs globaux) : ajout, date, libellé,
@@ -28,7 +28,7 @@ Ecrans.monAdmin = {
     const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutGererEnvoiProjet(p));   // onglet Envoi du daily
     const onglets = C.onglets([
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
-      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: referentielsVisibles().length },
+      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length }

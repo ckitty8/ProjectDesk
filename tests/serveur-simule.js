@@ -89,7 +89,7 @@ function amorcer() {
     ['MO-23', 'Notifications push', 'mo', 'KR4.2', 'mf', 100, '2026-07-01', '2026-09-30', 'Terminé', 'Service de notifications push.', ['Service d’envoi', 'Préférences utilisateur', 'Suivi des ouvertures']],
     ['PR-03', 'Refonte du parcours de demande', 'pr', 'KR5.1', 'nb', 55, '2026-08-01', '2026-11-28', 'En cours', 'Nouveau formulaire et circuit de validation des demandes.', ['Entretiens demandeurs', 'Nouveau formulaire', 'Circuit de validation', 'Notifications de suivi']],
     ['PR-06', 'Design system interne', 'pr', 'KR6.1', 'pl', 30, '2026-10-01', '2027-01-15', 'Planifié', 'Bibliothèque de composants partagée.', ['Inventaire des composants', 'Tokens de couleur', 'Documentation', 'Kit Figma']]];
-  const idPr = {}; bd.projets = []; bd.tickets = [];   // tickets : notion retirée de l'application (2026-09-27)
+  const idPr = {}; bd.projets = [];
   PROJ.forEach(([code, nom, eq, kr, chef, avancement, debut, fin, statut, description]) => {
     const id = uuid(); idPr[code] = id;
     bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, resultat_cle_id: idKr[kr], chef_id: idP[chef], debut, fin, statut, avancement });
@@ -128,12 +128,9 @@ function amorcer() {
   });
 
   // Référentiels et champs : identiques à la migration 002
-  bd.referentiels = [['type', 'Types de demande', 1], ['prio', 'Priorités', 2], ['stp', 'Statuts projet', 3], ['stt', 'Statuts ticket', 4], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8]]
+  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8]]
     .map(([id, nom, ordre]) => ({ id, nom, ordre }));
-  const V = { type: [['Nouveau projet', '#003CC8'], ['Évolution', '#0F8A6B'], ['Anomalie', '#A32020'], ['Accès / droits', '#7A3FC2'], ['Donnée / rapport', '#B25E09']],
-    prio: [['Critique', '#A32020'], ['Haute', '#B25E09'], ['Moyenne', '#4A5363'], ['Basse', '#8A93A3']],
-    stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
-    stt: [['À faire', '#4A5363', 1], ['En cours', '#003CC8', 1], ['En revue', '#5E2CA5', 1], ['Terminé', '#0F8A6B', 1]],
+  const V = { stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
     role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],
     // Types d'absence de la production (données du porteur, DAT 1.19 ; migration 008)
     abs: [['Congés validé', '#0F8A6B', 1, 'CV'], ['Congés prévisionnel', '#E07B00', 0, 'PR'], ['Jours férié', '#7B4A1E', 1, 'JF']],
@@ -142,33 +139,14 @@ function amorcer() {
   bd.valeurs_referentiel = [];
   // Clés techniques des valeurs système (migration 007)
   const CLES_SYSTEME = { 'stp:Planifié': 'planifie', 'stp:En cours': 'en_cours', 'stp:À risque': 'a_risque', 'stp:En retard': 'en_retard', 'stp:Terminé': 'termine',
-    'stt:À faire': 'a_faire', 'stt:En cours': 'en_cours', 'stt:En revue': 'en_revue', 'stt:Terminé': 'termine',
     'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie' };
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
       cle: systeme ? CLES_SYSTEME[ref + ':' + libelle] : null })));
-  bd.champs_formulaire = [['Titre de la demande', 'Texte court', true, null, 'titre', true], ['Type de demande', 'Liste', true, 'type', 'type', true],
-    ['Description du besoin', 'Texte long', true, null, 'description', false], ['Équipe concernée', 'Liste', true, 'equipes', 'equipe_id', true],
-    ['Priorité souhaitée', 'Liste', false, 'prio', 'priorite', false], ['Date de livraison souhaitée', 'Date', false, null, 'date_souhaitee', false],
-    ['Budget estimé (k€)', 'Nombre', false, null, 'budget', false], ['Pièces jointes', 'Fichier', false, null, null, false]]
-    .map(([libelle, type, obligatoire, referentiel_id, cle, systeme], i) => ({ id: uuid(), ordre: i + 1, libelle, type, obligatoire, referentiel_id, cle, systeme }));
   bd.jours_feries = [['2026-11-01', 'Toussaint'], ['2026-11-11', 'Armistice'], ['2026-12-25', 'Noël'], ['2026-08-15', 'Assomption'], ['2026-07-14', 'Fête nationale']].map(([jour, libelle]) => ({ jour, libelle }));
 
 
-  const DEM = [['Assistant conversationnel RH', 'Nouveau projet', 'pr', 'Basse', 'refusee', 'Élodie Charpentier', 'RH', 'Répondre automatiquement aux questions fréquentes.', 'Hors périmètre 2026, à reproposer au cadrage budgétaire 2027.', elodie.id],
-    ['Note de frais sur mobile', 'Évolution', 'pf', 'Basse', 'acceptee', 'Sophie Mercier', 'Exploitation', 'Photographier et soumettre un justificatif.', null, uuid()],
-    ['Doublons clients dans le CRM', 'Anomalie', 'pf', 'Haute', 'acceptee', 'Marc Lambert', 'Finance', 'Environ 4 % des fiches clients sont en double.', null, uuid()],
-    ['Export comptable automatique', 'Évolution', 'pf', 'Haute', 'analyse', 'Karim Haddad', 'Comptabilité', 'Générer chaque nuit l’export des écritures.', null, uuid()],
-    ['Application de relevé de compteurs', 'Nouveau projet', 'pf', 'Moyenne', 'analyse', 'Sophie Mercier', 'Exploitation', 'Saisie des relevés sur tablette.', null, uuid()],
-    ['Accès SSO pour l’outil de paie', 'Accès / droits', 'pf', 'Critique', 'nouvelle', 'Marc Lambert', 'Finance', 'Intégrer l’outil de paie au SSO.', null, uuid()],
-    ['Tableau de bord absentéisme RH', 'Donnée / rapport', 'pf', 'Haute', 'nouvelle', 'Élodie Charpentier', 'RH', 'Suivi mensuel du taux d’absentéisme par service.', null, elodie.id]];
-  bd.demandes = DEM.map(([titre, type, eq, priorite, statut, demandeur_nom, service, description, commentaire, demandeur_id], i) => ({
-    id: uuid(), numero: 38 + i, titre, type, description, equipe_id: idEq[eq], priorite, date_souhaitee: '2026-12-15', budget: 12, valeurs: {},
-    statut, commentaire, demandeur_id, demandeur_nom, service, projet_id: null, cree_le: `2026-09-${String(10 + i * 2).padStart(2, '0')}T09:00:00Z` }));
   const jourJ = new Date().toISOString().slice(0, 10);   // notes « du jour » pour les tests
-  bd.notes_daily = [{ user_id: thomas.id, jour: jourJ, texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
-    { user_id: camille.id, jour: jourJ, texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n- Point budget T4 avec Nadia\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n- Préparer la démo du sprint 20\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' },
-    { user_id: camille.id, jour: '2026-09-24', texte: 'Hier\n- Atelier mapping des rôles\n\nAujourd’hui\n- Revue de la PR LDAP\n- Point budget T4' }];
   // Daily par projet (migration 018) : une note par personne, jour et projet
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
@@ -287,7 +265,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
 function filtrer(lignes, params) {
   let r = lignes;
   params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
@@ -331,10 +309,7 @@ async function donnees(req, res, table, url) {
   }
   if (!bd[table]) return envoyer(res, 404, { message: 'Table inconnue : ' + table });
   const p = url.searchParams;
-  // Notes de daily : l'auteur et ses coéquipiers (même organisation), comme la règle RLS
-  const partage = autre => membres.some(m1 => m1.userId === moi.id && membres.some(m2 => m2.userId === autre && m2.organizationId === m1.organizationId));
-  const visibles = () => table === 'notes_daily' ? bd[table].filter(n => n.user_id === moi.id || partage(n.user_id)) : bd[table];
-  if (req.method === 'GET') return envoyer(res, 200, paginer(filtrer(visibles(), p), p));
+  if (req.method === 'GET') return envoyer(res, 200, paginer(filtrer(bd[table], p), p));
   // Contrôles de suppression des migrations 005-006 (unité non vide : refus)
   if (req.method === 'DELETE') {
     const cibles0 = filtrer(bd[table], p);
@@ -345,8 +320,8 @@ async function donnees(req, res, table, url) {
   const corps = await lireCorps(req);
   if (req.method === 'PATCH' && table === 'valeurs_referentiel' && corps.libelle) filtrer(bd[table], p).forEach(v => {
     // Propagation du renommage aux données (trigger propager_renommage_valeur, migration 007)
-    const cibles = { poste: [['ressources', 'poste']], contrat: [['ressources', 'type_contrat']], stp: [['projets', 'statut']], stt: [['tickets', 'statut']],
-      role: [['affectations', 'role']], abs: [['absences', 'type']], type: [['demandes', 'type']], prio: [['demandes', 'priorite'], ['tickets', 'priorite']] }[v.referentiel_id] || [];
+    const cibles = { poste: [['ressources', 'poste']], contrat: [['ressources', 'type_contrat']], stp: [['projets', 'statut']],
+      role: [['affectations', 'role']], abs: [['absences', 'type']] }[v.referentiel_id] || [];
     cibles.forEach(([t, champ]) => bd[t].filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; }));
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
@@ -358,8 +333,7 @@ async function donnees(req, res, table, url) {
     const conflit = p.get('on_conflict') ? p.get('on_conflict').split(',') : null;
     const resultat = corps.map(ligne => {
       const l = { ...ligne };
-      if ((table === 'notes_daily' || table === 'notes_daily_projet') && !l.user_id) l.user_id = moi.id;
-      if (table === 'demandes') { l.numero = Math.max(0, ...bd.demandes.map(x => x.numero)) + 1; l.statut = l.statut || 'nouvelle'; l.demandeur_id = moi.id; l.cree_le = maintenant(); l.valeurs = l.valeurs || {}; }
+      if (table === 'notes_daily_projet' && !l.user_id) l.user_id = moi.id;
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
       if (table === 'equipes') { l.actif = l.actif ?? true; l.type = l.type || 'equipe'; l.parent_id = l.parent_id ?? null; }
