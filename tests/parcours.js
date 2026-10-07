@@ -462,27 +462,28 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Suivi de mes équipes : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
 
     await aller('monAdmin'); await capture('14-mon-admin');
-    // Envoi du daily (migration 017) : réglage par équipe, mise en place Power Automate
+    // Envoi du daily PAR PROJET (migration 019) : réglage par projet, mise en place Power Automate
     await page.click('[data-action="ongletMonAdmin"][data-id="envoiDaily"]'); await page.waitForTimeout(200);
-    const idData = await page.evaluate(() => etat.d.equipes.find(e => e.nom === 'Data').id);
-    await page.selectOption(`select[data-action-change="majEnvoiDaily"][data-equipe="${idData}"]`, 'power_automate'); await page.waitForTimeout(300);
-    await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="5"]`); await page.waitForTimeout(300);
-    verifier('Envoi du daily : mode et jours enregistrés par équipe', await page.evaluate(id => {
-      const r = etat.d.envoisDaily.find(x => x.equipeId === id); return r && r.mode === 'power_automate' && r.jours === '1,2,3,4' && r.heure === '09:30'; }, idData));
+    const idDa08 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'DA-08').id);
+    await page.selectOption(`select[data-action-change="majEnvoiDaily"][data-projet="${idDa08}"]`, 'power_automate'); await page.waitForTimeout(300);
+    await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="5"]`); await page.waitForTimeout(300);
+    verifier('Envoi du daily : mode et jours enregistrés par projet', await page.evaluate(id => {
+      const r = etat.d.envoisDaily.find(x => x.projetId === id); return r && r.mode === 'power_automate' && r.jours === '1,2,3,4' && r.heure === '09:30'; }, idDa08));
     // Liste vide et aucun jour : enregistrés tels quels (bug du 2026-10-06 : '' envoyé en null, refusé par la base)
-    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
+    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
     verifier('Envoi du daily : destinataires vides et aucun jour acceptés', await page.evaluate(id => {
-      const r = etat.d.envoisDaily.find(x => x.equipeId === id); return r && r.jours === '' && r.destinataires === ''; }, idData)
+      const r = etat.d.envoisDaily.find(x => x.projetId === id); return r && r.jours === '' && r.destinataires === ''; }, idDa08)
       && !(await page.textContent('body')).includes('violates not-null'));
-    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-equipe="${idData}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
-    verifier('Envoi du daily : équipes seulement (pas de direction, ex. DSI)', await page.evaluate(() => {
-      const lignes = [...document.querySelectorAll('select[data-action-change="majEnvoiDaily"]')].map(x => x.dataset.equipe);
-      return lignes.length > 0 && lignes.every(id => equipe(id).type !== 'direction') && etat.d.equipes.some(e => e.type === 'direction'); }));
+    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
+    verifier('Envoi du daily : une ligne par projet en cours (pas de projet terminé)', await page.evaluate(() => {
+      const lignes = [...document.querySelectorAll('select[data-action-change="majEnvoiDaily"]')].map(x => projet(x.dataset.projet));
+      return lignes.length > 0 && lignes.every(p => p && p.statut !== STATUTS_PROJET.TERMINE)
+        && etat.d.projets.some(p => p.statut === STATUTS_PROJET.TERMINE); }));
     await capture('21-envoi-daily');
-    await page.click(`[data-action="configurerPowerAutomate"][data-equipe="${idData}"]`); await page.waitForTimeout(400);
-    const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_equipe: etat.modale.equipeId, p_cle: etat.modale.cle }));
-    verifier('Envoi du daily : fenêtre Power Automate (URI, corps avec clé, aperçu)', !!corpsFlux && corpsFlux.includes('p_cle')
-      && await page.evaluate(() => { const m = document.querySelector('.modale'); return !!m && m.innerHTML.includes('/rpc/daily_equipe') && m.textContent.includes('Blocages du jour'); }));
+    await page.click(`[data-action="configurerPowerAutomate"][data-projet="${idDa08}"]`); await page.waitForTimeout(400);
+    const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_projet: etat.modale.projetId, p_cle: etat.modale.cle }));
+    verifier('Envoi du daily : fenêtre Power Automate du projet (URI, corps avec clé, aperçu)', !!corpsFlux && corpsFlux.includes('p_cle')
+      && await page.evaluate(() => { const m = document.querySelector('.modale'); return !!m && m.innerHTML.includes('/rpc/daily_projet') && m.textContent.includes('Blocages du jour'); }));
     await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);
     // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))

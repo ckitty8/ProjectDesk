@@ -111,9 +111,8 @@ function amorcer() {
   for (let d = new Date(Date.UTC(2026, 0, 5)); d < new Date(Date.UTC(2026, 3, 1)); d.setUTCDate(d.getUTCDate() + 1))
     if (d.getUTCDay() % 6) bd.absences.push({ ressource_id: idP.pl, jour: d.toISOString().slice(0, 10), type: 'Congés validé', duree: 1 });
   bd.temps_saisis = []; bd.feuilles_temps = [];
-  // Envoi du daily par équipe (migration 017) : un exemple de chaque mode
-  bd.envois_daily = [{ equipe_id: idEq.pf, mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'equipe-plateforme@test.fr' },
-    { equipe_id: idEq.pr, mode: 'direct', heure: '10:00', jours: '1,2,3,4', sans_feries: true, destinataires: 'camille@test.fr, thomas@test.fr' }];
+  // Envoi du daily par projet (migration 019) : renseigné après la création des projets (plus bas)
+  bd.envois_daily_projet = [];
   bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // saisies de l'onglet Capacité (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
@@ -172,6 +171,8 @@ function amorcer() {
     { user_id: camille.id, jour: '2026-09-24', texte: 'Hier\n- Atelier mapping des rôles\n\nAujourd’hui\n- Revue de la PR LDAP\n- Point budget T4' }];
   // Daily par projet (migration 018) : une note par personne, jour et projet
   const idProjet = code => bd.projets.find(x => x.code === code).id;
+  bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
+    { projet_id: idProjet('PF-17'), mode: 'direct', heure: '10:00', jours: '1,2,3,4', sans_feries: true, destinataires: 'equipe-projet@test.fr' }];
   bd.notes_daily_projet = [
     { user_id: thomas.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
     { user_id: camille.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' }];
@@ -286,7 +287,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily: ['equipe_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
 function filtrer(lignes, params) {
   let r = lignes;
   params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
@@ -312,19 +313,19 @@ async function donnees(req, res, table, url) {
   if (!moi) return envoyer(res, 401, { message: 'JWT manquant' });
   if (table.startsWith('rpc/')) {
     if (table === 'rpc/lier_ma_ressource') bd.ressources.filter(r => !r.user_id && r.email === moi.email).forEach(r => { r.user_id = moi.id; });
-    // Envoi du daily (migration 017) : clé de l'équipe et daily prêt à envoyer (version simplifiée)
-    if (table === 'rpc/cle_envoi_daily') {
-      const { p_equipe, p_renouveler } = await lireCorps(req);
-      if (p_renouveler || !clesDaily[p_equipe]) clesDaily[p_equipe] = uuid().replace(/-/g, '') + uuid().replace(/-/g, '');
-      return envoyer(res, 200, clesDaily[p_equipe]);
+    // Envoi du daily par projet (migration 019) : clé du projet et daily prêt à envoyer (version simplifiée)
+    if (table === 'rpc/cle_envoi_daily_projet') {
+      const { p_projet, p_renouveler } = await lireCorps(req);
+      if (p_renouveler || !clesDaily[p_projet]) clesDaily[p_projet] = uuid().replace(/-/g, '') + uuid().replace(/-/g, '');
+      return envoyer(res, 200, clesDaily[p_projet]);
     }
-    if (table === 'rpc/daily_equipe') {
-      const { p_equipe, p_cle } = await lireCorps(req);
-      if (!p_cle || clesDaily[p_equipe] !== p_cle) return envoyer(res, 400, { message: 'Clé invalide' });
-      const eq = bd.equipes.find(e => e.id === p_equipe), reglage = bd.envois_daily.find(x => x.equipe_id === p_equipe) || {};
-      const noms = membres.filter(m => m.organizationId === p_equipe).map(m => utilisateurs.find(u => u.id === m.userId).name);
-      return envoyer(res, 200, { equipe: eq.nom, a_envoyer: true, destinataires: reglage.destinataires || '', objet: 'Daily ' + eq.nom,
-        html: `<div><h2>Daily ${eq.nom}</h2><h3 style="color:#C62828">Blocages du jour</h3><p>Aucun blocage signalé.</p>${noms.map(n => `<h3>${n}</h3><b>Hier</b><br>- …<br>`).join('')}</div>` });
+    if (table === 'rpc/daily_projet') {
+      const { p_projet, p_cle } = await lireCorps(req);
+      if (!p_cle || clesDaily[p_projet] !== p_cle) return envoyer(res, 400, { message: 'Clé invalide' });
+      const pr = bd.projets.find(x => x.id === p_projet), reglage = bd.envois_daily_projet.find(x => x.projet_id === p_projet) || {};
+      const noms = bd.affectations.filter(a => a.projet_id === p_projet && a.role !== 'Lecteur').map(a => bd.ressources.find(r => r.id === a.ressource_id).nom);
+      return envoyer(res, 200, { projet: pr.code + ' · ' + pr.nom, a_envoyer: true, destinataires: reglage.destinataires || '', objet: 'Daily ' + pr.code,
+        html: `<div><h2>Daily ${pr.code} · ${pr.nom}</h2><h3 style="color:#C62828">Blocages du jour</h3><p>Aucun blocage signalé.</p>${noms.map(n => `<h4>${n}</h4><b>Hier</b><br>- …<br>`).join('')}</div>` });
     }
     return envoyer(res, 200, null);
   }
@@ -350,7 +351,7 @@ async function donnees(req, res, table, url) {
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
   // Colonnes NOT NULL de la vraie base (migration 017) : refusées si null, comme Postgres
-  const NON_NULLES = { envois_daily: ['mode', 'heure', 'jours', 'sans_feries', 'destinataires'], notes_daily_projet: ['texte'] };
+  const NON_NULLES = { envois_daily_projet: ['mode', 'heure', 'jours', 'sans_feries', 'destinataires'], notes_daily_projet: ['texte'] };
   const manquante = (NON_NULLES[table] || []).find(c => (Array.isArray(corps) ? corps : [corps]).some(l => c in l && l[c] === null));
   if (manquante) return envoyer(res, 400, { message: `null value in column "${manquante}" of relation "${table}" violates not-null constraint` });
   if (req.method === 'POST') {

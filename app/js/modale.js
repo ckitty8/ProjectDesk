@@ -148,17 +148,17 @@ const Modale = {
   },
 
   /* ---------- Envoi du daily : mise en place du flux Power Automate ----------
-     Le flux appelle la fonction daily_equipe de la Data API (migration 017) avec l'id et la clé
-     de l'équipe, sans compte : la clé suffit. m = { equipeId, cle, apercu (réponse de la fonction) } */
+     Le flux appelle la fonction daily_projet de la Data API (migration 019) avec l'id et la clé
+     du projet, sans compte : la clé suffit. m = { projetId, cle, apercu (réponse de la fonction) } */
   envoiPowerAutomate(m) {
-    const esc = C.esc, e = equipe(m.equipeId);
-    const url = CONFIG.DATA_API_URL + '/rpc/daily_equipe';
-    const corps = JSON.stringify({ p_equipe: m.equipeId, p_cle: m.cle });
+    const esc = C.esc, p = projet(m.projetId);
+    const url = CONFIG.DATA_API_URL + '/rpc/daily_projet';
+    const corps = JSON.stringify({ p_projet: m.projetId, p_cle: m.cle });
     const champ = (libelle, valeur) => `<div><div class="libelle">${libelle}</div>
       <div class="ligne-flex"><input class="champ" readonly value="${esc(valeur)}" style="font-family:monospace;font-size:12px">
       <button type="button" class="btn petit" data-action="copierTexte" data-texte="${esc(valeur)}">Copier</button></div></div>`;
     const etape = (n, texte) => `<li style="margin-bottom:6px">${texte}</li>`;
-    return `<div style="display:flex;flex-direction:column">${this.entete('Power Automate · daily ' + e.nom)}
+    return `<div style="display:flex;flex-direction:column">${this.entete('Power Automate · daily ' + p.code + ' · ' + p.nom)}
       <div class="panneau-corps">
         <ol style="margin:0;padding-left:18px">
           ${etape(1, 'Nouveau flux <b>planifié</b> : périodicité 1 jour, à l’heure réglée dans l’onglet (fuseau Paris).')}
@@ -167,8 +167,8 @@ const Modale = {
           ${etape(4, 'Si oui : <b>Envoyer un e-mail (V2)</b> (Outlook pro ou perso, Gmail) — À : <span class="code">replace(body(\'HTTP\')?[\'destinataires\'], \',\', \';\')</span>, Objet : <span class="code">body(\'HTTP\')?[\'objet\']</span>, Corps : <span class="code">body(\'HTTP\')?[\'html\']</span>.')}
         </ol>
         ${champ('URI', url)}
-        ${champ('Corps (contient la clé secrète de l’équipe : ne pas la diffuser)', corps)}
-        <div class="ligne-flex"><button type="button" class="btn petit" data-action="renouvelerCleDaily" data-equipe="${m.equipeId}">Renouveler la clé</button>
+        ${champ('Corps (contient la clé secrète du projet : ne pas la diffuser)', corps)}
+        <div class="ligne-flex"><button type="button" class="btn petit" data-action="renouvelerCleDaily" data-projet="${m.projetId}">Renouveler la clé</button>
           <span class="discret" style="font-size:12px">l’ancienne clé cesse aussitôt de fonctionner : mettez le flux à jour</span></div>
         <div><div class="libelle">Aperçu de l’e-mail du jour</div>
           <div class="carte" style="padding:12px 14px;max-height:260px;overflow:auto">${m.apercu ? m.apercu.html : '<span class="pale">Aperçu indisponible</span>'}</div></div>

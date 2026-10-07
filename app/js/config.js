@@ -62,10 +62,10 @@ const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : dé
 // tickets retirés le 2026-09-27) ; « Types de demande » (type) et « Priorités » (prio), les
 // demandes étant gérées dans Azure DevOps (retrait du 2026-10-05).
 const REFERENTIELS_MASQUES = ['stt', 'type', 'prio'];
-/* Envoi du daily par e-mail (demande du porteur, 2026-10-06) : mode choisi PAR ÉQUIPE
-   (Administration › Envoi du daily, table envois_daily).
-   - power_automate : un flux Power Automate planifié lit le daily de l'équipe à une adresse
-     protégée par une clé, puis l'envoie depuis la boîte de l'équipe (pro ou perso) ;
+/* Envoi du daily par e-mail (demande du porteur, 2026-10-06) : mode choisi PAR PROJET depuis le
+   2026-10-07 (Administration › Envoi du daily, table envois_daily_projet, migration 019).
+   - power_automate : un flux Power Automate planifié lit le daily du projet à une adresse
+     protégée par une clé, puis l'envoie depuis la boîte de l'utilisateur (pro ou perso) ;
    - direct : l'application envoie elle-même l'e-mail à l'heure choisie (tâche planifiée Vercel). */
 const MODES_ENVOI_DAILY = [
   { valeur: 'aucun', libelle: 'Désactivé' },
@@ -138,7 +138,7 @@ const AIDES = {
   rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
   syntheseProjets: 'Pour chaque projet de l’unité : nombre de membres absents ce jour / nombre de membres. Orange = au moins un absent ; rouge = plus de la moitié.',
   avancementProjet: 'Avancement (%) du projet.',
-  envoiDaily: 'Chaque équipe choisit son mode. Power Automate : votre flux planifié lit le daily de l’équipe (adresse + clé de l’équipe) et l’envoie depuis votre boîte, pro ou perso. Envoi direct : l’application envoie l’e-mail à l’heure choisie. Jours : cliquez pour activer ou retirer un jour.'
+  envoiDaily: 'Chaque projet en cours choisit son mode. Power Automate : votre flux planifié lit le daily du projet (adresse + clé du projet) et l’envoie depuis votre boîte, pro ou perso. Envoi direct : l’application envoie l’e-mail à l’heure choisie. Réglable par le chef du projet, les responsables de son unité et les administrateurs.'
 };
 
 /* ============================================================

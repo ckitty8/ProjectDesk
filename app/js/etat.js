@@ -37,7 +37,7 @@ const TABLES = {
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
-  notes: 'notes_daily', notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily'
+  notes: 'notes_daily', notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
 // Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
@@ -72,7 +72,7 @@ function rendre() {
 const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
-const CLES_UNIQUES = { envoisDaily: 'equipe_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
+const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notes: 'user_id,jour', notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
@@ -269,6 +269,18 @@ function peutLireDailyProjet(p) {
   if (etat.estAdmin) return true;
   const moi = maRessource();
   if (moi && etat.d.affectations.some(a => a.projetId === p.id && a.ressourceId === moi.id)) return true;
+  for (let e = equipe(p.equipeId), garde = 0; e && e.id && garde < 10; e = equipe(e.parentId), garde++) {
+    if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
+  }
+  return false;
+}
+/* Qui règle l'envoi du daily d'un projet (même règle que peut_gerer_envoi_projet en base) :
+   administrateur, chef du projet (fiche chef ou affectation « Chef de projet »), responsable de
+   l'unité du projet ou d'une unité parente. */
+function peutGererEnvoiProjet(p) {
+  if (etat.estAdmin) return true;
+  const moi = maRessource();
+  if (moi && (p.chefId === moi.id || etat.d.affectations.some(a => a.projetId === p.id && a.ressourceId === moi.id && a.role === ROLES_PROJET.CHEF))) return true;
   for (let e = equipe(p.equipeId), garde = 0; e && e.id && garde < 10; e = equipe(e.parentId), garde++) {
     if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
   }
