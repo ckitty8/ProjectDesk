@@ -7,13 +7,14 @@
                    rattachement, statut), membres et invitations
    - objectifs   : objectifs (OKR) et résultats clés de mon équipe
    - envoiPowerAutomate : mise en place du flux qui envoie le daily d'une équipe
+   - exportDaily : choix de la période et des projets du fichier Excel du daily
    ============================================================ */
 'use strict';
 
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -173,6 +174,32 @@ const Modale = {
         <div><div class="libelle">Aperçu de l’e-mail du jour</div>
           <div class="carte" style="padding:12px 14px;max-height:260px;overflow:auto">${m.apercu ? m.apercu.html : '<span class="pale">Aperçu indisponible</span>'}</div></div>
       </div></div>`;
+  },
+
+  /* ---------- Export du daily en Excel (maquette docs/maquettes/export-daily-excel/) ----------
+     Période (raccourcis ou dates libres), projets dont je peux lire le daily (cochés au départ :
+     celui filtré à l'écran, sinon tous), options du fichier. Voir telechargerDailyExcel. */
+  exportDaily(m) {
+    const esc = C.esc;
+    const raccourci = (cle, libelle) => `<button type="button" class="puce${m.periode === cle ? ' active' : ''}" data-action="periodeExportDaily" data-periode="${cle}">${libelle}</button>`;
+    const projets = projetsDailyVisibles().map(p => `<label class="ligne-flex" style="padding:4px 0">
+      <input type="checkbox" name="projet" value="${p.id}" ${m.projets.includes(p.id) ? 'checked' : ''}>${C.code(p.code)}<span>${esc(p.nom)}</span></label>`).join('');
+    const option = (nom, libelle) => `<label class="ligne-flex" style="padding:3px 0"><input type="checkbox" name="${nom}" checked>${libelle}</label>`;
+    return `<form style="display:flex;flex-direction:column;min-height:0" data-action-envoi="telechargerDailyExcel">
+      ${this.entete('Exporter le daily en Excel')}
+      <div class="panneau-corps">
+        <div><div class="libelle">Période</div>
+          <div class="puces" style="margin-bottom:8px">${raccourci('jour', 'Ce jour')}${raccourci('semaine', 'Cette semaine')}${raccourci('mois', 'Ce mois')}${raccourci('moisPrecedent', 'Mois précédent')}</div>
+          <div class="deux-colonnes"><div><label class="libelle">Du</label><input class="champ" type="date" name="debut" value="${m.debut}" required></div>
+            <div><label class="libelle">Au</label><input class="champ" type="date" name="fin" value="${m.fin}" required></div></div></div>
+        <div><div class="libelle">Projets (ceux dont vous pouvez lire le daily)</div>${projets}</div>
+        <div><div class="libelle">Contenu du fichier</div>
+          <div class="discret" style="padding:3px 0">Onglet « Daily » : une ligne par personne, par projet et par jour ouvré</div>
+          ${option('manquants', 'Inclure les absents et les daily manquants')}
+          ${option('blocages', 'Ajouter l’onglet « Blocages » : uniquement les blocages signalés')}</div>
+      </div>
+      <div class="panneau-pied"><span style="flex:1"></span><button type="button" class="btn" data-action="fermer">Annuler</button>
+        <button class="btn primaire">Télécharger le fichier Excel</button></div></form>`;
   },
 
   /* ---------- Objectifs (OKR) de l'équipe courante ---------- */

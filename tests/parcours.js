@@ -110,7 +110,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
        Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
-      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier'];
+      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier',
+      'ouvrirExportDaily'];   // export Excel : lecture seule (téléchargement de ce qui est affiché)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
         .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
@@ -176,6 +177,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await page.click('[data-action="filtrerDailyEquipes"]:has-text("PF-14")'); await page.waitForTimeout(200);
     verifier('Daily des équipes : filtre par projet', (await page.$$('.contenu h2')).length >= 1 && (await page.textContent('.contenu')).includes('SSO'));
+
+    // Export du daily en Excel (maquette export-daily-excel) : projet filtré coché, fichier .xlsx téléchargé
+    await page.click('[data-action="ouvrirExportDaily"]'); await page.waitForTimeout(200);
+    verifier('Export daily : fenêtre ouverte avec le seul projet filtré coché', await page.$$eval('.modale input[name=projet]:checked', l => l.length) === 1);
+    await capture('22-export-daily-excel');
+    await page.click('.modale [data-action="periodeExportDaily"][data-periode="jour"]');
+    const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('.modale button.primaire')]);
+    const fichierXlsx = require('fs').readFileSync(await telechargement.path());
+    const contenuXlsx = fichierXlsx.toString('utf8');
+    const jourOuvre = await page.evaluate(() => Calculs.estJourOuvre(Calculs.aujourdhui(), feries()));
+    verifier('Export daily : vrai fichier .xlsx (archive ZIP, onglets Daily et Blocages)', telechargement.suggestedFilename().endsWith('.xlsx')
+      && fichierXlsx.slice(0, 2).toString() === 'PK' && contenuXlsx.includes('name="Daily"') && contenuXlsx.includes('name="Blocages"'));
+    verifier('Export daily : notes du jour et blocages dans le fichier', !jourOuvre
+      || (contenuXlsx.includes('Finaliser le plan de migration SSO') && contenuXlsx.includes('Identifiants de recette expirés') && !contenuXlsx.includes('Aujourd’hui\n-')));
 
     /* --- Mon dashboard (édition) --- */
     await aller('daily'); await capture('08-daily');

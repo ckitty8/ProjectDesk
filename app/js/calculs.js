@@ -28,8 +28,14 @@ const Calculs = (() => {
 
   // Lundi de la semaine contenant la date
   function lundi(iso) { const d = depuisIso(iso); const decalage = (d.getDay() + 6) % 7; d.setDate(d.getDate() - decalage); return versIso(d); }
-  // Numéro de semaine ISO 8601 (semaine du jeudi)
+  // Lundi → vendredi de la semaine qui commence au lundi donné
   const joursOuvresSemaine = lundiIso => [0, 1, 2, 3, 4].map(i => ajouterJours(lundiIso, i));
+  // Jours ouvrés (hors week-ends et fériés) entre deux dates ISO incluses — export du daily
+  function joursOuvresEntre(debut, fin, feries) {
+    const jours = [];
+    for (let j = debut; j <= fin; j = ajouterJours(j, 1)) if (estJourOuvre(j, feries)) jours.push(j);
+    return jours;
+  }
 
   function joursDuMois(annee, mois) {
     const nb = new Date(annee, mois + 1, 0).getDate();
@@ -257,7 +263,7 @@ const Calculs = (() => {
 
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
-    lundi, joursOuvresSemaine, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
+    lundi, joursOuvresSemaine, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,

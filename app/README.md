@@ -78,5 +78,6 @@ app/
     ├── composants.js   # badges, barres, onglets…
     ├── coquille.js     # barre latérale et en-tête
     ├── panneau-projet.js, modale.js
+    ├── excel.js        # fabrication des fichiers Excel (.xlsx), sans bibliothèque
     └── ecrans/         # un fichier par écran
 ```

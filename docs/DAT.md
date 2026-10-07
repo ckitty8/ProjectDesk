@@ -87,6 +87,7 @@
 | 1.73    | 2026-10-07 | **Envoi du daily par projet** (maquette `envoi-daily-projet/`) : Administration › Envoi du daily = une ligne par **projet en cours** (mode, heure, jours, fériés, destinataires), réglable par un administrateur, le chef du projet ou un responsable de son unité (`peutGererEnvoiProjet`) ; « Configurer le flux » donne l'adresse et la clé **du projet**. Migration 019 (additive) : `envois_daily_projet`, `cles_envoi_daily_projet`, `peut_gerer_envoi_projet`, `cle_envoi_daily_projet`, `daily_projet` ; tables par équipe (`envois_daily`, `cles_envoi_daily`, vides) conservées, plus utilisées (§ 3.3, § 4, § 5, § 7) |
 | 1.74    | 2026-10-07 | **Revue de lisibilité, code mort retiré** (aucun changement visible, aucune donnée touchée) : le calcul du récap congés (recapConges) et `DROIT_CP_ANNUEL` (remplacés par le récap des jours travaillés), `numeroSemaine` (saisie au mois), `numeroDemande`, `badgeDemande`, `STATUTS_DEMANDE`, `TYPES_CHAMP` (demandes retirées), `nbMots`, `nbPoints` (ancien daily), action `rien`, styles kanban / étapes / arbre-enfant ; règles « responsable de l'unité » et « absence d'un jour » factorisées (`suisResponsableDuProjet`, `monAffectation`, `absenceDe`) ; `tableauFeuilles` découpé. Fonction en base `daily_equipe` / `cle_envoi_daily` (par équipe) conservée mais plus appelée depuis 1.73 (§ 2.1, § 6) |
 | 1.75    | 2026-10-07 | **Nettoyage de la base** (migration 020, accord du porteur, sauvegarde préalable : branche Neon « sauvegarde-avant-020-2026-10-07 ») : tables inutiles supprimées (`demandes`, `champs_formulaire`, `tickets`, `envois_daily`, `cles_envoi_daily`, `notes_daily`), référentiels des demandes et tickets, fonctions de l'envoi par équipe ; liaison `repartitions_sprint` → `sprints_projet` (répartition orpheline à 0 j supprimée). Application : « note générale » du daily et filtre des référentiels masqués retirés (§ 4, § 5) |
+| 1.76    | 2026-10-07 | **Export du daily en Excel** (maquette `export-daily-excel/`) : bouton « Exporter en Excel » dans Général › Daily des équipes, fenêtre de choix (période : ce jour, cette semaine, ce mois, mois précédent ou dates libres ; projets lisibles ; absents et manquants ; onglet Blocages) ; vrai fichier `.xlsx` fabriqué dans le navigateur par `excel.js` (sans bibliothèque) ; notes de la période lues en base (RLS inchangée) ; `Calculs.joursOuvresEntre`. Aucun changement en base (§ 2.1, § 3.2, § 6, § 9) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -111,7 +112,7 @@ La barre latérale a deux sections :
 ```
 ┌──────────── Navigateur (app/ — HTML/CSS/JS natif, sans build, hébergé sur Vercel) ────────────┐
 │ index.html → config.js · api.js · calculs.js · etat.js · composants.js · coquille.js           │
-│              panneau-projet.js · modale.js · ecrans/*.js (un fichier par écran)                │
+│              panneau-projet.js · modale.js · excel.js · ecrans/*.js (un fichier par écran)     │
 └───────┬──────────────────────────────────────────────┬────────────────────────────────────────┘
         │ 1. connexion (cookie de session)             │ 3. lecture / écriture REST
         ▼                                              │    + jeton JWT (Authorization: Bearer)
@@ -161,7 +162,8 @@ Principes :
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js` ; positionnées par `placerBulle` pour n'être jamais coupées) (échappement HTML `esc`) |
 | `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition) et « Nouveau projet » |
-| `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs |
+| `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs, mise en place Power Automate, **export du daily en Excel** |
+| `app/js/excel.js` | Fabrication d'un fichier **.xlsx** dans le navigateur, sans bibliothèque : XML Office Open (textes en ligne, jamais interprétés comme formules), en-tête figée, filtres, largeurs, styles fixes ; archive ZIP « stockée » avec CRC-32 ; téléchargement (`Excel.telecharger`) |
 | `app/js/ecrans/*.js` | Un fichier par écran (§ 3) |
 | `app/css/theme.css` | Jetons de la maquette (couleurs, typographie) et composants |
 
@@ -185,7 +187,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 | `ressources` | `ressources.js` | Calendrier mensuel des absences (composant `Calendrier`, personnes présentes sur le mois) + annuaire de **toutes** les fiches avec colonne **Statut** (Actif / Inactif dès qu'une date de fin est saisie, « fin le … », inactifs grisés en fin de liste) | `05-ressources.png` |
 | `administration` | `administration.js` | Onglets Équipes / Référentiels / Champs, **consultation** (lien vers Mon dashboard › Administration pour les administrateurs) | `06-administration.png` |
 | `timesheet` | `timesheet.js` | Feuilles **du mois** par personne (navigation `MoisTemps`) : projets, saisi / attendu, complétude, statut ; tableau `tableauFeuilles` partagé avec Suivi de mes équipes | `07-timesheet.png` |
-| `dailyEquipes` | `daily-equipes.js` | **Daily par projet** du jour (maquette `daily-par-projet/`) : seulement les projets que je peux lire (`peutLireDailyProjet` = règle `peut_lire_daily_projet` en base : affecté(e) au projet ; responsable de l'unité du projet ou d'une unité parente, ex. Anne pour Applications ; administrateur) ; filtre par projet, « Blocages du jour » (avec le projet), par projet une carte par membre affecté hors Lecteur et présent ce jour-là : sa note, ou « pas de daily » avec son absence (congés) | `17-daily-equipes.png` |
+| `dailyEquipes` | `daily-equipes.js` | **Daily par projet** du jour (maquette `daily-par-projet/`) : seulement les projets que je peux lire (`peutLireDailyProjet` = règle `peut_lire_daily_projet` en base : affecté(e) au projet ; responsable de l'unité du projet ou d'une unité parente, ex. Anne pour Applications ; administrateur) ; filtre par projet, « Blocages du jour » (avec le projet), par projet une carte par membre affecté hors Lecteur et présent ce jour-là : sa note, ou « pas de daily » avec son absence (congés). **Exporter en Excel** (maquette `export-daily-excel/`) : période (raccourcis ou dates libres, un an maximum) et projets cochés parmi ceux que je peux lire ; onglet « Daily » = une ligne par membre attendu, projet et jour ouvré (Date, Code projet, Projet, Personne, Statut Renseigné / Absent(e) / Manquant / Sans compte, Hier, Aujourd'hui, Blocages, Absence), onglet « Blocages » en option ; notes lues en base pour la période (la RLS ne renvoie que les notes lisibles). Lecture seule : rien n'est écrit | `17-daily-equipes.png`, `22-export-daily-excel.png` |
 
 ### 3.3 Section « Mon dashboard » (édition)
 
@@ -345,7 +347,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Heures attendues = (jours de semaine hors fériés − absences, demi-journée = 0,5, hors jours de non-présence) × `HEURES_PAR_JOUR` × capacité ; au mois pour le timesheet, à la semaine pour le taux d'occupation du Dashboard | `Calculs.heuresAttenduesMois`, `Calculs.heuresAttendues` |
 | Taux d'occupation = heures saisies / heures attendues (semaine courante) | `Calculs.tauxOccupation` |
 | Code projet suivant = PREFIXE-(max + 1) | `Calculs.prochainCodeProjet` |
-| Jours ouvrés : hors week-ends et `jours_feries` | `Calculs.estJourOuvre` |
+| Jours ouvrés : hors week-ends et `jours_feries` ; liste des jours ouvrés d'une période (export du daily) | `Calculs.estJourOuvre`, `Calculs.joursOuvresEntre` |
 | Note de daily découpée en rubriques (ligne sans tiret = titre, ex. Hier / Aujourd'hui / Blocages) | `Calculs.rubriquesDaily` |
 | Blocages = lignes de la rubrique « Blocages », hors « Aucun », « RAS », « néant », « rien » | `Calculs.blocagesDaily` |
 
@@ -407,7 +409,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (69 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe le daily des équipes et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (89 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

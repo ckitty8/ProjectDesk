@@ -268,9 +268,18 @@ async function auth(req, res, chemin, url) {
 const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
 function filtrer(lignes, params) {
   let r = lignes;
-  params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
+  // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne
+  const conditions = [];
+  params.forEach((v, k) => {
+    if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
+    if (k === 'and') v.slice(1, -1).split(',').forEach(c => { const [col, ...reste] = c.split('.'); conditions.push([col, reste.join('.')]); });
+    else conditions.push([k, v]);
+  });
+  conditions.forEach(([k, v]) => {
     if (v.startsWith('eq.')) r = r.filter(l => String(l[k]) === v.slice(3));
-    if (v.startsWith('gte.')) r = r.filter(l => String(l[k]) >= v.slice(4)); });
+    if (v.startsWith('gte.')) r = r.filter(l => String(l[k]) >= v.slice(4));
+    if (v.startsWith('lte.')) r = r.filter(l => String(l[k]) <= v.slice(4));
+  });
   // Tri multi-colonnes « a,b.desc » comme PostgREST
   const ordre = params.get('order');
   if (ordre) {
