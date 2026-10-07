@@ -37,13 +37,14 @@ const TABLES = {
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
-  notes: 'notes_daily', administrateurs: 'administrateurs', envoisDaily: 'envois_daily'
+  notes: 'notes_daily', notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
 // Filtres de chargement : les notes de daily (les miennes et celles de mes coéquipiers)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;
-const FILTRES = { notes: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }) };
+const FILTRES = { notes: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }),
+  notesProjet: () => ({ jour: 'gte.' + Calculs.ajouterJours(Calculs.aujourdhui(), -JOURS_DAILY) }) };
 
 /* ---------- Mise à jour et rendu ---------- */
 function majEtat(modifications, options = {}) {
@@ -72,7 +73,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = { envoisDaily: 'equipe_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notes: 'user_id,jour', administrateurs: 'user_id' };
+  notes: 'user_id,jour', notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -250,6 +251,34 @@ const ressourcesPresentes = (debut, fin = debut) => (etat.d.ressources || []).fi
 const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); return !!r && Calculs.estPresentSur(r, debut, fin); };
 const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
+
+/* ---------- Daily par projet (migration 018) ---------- */
+// Absence d'une personne un jour donné (Congés & capacité), ou null
+const absenceDe = (ressourceId, jour) => (etat.d.absences || []).find(a => a.ressourceId === ressourceId && a.jour === jour) || null;
+// Projet en cours (non terminé) : seul un projet en cours attend un daily
+const projetEnCours = p => !!p && p.statut !== STATUTS_PROJET.TERMINE;
+// Projets où je saisis un daily : affecté(e) Chef de projet ou Membre, projet en cours
+const mesProjetsDaily = () => {
+  const moi = maRessource(); if (!moi) return [];
+  return etat.d.affectations.filter(a => a.ressourceId === moi.id && a.role !== ROLES_PROJET.LECTEUR)
+    .map(a => projet(a.projetId)).filter(projetEnCours).sort((a, b) => a.code.localeCompare(b.code));
+};
+/* Projets dont je peux lire le daily (même règle que peut_lire_daily_projet en base) : administrateur ;
+   affecté(e) au projet ; responsable de l'unité du projet ou d'une unité parente (ex. Anne, Applications). */
+function peutLireDailyProjet(p) {
+  if (etat.estAdmin) return true;
+  const moi = maRessource();
+  if (moi && etat.d.affectations.some(a => a.projetId === p.id && a.ressourceId === moi.id)) return true;
+  for (let e = equipe(p.equipeId), garde = 0; e && e.id && garde < 10; e = equipe(e.parentId), garde++) {
+    if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
+  }
+  return false;
+}
+const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p))
+  .sort((a, b) => a.code.localeCompare(b.code));
+// Note d'une personne (compte) pour un projet et un jour
+const noteProjet = (userId, projetId, jour) =>
+  (etat.d.notesProjet || []).find(n => n.userId === userId && n.projetId === projetId && n.jour === jour) || null;
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));

@@ -170,6 +170,11 @@ function amorcer() {
   bd.notes_daily = [{ user_id: thomas.id, jour: jourJ, texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
     { user_id: camille.id, jour: jourJ, texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n- Point budget T4 avec Nadia\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n- Préparer la démo du sprint 20\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' },
     { user_id: camille.id, jour: '2026-09-24', texte: 'Hier\n- Atelier mapping des rôles\n\nAujourd’hui\n- Revue de la PR LDAP\n- Point budget T4' }];
+  // Daily par projet (migration 018) : une note par personne, jour et projet
+  const idProjet = code => bd.projets.find(x => x.code === code).id;
+  bd.notes_daily_projet = [
+    { user_id: thomas.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
+    { user_id: camille.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' }];
 }
 amorcer();
 
@@ -281,7 +286,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily: ['equipe_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
+const CLES = { envois_daily: ['equipe_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], notes_daily: ['user_id', 'jour'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
 function filtrer(lignes, params) {
   let r = lignes;
   params.forEach((v, k) => { if (['select', 'order', 'on_conflict', 'limit', 'offset'].includes(k)) return;
@@ -345,14 +350,14 @@ async function donnees(req, res, table, url) {
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }
   // Colonnes NOT NULL de la vraie base (migration 017) : refusées si null, comme Postgres
-  const NON_NULLES = { envois_daily: ['mode', 'heure', 'jours', 'sans_feries', 'destinataires'] };
+  const NON_NULLES = { envois_daily: ['mode', 'heure', 'jours', 'sans_feries', 'destinataires'], notes_daily_projet: ['texte'] };
   const manquante = (NON_NULLES[table] || []).find(c => (Array.isArray(corps) ? corps : [corps]).some(l => c in l && l[c] === null));
   if (manquante) return envoyer(res, 400, { message: `null value in column "${manquante}" of relation "${table}" violates not-null constraint` });
   if (req.method === 'POST') {
     const conflit = p.get('on_conflict') ? p.get('on_conflict').split(',') : null;
     const resultat = corps.map(ligne => {
       const l = { ...ligne };
-      if (table === 'notes_daily' && !l.user_id) l.user_id = moi.id;
+      if ((table === 'notes_daily' || table === 'notes_daily_projet') && !l.user_id) l.user_id = moi.id;
       if (table === 'demandes') { l.numero = Math.max(0, ...bd.demandes.map(x => x.numero)) + 1; l.statut = l.statut || 'nouvelle'; l.demandeur_id = moi.id; l.cree_le = maintenant(); l.valeurs = l.valeurs || {}; }
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL

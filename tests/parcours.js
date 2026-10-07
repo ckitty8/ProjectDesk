@@ -163,21 +163,40 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
 
+    // Daily des équipes PAR PROJET (migration 018) : notes du projet, blocages, règle de lecture
     await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
-    verifier('Daily des équipes : note d’un coéquipier visible', (await texte()).includes('Mapping des rôles applicatifs'));
-    verifier('Daily des équipes : blocages du jour regroupés', (await texte()).includes('Blocages du jour') && (await texte()).includes('Identifiants de recette expirés'));
+    verifier('Daily des équipes : note d’un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
+    verifier('Daily des équipes : blocages du jour regroupés (avec le projet)', (await texte()).includes('Blocages du jour') && (await texte()).includes('Identifiants de recette expirés'));
+    verifier('Daily des équipes : seulement mes projets et ceux des unités (et sous-unités) dont je suis responsable', await page.evaluate(() => {
+      // Camille est administratrice dans les données simulées : on vérifie la règle comme non-administratrice.
+      // Elle est responsable de Plateforme (Data y est rattachée) et affectée à PR-03 ; Mobile et PR-06 ne la concernent pas.
+      const admin = etat.estAdmin; etat.estAdmin = false;
+      const codes = projetsDailyVisibles().map(p => p.code); etat.estAdmin = admin;
+      return ['PF-14', 'DA-08', 'PR-03'].every(c => codes.includes(c)) && !codes.includes('MO-21') && !codes.includes('PR-06');
+    }));
+    await page.click('[data-action="filtrerDailyEquipes"]:has-text("PF-14")'); await page.waitForTimeout(200);
+    verifier('Daily des équipes : filtre par projet', (await page.$$('.contenu h2')).length >= 1 && (await page.textContent('.contenu')).includes('SSO'));
 
     /* --- Mon dashboard (édition) --- */
     await aller('daily'); await capture('08-daily');
+    const nbCartes = await page.evaluate(() => mesProjetsDaily().length);
+    verifier('Daily : une carte par projet affecté (Chef de projet, Membre)', nbCartes > 1 && (await page.$$('[data-carte-projet]')).length === nbCartes);
     await page.click('[data-action="dailyDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
-    // Trois champs : Hier (la veille), Aujourd'hui, Blocages ; un seul texte en base, au format des rubriques
-    await page.fill('#daily-hier', 'Test automatique\nDeuxième point');
-    await page.fill('#daily-aujourdhui', 'Revue de code'); await page.press('#daily-aujourdhui', 'Space'); await page.waitForTimeout(1200);
-    const noteVeille = await page.evaluate(() => (etat.d.notes.find(n => n.userId === etat.session.user.id && n.jour === Ecrans.daily.jour()) || {}).texte);
+    // Trois champs par projet ; un texte par projet et par jour en base, au format des rubriques
+    const idPf14 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
+    await page.fill(`textarea[data-projet="${idPf14}"][data-champ="hier"]`, 'Test automatique\nDeuxième point');
+    await page.fill(`textarea[data-projet="${idPf14}"][data-champ="aujourdhui"]`, 'Revue de code');
+    await page.press(`textarea[data-projet="${idPf14}"][data-champ="aujourdhui"]`, 'Space'); await page.waitForTimeout(1200);
+    const noteVeille = await page.evaluate(id => (noteProjet(etat.session.user.id, id, Ecrans.daily.jour()) || {}).texte || '', idPf14);
     await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
-    verifier('Daily : champs Hier / Aujourd’hui enregistrés et visibles dans l’historique', (await texte()).includes('Test automatique')
-      && noteVeille.startsWith('Hier\n- Test automatique\n- Deuxième point\n\nAujourd’hui\n- Revue de code'));
+    verifier('Daily : note du projet enregistrée (Hier / Aujourd’hui) et rappelée le lendemain', noteVeille.startsWith('Hier\n- Test automatique\n- Deuxième point\n\nAujourd’hui\n- Revue de code')
+      && await page.evaluate(id => document.querySelector(`textarea[data-projet="${id}"][data-champ="hier"]`).value !== '' || document.querySelector(`textarea[data-projet="${id}"][data-champ="hier"]`).placeholder.includes('Revue de code'), idPf14));
     verifier('Daily personnel : la note d’un coéquipier n’apparaît pas', !(await page.$$eval('.champ-daily textarea', l => l.map(t => t.value).join(' '))).includes('Mapping des rôles'));
+    // Lien avec les congés : un jour d'absence d'une journée → aucun daily attendu, cartes repliées
+    const jourConge = await page.evaluate(() => { const moi = maRessource(); const a = etat.d.absences.find(x => x.ressourceId === moi.id && Calculs.dureeAbsence(x) >= 1 && !Calculs.estWeekend(x.jour)); return a && a.jour; });
+    await page.evaluate(j => majUi('daily', { jour: j }), jourConge); await page.waitForTimeout(200);
+    verifier('Daily : jour de congé → « aucun daily attendu », cartes repliées', !!jourConge && (await texte()).includes('aucun daily attendu') && !(await page.$('textarea[data-champ="hier"]')));
+    await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
 
     await aller('mesProjets'); await capture('09-mes-projets');
     await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);
