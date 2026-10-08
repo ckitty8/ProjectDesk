@@ -45,8 +45,8 @@ const Previsionnel = {
       return { annee: date.getFullYear(), mois: date.getMonth() };
     });
   },
-  // Valeur affichée dans l'unité choisie (jours, ou heures = jours × HEURES_PAR_JOUR)
-  enUnite: jours => ui('previsionnel', { unite: 'jours' }).unite === 'heures' ? jours * CONFIG.HEURES_PAR_JOUR : jours,
+  // Valeur affichée dans l'unité choisie (jours, ou heures : Calculs.joursEnHeures)
+  enUnite: jours => ui('previsionnel', { unite: 'jours' }).unite === 'heures' ? Calculs.joursEnHeures(jours) : jours,
   format: n => n.toFixed(2).replace('.', ','),
 
   /* ---------- Onglet Prévisionnel ---------- */
@@ -159,12 +159,12 @@ const Previsionnel = {
           const ecart = pourcentReel(l) - l.cible;
           return `<tr><td><span class="ligne-flex">${C.code(l.p.code)}${esc(l.p.nom)}</span></td><td class="num">${l.cible} %</td>
             <td class="num">${this.format(l.prevu)}</td><td class="num"><b>${this.format(l.reel)}</b></td>
-            <td class="num">${this.format(l.reel / CONFIG.HEURES_PAR_JOUR)}</td><td class="num">${totalReel ? Calculs.nombre(pourcentReel(l)) + ' %' : '—'}</td>
+            <td class="num">${this.format(Calculs.heuresEnJours(l.reel))}</td><td class="num">${totalReel ? Calculs.nombre(pourcentReel(l)) + ' %' : '—'}</td>
             <td class="num" style="color:${totalReel && Math.abs(ecart) > 5 ? 'var(--danger)' : 'inherit'}">${totalReel ? (ecart > 0 ? '+' : '') + Calculs.nombre(ecart) : '—'}</td>
             <td>${C.barre(l.prevu ? Math.min(100, l.reel / l.prevu * 100) : 0)}</td></tr>`;
         }).join('')}
           <tr class="groupe"><td><b>Total</b></td><td class="num">${lignes.reduce((t, l) => t + l.cible, 0)} %</td><td class="num">${this.format(totalPrevu)}</td>
-            <td class="num"><b>${this.format(totalReel)}</b></td><td class="num">${this.format(totalReel / CONFIG.HEURES_PAR_JOUR)}</td><td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
+            <td class="num"><b>${this.format(totalReel)}</b></td><td class="num">${this.format(Calculs.heuresEnJours(totalReel))}</td><td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
         </tbody></table></div>
       <div class="discret" style="font-size:12px">Capacité = jours ouvrés du sprint hors fériés et congés × ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h × capacité de la personne.
         Les heures se saisissent par projet dans Gestion des ressources › Mon timesheet › Saisir mes heures.</div>`;

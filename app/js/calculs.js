@@ -220,6 +220,9 @@ const Calculs = (() => {
     return { ouvres: j.ouvres - j.feries, conges: j.conges, travailles: j.travailles,
       disponibles: j.travailles * (ressource.capacite ?? 100) / 100 };
   }
+  // Conversions jours ↔ heures (HEURES_PAR_JOUR, config.js)
+  const joursEnHeures = jours => jours * CONFIG.HEURES_PAR_JOUR;
+  const heuresEnJours = heures => heures / CONFIG.HEURES_PAR_JOUR;
   // Part d'une valeur : partDe(20, 36) = 7,2 (36 % de 20)
   const partDe = (valeur, pourcent) => valeur * Number(pourcent || 0) / 100;
   // Heures saisies (timesheet) par une personne sur un projet entre deux dates incluses
@@ -281,11 +284,11 @@ const Calculs = (() => {
 
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
-    lundi, joursOuvresSemaine, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
+    lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
     rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily,
-    heuresAttenduesJours, previsionMois, partDe, heuresProjetPeriode
+    heuresAttenduesJours, previsionMois, partDe, heuresProjetPeriode, joursEnHeures, heuresEnJours
   };
 })();

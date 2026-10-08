@@ -15,11 +15,15 @@ congés et capacité, timesheet, daily), sur Neon (Postgres, Auth, Data API) et 
 | [`CLAUDE.md`](CLAUDE.md) | Règles de travail permanentes du projet. |
 | [`vercel.json`](vercel.json) | Déploiement Vercel (la racine du site ouvre `app/`). |
 | [`scripts/verifier-docs.js`](scripts/verifier-docs.js) | Vérification de la cohérence documentation ↔ code, à lancer après chaque commit. |
+| [`scripts/audit-code.js`](scripts/audit-code.js) | Audit du code : liens cassés, code mort, écrans, tables et fonctions SQL, lisibilité. |
+| [`db/audit/verifier-bdd.sql`](db/audit/verifier-bdd.sql) | Audit de la base en lecture seule : droits, liaisons, cohérence des données. |
+| [`.claude/skills/revue-qualite/`](.claude/skills/revue-qualite/SKILL.md) | Skill Claude Code « revue qualité » : la revue complète pas à pas (utilisable aussi à la main). |
 
 ## Après avoir cloné
 
 ```bash
 git config core.hooksPath .githooks   # active la vérification des documents après chaque commit
 node scripts/verifier-docs.js         # lancement manuel
+node scripts/audit-code.js            # audit du code (code mort, liens, cohérence)
 node tests/parcours.js                # tests de bout en bout (Playwright requis)
 ```

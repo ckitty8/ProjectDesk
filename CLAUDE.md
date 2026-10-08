@@ -71,6 +71,15 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
 - [ ] `docs/DAT.md` à jour + ligne d'historique
 - [ ] Version `?v=` des fichiers de `app/index.html` alignée sur la version du DAT (sinon le navigateur garde l'ancien code)
 - [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
+- [ ] `node scripts/audit-code.js` → aucune erreur (pas de code mort, pas de lien cassé)
+
+## Revue qualité
+
+Après une série d'évolutions (ou à la demande du porteur) : skill **`revue-qualite`**
+(`.claude/skills/revue-qualite/SKILL.md`) — nettoyage du code, lisibilité, cohérence entre les
+pages, audit de la base (`db/audit/verifier-bdd.sql`, lecture seule), mise à jour des documents.
+Objectif du porteur : aucune ligne inutile ni code mort ; une application reprenable par une
+équipe de développeurs humains.
 
 ## Après chaque commit
 

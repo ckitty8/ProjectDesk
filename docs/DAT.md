@@ -92,6 +92,7 @@
 | 1.78    | 2026-10-08 | Menu « Prévisionnel des temps » renommé **« Plan de charge »** (demande du porteur) : libellé du menu, titre de l'écran, documentation ; identifiant d'écran `previsionnel` et tables inchangés (§ 3.3) |
 | 1.79    | 2026-10-08 | Menu : **Mon timesheet rangé dans Gestion des ressources** (Mon dashboard), sous l'intertitre « Mon timesheet » : Saisir mes heures, Suivi de mes équipes (demande du porteur ; maquette `menu-timesheet-ressources/`). Écrans inchangés (§ 3.3) |
 | 1.80    | 2026-10-08 | **Rôles Scrum** dans Trucs et astuces (maquette `organigramme-scrum/`) : onglet « Rôles Scrum (organigramme) » — organigramme détaillé (sponsor et parties prenantes ; Product Ownership partagé PO fonctionnel / PO technique ; Scrum Master ; équipe de développement : tech lead, développeurs, QA, UX/UI et DevOps si besoin) et tableau « qui fait quoi » (`ROLES_SCRUM`, `FAMILLES_ROLES_SCRUM`, `QUI_FAIT_QUOI_SCRUM` dans `config.js`). **Méthode de gestion du projet** (maquette `methode-projet/`) : choix obligatoire à la création (Agile Scrum, Agile Kanban, Cascade, Cycle en V), modifiable dans la fiche projet ; migration 022 (additive, sauvegarde préalable : branche Neon « sauvegarde-avant-022-2026-10-08 ») : référentiel `methode` (4 valeurs système, clés `scrum`, `kanban`, `cascade`, `cycle_v`), colonne `projets.methode`, renommage propagé ; CDO = Agile Scrum, IA = Agile Kanban (§ 3.3, § 4, § 9) |
+| 1.81    | 2026-10-08 | **Revue qualité outillée** : skill `revue-qualite` (`.claude/skills/revue-qualite/SKILL.md` : nettoyage, lisibilité, cohérence entre pages, audit de la base, documents) ; `scripts/audit-code.js` (liens cassés, code mort — actions, fonctions, méthodes, `Calculs`, composants, classes CSS —, écrans inaccessibles ou sans guide, tables et fonctions SQL absentes des migrations, versions `?v=`, restes de mise au point, lisibilité) ; `db/audit/verifier-bdd.sql` (audit en lecture seule : RLS, clés, droits, fonctions, valeurs hors référentiel, cohérence des données). Première revue : conversions jours ↔ heures centralisées (`Calculs.joursEnHeures`, `Calculs.heuresEnJours`), exports internes retirés de `Calculs`, capture d'échec de test retirée du dépôt (`.gitignore`) (§ 6, § 11) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -356,6 +357,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Taux d'occupation = heures saisies / heures attendues (semaine courante) | `Calculs.tauxOccupation` |
 | Code projet suivant = PREFIXE-(max + 1) | `Calculs.prochainCodeProjet` |
 | Plan de charge (tableur du porteur) : jours prévus = jours disponibles du mois × % du projet × % du type de tâche ; disponibles = jours travaillés (`joursTravaillesMois`) × capacité ; temps réel d'un sprint : prévu = capacité du sprint (h) × % du projet, réel = heures saisies sur le projet entre les dates du sprint | `Calculs.previsionMois`, `Calculs.partDe`, `Calculs.heuresAttenduesJours`, `Calculs.heuresProjetPeriode` |
+| Conversion jours ↔ heures : × ou ÷ `HEURES_PAR_JOUR` (`config.js`) | `Calculs.joursEnHeures`, `Calculs.heuresEnJours` |
 | Jours ouvrés : hors week-ends et `jours_feries` ; liste des jours ouvrés d'une période (export du daily) | `Calculs.estJourOuvre`, `Calculs.joursOuvresEntre` |
 | Note de daily découpée en rubriques (ligne sans tiret = titre, ex. Hier / Aujourd'hui / Blocages) | `Calculs.rubriquesDaily` |
 | Blocages = lignes de la rubrique « Blocages », hors « Aucun », « RAS », « néant », « rien » | `Calculs.blocagesDaily` |
@@ -453,7 +455,9 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
   `AIDES` dans `config.js` (un seul endroit pour les textes d'aide). Nouvel écran → ajouter son guide
   dans `GUIDE_ECRANS` (bouton Aide › « Aide sur cet écran »).
 
-## 11. Outillage qualité documentaire
+## 11. Outillage qualité (documents, code, base)
+
+### 11.1 Vérification des documents — après chaque commit
 
 `scripts/verifier-docs.js` (Node.js, sans dépendance) contrôle après chaque commit :
 
@@ -468,6 +472,20 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
 | DAT suivi | code ou SQL modifié dans le dernier commit | `docs/DAT.md` modifié aussi |
 
 Activation du hook, une fois par poste : `git config core.hooksPath .githooks`.
+
+### 11.2 Revue qualité — skill `revue-qualite`
+
+Le skill `.claude/skills/revue-qualite/SKILL.md` (Claude Code) décrit la revue complète à lancer
+après une série d'évolutions : nettoyage du code, lisibilité pour un développeur humain, cohérence
+entre les pages, audit de la base, mise à jour des documents, rapport au porteur. Un développeur
+peut suivre les mêmes étapes à la main. Il s'appuie sur deux scripts :
+
+| Script | Contrôles | Sortie |
+|--------|-----------|--------|
+| `node scripts/audit-code.js` | fichiers JS chargés par `index.html` et version `?v=` = dernière version du DAT ; liens `data-action…` cassés ; **code mort** : action, fonction, constante, méthode d'écran ou d'objet, fonction `Calculs`, composant `C`, classe CSS jamais utilisés ; menus, écrans accessibles et guides d'aide ; tables chargées et fonctions SQL appelées présentes dans les migrations ; `console.log` / `debugger` oubliés. Avertissements : en-tête de fichier, fonctions et lignes trop longues | erreurs (code 1) / avertissements |
+| `db/audit/verifier-bdd.sql` | **lecture seule** sur la branche `production` : tables sans RLS, sans règle, sans clé primaire ; droits du rôle `anonymous` ; fonctions `SECURITY DEFINER` sans `search_path` ; clés étrangères sans index ; fonctions non référencées en base (à rapprocher des appels de `app/`) ; valeurs hors référentiel ; doublons d'email ou de compte ; dates incohérentes ; heures ou absences hors présence ; sprints sans dates ; plan de charge > 100 % ; daily et envois incohérents | une ligne par écart |
+
+Une correction de la base issue de l'audit passe par une migration montrée au porteur (règle n°8).
 
 ## 12. Points ouverts
 
