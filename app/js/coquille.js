@@ -40,7 +40,7 @@ const Coquille = (() => {
     { id: 'monTimesheet', libelle: 'Mon timesheet', icone: 'time',
       enfants: [{ id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
     // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
-    { id: 'previsionnel', libelle: 'Prévisionnel des temps', icone: 'prev', visible: () => Previsionnel.estVisible() },
+    { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     { id: 'monAdmin', libelle: 'Administration', icone: 'admin' }
   ];

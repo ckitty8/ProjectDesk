@@ -504,7 +504,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
       && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));
 
-    /* --- Prévisionnel des temps (migration 021) : chefs de projet seulement --- */
+    /* --- Plan de charge (migration 021) : chefs de projet seulement --- */
     verifier('Prévisionnel : menu visible pour une cheffe de projet, caché sinon', !!(await page.$('[data-action="aller"][data-ecran="previsionnel"]'))
       && await page.evaluate(() => { const admin = etat.estAdmin, aff = etat.d.affectations, projets = etat.d.projets;
         etat.estAdmin = false; etat.d.affectations = aff.filter(a => a.role !== ROLES_PROJET.CHEF); etat.d.projets = projets.map(p => ({ ...p, chefId: null }));

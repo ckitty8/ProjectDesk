@@ -151,7 +151,7 @@ function amorcer() {
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
     { projet_id: idProjet('PF-17'), mode: 'direct', heure: '10:00', jours: '1,2,3,4', sans_feries: true, destinataires: 'equipe-projet@test.fr' }];
-  // Prévisionnel des temps (migration 021) : types de tâche de PF-14, répartition de Camille,
+  // Plan de charge (migration 021) : types de tâche de PF-14, répartition de Camille,
   // deux sprints datés de PF-14 (heures saisies du 21 au 25/09 dans le premier)
   bd.types_tache_projet = [['US', 36], ['Incident', 20], ['Bug', 6], ['Doc', 5], ['Test / Aller retour', 9], ['Technique', 4], ['Autres sujets', 20]]
     .map(([libelle, part], i) => ({ id: uuid(), projet_id: idProjet('PF-14'), libelle, part, ordre: i + 1 }));

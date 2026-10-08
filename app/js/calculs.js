@@ -209,7 +209,7 @@ const Calculs = (() => {
     return attendu ? (saisi / attendu) * 100 : 0;
   }
 
-  /* ---------- Prévisionnel des temps (migration 021) ----------
+  /* ---------- Plan de charge (migration 021) ----------
      Reprise du tableur du porteur « Suivi_temps_TechLead_2projets » (2026-10-07) :
      jours prévus = jours disponibles × % du temps sur le projet × % du type de tâche.
      Jours disponibles d'un mois = jours travaillés (jours de semaine − fériés − congés, hors

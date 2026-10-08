@@ -1,5 +1,5 @@
 /* ============================================================
-   Mon dashboard › Prévisionnel des temps (maquette docs/maquettes/previsionnel-temps/)
+   Mon dashboard › Plan de charge (maquette docs/maquettes/previsionnel-temps/)
    Réservé aux chefs de projet (et administrateurs). Remplace le tableur du porteur
    « Suivi temps tech lead », pour toute personne affectée (pas seulement les tech leads).
    - Onglet « Prévisionnel » : par mois sur 12 mois, jours ouvrés (fériés), congés
@@ -172,11 +172,11 @@ const Previsionnel = {
 };
 
 Ecrans.previsionnel = {
-  titre: 'Prévisionnel des temps',
+  titre: 'Plan de charge',
   section: 'moi',
   rendre() {
     const onglet = ui('previsionnel', { onglet: 'prevision' }).onglet;
-    const entete = C.entete('Prévisionnel des temps', 'Réservé aux chefs de projet · répartition du temps d’une personne entre ses projets', '');
+    const entete = C.entete('Plan de charge', 'Réservé aux chefs de projet · répartition du temps d’une personne entre ses projets', '');
     if (!Previsionnel.estVisible()) return `<div class="ecran">${entete}<div class="carte">${C.vide('Écran réservé aux chefs de projet.')}</div></div>`;
     const personnes = Previsionnel.personnes(), r = Previsionnel.personneChoisie(personnes);
     if (!r) return `<div class="ecran">${entete}<div class="carte">${C.vide('Aucune personne affectée à vos projets.')}</div></div>`;

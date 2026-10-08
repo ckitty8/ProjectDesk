@@ -287,7 +287,7 @@ function suisChefDuProjet(p) {
   const moi = maRessource(), aff = monAffectation(p);
   return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
 }
-/* Qui pilote un projet — règle l'envoi de son daily et son prévisionnel des temps (même règle
+/* Qui pilote un projet — règle l'envoi de son daily et son plan de charge (même règle
    que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,
    ou responsable de son unité ou d'une unité parente. */
 const peutPiloterProjet = p => etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p);
