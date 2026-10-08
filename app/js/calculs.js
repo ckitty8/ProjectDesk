@@ -209,6 +209,24 @@ const Calculs = (() => {
     return attendu ? (saisi / attendu) * 100 : 0;
   }
 
+  /* ---------- Prévisionnel des temps (migration 021) ----------
+     Reprise du tableur du porteur « Suivi_temps_TechLead_2projets » (2026-10-07) :
+     jours prévus = jours disponibles × % du temps sur le projet × % du type de tâche.
+     Jours disponibles d'un mois = jours travaillés (jours de semaine − fériés − congés, hors
+     jours de non-présence : joursTravaillesMois) × capacité de la personne (100 % en général ;
+     ajout par rapport au tableur, pour rester cohérent avec le timesheet). */
+  function previsionMois(ressource, annee, mois, absences, feries) {
+    const j = joursTravaillesMois(ressource.id, annee, mois, absences, feries, ressource);
+    return { ouvres: j.ouvres - j.feries, conges: j.conges, travailles: j.travailles,
+      disponibles: j.travailles * (ressource.capacite ?? 100) / 100 };
+  }
+  // Part d'une valeur : partDe(20, 36) = 7,2 (36 % de 20)
+  const partDe = (valeur, pourcent) => valeur * Number(pourcent || 0) / 100;
+  // Heures saisies (timesheet) par une personne sur un projet entre deux dates incluses
+  const heuresProjetPeriode = (ressourceId, projetId, debut, fin, temps) => temps
+    .filter(t => t.ressourceId === ressourceId && t.projetId === projetId && t.jour >= debut && t.jour <= fin)
+    .reduce((s, t) => s + Number(t.heures || 0), 0);
+
   /* ---------- Divers ---------- */
   const initiales = nom => (nom || '?').split(/\s+/).map(m => m[0]).join('').slice(0, 2).toUpperCase();
   // Prochain code projet d'une équipe : PREFIXE-n (n = plus grand numéro existant + 1)
@@ -267,6 +285,7 @@ const Calculs = (() => {
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
-    rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily
+    rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily,
+    heuresAttenduesJours, previsionMois, partDe, heuresProjetPeriode
   };
 })();

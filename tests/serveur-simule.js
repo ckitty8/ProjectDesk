@@ -151,6 +151,14 @@ function amorcer() {
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
     { projet_id: idProjet('PF-17'), mode: 'direct', heure: '10:00', jours: '1,2,3,4', sans_feries: true, destinataires: 'equipe-projet@test.fr' }];
+  // Prévisionnel des temps (migration 021) : types de tâche de PF-14, répartition de Camille,
+  // deux sprints datés de PF-14 (heures saisies du 21 au 25/09 dans le premier)
+  bd.types_tache_projet = [['US', 36], ['Incident', 20], ['Bug', 6], ['Doc', 5], ['Test / Aller retour', 9], ['Technique', 4], ['Autres sujets', 20]]
+    .map(([libelle, part], i) => ({ id: uuid(), projet_id: idProjet('PF-14'), libelle, part, ordre: i + 1 }));
+  const idCamille = bd.ressources.find(r => r.nom === 'Camille Laurent').id;
+  bd.previsions_temps = [['PF-14', 60], ['PF-17', 20], ['PR-03', 20]].map(([code, part]) => ({ projet_id: idProjet(code), ressource_id: idCamille, part }));
+  bd.sprints_projet.push({ projet_id: idProjet('PF-14'), numero: 1, numero_sprint: 19, annee: 2026, nom: 'V1.9', debut: '2026-09-14', fin: '2026-09-25' },
+    { projet_id: idProjet('PF-14'), numero: 2, numero_sprint: 20, annee: 2026, nom: 'V2.0', debut: '2026-09-28', fin: '2026-10-09' });
   bd.notes_daily_projet = [
     { user_id: thomas.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
     { user_id: camille.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' }];
@@ -265,7 +273,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'] };
 function filtrer(lignes, params) {
   let r = lignes;
   // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne

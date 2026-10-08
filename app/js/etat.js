@@ -37,9 +37,10 @@ const TABLES = {
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
-  notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet'
+  notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
+  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet'
 };
-const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
+const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;
@@ -72,7 +73,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id' };
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -281,14 +282,15 @@ const monAffectation = p => { const moi = maRessource(); return moi ? etat.d.aff
    administrateur, affecté(e) au projet, ou responsable de son unité ou d'une unité parente. */
 const peutLireDailyProjet = p => etat.estAdmin || !!monAffectation(p) || suisResponsableDuProjet(p);
 
-/* Qui règle l'envoi du daily d'un projet (même règle que peut_gerer_envoi_projet en base) :
-   administrateur, chef du projet (fiche « chef » ou affectation « Chef de projet »), ou responsable
-   de son unité ou d'une unité parente. */
-function peutGererEnvoiProjet(p) {
+/* Chef du projet : fiche « chef » du projet ou affectation « Chef de projet » */
+function suisChefDuProjet(p) {
   const moi = maRessource(), aff = monAffectation(p);
-  const estChef = (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
-  return etat.estAdmin || estChef || suisResponsableDuProjet(p);
+  return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
 }
+/* Qui pilote un projet — règle l'envoi de son daily et son prévisionnel des temps (même règle
+   que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,
+   ou responsable de son unité ou d'une unité parente. */
+const peutPiloterProjet = p => etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p);
 const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p)).sort(parCode);
 // Note d'une personne (compte) pour un projet et un jour
 const noteProjet = (userId, projetId, jour) =>

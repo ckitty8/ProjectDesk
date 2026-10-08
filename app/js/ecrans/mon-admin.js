@@ -25,7 +25,7 @@ Ecrans.monAdmin = {
   rendre() {
     const u = ui('monAdmin', { onglet: 'sprints' });
     const gereEquipes = etat.estAdmin || mesEquipes().some(e => estResponsableDe(e.id));
-    const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutGererEnvoiProjet(p));   // onglet Envoi du daily
+    const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutPiloterProjet(p));   // onglet Envoi du daily
     const onglets = C.onglets([
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
       ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
@@ -101,10 +101,10 @@ Ecrans.monAdmin = {
      Demande du porteur (2026-10-07, maquette envoi-daily-projet/) : chaque projet en cours choisit
      son mode d'envoi (MODES_ENVOI_DAILY), l'heure, les jours, l'exclusion des fériés et les
      destinataires ; une ligne par projet dans envois_daily_projet (migration 019). Modifiable par
-     un administrateur, le chef du projet ou un responsable de son unité (peutGererEnvoiProjet). */
+     un administrateur, le chef du projet ou un responsable de son unité (peutPiloterProjet). */
   envoiDaily() {
     const esc = C.esc;
-    const projets = etat.d.projets.filter(p => projetEnCours(p) && peutGererEnvoiProjet(p)).sort(parCode);
+    const projets = etat.d.projets.filter(p => projetEnCours(p) && peutPiloterProjet(p)).sort(parCode);
     const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V']];
     const ligne = p => {
       const r = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.projetId === p.id) || {}) };

@@ -18,6 +18,7 @@ const Coquille = (() => {
     ress: 'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M21 19v-1a4 4 0 0 0-3-3.8M16 4.2a3 3 0 0 1 0 5.6',
     admin: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
     time: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18', daily: 'M6 3h9l4 4v14H6zM9 10h7M9 14h7M9 18h4',
+    prev: 'M4 20V11M10 20V5M16 20v-6M2 20h20',
     idee: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3'
   };
   const icone = nom => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONES[nom]}"></path></svg>`;
@@ -38,6 +39,8 @@ const Coquille = (() => {
       enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
     { id: 'monTimesheet', libelle: 'Mon timesheet', icone: 'time',
       enfants: [{ id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
+    // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
+    { id: 'previsionnel', libelle: 'Prévisionnel des temps', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     { id: 'monAdmin', libelle: 'Administration', icone: 'admin' }
   ];
@@ -64,7 +67,7 @@ const Coquille = (() => {
         <div class="menu-titre"><span>Général ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${MENU_GENERAL.map(lienMenu).join('')}
         <div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
-        ${MENU_MOI.map(lienMenu).join('')}
+        ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}
       </nav>
       <div class="bloc-utilisateur">
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>

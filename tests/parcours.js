@@ -504,6 +504,35 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
       && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));
 
+    /* --- Prévisionnel des temps (migration 021) : chefs de projet seulement --- */
+    verifier('Prévisionnel : menu visible pour une cheffe de projet, caché sinon', !!(await page.$('[data-action="aller"][data-ecran="previsionnel"]'))
+      && await page.evaluate(() => { const admin = etat.estAdmin, aff = etat.d.affectations, projets = etat.d.projets;
+        etat.estAdmin = false; etat.d.affectations = aff.filter(a => a.role !== ROLES_PROJET.CHEF); etat.d.projets = projets.map(p => ({ ...p, chefId: null }));
+        const visible = Previsionnel.estVisible(); etat.estAdmin = admin; etat.d.affectations = aff; etat.d.projets = projets; return !visible; }));
+    await aller('previsionnel'); await page.waitForTimeout(250);
+    verifier('Prévisionnel : projets de la personne, % du projet et types de tâche (sous-total hors US)', (await texte()).includes('SSO & gestion des droits')
+      && await page.$eval('input[data-action-change="partProjetPrevision"]', e => e.value) === '60' && (await texte()).includes('Total hors US'));
+    verifier('Prévisionnel : jours = jours travaillés × % projet × % type', await page.evaluate(() => {
+      const r = maRessource(), d = Calculs.depuisIso(Calculs.aujourdhui());
+      const m = Calculs.previsionMois(r, d.getFullYear(), d.getMonth(), etat.d.absences, feries());
+      const attendu = Previsionnel.format(m.disponibles * 0.6 * 0.36);
+      const ligneUs = [...document.querySelectorAll('.contenu tr')].find(tr => (tr.querySelector('input.champ') || {}).value === 'US');
+      return !!ligneUs && ligneUs.querySelectorAll('td.num')[1].textContent.trim() === attendu;
+    }));
+    await capture('23-previsionnel');
+    await page.fill('input[data-action-change="partProjetPrevision"]', '50'); await page.dispatchEvent('input[data-action-change="partProjetPrevision"]', 'change'); await page.waitForTimeout(300);
+    verifier('Prévisionnel : % du projet enregistré', await page.evaluate(() => Previsionnel.part(etat.d.projets.find(p => p.code === 'PF-14').id, maRessource().id) === 50));
+    await page.fill('form[data-action-envoi="ajouterTypeTache"] input[name=libelle]', 'Revue de code'); await page.click('form[data-action-envoi="ajouterTypeTache"] button'); await page.waitForTimeout(300);
+    verifier('Prévisionnel : type de tâche ajouté', await page.evaluate(() => etat.d.typesTache.some(t => t.libelle === 'Revue de code')));
+    await page.click('[data-action="ongletPrevision"][data-onglet="reel"]'); await page.waitForTimeout(250);
+    await page.evaluate(() => majUi('previsionnel', { sprint: 1 })); await page.waitForTimeout(200);
+    verifier('Temps réel par sprint : heures saisies du sprint par projet', await page.evaluate(() => {
+      const r = maRessource(), pf14 = etat.d.projets.find(p => p.code === 'PF-14');
+      const reel = Calculs.heuresProjetPeriode(r.id, pf14.id, '2026-09-14', '2026-09-25', etat.d.temps);
+      return reel > 0 && document.querySelector('.contenu').textContent.includes(Previsionnel.format(reel));
+    }));
+    await capture('24-previsionnel-reel');
+
     /* --- Compte sans équipe : écran de choix d'équipe, en attente d'invitation --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
     await page.fill('input[name=email]', 'elodie@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
