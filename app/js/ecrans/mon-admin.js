@@ -242,7 +242,7 @@ Object.assign(Actions, {
   },
   /* Donner l'accès : la fiche choisie reçoit l'email du compte (lier_ma_ressource la relie à la
      connexion) ou une fiche est créée, puis invitation dans l'équipe (Neon Auth), acceptée d'office
-     à la connexion de la personne (accepterInvitationsEnAttente, etat.js). */
+     à la connexion de la personne (fonction SQL accepter_mes_invitations, migration 026). */
   async donnerAcces(d) {
     const compte = etat.comptesEnAttente.find(c => c.userId === d.compte), choix = Ecrans.monAdmin.choixCompte(compte);
     if (!choix.equipe || !choix.fiche) return notifier('Choisissez l’équipe et la fiche ressource', 'erreur');

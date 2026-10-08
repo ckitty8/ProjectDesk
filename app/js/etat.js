@@ -167,6 +167,12 @@ async function demarrer() {
     }
     etat.session = session;
     await Api.executer('lier_ma_ressource').catch(() => {});      // lie le compte à sa fiche ressource (même email)
+    /* Invitations acceptées d'office par la base (migration 026), avant de lister les équipes :
+       - compte sans équipe : l'accès a été donné par un administrateur (Administration › Comptes en
+         attente ; maquette docs/maquettes/comptes-en-attente/) ;
+       - créateur : invité dans chaque équipe créée par un autre administrateur (inviterCreateur), pour
+         pouvoir y inviter des personnes (Neon Auth exige d'être membre de l'équipe pour inviter). */
+    await Api.executer('accepter_mes_invitations').catch(() => {});
     const [organisations, invitations] = await Promise.all([
       Api.listerOrganisations(), Api.listerMesInvitations().catch(() => [])
     ]);
@@ -175,9 +181,6 @@ async function demarrer() {
     await chargerDonnees();
     etat.estCreateur = etat.d.createur.some(c => c.userId === session.user.id);
     etat.estAdmin = etat.estCreateur || etat.d.administrateurs.some(a => a.userId === session.user.id);
-    // Invitations acceptées d'office : compte sans équipe (accès donné, Comptes en attente) ou créateur
-    // (invitée dans chaque nouvelle équipe, voir inviterCreateur)
-    if (etat.invitations.length && (!etat.organisations.length || etat.estCreateur)) await accepterInvitationsEnAttente();
     await chargerComptesEnAttente();
     await chargerRoles();
     const equipesReconnues = mesEquipes();
@@ -202,17 +205,6 @@ async function demarrer() {
   } catch (e) {
     majEtat({ chargement: false, erreur: e.message });
   }
-}
-
-/* Invitations acceptées d'office (sans clic) :
-   - compte sans équipe : l'accès a été donné par un administrateur (Administration › Comptes en
-     attente, migration 024 ; maquette docs/maquettes/comptes-en-attente/) ;
-   - créateur : invité dans chaque équipe créée par un autre administrateur, pour pouvoir y inviter
-     des personnes (Neon Auth exige d'être membre de l'équipe pour inviter). */
-async function accepterInvitationsEnAttente() {
-  for (const invitation of etat.invitations) await Api.accepterInvitation(invitation.id).catch(() => {});
-  etat.organisations = await Api.listerOrganisations() || [];
-  etat.invitations = [];
 }
 
 // Inscrits sans accès (administrateurs seulement ; liste vide pour les autres, voir comptes_en_attente)

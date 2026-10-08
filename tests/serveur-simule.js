@@ -319,6 +319,16 @@ async function donnees(req, res, table, url) {
   if (!moi) return envoyer(res, 401, { message: 'JWT manquant' });
   if (table.startsWith('rpc/')) {
     if (table === 'rpc/lier_ma_ressource') bd.ressources.filter(r => !r.user_id && r.email === moi.email).forEach(r => { r.user_id = moi.id; });
+    // Acceptation des invitations par la base (migration 026) : compte sans équipe, ou créateur
+    if (table === 'rpc/accepter_mes_invitations') {
+      const idsEquipes = new Set(bd.equipes.map(e => e.id));
+      const aUneEquipe = membres.some(m => m.userId === moi.id && idsEquipes.has(m.organizationId));
+      if (aUneEquipe && !bd.createur.some(c => c.user_id === moi.id)) return envoyer(res, 200, 0);
+      const aAccepter = invitations.filter(i => i.email === moi.email && i.status === 'pending' && idsEquipes.has(i.organizationId));
+      aAccepter.forEach(i => { i.status = 'accepted';
+        if (!membres.some(m => m.organizationId === i.organizationId && m.userId === moi.id)) membres.push({ id: uuid(), organizationId: i.organizationId, userId: moi.id, role: i.role || 'member' }); });
+      return envoyer(res, 200, aAccepter.length);
+    }
     // Comptes en attente (migration 024) : inscrits sans équipe, ni administrateurs, ni écartés — administrateurs seulement
     if (table === 'rpc/comptes_en_attente') {
       const estAdmin = bd.administrateurs.some(a => a.user_id === moi.id) || bd.createur.some(c => c.user_id === moi.id);

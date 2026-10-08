@@ -231,7 +231,7 @@ const Modale = {
 };
 
 // Le créateur est invité dans chaque équipe créée par un autre administrateur ; il accepte d'office à sa
-// connexion (accepterInvitationsEnAttente, etat.js) et peut ainsi y donner l'accès à des personnes.
+// connexion (fonction SQL accepter_mes_invitations, migration 026) et peut ainsi y donner l'accès à des personnes.
 async function inviterCreateur(equipeId) {
   const createur = (etat.d.createur || [])[0];
   if (createur && !etat.estCreateur) await Api.inviterMembre(equipeId, createur.email, 'admin').catch(() => {});
