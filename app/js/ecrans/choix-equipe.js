@@ -1,6 +1,8 @@
 /* ============================================================
    Écran « Choix de l'équipe » (maquette complements/choix-equipe.png)
-   Invitations reçues, équipes de l'utilisateur.
+   Invitations reçues, équipes de l'utilisateur. Compte sans équipe : message « compte créé, en
+   attente d'accès » et bouton Actualiser (maquette docs/maquettes/comptes-en-attente/) — l'accès
+   est donné par un administrateur dans Administration › Comptes en attente.
    ============================================================ */
 'use strict';
 
@@ -27,6 +29,7 @@ Ecrans.choixEquipe = {
         <button class="btn ${courante ? 'primaire' : ''}" data-action="ouvrirEquipe" data-id="${e.id}">Ouvrir</button>
       </div>`;
     }).join('');
+    if (!equipes && !invitations && !etat.estAdmin) return this.enAttente(prenom);
     return `
     <div class="plein-ecran"><div class="carte boite large">
       <div class="ligne-flex" style="justify-content:space-between"><h1>Bonjour ${esc(prenom)}</h1><a data-action="deconnexion">Déconnexion</a></div>
@@ -34,11 +37,26 @@ Ecrans.choixEquipe = {
       ${invitations ? `<div class="libelle">Invitations reçues</div><div class="pile" style="margin-bottom:20px">${invitations}</div>` : ''}
       <div class="libelle">Mes équipes</div>
       <div class="pile" style="margin-bottom:20px">${equipes || C.vide('Vous n’êtes membre d’aucune équipe pour le moment.')}</div>
-      <div style="border-top:1px solid var(--bordure-fine);padding-top:16px;font-size:12.5px" class="discret">
-        <b style="color:var(--texte)">Vous n’êtes membre d’aucune équipe ?</b> Demandez une invitation à un administrateur :
-        elle apparaîtra ici.<br>Les équipes sont créées par un administrateur (menu Administration).
-        ${etat.estAdmin && !mesEquipes().length ? `<br><a data-action="aller" data-ecran="monAdmin">Ouvrir l’administration</a>` : ''}
-      </div>
+      ${etat.estAdmin && !mesEquipes().length ? `<div class="discret" style="font-size:12.5px">Les équipes sont créées dans l’Administration.
+        <a data-action="aller" data-ecran="monAdmin">Ouvrir l’administration</a></div>` : ''}
+    </div></div>`;
+  },
+
+  // Compte créé mais pas encore d'équipe : l'administrateur voit la demande (Comptes en attente)
+  enAttente(prenom) {
+    const esc = C.esc;
+    return `
+    <div class="plein-ecran"><div class="carte boite large">
+      <div class="ligne-flex" style="justify-content:space-between"><h1>Bonjour ${esc(prenom)}</h1><a data-action="deconnexion">Déconnexion</a></div>
+      <div class="carte" style="padding:14px 16px;margin:14px 0;background:#F3F6FF;border-color:#B7C8F5">
+        <b>Votre compte est créé.</b> Il reste une étape : un administrateur doit vous donner accès à votre équipe.
+        <div class="discret" style="margin-top:6px">Votre demande apparaît déjà dans son Administration (compte <b>${esc(etat.session.user.email)}</b>).
+          Vous n’avez rien d’autre à faire.</div></div>
+      <div class="ligne-flex"><button class="btn primaire" data-action="reessayer">Actualiser</button>
+        <span class="discret" style="font-size:12.5px">dès que l’accès est donné, cliquez ici ou reconnectez-vous</span></div>
+      <div style="border-top:1px solid var(--bordure-fine);padding-top:14px;margin-top:18px;font-size:12.5px" class="discret">
+        Ce n’est pas le bon compte ? Si vous en avez créé plusieurs (email personnel et professionnel), connectez-vous avec
+        celui donné à votre responsable.</div>
     </div></div>`;
   }
 };

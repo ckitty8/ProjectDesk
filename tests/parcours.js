@@ -554,12 +554,30 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await capture('24-previsionnel-reel');
 
-    /* --- Compte sans équipe : écran de choix d'équipe, en attente d'invitation --- */
-    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
-    await page.fill('input[name=email]', 'elodie@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('.boite'); await page.waitForTimeout(300);
-    verifier('Compte sans équipe : invité à demander une invitation (plus d’espace demandeur)', (await texte()).includes('Demandez une invitation')
-      && !(await page.$('form[data-action-envoi="deposerDemande"]')));
+    /* --- Compte sans équipe (migration 024) : en attente, accès donné par l'administratrice, entrée directe --- */
+    const connecter = async email => {
+      await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
+      await page.fill('input[name=email]', email); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
+      await page.waitForTimeout(900);
+    };
+    await connecter('elodie@test.fr');
+    verifier('Compte sans équipe : « compte créé, en attente d’accès » avec Actualiser', (await texte()).includes('Votre compte est créé')
+      && !!(await page.$('[data-action="reessayer"]')) && !(await page.$('form[data-action-envoi="deposerDemande"]')));
+    await connecter('camille@test.fr');
+    verifier('Comptes en attente : pastille sur Administration et compte listé', await page.evaluate(() =>
+      !!document.querySelector('.menu-lien .pastille-alerte') && etat.comptesEnAttente.some(c => c.email === 'elodie@test.fr')));
+    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="comptes"]'); await page.waitForTimeout(200);
+    const ligneElodie = 'tr:has-text("elodie@test.fr")';
+    await page.selectOption(`${ligneElodie} select[data-champ="equipe"]`, { label: 'Plateforme' }); await page.waitForTimeout(150);
+    await page.selectOption(`${ligneElodie} select[data-champ="fiche"]`, 'nouvelle'); await page.waitForTimeout(150);
+    await capture('26-comptes-en-attente');
+    await page.click(`${ligneElodie} [data-action="donnerAcces"]`); await page.waitForTimeout(400);
+    verifier('Comptes en attente : accès donné (fiche créée avec son email, invitation envoyée)', await page.evaluate(() =>
+      etat.d.ressources.some(r => r.email === 'elodie@test.fr') && etat.comptesEnAttente.find(c => c.email === 'elodie@test.fr').invite
+      && !document.querySelector('.menu-lien .pastille-alerte')));
+    await connecter('elodie@test.fr');
+    verifier('Compte sans équipe : entre directement après l’accès donné (invitation acceptée d’office)', await page.evaluate(() =>
+      mesEquipes().length === 1 && etat.ecran !== 'choixEquipe' && !!maRessource()));
 
     /* --- Administratrice sans équipe : entrée directe dans l'outil, création d'équipe --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');

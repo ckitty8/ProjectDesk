@@ -23,10 +23,13 @@ Ecrans.monAdmin = {
   section: 'moi',
   sansEquipePermis: () => etat.estAdmin,        // voir coquille.js : écran ouvert sans équipe
   rendre() {
-    const u = ui('monAdmin', { onglet: 'sprints' });
+    // Onglet par défaut : les comptes en attente s'il y en a (administrateur), sinon les sprints
+    const enAttente = etat.comptesEnAttente.filter(c => !c.invite).length;
+    const u = ui('monAdmin', { onglet: etat.estAdmin && enAttente ? 'comptes' : 'sprints' });
     const gereEquipes = etat.estAdmin || mesEquipes().some(e => estResponsableDe(e.id));
     const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutPiloterProjet(p));   // onglet Envoi du daily
     const onglets = C.onglets([
+      ...(etat.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
       ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
@@ -34,17 +37,66 @@ Ecrans.monAdmin = {
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length }
     ], u.onglet, 'ongletMonAdmin');
     let corps;
-    if (u.onglet === 'equipes') corps = Administration.equipes(true);
+    if (u.onglet === 'comptes' && etat.estAdmin) corps = this.comptes();
+    else if (u.onglet === 'equipes') corps = Administration.equipes(true);
     else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
     else if (u.onglet === 'feries' && etat.estAdmin) corps = this.feries();
     else if (u.onglet === 'envoiDaily' && regleEnvois) corps = this.envoiDaily();
     else corps = this.sprints();
-    const sousTitre = `Sprints des projets${gereEquipes ? ', équipes' : ''}${etat.estAdmin ? ', référentiels et jours fériés' : ''}`;
+    const parties = [etat.estAdmin && 'comptes en attente', 'sprints des projets', gereEquipes && 'équipes', etat.estAdmin && 'référentiels et jours fériés'].filter(Boolean).join(', ');
+    const sousTitre = parties.charAt(0).toUpperCase() + parties.slice(1);
     return `
     <div class="ecran" style="max-width:1500px">
       ${C.entete('Administration', sousTitre)}
       ${onglets}${corps}
     </div>`;
+  },
+
+  /* ---------- Onglet Comptes en attente (administrateurs ; maquette docs/maquettes/comptes-en-attente/) ----------
+     Personnes inscrites sans équipe (fonction comptes_en_attente, migration 024). Pour chacune :
+     équipe, fiche ressource (existante sans compte, proposée si l'email ou le prénom correspond,
+     ou nouvelle fiche), rôle dans l'équipe ; « Donner l'accès » (donnerAcces) ; « Ignorer »
+     écarte un compte (doublon, inconnu). Choix en cours gardés dans ui('comptes')[compte]. */
+  // Fiche proposée pour un compte : même email, sinon même prénom, parmi les fiches sans compte
+  ficheProposee(compte) {
+    const libres = ressourcesActives().filter(r => !r.userId);
+    const prenom = (compte.nom || '').trim().split(/\s+/)[0].toLowerCase();
+    return libres.find(r => (r.email || '').toLowerCase() === (compte.email || '').toLowerCase())
+      || (prenom ? libres.find(r => r.nom.toLowerCase().split(/\s+/)[0] === prenom) : null) || null;
+  },
+  choixCompte(compte) {
+    const proposee = this.ficheProposee(compte);
+    const defaut = { equipe: proposee ? proposee.equipeId : '', fiche: proposee ? proposee.id : '', role: 'member' };
+    return { ...defaut, ...(ui('comptes')[compte.userId] || {}) };
+  },
+  comptes() {
+    const esc = C.esc, comptes = etat.comptesEnAttente;
+    if (!comptes.length) return `<div class="carte">${C.vide('Aucun compte en attente : toutes les personnes inscrites ont accès à une équipe.')}</div>`;
+    const equipes = etat.d.equipes.filter(e => e.actif !== false).map(e => ({ valeur: e.id, libelle: e.nom }));
+    const ligne = c => {
+      const choix = this.choixCompte(c), attr = champ => `class="champ" style="width:auto" data-action-change="choisirCompte" data-compte="${c.userId}" data-champ="${champ}"`;
+      const fiches = ressourcesActives().filter(r => !r.userId && r.equipeId === choix.equipe).map(r => ({ valeur: r.id, libelle: r.nom + (r.email ? '' : ' (sans email)') }));
+      const actions = c.invite
+        ? `${C.badge('Accès donné · en attente de sa connexion', '#0B6B4F', '#E3F5EC')}`
+        : `<button class="btn petit primaire" data-action="donnerAcces" data-compte="${c.userId}">Donner l’accès</button>`;
+      return `<tr><td><span class="ligne-flex">${C.avatar(c.nom || c.email)}<span><b>${esc(c.nom || '—')}</b>
+          <div class="discret" style="font-size:12px">${esc(c.email)}</div></span></span></td>
+        <td>${Calculs.formatAvecAnnee((c.inscritLe || '').slice(0, 10))}</td>
+        <td>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...equipes], choix.equipe, attr('equipe'))}</td>
+        <td>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...fiches, { valeur: 'nouvelle', libelle: '+ Créer sa fiche' }], choix.fiche, attr('fiche'))}</td>
+        <td>${C.liste([{ valeur: 'member', libelle: 'Membre' }, { valeur: 'admin', libelle: 'Admin d’équipe' }], choix.role, attr('role'))}</td>
+        <td class="num" style="white-space:nowrap"><button class="btn petit" data-action="ignorerCompte" data-compte="${c.userId}">Ignorer</button> ${actions}</td></tr>`;
+    };
+    const enAttente = comptes.filter(c => !c.invite).length;
+    return `${enAttente ? `<div class="carte" style="padding:12px 16px;background:#FFF8EC;border-color:#F3D9A8">
+        <b>${enAttente} personne${enAttente > 1 ? 's se sont inscrites et attendent' : ' s’est inscrite et attend'} un accès.</b>
+        Choisissez l’équipe et la fiche ressource, puis « Donner l’accès » : la personne entre dans l’application à sa prochaine
+        connexion (ou en cliquant « Actualiser »), sans autre démarche.</div>` : ''}
+      <div class="carte"><table class="tableau"><thead><tr><th>Compte inscrit</th><th>Inscrit le</th><th>Équipe</th><th>Fiche ressource</th>
+        <th>Rôle dans l’équipe</th><th></th></tr></thead><tbody>${comptes.map(ligne).join('')}</tbody></table>
+      <div class="discret" style="font-size:12px;padding:8px 16px">Fiche ressource : la fiche existante de la personne (proposée si l’email ou le prénom
+        correspond) reçoit l’email du compte et s’y relie à sa connexion ; sinon une fiche est créée. Une personne inscrite deux fois
+        (email personnel et professionnel) : donner l’accès au compte utilisé, « Ignorer » l’autre.</div></div>`;
   },
 
   /* ---------- Onglet Sprints : sprints de chaque projet ----------
@@ -180,6 +232,30 @@ Object.assign(Actions, {
   },
 
   ongletMonAdmin: d => majUi('monAdmin', { onglet: d.id }),
+  // Comptes en attente : choix de l'équipe, de la fiche ou du rôle (changer d'équipe vide la fiche)
+  choisirCompte(d, el) {
+    const choix = Ecrans.monAdmin.choixCompte(etat.comptesEnAttente.find(c => c.userId === d.compte));
+    const nouveau = { ...choix, [d.champ]: el.value, ...(d.champ === 'equipe' ? { fiche: '' } : {}) };
+    majUi('comptes', { [d.compte]: nouveau });
+  },
+  /* Donner l'accès : la fiche choisie reçoit l'email du compte (lier_ma_ressource la relie à la
+     connexion) ou une fiche est créée, puis invitation dans l'équipe (Neon Auth), acceptée d'office
+     à la connexion de la personne (accepterInvitationsEnAttente, etat.js). */
+  async donnerAcces(d) {
+    const compte = etat.comptesEnAttente.find(c => c.userId === d.compte), choix = Ecrans.monAdmin.choixCompte(compte);
+    if (!choix.equipe || !choix.fiche) return notifier('Choisissez l’équipe et la fiche ressource', 'erreur');
+    const reussi = await executer(async () => {
+      if (choix.fiche === 'nouvelle') await Api.creer('ressources', { nom: compte.nom || compte.email, email: compte.email, equipeId: choix.equipe });
+      else await Api.modifier('ressources', { id: 'eq.' + choix.fiche }, { email: compte.email });
+      await Api.inviterMembre(choix.equipe, compte.email, choix.role);
+    }, 'ressources');
+    if (reussi) { await chargerComptesEnAttente(); notifier(`Accès donné à ${compte.nom || compte.email}`); rendre(); }
+  },
+  async ignorerCompte(d) {
+    if (!confirm('Écarter ce compte de la liste ? Il n’aura pas accès à l’application.')) return;
+    const reussi = await executer(() => Api.creer('comptes_ignores', { userId: d.compte }));
+    if (reussi) { await chargerComptesEnAttente(); rendre(); }
+  },
   // Envoi du daily : écrit le réglage complet du projet (valeurs par défaut si première saisie)
   majEnvoiDaily(d, el) {
     const actuel = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.projetId === d.projet) || {}) };

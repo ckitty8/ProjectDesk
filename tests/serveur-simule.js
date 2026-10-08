@@ -115,6 +115,7 @@ function amorcer() {
   bd.temps_saisis = []; bd.feuilles_temps = [];
   // Envoi du daily par projet (migration 019) : renseigné après la création des projets (plus bas)
   bd.envois_daily_projet = [];
+  bd.comptes_ignores = [];   // comptes écartés par un administrateur (migration 024)
   bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // saisies de l'onglet Capacité (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
@@ -278,7 +279,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'] };
 function filtrer(lignes, params) {
   let r = lignes;
   // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne
@@ -313,6 +314,15 @@ async function donnees(req, res, table, url) {
   if (!moi) return envoyer(res, 401, { message: 'JWT manquant' });
   if (table.startsWith('rpc/')) {
     if (table === 'rpc/lier_ma_ressource') bd.ressources.filter(r => !r.user_id && r.email === moi.email).forEach(r => { r.user_id = moi.id; });
+    // Comptes en attente (migration 024) : inscrits sans équipe, ni administrateurs, ni écartés — administrateurs seulement
+    if (table === 'rpc/comptes_en_attente') {
+      if (!bd.administrateurs.some(a => a.user_id === moi.id)) return envoyer(res, 200, []);
+      const idsEquipes = new Set(bd.equipes.map(e => e.id));
+      return envoyer(res, 200, utilisateurs.filter(u => !membres.some(m => m.userId === u.id && idsEquipes.has(m.organizationId))
+          && !bd.administrateurs.some(a => a.user_id === u.id) && !bd.comptes_ignores.some(c => c.user_id === u.id))
+        .map(u => ({ user_id: u.id, nom: u.name, email: u.email, inscrit_le: maintenant(), derniere_connexion: null,
+          invite: invitations.some(i => i.email === u.email && i.status === 'pending') })));
+    }
     // Envoi du daily par projet (migration 019) : clé du projet et daily prêt à envoyer (version simplifiée)
     if (table === 'rpc/cle_envoi_daily_projet') {
       const { p_projet, p_renouveler } = await lireCorps(req);

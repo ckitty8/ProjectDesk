@@ -42,13 +42,15 @@ const Coquille = (() => {
     // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
     { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
-    { id: 'monAdmin', libelle: 'Administration', icone: 'admin' }
+    // Pastille rouge : comptes inscrits qui attendent un accès (administrateurs, migration 024)
+    { id: 'monAdmin', libelle: 'Administration', icone: 'admin', alerte: () => etat.comptesEnAttente.filter(c => !c.invite).length }
   ];
   const PLEIN_ECRAN = ['connexion', 'choixEquipe'];
 
   function lienMenu(item) {
     const actif = etat.ecran === item.id && !item.enfants;
-    const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}<span>${esc(item.libelle)}</span></a>`;
+    const alerte = item.alerte ? item.alerte() : 0;
+    const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}<span>${esc(item.libelle)}</span>${alerte ? `<span class="pastille-alerte">${alerte}</span>` : ''}</a>`;
     if (!item.enfants) return html;
     return html + `<div class="sous-menu">${item.enfants.map(e => e.groupe
       ? `<div class="sous-lien" style="cursor:default;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6F7C99;margin-top:4px">${esc(e.groupe)}</div>`

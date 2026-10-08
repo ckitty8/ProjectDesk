@@ -24,6 +24,7 @@ const etat = {
   membresEquipe: {},        // { equipeId: [{ userId, nom, role }] } (comptes Neon Auth des équipes)
   equipeCourante: null,     // id de l'équipe ouverte
   estAdmin: false,
+  comptesEnAttente: [],     // inscrits sans accès (administrateurs, Administration › Comptes en attente)
   ecran: 'dashboard',
   panneau: null,            // { type: 'projet', id } | { type: 'nouveauProjet', ... }
   modale: null,             // { type: 'affectation', ... }
@@ -166,8 +167,10 @@ async function demarrer() {
     ]);
     etat.organisations = organisations || [];
     etat.invitations = (invitations || []).filter(i => i.status === 'pending');
+    if (!etat.organisations.length && etat.invitations.length) await accepterInvitationsEnAttente();
     await chargerDonnees();
     etat.estAdmin = etat.d.administrateurs.some(a => a.userId === session.user.id);
+    await chargerComptesEnAttente();
     await chargerRoles();
     const equipesReconnues = mesEquipes();
     const memorisee = lireMemoire('equipe');
@@ -191,6 +194,22 @@ async function demarrer() {
   } catch (e) {
     majEtat({ chargement: false, erreur: e.message });
   }
+}
+
+/* Compte sans équipe qui a reçu une invitation : l'accès a été donné par un administrateur
+   (Administration › Comptes en attente, migration 024). On accepte d'office pour que la personne
+   entre directement, sans autre démarche (maquette docs/maquettes/comptes-en-attente/). */
+async function accepterInvitationsEnAttente() {
+  for (const invitation of etat.invitations) await Api.accepterInvitation(invitation.id).catch(() => {});
+  etat.organisations = await Api.listerOrganisations() || [];
+  etat.invitations = [];
+}
+
+// Inscrits sans accès (administrateurs seulement ; liste vide pour les autres, voir comptes_en_attente)
+async function chargerComptesEnAttente() {
+  const lignes = etat.estAdmin ? (await Api.executer('comptes_en_attente').catch(() => null)) || [] : [];
+  // Colonnes SQL → noms de l'application (user_id → userId, inscrit_le → inscritLe)
+  etat.comptesEnAttente = lignes.map(c => ({ userId: c.user_id, nom: c.nom, email: c.email, inscritLe: c.inscrit_le, invite: c.invite }));
 }
 
 // Rôle Neon Auth (owner / admin / member) de l'utilisateur dans chacune de ses équipes

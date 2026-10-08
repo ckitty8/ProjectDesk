@@ -264,3 +264,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .choix-methode { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--bordure); border-left: 4px solid; border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 12.5px; }
 .choix-methode > span { display: flex; flex-direction: column; gap: 2px; }
 .choix-methode:has(input:checked) { background: var(--primaire-clair); border-color: #B7C8F5; }
+
+/* Pastille rouge d'un menu (ex. comptes en attente d'accès sur Administration) */
+.pastille-alerte { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
