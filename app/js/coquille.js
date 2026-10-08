@@ -77,6 +77,7 @@ const Coquille = (() => {
           ${mesEquipes().length ? '<a data-action="changerEquipe">Changer</a>' : ''}</div>
         <div class="bloc-moi">${C.avatar(nom, true)}<div><div class="moi-nom">${esc(nom)}</div>
           ${etat.estCreateur ? '<span class="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>' : ''}
+          ${etat.simulation ? '<span class="badge-createur" title="Simulation des rôles en cours">simulation</span>' : ''}
           <a class="moi-sortie" data-action="deconnexion">Se déconnecter</a></div></div>
       </div>
     </aside>`;
@@ -123,14 +124,14 @@ const Coquille = (() => {
     if (etat.erreur) return `<div class="plein-ecran"><div class="carte boite"><h2>Connexion aux données impossible</h2>
       <p>${esc(etat.erreur)}</p><button class="btn primaire" data-action="reessayer">Réessayer</button>
       <button class="btn" data-action="deconnexion">Se déconnecter</button></div></div>`;
-    if (PLEIN_ECRAN.includes(etat.ecran)) return Ecrans[etat.ecran].rendre();
+    if (PLEIN_ECRAN.includes(etat.ecran)) return Simulation.bandeau() + Ecrans[etat.ecran].rendre();
     const ecran = Ecrans[etat.ecran] || Ecrans.dashboard;
     return `
     <div class="appli">
       ${barreLaterale()}
       <main class="principal">
         ${enTete(ecran)}
-        <div class="contenu">${ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis()) ? sansEquipe() : ecran.rendre()}</div>
+        <div class="contenu">${Simulation.bandeau()}${ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis()) ? sansEquipe() : ecran.rendre()}</div>
       </main>
       ${etat.panneau ? `<div class="voile" data-action="fermer"></div>${Panneau.rendre()}` : ''}
       ${etat.modale ? `<div class="voile" data-action="fermer"></div>${Modale.rendre()}` : ''}
@@ -146,7 +147,7 @@ Object.assign(Actions, {
   changerEquipe: () => allerA('choixEquipe'),
   async deconnexion() {
     await Api.deconnecter().catch(() => {});
-    majEtat({ session: null, equipeCourante: null, ecran: 'connexion', d: {} });
+    majEtat({ session: null, equipeCourante: null, ecran: 'connexion', d: {}, simulation: null, reel: null });
   }
 });
 

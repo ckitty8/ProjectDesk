@@ -61,7 +61,7 @@ Pour afficher l'entrée « Contacter l'administrateur », renseigner `CONTACT_AI
 
 | Qui | Peut |
 |-----|------|
-| Créateur (table `createur`, un seul compte) | Tous les droits d'un administrateur, sur **toutes** les équipes même sans en être membre ; seul à nommer ou retirer un administrateur ; ne peut pas être retiré depuis l'application |
+| Créateur (table `createur`, un seul compte) | Tous les droits d'un administrateur, sur **toutes** les équipes même sans en être membre ; seul à nommer ou retirer un administrateur ; ne peut pas être retiré depuis l'application ; **simule** les autres rôles (Administration › Simulation des rôles, lecture seule) |
 | Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels (dont postes et types de contrat), donner l'accès aux comptes en attente |
 | Responsable d'équipe (rôle `owner` / `admin` de l'organisation) | Inviter des membres, valider les feuilles de temps |
 | Membre d'une équipe | Tout lire (section Général) ; modifier son équipe et ses projets (sauf rôle projet « Lecteur ») |
@@ -82,5 +82,6 @@ app/
     ├── coquille.js     # barre latérale et en-tête
     ├── panneau-projet.js, modale.js
     ├── excel.js        # fabrication des fichiers Excel (.xlsx), sans bibliothèque
+    ├── simulation.js   # simulation des rôles par le créateur (lecture seule)
     └── ecrans/         # un fichier par écran
 ```

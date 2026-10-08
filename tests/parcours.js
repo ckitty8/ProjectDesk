@@ -603,6 +603,26 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       etat.estCreateur && etat.estAdmin && mesEquipes().length === etat.d.equipes.length && etat.ecran !== 'choixEquipe'
       && etat.organisations.some(o => o.name === 'Direction Digitale') && !!document.querySelector('.badge-createur')));
     await capture('27-createur');
+    // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
+    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);
+    await capture('28-simulation-roles');
+    await page.evaluate(() => { const liste = document.querySelector('select[name="personne-membre"]');
+      liste.value = [...liste.options].find(o => o.textContent.startsWith('Thomas Bernard')).value; });
+    await page.click('[data-action="demarrerSimulation"][data-role="membre"]'); await page.waitForTimeout(300);
+    verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
+      !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
+      && !document.querySelector('[data-ecran="previsionnel"]') && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
+    await aller('daily'); await page.waitForTimeout(300);
+    verifier('Simulation : écrans de la personne (son daily par projet)', (await texte()).includes('SSO & gestion des droits')
+      && (await texte()).includes('Mapping des rôles applicatifs'));
+    await capture('29-simulation-en-cours');
+    verifier('Simulation : lecture seule (écriture refusée)', await page.evaluate(() =>
+      Api.creer('absences', { ressourceId: maRessource().id, jour: '2026-12-01', type: 'Congés validé' }).then(() => false, e => e.message.includes('lecture seule'))));
+    await page.selectOption('.bandeau-simulation select', 'sansEquipe|'); await page.waitForTimeout(300);
+    verifier('Simulation : compte sans équipe (écran d’attente avec bandeau)', (await texte()).includes('Votre compte est créé') && !!(await page.$('.bandeau-simulation')));
+    await page.click('[data-action="arreterSimulation"]'); await page.waitForTimeout(300);
+    verifier('Simulation : retour au rôle de créateur', await page.evaluate(() =>
+      etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'monAdmin'));
 
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');

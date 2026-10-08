@@ -15,8 +15,19 @@ const Api = (() => {
 
   /* ---------- Outils ---------- */
 
+  /* Simulation des rôles (simulation.js) : LECTURE SEULE. Toute écriture est refusée ici, à un seul
+     endroit (la base appliquerait les droits réels du créateur). Exceptions : appels POST qui ne
+     font que lire (fonctions SQL de lecture) et la déconnexion. */
+  const POST_SANS_ECRITURE = ['/rpc/comptes_en_attente', '/rpc/daily_projet', '/sign-out'];
+  function refuserEnSimulation(url, methode) {
+    if (typeof etat === 'undefined' || !etat.simulation || !methode || methode === 'GET') return;
+    if (POST_SANS_ECRITURE.some(fin => url.split('?')[0].endsWith(fin))) return;
+    throw new Error('Simulation : lecture seule, rien n’est enregistré');
+  }
+
   // Appel HTTP commun : lève une erreur lisible si la réponse n'est pas OK
   async function appeler(url, options = {}) {
+    refuserEnSimulation(url, options.method);
     const reponse = await fetch(url, { credentials: 'include', ...options });
     const texte = await reponse.text();
     const corps = texte ? JSON.parse(texte) : null;

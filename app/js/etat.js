@@ -29,6 +29,8 @@ const etat = {
   ecran: 'dashboard',
   panneau: null,            // { type: 'projet', id } | { type: 'nouveauProjet', ... }
   modale: null,             // { type: 'affectation', ... }
+  simulation: null,         // { cle, ressourceId } : rôle simulé par le créateur (simulation.js)
+  reel: null,               // identité réelle mise de côté pendant une simulation
   ui: {},                   // états d'affichage propres à chaque écran (onglets, filtres, mois...)
   d: {}                     // données chargées (voir TABLES)
 };
@@ -147,6 +149,8 @@ function notifier(message, type = 'info') {
 
 /* ---------- Démarrage : session, équipes, données ---------- */
 async function demarrer() {
+  // Redémarrage complet (Actualiser, Réessayer) : une simulation en cours prend fin
+  if (etat.reel) Object.assign(etat, etat.reel, { reel: null, simulation: null });
   majEtat({ chargement: true, erreur: null });
   try {
     // Retour du lien « Mot de passe oublié » (?token=…) : choix du nouveau mot de passe
@@ -244,7 +248,9 @@ function mesEquipes() {
 }
 const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
-const maRessource = () => (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
+// Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
+const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
+  : (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
 function peutEditerProjet(projet) {
   if (!projet) return false;
   if (estMembreDe(projet.equipeId)) return true;
