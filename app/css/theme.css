@@ -276,3 +276,40 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .bandeau-simulation .champ { background: #fff; color: var(--texte); border: 0; }
 .bandeau-simulation .btn { background: #fff; color: #5B2A9E; border: 0; font-weight: 600; }
 .grille-simulation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+/* ---------- Grilles d'écran (remplacent des styles en ligne, pour pouvoir s'adapter à l'écran) ---------- */
+.ecran-daily { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; max-width: 1280px; }
+.ecran-daily .historique { margin-top: 58px; }
+.grille-objectifs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.grille-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .75fr); gap: 16px; align-items: start; }
+.bouton-menu { display: none; font-size: 17px; padding: 0 10px; }
+
+/* ---------- Écran étroit : Galaxy Z Fold 7 déplié (≈ 880 px de large), tablette ----------
+   Demande du porteur (2026-10-08 ; maquette docs/maquettes/zfold7/). Sous 1100 px :
+   le menu latéral devient un tiroir ouvert par ☰ (il ne mange plus un quart de l'écran),
+   la recherche (inactive) disparaît, panneaux et fenêtres tiennent dans l'écran. */
+@media (max-width: 1100px) {
+  .bouton-menu { display: inline-flex; }
+  .laterale { position: fixed; top: 0; left: 0; bottom: 0; z-index: 40; transform: translateX(-100%); transition: transform .2s ease; }
+  .laterale.ouverte { transform: none; box-shadow: 8px 0 30px rgba(10, 22, 51, .3); }
+  .voile-menu { z-index: 35; }
+  .entete { padding: 0 16px; }
+  .entete .fil { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .recherche { display: none; }
+  .ecran { padding: 20px 16px; }
+  .panneau { width: min(480px, 100vw); }
+  .modale { width: min(640px, calc(100vw - 24px)); }
+}
+/* Sous 960 px : les écrans à deux colonnes passent sur une seule (historique du daily sous la saisie) */
+@media (max-width: 960px) {
+  .ecran-daily, .grille-dashboard { grid-template-columns: minmax(0, 1fr); }
+  .ecran-daily .historique { margin-top: 0; }
+  .grille-objectifs, .grille-simulation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grille-kpi, .grille-kpi.q4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entete-ecran { flex-wrap: wrap; align-items: flex-start; }
+}
+/* Écran tactile : cibles assez grandes pour le doigt */
+@media (pointer: coarse) {
+  .btn, .puce, .champ, .onglet { min-height: 36px; }
+  .menu-lien, .sous-lien { min-height: 40px; }
+}

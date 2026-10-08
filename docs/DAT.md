@@ -98,6 +98,7 @@
 | 1.84    | 2026-10-08 | **Rôle Créateur** (porteur du projet, « ok 2 » ; maquette `roles-droits/`) : rôle unique, tous les droits d'un administrateur sur toutes les équipes même sans en être membre, seul à nommer ou retirer un administrateur, non retirable depuis l'application ; badge « ★ Créateur » dans le bloc utilisateur ; invité d'office (et acceptation automatique) dans chaque équipe créée par un autre administrateur (`inviterCreateur`). Migration 025 (sauvegarde préalable « sauvegarde-avant-025-2026-10-08 ») : table `createur` (une ligne : ciritecgrp@gmail.com), fonction `est_createur()`, `est_admin()`, `mes_equipes()` et `est_responsable_equipe()` incluent le créateur, écriture sur `administrateurs` réservée au créateur, `comptes_en_attente()` l'exclut (§ 4, § 5, § 9) |
 | 1.85    | 2026-10-08 | **Simulation des rôles** (créateur, maquette `simulation-roles/`) : Administration › onglet « ★ Simulation des rôles » — une carte par rôle (Administrateur, Responsable d'équipe, Chef de projet, Membre, Lecteur de projet, Compte sans équipe) et une personne qui a ce rôle ; l'application s'affiche comme pour elle (identité, droits d'affichage, équipe et rôle dans l'équipe, fiche ressource) ; bandeau violet (changer de rôle, revenir au rôle de créateur) ; **lecture seule** : toute écriture refusée dans `Api` (`refuserEnSimulation`). Nouveau fichier `simulation.js`. Aucun changement en base (§ 2.1, § 3.3, § 9) |
 | 1.86    | 2026-10-08 | **Correctif accès donné non pris en compte** (incident : Cerine et Thomas restaient sur « Votre compte est créé » après « Donner l'accès ») : l'acceptation automatique passait par l'API de Neon Auth, dont l'échec était silencieux. Migration 026 : fonction `accepter_mes_invitations()` appelée à la connexion — la base accepte les invitations en attente adressées à l'email du compte (compte sans équipe ou créateur), échéance non bloquante. `accepterInvitationsEnAttente` (etat.js) retiré (§ 3.1, § 5) |
+| 1.87    | 2026-10-08 | **Affichage écran étroit — Galaxy Z Fold 7 déplié** (maquette `zfold7/`, captures `apres-daily.png`, `apres-menu-ouvert.png`, `30-zfold-deplie.png`) : sous 1 100 px le menu latéral devient un tiroir (bouton ☰, refermé après le choix d'un écran), recherche masquée, panneaux et fenêtres limités à l'écran ; sous 960 px Daily (historique sous la saisie), Dashboard, indicateurs et objectifs sur 2 colonnes ; cibles tactiles agrandies. Grilles d'écran passées en classes CSS (`ecran-daily`, `grille-objectifs`, `grille-dashboard`). Ordinateur inchangé (§ 2) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -145,6 +146,11 @@ Principes :
   le seul juge des droits (RLS). Les droits calculés côté écran (`etat.js`) ne servent qu'à
   masquer les boutons inutiles.
 - **Aucune dépendance** JavaScript, aucun build (règle n°1). Polices IBM Plex (Google Fonts).
+- **Affichage adaptatif** (`theme.css`, fin du fichier ; demande du porteur 2026-10-08 : Galaxy Z Fold 7 déplié,
+  ≈ 884 px) : sous 1 100 px, menu latéral en tiroir (bouton ☰ de l'en-tête, `basculerMenuLateral`, refermé par
+  `allerA`), recherche masquée, panneaux et fenêtres limités à la largeur de l'écran ; sous 960 px, écrans à deux
+  colonnes sur une seule et grilles sur deux colonnes ; écran tactile : cibles de 36 à 40 px. Une nouvelle grille
+  d'écran se déclare en classe CSS (pas en style en ligne) pour pouvoir s'adapter.
 - Toutes les tables sont chargées à l'ouverture (volumétrie d'équipes projet) ; après chaque
   écriture, seules les tables touchées sont rechargées (`executer()` / `recharger()`). Exception :
   les notes de daily ne sont chargées que sur les `JOURS_DAILY` (90) derniers jours ; un écran peut

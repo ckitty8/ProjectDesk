@@ -61,7 +61,7 @@ const Coquille = (() => {
     const eq = equipe(etat.equipeCourante);
     const nom = etat.session.user.name || etat.session.user.email;
     return `
-    <aside class="laterale">
+    <aside class="laterale${ui('menuLateral', { ouvert: false }).ouvert ? ' ouverte' : ''}">
       <div class="marque">
         <div class="logo"><i style="height:8px"></i><i style="height:14px"></i><i style="height:11px;background:#9DB6FF"></i></div>
         <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div>
@@ -87,6 +87,7 @@ const Coquille = (() => {
     const general = ecran.section === 'general';
     return `
     <header class="entete">
+      <button class="btn bouton-menu" data-action="basculerMenuLateral" aria-label="Menu" title="Menu">☰</button>
       <div class="fil"><span class="discret">${general ? 'Général' : 'Mon dashboard'}</span><span class="sep">/</span>
         <b>${esc(ecran.titre)}</b>
         ${general ? C.badge('Lecture seule', '#4A5363', '#F1F3F7') : C.badge('Édition', '#0033AD', '#E8EEFF')}</div>
@@ -129,6 +130,7 @@ const Coquille = (() => {
     return `
     <div class="appli">
       ${barreLaterale()}
+      ${ui('menuLateral', { ouvert: false }).ouvert ? '<div class="voile voile-menu" data-action="basculerMenuLateral"></div>' : ''}
       <main class="principal">
         ${enTete(ecran)}
         <div class="contenu">${Simulation.bandeau()}${ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis()) ? sansEquipe() : ecran.rendre()}</div>
@@ -153,6 +155,8 @@ Object.assign(Actions, {
 
 /* Bouton Aide : ouverture du menu, affichage d'un guide dans une fenêtre */
 Object.assign(Actions, {
+  // Écran étroit : le menu latéral s'ouvre par-dessus le contenu (bouton ☰ de l'en-tête)
+  basculerMenuLateral: () => majUi('menuLateral', { ouvert: !ui('menuLateral', { ouvert: false }).ouvert }),
   basculerMenuAide: () => majUi('menuAide', { ouvert: !ui('menuAide', { ouvert: false }).ouvert }),
   ouvrirAide(d) {
     majUi('menuAide', { ouvert: false }, { rendre: false });

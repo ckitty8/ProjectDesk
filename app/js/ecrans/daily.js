@@ -70,7 +70,7 @@ Ecrans.daily = {
         : `Demi-journée de <b>${esc(b.absence.type)}</b> ce jour : la saisie reste ouverte.`}</div>` : '';
 
     return `
-    <div class="ecran" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:start;max-width:1280px">
+    <div class="ecran ecran-daily">
       <div class="pile" style="gap:16px">
         ${entete}
         <div class="carte" style="padding:12px 16px"><div class="ligne-flex" style="justify-content:space-between">
@@ -80,7 +80,7 @@ Ecrans.daily = {
         ${bandeau}
         ${projets.map(p => this.carteProjet(p, jour, b.absentJournee)).join('') || `<div class="carte">${C.vide('Aucun projet en cours : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur).')}</div>`}
       </div>
-      <div class="carte historique" style="margin-top:58px">
+      <div class="carte historique">
         <div class="carte-titre"><h2>Historique ${C.aide('dailyVisibilite')}</h2></div>
         ${historique.map(h => {
           const bh = this.bilan(h, projets);

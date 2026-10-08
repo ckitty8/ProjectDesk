@@ -51,6 +51,10 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
    « + Membre » (avec l'email : le lien avec le compte se fait automatiquement à la connexion),
    enfin sur le projet « + Membre ». Ajuster si besoin les onglets **Postes** et **Types de contrat**.
 
+## Écrans étroits
+
+L'application s'adapte sous 1 100 px de large (Galaxy Z Fold déplié, tablette) : menu en tiroir (bouton ☰), écrans sur une colonne. Rien ne change sur ordinateur.
+
 ## Aide
 
 Le bouton **Aide** (en-tête) affiche l'aide de l'écran courant, les premiers pas et les rôles.

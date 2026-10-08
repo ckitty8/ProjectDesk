@@ -624,6 +624,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation : retour au rôle de créateur', await page.evaluate(() =>
       etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'monAdmin'));
 
+    /* --- Écran étroit : Galaxy Z Fold 7 déplié (≈ 884 px) — menu en tiroir, écrans sur toute la largeur --- */
+    await page.setViewportSize({ width: 884, height: 1000 });
+    await page.evaluate(() => allerA('daily')); await page.waitForTimeout(300);   // menu masqué : navigation directe
+    const largeurContenu = await page.evaluate(() => document.querySelector('.contenu').getBoundingClientRect().width);
+    verifier('Z Fold déplié : menu latéral masqué, bouton ☰, contenu sur toute la largeur, pas de débordement',
+      await page.isVisible('[data-action="basculerMenuLateral"]') && largeurContenu > 860
+      && await page.evaluate(() => document.querySelector('.laterale').getBoundingClientRect().right <= 0 && document.documentElement.scrollWidth <= 884));
+    await page.click('[data-action="basculerMenuLateral"]'); await page.waitForTimeout(300);
+    const menuOuvert = await page.evaluate(() => document.querySelector('.laterale').getBoundingClientRect().left === 0);
+    await page.click('.laterale [data-action="aller"][data-ecran="dashboard"]'); await page.waitForTimeout(400);
+    verifier('Z Fold déplié : le menu s’ouvre par ☰ et se referme après le choix d’un écran', menuOuvert
+      && await page.evaluate(() => etat.ecran === 'dashboard' && !document.querySelector('.laterale.ouverte')));
+    await capture('30-zfold-deplie');
+    await page.setViewportSize({ width: 1440, height: 900 });
+
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
     await page.click('[data-action="connexionGoogle"]');

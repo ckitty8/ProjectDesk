@@ -64,8 +64,8 @@ Ecrans.dashboard = {
       <div class="grille-kpi">${kpis}</div>
       <div class="ligne-flex" style="justify-content:space-between"><h2>Objectifs T${t} ${annee}</h2>
         <span class="discret">${objs.length} objectifs · ${nbKr} résultats clés</span></div>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">${cartesObjectifs || `<div class="carte">${C.vide('Aucun objectif pour ce trimestre (saisie : Mon dashboard › Projets et Roadmap).')}</div>`}</div>
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.75fr);gap:16px;align-items:start">
+      <div class="grille-objectifs">${cartesObjectifs || `<div class="carte">${C.vide('Aucun objectif pour ce trimestre (saisie : Mon dashboard › Projets et Roadmap).')}</div>`}</div>
+      <div class="grille-dashboard">
         <div class="carte"><div class="carte-titre"><h2>Progression par trimestre</h2><span class="discret">Atteinte moyenne des OKR · ${annee}</span></div>
           <table class="tableau"><thead><tr><th>Équipe</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th></tr></thead><tbody>${lignesTrimestres}</tbody></table></div>
         <div class="carte"><div class="carte-titre"><h2>Projets à surveiller ${C.aide('projetsSurveiller')}</h2></div>

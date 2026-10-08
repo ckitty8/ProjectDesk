@@ -345,7 +345,8 @@ function ecrireMemoire(cle, valeur) { try { localStorage.setItem('pp_' + cle, va
 // Un écran peut déclarer auChargement() : données à rafraîchir à son ouverture
 // (ex. Daily des équipes recharge les notes saisies entre-temps par les coéquipiers).
 function allerA(ecran) {
-  majEtat({ ecran, panneau: null, modale: null });
+  // Sur écran étroit (Z Fold déplié, tablette), le menu latéral se referme après le choix d'un écran
+  majEtat({ ecran, panneau: null, modale: null, ui: { ...etat.ui, menuLateral: { ouvert: false } } });
   if (Ecrans[ecran] && Ecrans[ecran].auChargement) Ecrans[ecran].auChargement();
   rafraichirDonnees();
 }
