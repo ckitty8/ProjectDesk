@@ -576,7 +576,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`${ligneElodie} [data-action="donnerAcces"]`); await page.waitForTimeout(400);
     verifier('Comptes en attente : accès donné (fiche créée avec son email, invitation envoyée)', await page.evaluate(() =>
       etat.d.ressources.some(r => r.email === 'elodie@test.fr') && etat.comptesEnAttente.find(c => c.email === 'elodie@test.fr').invite
-      && !document.querySelector('.menu-lien .pastille-alerte')));
+      && Number((document.querySelector('.menu-lien .pastille-alerte') || { textContent: 0 }).textContent) === etat.comptesEnAttente.filter(c => !c.invite).length));
     await connecter('elodie@test.fr');
     verifier('Compte sans équipe : entre directement après l’accès donné (invitation acceptée d’office)', await page.evaluate(() =>
       mesEquipes().length === 1 && etat.ecran !== 'choixEquipe' && !!maRessource()));
@@ -638,6 +638,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.evaluate(() => etat.ecran === 'dashboard' && !document.querySelector('.laterale.ouverte')));
     await capture('30-zfold-deplie');
     await page.setViewportSize({ width: 1440, height: 900 });
+
+    /* --- Vérification de l'email (maquette verification-email) : code demandé, refusé si faux, accepté sinon --- */
+    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
+    await page.fill('input[name=email]', 'nonverifie@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
+    await page.waitForSelector('form[data-action-envoi="validerCodeEmail"]');
+    verifier('Email non vérifié : saisie du code à la connexion', (await texte()).includes('Vérifiez votre adresse email') && (await texte()).includes('nonverifie@test.fr'));
+    await capture('31-verification-email');
+    await page.fill('input[name=code]', '000000'); await page.click('form[data-action-envoi="validerCodeEmail"] button'); await page.waitForTimeout(300);
+    verifier('Email non vérifié : code faux refusé avec un message clair', (await texte()).includes('Code incorrect ou expiré'));
+    await page.fill('input[name=code]', '123456'); await page.click('form[data-action-envoi="validerCodeEmail"] button');
+    await page.waitForFunction(() => etat.session && etat.session.user.email === 'nonverifie@test.fr' && !etat.chargement);
+    verifier('Email non vérifié : bon code → connecté directement', await page.evaluate(() => etat.session.user.emailVerified === true));
 
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');

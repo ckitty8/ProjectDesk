@@ -33,7 +33,9 @@ const Api = (() => {
     const corps = texte ? JSON.parse(texte) : null;
     if (!reponse.ok) {
       const message = (corps && (corps.message || corps.error || corps.hint)) || `Erreur ${reponse.status}`;
-      throw new Error(message);
+      const erreur = new Error(message);
+      erreur.code = corps && corps.code;      // code technique de Neon Auth (ex. EMAIL_NOT_VERIFIED)
+      throw erreur;
     }
     return corps;
   }
@@ -71,6 +73,14 @@ const Api = (() => {
     appeler(auth('/sign-up/email'), json('POST', { name: nom, email, password: motDePasse }));
   const connecter = (email, motDePasse) =>
     appeler(auth('/sign-in/email'), json('POST', { email, password: motDePasse }));
+
+  /* Vérification de l'adresse email par code à 6 chiffres (Neon Auth, méthode « otp » ;
+     maquette docs/maquettes/verification-email/) : envoi du code, puis vérification — qui ouvre
+     la session (réglage « connexion automatique après vérification »). */
+  const envoyerCodeVerification = email =>
+    appeler(auth('/email-otp/send-verification-otp'), json('POST', { email, type: 'email-verification' }));
+  const verifierEmail = (email, code) =>
+    appeler(auth('/email-otp/verify-email'), json('POST', { email, otp: code }));
 
   // Adresse de retour après Google : la page de l'application, sans paramètres
   const adresseRetour = () => location.origin + location.pathname;
@@ -239,7 +249,7 @@ const Api = (() => {
   }
 
   return {
-    inscrire, connecter, connecterGoogle, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
+    inscrire, connecter, connecterGoogle, envoyerCodeVerification, verifierEmail, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
     demanderReinitialisation, reinitialiserMotDePasse, lireJetonReinitialisation,
     listerOrganisations, creerOrganisation, activerOrganisation, lireOrganisation, inviterMembre,
     listerMesInvitations, accepterInvitation, refuserInvitation, supprimerOrganisation,

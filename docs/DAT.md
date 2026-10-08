@@ -99,6 +99,7 @@
 | 1.85    | 2026-10-08 | **Simulation des rôles** (créateur, maquette `simulation-roles/`) : Administration › onglet « ★ Simulation des rôles » — une carte par rôle (Administrateur, Responsable d'équipe, Chef de projet, Membre, Lecteur de projet, Compte sans équipe) et une personne qui a ce rôle ; l'application s'affiche comme pour elle (identité, droits d'affichage, équipe et rôle dans l'équipe, fiche ressource) ; bandeau violet (changer de rôle, revenir au rôle de créateur) ; **lecture seule** : toute écriture refusée dans `Api` (`refuserEnSimulation`). Nouveau fichier `simulation.js`. Aucun changement en base (§ 2.1, § 3.3, § 9) |
 | 1.86    | 2026-10-08 | **Correctif accès donné non pris en compte** (incident : Cerine et Thomas restaient sur « Votre compte est créé » après « Donner l'accès ») : l'acceptation automatique passait par l'API de Neon Auth, dont l'échec était silencieux. Migration 026 : fonction `accepter_mes_invitations()` appelée à la connexion — la base accepte les invitations en attente adressées à l'email du compte (compte sans équipe ou créateur), échéance non bloquante. `accepterInvitationsEnAttente` (etat.js) retiré (§ 3.1, § 5) |
 | 1.87    | 2026-10-08 | **Affichage écran étroit — Galaxy Z Fold 7 déplié** (maquette `zfold7/`, captures `apres-daily.png`, `apres-menu-ouvert.png`, `30-zfold-deplie.png`) : sous 1 100 px le menu latéral devient un tiroir (bouton ☰, refermé après le choix d'un écran), recherche masquée, panneaux et fenêtres limités à l'écran ; sous 960 px Daily (historique sous la saisie), Dashboard, indicateurs et objectifs sur 2 colonnes ; cibles tactiles agrandies. Grilles d'écran passées en classes CSS (`ecran-daily`, `grille-objectifs`, `grille-dashboard`). Ordinateur inchangé (§ 2) |
+| 1.88    | 2026-10-08 | **Vérification de l'email par code** (maquette `verification-email/`, capture `31-verification-email.png`) : écran « Vérifiez votre adresse email » (code à 6 chiffres envoyé par Neon Auth, Renvoyer un code, Changer d'adresse) — après une création de compte sans session ouverte, à la connexion refusée pour email non vérifié (`EMAIL_NOT_VERIFIED`), ou à la demande (« Vérifier mon email » dans le bloc utilisateur d'un compte non vérifié). `Api.envoyerCodeVerification`, `Api.verifierEmail`, code d'erreur Neon Auth transmis (`erreur.code`). Réglage Neon Auth **inchangé** : la vérification sera exigée après essai sur le compte du porteur (§ 3.1, § 8) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -192,7 +193,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 
 | Écran (`etat.ecran`) | Fichier | Rôle | Capture |
 |------|---------|------|---------|
-| `connexion` | `connexion.js` | Connexion / création de compte (email + mot de passe), Google | `01-connexion.png` |
+| `connexion` | `connexion.js` | Connexion / création de compte (email + mot de passe), Google ; **vérification de l'email** par code à 6 chiffres (création de compte, connexion d'un compte non vérifié quand c'est exigé, ou « Vérifier mon email » depuis le bloc utilisateur) | `01-connexion.png` |
 | `choixEquipe` | `choix-equipe.js` | Équipes de l'utilisateur, invitations reçues ; compte sans équipe ni invitation : « Votre compte est créé », demande visible par l'administrateur (Comptes en attente), bouton **Actualiser** ; une invitation reçue sans équipe est acceptée d'office à la connexion, par la base (`accepter_mes_invitations()`, migration 026) | `02-choix-equipe.png` |
 
 ### 3.2 Section « Général » (lecture)
@@ -438,7 +439,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (108 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (113 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
@@ -510,10 +511,10 @@ Une correction de la base issue de l'audit passe par une migration montrée au p
 | # | Sujet | État |
 |---|-------|------|
 | O1 | Recherche ⌘K (en-tête) | Affichée, inactive — à concevoir |
-| O2 | Pièces jointes des demandes (stockage de fichiers) | Champ affiché, non fonctionnel — Neon Object Storage envisageable |
+| O2 | Pièces jointes des demandes (stockage de fichiers) | Sans objet depuis le 2026-10-05 (demandes gérées dans Azure DevOps) |
 | O3 | Connexion Google : identifiants partagés de Neon | À remplacer par ceux du projet avant la production |
-| O4 | Invitations par email (nécessite la vérification d'email) | Désactivées : invitations visibles dans l'écran de choix d'équipe |
-| O5 | Gestion des administrateurs globaux depuis l'application | Aujourd'hui par SQL (table `administrateurs`) |
+| O4 | Vérification de l'email exigée (Neon Auth) | Écran de saisie du code en ligne (1.88) ; réglage à activer après essai sur le compte du porteur (« Vérifier mon email »). Invitations : acceptées par la base à la connexion (migration 026) |
+| O5 | Gestion des administrateurs globaux depuis l'application | Réservée au créateur (migration 025) ; aujourd'hui par SQL, écran prévu avec « Rôles et droits » |
 | O6 | Indicateurs « évolution vs trimestre précédent » de la maquette (+2 vs T3…) | Non calculés (pas d'historique figé) |
 | O7 | Recette réelle (connexion, RLS avec jetons réels) | À faire par le porteur (le conteneur de développement n'accède pas à Neon Auth) |
 | O8 | Envoi **direct** du daily (étape 2) | Réglable dans Administration › Envoi du daily ; envoi effectif à brancher (tâche planifiée Vercel + service d'envoi, clé saisie par le porteur dans Vercel) |

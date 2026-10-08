@@ -313,3 +313,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
   .btn, .puce, .champ, .onglet { min-height: 36px; }
   .menu-lien, .sous-lien { min-height: 40px; }
 }
+
+/* Code de vérification de l'email (connexion) : 6 chiffres bien espacés, faciles à lire et à taper */
+input.code-verification { height: 52px; text-align: center; font-size: 26px; font-weight: 600; letter-spacing: 12px; font-family: var(--mono); }

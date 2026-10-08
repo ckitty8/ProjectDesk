@@ -78,6 +78,7 @@ const Coquille = (() => {
         <div class="bloc-moi">${C.avatar(nom, true)}<div><div class="moi-nom">${esc(nom)}</div>
           ${etat.estCreateur ? '<span class="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>' : ''}
           ${etat.simulation ? '<span class="badge-createur" title="Simulation des rôles en cours">simulation</span>' : ''}
+          ${etat.session.user.emailVerified === false && !etat.simulation ? '<a class="moi-sortie" data-action="verifierMonEmail">Vérifier mon email</a> · ' : ''}
           <a class="moi-sortie" data-action="deconnexion">Se déconnecter</a></div></div>
       </div>
     </aside>`;

@@ -51,6 +51,8 @@ function amorcer() {
   bd.administrateurs = [{ user_id: camille.id }, { user_id: admin.id }];
   // Rôle Créateur (migration 025) : compte sans équipe Neon Auth, qui voit toutes les équipes
   const createur = u('Christelle Créatrice', 'createur@test.fr');
+  // Compte dont l'email n'est pas vérifié (vérification de l'email exigée) : code simulé 123456
+  u('Victor Nonvérifié', 'nonverifie@test.fr').emailVerified = false;
   bd.createur = [{ ligne_unique: true, user_id: createur.id, email: createur.email }];
 
   const PERS = [['cl', 'Camille Laurent', 'pf', 'Chef de projet', 100, camille.id], ['tb', 'Thomas Bernard', 'pf', 'Dév. back-end', 100, thomas.id],
@@ -192,7 +194,7 @@ function ouvrirSession(res, u) {
   const jeton = uuid(); sessions[jeton] = u.id;
   return { 'Set-Cookie': `sim_session=${jeton}; Path=/; HttpOnly` };
 }
-const vueUtilisateur = u => ({ id: u.id, name: u.name, email: u.email });
+const vueUtilisateur = u => ({ id: u.id, name: u.name, email: u.email, emailVerified: u.emailVerified !== false });
 
 /* ---------- Neon Auth simulé ---------- */
 async function auth(req, res, chemin, url) {
@@ -202,12 +204,22 @@ async function auth(req, res, chemin, url) {
     case '/sign-in/email': {
       const u = utilisateurs.find(x => x.email === corps.email && x.password === corps.password);
       if (!u) return envoyer(res, 401, { message: 'Invalid email or password' });
+      // Vérification de l'email exigée (réglage Neon Auth) : compte non vérifié refusé
+      if (u.emailVerified === false) return envoyer(res, 403, { code: 'EMAIL_NOT_VERIFIED', message: 'Email not verified' });
       return envoyer(res, 200, { user: vueUtilisateur(u) }, ouvrirSession(res, u));
     }
     case '/sign-up/email': {
       if (utilisateurs.some(x => x.email === corps.email)) return envoyer(res, 422, { message: 'Email déjà utilisé' });
       const u = { id: uuid(), name: corps.name, email: corps.email, password: corps.password }; utilisateurs.push(u);
       return envoyer(res, 200, { user: vueUtilisateur(u) }, ouvrirSession(res, u));
+    }
+    // Vérification de l'email par code (méthode « otp ») : le code simulé est toujours 123456
+    case '/email-otp/send-verification-otp': return envoyer(res, 200, { success: true });
+    case '/email-otp/verify-email': {
+      const u = utilisateurs.find(x => x.email === corps.email);
+      if (!u || corps.otp !== '123456') return envoyer(res, 400, { code: 'INVALID_OTP', message: 'Invalid OTP' });
+      u.emailVerified = true;
+      return envoyer(res, 200, { status: true, user: vueUtilisateur(u) }, ouvrirSession(res, u));   // connexion automatique
     }
     // Mot de passe oublié : le « mail » est simulé par /auth/dernier-lien-simule (lien du dernier email envoyé)
     case '/request-password-reset': {
