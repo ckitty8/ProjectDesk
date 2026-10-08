@@ -95,6 +95,7 @@
 | 1.81    | 2026-10-08 | **Revue qualité outillée** : skill `revue-qualite` (`.claude/skills/revue-qualite/SKILL.md` : nettoyage, lisibilité, cohérence entre pages, audit de la base, documents) ; `scripts/audit-code.js` (liens cassés, code mort — actions, fonctions, méthodes, `Calculs`, composants, classes CSS —, écrans inaccessibles ou sans guide, tables et fonctions SQL absentes des migrations, versions `?v=`, restes de mise au point, lisibilité) ; `db/audit/verifier-bdd.sql` (audit en lecture seule : RLS, clés, droits, fonctions, valeurs hors référentiel, cohérence des données). Première revue : conversions jours ↔ heures centralisées (`Calculs.joursEnHeures`, `Calculs.heuresEnJours`), exports internes retirés de `Calculs`, capture d'échec de test retirée du dépôt (`.gitignore`) (§ 6, § 11) |
 | 1.82    | 2026-10-08 | Migration 023 (accord du porteur, sauvegarde préalable : branche Neon « sauvegarde-avant-023-2026-10-08 ») : fonction `partage_une_equipe` supprimée (code mort depuis la migration 020) ; index sur 9 clés étrangères (équipes, objectifs, résultats clés, projets, affectations, temps saisis, notes de daily). Spécification Roadmap mise en attente (demandes dans Azure DevOps). Aucune donnée touchée (§ 4, § 5) |
 | 1.83    | 2026-10-08 | **Comptes en attente d'accès** (maquette `comptes-en-attente/` ; cas réel : Thomas et Cerine inscrits sans accès) : Administration › onglet « Comptes en attente » (administrateurs, ouvert par défaut s'il y en a, pastille rouge sur le menu) — équipe, fiche ressource (proposée par email ou prénom, ou créée), rôle, « Donner l'accès » (email posé sur la fiche + invitation Neon Auth), « Ignorer » ; côté inscrit, écran « Votre compte est créé » avec Actualiser, et **invitation acceptée d'office** à la connexion d'un compte sans équipe (`accepterInvitationsEnAttente`, etat.js). Migration 024 (additive, sauvegarde préalable « sauvegarde-avant-024-2026-10-08 ») : table `comptes_ignores`, fonction `comptes_en_attente()` (§ 3.1, § 3.3, § 4, § 5, § 9) |
+| 1.84    | 2026-10-08 | **Rôle Créateur** (porteur du projet, « ok 2 » ; maquette `roles-droits/`) : rôle unique, tous les droits d'un administrateur sur toutes les équipes même sans en être membre, seul à nommer ou retirer un administrateur, non retirable depuis l'application ; badge « ★ Créateur » dans le bloc utilisateur ; invité d'office (et acceptation automatique) dans chaque équipe créée par un autre administrateur (`inviterCreateur`). Migration 025 (sauvegarde préalable « sauvegarde-avant-025-2026-10-08 ») : table `createur` (une ligne : ciritecgrp@gmail.com), fonction `est_createur()`, `est_admin()`, `mes_equipes()` et `est_responsable_equipe()` incluent le créateur, écriture sur `administrateurs` réservée au créateur, `comptes_en_attente()` l'exclut (§ 4, § 5, § 9) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -167,7 +168,7 @@ Principes :
 | `app/js/calculs.js` | **Seul endroit des règles de calcul** (§ 6) : fonctions pures |
 | `app/js/etat.js` | État global, chargement, navigation, délégation d'événements (`data-action`, `data-action-change`, `data-action-saisie`, `data-action-envoi`), droits d'affichage |
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js` ; positionnées par `placerBulle` pour n'être jamais coupées) (échappement HTML `esc`) |
-| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur |
+| `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur (badge « ★ Créateur », capture `27-createur.png`), pastille rouge des comptes en attente sur Administration |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition, dont la **méthode**) et « Nouveau projet » (code, nom, description, chef, **méthode obligatoire** : une carte par valeur du référentiel `methode`, description `DESCRIPTIONS_METHODES` de `config.js`) |
 | `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs, mise en place Power Automate, **export du daily en Excel** |
 | `app/js/excel.js` | Fabrication d'un fichier **.xlsx** dans le navigateur, sans bibliothèque : XML Office Open (textes en ligne, jamais interprétés comme formules), en-tête figée, filtres, largeurs, styles fixes ; archive ZIP « stockée » avec CRC-32 ; téléchargement (`Excel.telecharger`) |
@@ -227,14 +228,15 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`, `020_nettoyage_tables.sql`, `021_previsionnel_temps.sql`, `022_methode_projet.sql`, `023_nettoyage_index.sql`, `024_comptes_en_attente.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`, `020_nettoyage_tables.sql`, `021_previsionnel_temps.sql`, `022_methode_projet.sql`, `023_nettoyage_index.sql`, `024_comptes_en_attente.sql`, `025_role_createur.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
 
 | Table | Contenu | Clé / liens |
 |-------|---------|-------------|
-| `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) | `user_id` |
+| `administrateurs` | Administrateurs globaux (`user_id` Neon Auth) ; nommés ou retirés par le créateur seulement (migration 025) | `user_id` |
+| `createur` | Rôle **Créateur** (migration 025) : une seule ligne (`ligne_unique`), `user_id`, `email`, `nomme_le` ; aucune écriture depuis l'application | `ligne_unique` |
 | `comptes_ignores` | Comptes inscrits écartés par un administrateur dans « Comptes en attente » (doublon, inconnu) : `user_id`, `ignore_par`, `ignore_le` (migration 024) | `user_id` |
 | `equipes` | Unité = organisation Neon Auth « reconnue », espace de travail (membres, projets) : `nom`, `prefixe` (codes projet), `couleur`, `responsable_id`, `type` (`direction` / `equipe`), `parent_id` (direction de rattachement d'une équipe, un seul niveau), `actif` (une unité inactive n'est plus proposée dans le formulaire de demande) | `id` = `neon_auth.organization.id` ; `parent_id` → `equipes` |
 | `referentiels` | Listes administrables : `stp`, `role`, `abs`, `poste`, `contrat`, `methode` (méthodes de gestion de projet, migration 022) | `id` |
@@ -290,10 +292,11 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 
 | Fonction | Rôle |
 |----------|------|
-| `mes_equipes()` | Équipes (enregistrées dans `equipes`) dont l'utilisateur est membre Neon Auth |
+| `mes_equipes()` | Équipes (enregistrées dans `equipes`) dont l'utilisateur est membre Neon Auth ; **toutes** pour le créateur |
 | `est_membre_equipe()` | Au moins une équipe → droit de lecture global |
-| `est_admin()` | Présent dans `administrateurs` |
-| `est_responsable_equipe(equipe)` | Rôle `owner` ou `admin` dans l'organisation |
+| `est_admin()` | Présent dans `administrateurs`, ou créateur |
+| `est_createur()` | Présent dans `createur` (migration 025) |
+| `est_responsable_equipe(equipe)` | Rôle `owner` ou `admin` dans l'organisation, ou créateur |
 | `mes_ressources()` | Fiches ressources liées au compte |
 | `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
@@ -309,7 +312,8 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | Tables | Lecture | Écriture |
 |--------|---------|----------|
 | `equipes`, `referentiels`, `valeurs_referentiel`, `jours_feries` | tout utilisateur connecté | administrateurs |
-| `administrateurs` | administrateurs (et sa propre ligne) | administrateurs |
+| `administrateurs` | administrateurs (et sa propre ligne) | créateur seulement (migration 025) |
+| `createur` | administrateurs (et sa propre ligne) | personne (pas de droit d'écriture) |
 | `comptes_ignores` | administrateurs | administrateurs |
 | `ressources` | membres, administrateurs | équipe concernée, administrateurs |
 | `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
@@ -424,7 +428,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (102 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (103 contrôles, dont « Général en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

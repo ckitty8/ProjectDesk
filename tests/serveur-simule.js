@@ -49,6 +49,9 @@ function amorcer() {
   invitations.push({ id: uuid(), organizationId: idEq.pr, email: 'camille@test.fr', role: 'member', status: 'pending' });
   const admin = u('Christelle Admin', 'admin@test.fr');        // administratrice sans équipe
   bd.administrateurs = [{ user_id: camille.id }, { user_id: admin.id }];
+  // Rôle Créateur (migration 025) : compte sans équipe Neon Auth, qui voit toutes les équipes
+  const createur = u('Christelle Créatrice', 'createur@test.fr');
+  bd.createur = [{ ligne_unique: true, user_id: createur.id, email: createur.email }];
 
   const PERS = [['cl', 'Camille Laurent', 'pf', 'Chef de projet', 100, camille.id], ['tb', 'Thomas Bernard', 'pf', 'Dév. back-end', 100, thomas.id],
     ['lm', 'Léa Moreau', 'pf', 'Dév. front-end', 80], ['jd', 'Julien Dubois', 'pf', 'DevOps', 100], ['hm', 'Hugo Martin', 'da', 'Lead data', 100],
@@ -256,6 +259,8 @@ async function auth(req, res, chemin, url) {
     case '/organization/set-active': return envoyer(res, 200, {});
     case '/organization/delete': {
       const i = organisations.findIndex(o => o.id === corps.organizationId); if (i >= 0) organisations.splice(i, 1);
+      // Comme Neon Auth : les invitations de l'équipe supprimée disparaissent avec elle
+      invitations.splice(0, invitations.length, ...invitations.filter(x => x.organizationId !== corps.organizationId));
       return envoyer(res, 200, {});
     }
     case '/organization/get-full-organization': {
@@ -279,7 +284,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'], createur: ['user_id'] };
 function filtrer(lignes, params) {
   let r = lignes;
   // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne
@@ -316,10 +321,11 @@ async function donnees(req, res, table, url) {
     if (table === 'rpc/lier_ma_ressource') bd.ressources.filter(r => !r.user_id && r.email === moi.email).forEach(r => { r.user_id = moi.id; });
     // Comptes en attente (migration 024) : inscrits sans équipe, ni administrateurs, ni écartés — administrateurs seulement
     if (table === 'rpc/comptes_en_attente') {
-      if (!bd.administrateurs.some(a => a.user_id === moi.id)) return envoyer(res, 200, []);
+      const estAdmin = bd.administrateurs.some(a => a.user_id === moi.id) || bd.createur.some(c => c.user_id === moi.id);
+      if (!estAdmin) return envoyer(res, 200, []);
       const idsEquipes = new Set(bd.equipes.map(e => e.id));
       return envoyer(res, 200, utilisateurs.filter(u => !membres.some(m => m.userId === u.id && idsEquipes.has(m.organizationId))
-          && !bd.administrateurs.some(a => a.user_id === u.id) && !bd.comptes_ignores.some(c => c.user_id === u.id))
+          && !bd.administrateurs.some(a => a.user_id === u.id) && !bd.createur.some(c => c.user_id === u.id) && !bd.comptes_ignores.some(c => c.user_id === u.id))
         .map(u => ({ user_id: u.id, nom: u.name, email: u.email, inscrit_le: maintenant(), derniere_connexion: null,
           invite: invitations.some(i => i.email === u.email && i.status === 'pending') })));
     }

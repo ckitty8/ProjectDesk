@@ -37,11 +37,13 @@ confiance de Neon Auth (Console Neon → Auth → Domains).
 ## Premier démarrage (base vide)
 
 1. Ouvrir l'application et **créer son compte** (onglet « Créer un compte »).
-2. Le déclarer **administrateur global** (une seule fois, dans l'éditeur SQL de la console Neon) :
+2. Le déclarer **créateur** (rôle unique, tous les droits sur toutes les équipes — une seule fois,
+   dans l'éditeur SQL de la console Neon ; la migration 025 le fait pour le compte du porteur) :
    ```sql
-   insert into public.administrateurs (user_id)
-   select id::text from neon_auth."user" where email = 'votre.email@entreprise.fr';
+   insert into public.createur (user_id, email)
+   select id::text, email from neon_auth."user" where email = 'votre.email@entreprise.fr';
    ```
+   Le créateur nomme ensuite les autres **administrateurs globaux** (table `administrateurs`).
 3. Se reconnecter : l'administrateur arrive directement dans l'outil ; **Mon dashboard › Administration › Équipes** permet de créer les équipes (chaque équipe est une
    organisation Neon Auth dont vous devenez propriétaire), puis d'inviter les membres par email.
 4. Dans **Mon dashboard › Liste des ressources › Organisation**, construire l'arborescence :
@@ -59,10 +61,11 @@ Pour afficher l'entrée « Contacter l'administrateur », renseigner `CONTACT_AI
 
 | Qui | Peut |
 |-----|------|
-| Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels (dont postes et types de contrat) et champs du formulaire |
+| Créateur (table `createur`, un seul compte) | Tous les droits d'un administrateur, sur **toutes** les équipes même sans en être membre ; seul à nommer ou retirer un administrateur ; ne peut pas être retiré depuis l'application |
+| Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels (dont postes et types de contrat), donner l'accès aux comptes en attente |
 | Responsable d'équipe (rôle `owner` / `admin` de l'organisation) | Inviter des membres, valider les feuilles de temps |
 | Membre d'une équipe | Tout lire (section Général) ; modifier son équipe et ses projets (sauf rôle projet « Lecteur ») |
-| Compte sans équipe | Attendre une invitation d'un administrateur |
+| Compte sans équipe | Attendre qu'un administrateur lui donne l'accès (Administration › Comptes en attente) ; il entre alors directement |
 
 ## Structure
 

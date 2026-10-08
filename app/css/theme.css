@@ -267,3 +267,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 
 /* Pastille rouge d'un menu (ex. comptes en attente d'accès sur Administration) */
 .pastille-alerte { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Badge du rôle Créateur dans le bloc utilisateur (migration 025) */
+.badge-createur { display: block; width: fit-content; margin: 1px 0 2px; font-size: 10.5px; font-weight: 600; color: #E6D9FF; background: rgba(122, 63, 194, .45); border-radius: 4px; padding: 0 5px; white-space: nowrap; }

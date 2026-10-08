@@ -183,8 +183,9 @@ const GUIDES = {
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
-    'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés.',
-    'Compte sans équipe : attend une invitation d’un administrateur (les demandes sont gérées dans Azure DevOps).'] }
+    'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés, donne l’accès aux comptes en attente.',
+    'Créateur (un seul compte, ★ dans le bloc utilisateur) : tous les droits sur toutes les équipes ; seul à nommer ou retirer un administrateur.',
+    'Compte sans équipe : attend qu’un administrateur lui donne l’accès (Administration › Comptes en attente), puis entre directement.'] }
 };
 
 /* ============================================================

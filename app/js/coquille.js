@@ -76,6 +76,7 @@ const Coquille = (() => {
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>
           ${mesEquipes().length ? '<a data-action="changerEquipe">Changer</a>' : ''}</div>
         <div class="bloc-moi">${C.avatar(nom, true)}<div><div class="moi-nom">${esc(nom)}</div>
+          ${etat.estCreateur ? '<span class="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>' : ''}
           <a class="moi-sortie" data-action="deconnexion">Se déconnecter</a></div></div>
       </div>
     </aside>`;

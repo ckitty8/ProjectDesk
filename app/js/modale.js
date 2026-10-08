@@ -230,6 +230,13 @@ const Modale = {
   }
 };
 
+// Le créateur est invité dans chaque équipe créée par un autre administrateur ; il accepte d'office à sa
+// connexion (accepterInvitationsEnAttente, etat.js) et peut ainsi y donner l'accès à des personnes.
+async function inviterCreateur(equipeId) {
+  const createur = (etat.d.createur || [])[0];
+  if (createur && !etat.estCreateur) await Api.inviterMembre(equipeId, createur.email, 'admin').catch(() => {});
+}
+
 Object.assign(Actions, {
   /* Affectations */
   choisirRessourceAffectation: (_, el) => majEtat({ modale: { ...etat.modale, ressourceId: el.value || null } }),
@@ -284,6 +291,7 @@ Object.assign(Actions, {
       else {
         const slug = f.nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString(36);
         const org = await Api.creerOrganisation(f.nom, slug);
+        await inviterCreateur(org.id);
         await Api.creer('equipes', { id: org.id, nom: f.nom, prefixe: f.prefixe, couleur: f.couleur, type: f.type, parentId: f.parentId, actif: f.actif });
         etat.organisations = await Api.listerOrganisations();
         etat.rolesEquipe[org.id] = 'owner';

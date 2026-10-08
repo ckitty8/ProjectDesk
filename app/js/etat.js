@@ -23,7 +23,8 @@ const etat = {
   rolesEquipe: {},          // { equipeId: 'owner' | 'admin' | 'member' }
   membresEquipe: {},        // { equipeId: [{ userId, nom, role }] } (comptes Neon Auth des équipes)
   equipeCourante: null,     // id de l'équipe ouverte
-  estAdmin: false,
+  estAdmin: false,          // administrateur global (ou créateur)
+  estCreateur: false,       // rôle Créateur : unique, tous les droits sur toutes les équipes (migration 025)
   comptesEnAttente: [],     // inscrits sans accès (administrateurs, Administration › Comptes en attente)
   ecran: 'dashboard',
   panneau: null,            // { type: 'projet', id } | { type: 'nouveauProjet', ... }
@@ -39,7 +40,7 @@ const TABLES = {
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
-  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet'
+  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -74,7 +75,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id' };
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -167,9 +168,12 @@ async function demarrer() {
     ]);
     etat.organisations = organisations || [];
     etat.invitations = (invitations || []).filter(i => i.status === 'pending');
-    if (!etat.organisations.length && etat.invitations.length) await accepterInvitationsEnAttente();
     await chargerDonnees();
-    etat.estAdmin = etat.d.administrateurs.some(a => a.userId === session.user.id);
+    etat.estCreateur = etat.d.createur.some(c => c.userId === session.user.id);
+    etat.estAdmin = etat.estCreateur || etat.d.administrateurs.some(a => a.userId === session.user.id);
+    // Invitations acceptées d'office : compte sans équipe (accès donné, Comptes en attente) ou créateur
+    // (invitée dans chaque nouvelle équipe, voir inviterCreateur)
+    if (etat.invitations.length && (!etat.organisations.length || etat.estCreateur)) await accepterInvitationsEnAttente();
     await chargerComptesEnAttente();
     await chargerRoles();
     const equipesReconnues = mesEquipes();
@@ -196,9 +200,11 @@ async function demarrer() {
   }
 }
 
-/* Compte sans équipe qui a reçu une invitation : l'accès a été donné par un administrateur
-   (Administration › Comptes en attente, migration 024). On accepte d'office pour que la personne
-   entre directement, sans autre démarche (maquette docs/maquettes/comptes-en-attente/). */
+/* Invitations acceptées d'office (sans clic) :
+   - compte sans équipe : l'accès a été donné par un administrateur (Administration › Comptes en
+     attente, migration 024 ; maquette docs/maquettes/comptes-en-attente/) ;
+   - créateur : invité dans chaque équipe créée par un autre administrateur, pour pouvoir y inviter
+     des personnes (Neon Auth exige d'être membre de l'équipe pour inviter). */
 async function accepterInvitationsEnAttente() {
   for (const invitation of etat.invitations) await Api.accepterInvitation(invitation.id).catch(() => {});
   etat.organisations = await Api.listerOrganisations() || [];
@@ -230,12 +236,14 @@ async function chargerRoles() {
 
 /* ---------- Droits (miroir des règles RLS, pour l'affichage uniquement) ----------
    La base reste le seul juge : ces fonctions servent à masquer les boutons inutiles. */
+// Équipes de l'utilisateur : celles dont il est membre ; le créateur les a toutes (comme mes_equipes en base)
 function mesEquipes() {
+  if (etat.estCreateur) return etat.d.equipes || [];
   const ids = new Set(etat.organisations.map(o => o.id));
   return (etat.d.equipes || []).filter(e => ids.has(e.id));
 }
 const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
-const estResponsableDe = equipeId => ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
+const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
 const maRessource = () => (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
 function peutEditerProjet(projet) {
   if (!projet) return false;

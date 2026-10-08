@@ -558,7 +558,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const connecter = async email => {
       await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
       await page.fill('input[name=email]', email); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-      await page.waitForTimeout(900);
+      // Connexion terminée : session du bon compte et chargement fini (invitations acceptées comprises)
+      await page.waitForFunction(adresse => etat.session && etat.session.user.email === adresse && !etat.chargement, email);
+      await page.waitForTimeout(200);
     };
     await connecter('elodie@test.fr');
     verifier('Compte sans équipe : « compte créé, en attente d’accès » avec Actualiser', (await texte()).includes('Votre compte est créé')
@@ -594,6 +596,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');
     await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(500);
     verifier('Admin : équipe créée et ouverte automatiquement', (await page.textContent('.bloc-equipe')).includes('Direction Digitale'));
+
+    /* --- Rôle Créateur (migration 025) : invitée d'office dans l'équipe créée, voit toutes les équipes --- */
+    await connecter('createur@test.fr');
+    verifier('Créateur : toutes les équipes, badge, invitation d’une nouvelle équipe acceptée d’office', await page.evaluate(() =>
+      etat.estCreateur && etat.estAdmin && mesEquipes().length === etat.d.equipes.length && etat.ecran !== 'choixEquipe'
+      && etat.organisations.some(o => o.name === 'Direction Digitale') && !!document.querySelector('.badge-createur')));
+    await capture('27-createur');
 
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
