@@ -59,7 +59,8 @@ sauf consigne contraire explicite du porteur du projet.
 
 Décisions du porteur à respecter lors du développement des fonctionnalités concernées :
 
-- **Roadmap** : `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
+- **Roadmap** (en attente : demandes gérées dans Azure DevOps depuis le 2026-10-05) :
+  `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
   déroulante alimentée par Administration).
 
 ## Check-list avant chaque commit

@@ -1,8 +1,10 @@
 # Spécifications — Roadmap (intégration du fichier `CDO-ROADMAP-NEW.xlsm`)
 
-> **Statut : fonctionnalité non encore développée.** Ce document consigne les décisions du
-> porteur du projet pour la future roadmap. Elles s'imposent à tout développement de cette
-> fonctionnalité. Une fois livrée, ses règles passent dans `docs/DAT.md` (§ 3, § 4, § 6).
+> **Statut : en attente (mis à jour le 2026-10-08).** Depuis le 2026-10-05, les demandes sont gérées
+> dans **Azure DevOps** : les demandes, le formulaire et les tickets ont été retirés de ProjectDesk
+> (tables supprimées par la migration 020). Ces décisions restent la référence si une roadmap des
+> demandes revient dans ProjectDesk (ou pour un import depuis Azure DevOps) ; elles ne s'appliquent
+> à aucun écran actuel. Une fois livrée, ses règles passeront dans `docs/DAT.md` (§ 3, § 4, § 6).
 
 | Date       | Décision |
 |------------|----------|
@@ -10,6 +12,7 @@
 | 2026-10-05 | Sprint : liste déroulante alimentée par Administration — § 2 |
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
+| 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
 
 ## 1. Rang de traitement DSI (règle reprise du fichier Excel)
 
