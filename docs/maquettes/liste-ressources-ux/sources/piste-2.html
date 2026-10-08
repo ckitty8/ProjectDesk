@@ -1,0 +1,77 @@
+<!-- Piste 2 — Organigramme en cartes : un onglet par équipe, une carte par projet (PO en haut, membres dessous) -->
+<style>
+.p2-resp { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--bordure); border-left: 4px solid #8B5CD6; border-radius: 10px; padding: 14px 16px; }
+.p2-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+.p2-carte { background: #fff; border: 1px solid var(--bordure); border-radius: 10px; }
+.p2-carte-tete { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--bordure-fine); }
+.p2-carte-tete .nom { font-weight: 600; font-size: 15px; }
+.p2-zone { padding: 10px 14px; } .p2-zone.po { background: #FFFBF2; border-bottom: 1px solid #F6E7C8; }
+.p2-zone-titre { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--pale); font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; }
+.p2-pers { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+.p2-pers .infos { flex: 1; min-width: 0; }
+.p2-ajout { display: block; text-align: center; padding: 9px; border-top: 1px dashed var(--bordure); color: var(--primaire); }
+.p2-connecteur { height: 18px; margin: 0 auto; width: 2px; background: var(--bordure); }
+</style>
+<div class="m-ecran">
+  <div class="m-entete">
+    <div><span class="m-titre-piste">Piste 2 · Organigramme en cartes</span><h1>Liste des ressources</h1><div class="sous-titre">Une équipe à la fois : responsable, puis une carte par projet</div></div>
+    <div class="m-barre"><span class="m-recherche">⌕ Rechercher une personne, un projet</span><button class="btn">Vue liste</button><button class="btn primaire">+ Projet</button></div>
+  </div>
+  <div class="onglets m-annot" data-n="1" style="width:fit-content;padding-right:16px">
+    <button class="onglet actif">Applications <span class="compte">16</span></button>
+    <button class="onglet">IA <span class="compte">0</span></button>
+    <button class="onglet">AMOA <span class="compte">0</span></button>
+    <button class="onglet">Postes <span class="compte">12</span></button>
+    <button class="onglet">Types de contrat <span class="compte">4</span></button>
+  </div>
+
+  <div class="p2-resp m-annot" data-n="2">
+    <span class="m-av resp" style="width:40px;height:40px;flex-basis:40px;font-size:13px">AN</span>
+    <div style="flex:1"><div class="m-nom" style="font-size:15px">Anne</div><div class="m-sous">Responsable applicatif · responsable de l'équipe Applications</div></div>
+    <span class="m-pill m-resp">Hors projet</span><span class="m-pill m-conges">Incluse dans Congés &amp; capacité</span><a>Fiche</a>
+  </div>
+  <div class="p2-connecteur"></div>
+
+  <div class="p2-grille">
+    <div class="p2-carte">
+      <div class="p2-carte-tete"><span class="nom">VISTA</span><span class="m-pill m-encours">En cours</span><span style="flex:1"></span><span class="discret">5 pers.</span><span class="discret">⋯</span></div>
+      <div class="p2-zone po m-annot" data-n="3"><div class="p2-zone-titre"><span>Product Owners · 2</span><a style="text-transform:none;letter-spacing:0;font-weight:500">+ PO</a></div>
+        <div class="p2-pers"><span class="m-av po">JR</span><div class="infos"><div class="m-nom">Julie R.</div><div class="m-sous">CDI</div></div></div>
+        <div class="p2-pers"><span class="m-av po">ML</span><div class="infos"><div class="m-nom">Marc L.</div><div class="m-sous">Prestataire</div></div></div></div>
+      <div class="p2-zone"><div class="p2-zone-titre"><span>Membres · 3</span></div>
+        <div class="p2-pers"><span class="m-av">KB</span><div class="infos"><div class="m-nom">Karim B.</div><div class="m-sous">Dév. back-end</div></div></div>
+        <div class="p2-pers"><span class="m-av">ST</span><div class="infos"><div class="m-nom">Sophie T.</div><div class="m-sous">Dév. front-end</div></div></div>
+        <div class="p2-pers m-annot" data-n="4"><span class="m-av">LP</span><div class="infos"><div class="m-nom">Lucas P.</div><div class="m-sous">DevOps · <span style="color:var(--alerte)">part le 31/12</span></div></div></div></div>
+      <a class="p2-ajout">+ Membre</a>
+    </div>
+    <div class="p2-carte">
+      <div class="p2-carte-tete"><span class="nom">CDO</span><span class="m-pill m-encours">En cours</span><span style="flex:1"></span><span class="discret">4 pers.</span><span class="discret">⋯</span></div>
+      <div class="p2-zone po"><div class="p2-zone-titre"><span>Product Owner · 1</span><a style="text-transform:none;letter-spacing:0;font-weight:500">+ PO</a></div>
+        <div class="p2-pers"><span class="m-av po">NK</span><div class="infos"><div class="m-nom">Nadia K.</div><div class="m-sous">CDI</div></div></div></div>
+      <div class="p2-zone"><div class="p2-zone-titre"><span>Membres · 3</span></div>
+        <div class="p2-pers"><span class="m-av">TG</span><div class="infos"><div class="m-nom">Théo G.</div><div class="m-sous">Data engineer</div></div></div>
+        <div class="p2-pers"><span class="m-av">YA</span><div class="infos"><div class="m-nom">Yasmine A.</div><div class="m-sous">Data analyst</div></div></div>
+        <div class="p2-pers"><span class="m-av">RD</span><div class="infos"><div class="m-nom">Romain D.</div><div class="m-sous">Dév. back-end</div></div></div></div>
+      <a class="p2-ajout">+ Membre</a>
+    </div>
+    <div class="p2-carte">
+      <div class="p2-carte-tete"><span class="nom">VI3P / V4</span><span class="m-pill m-encours">En cours</span><span style="flex:1"></span><span class="discret">6 pers.</span><span class="discret">⋯</span></div>
+      <div class="p2-zone po"><div class="p2-zone-titre"><span>Product Owners · 2</span><a style="text-transform:none;letter-spacing:0;font-weight:500">+ PO</a></div>
+        <div class="p2-pers"><span class="m-av po">PV</span><div class="infos"><div class="m-nom">Paul V.</div><div class="m-sous">CDI</div></div></div>
+        <div class="p2-pers"><span class="m-av po">IM</span><div class="infos"><div class="m-nom">Inès M.</div><div class="m-sous">CDI</div></div></div></div>
+      <div class="p2-zone"><div class="p2-zone-titre"><span>Membres · 4</span></div>
+        <div class="p2-pers"><span class="m-av">HF</span><div class="infos"><div class="m-nom">Hugo F.</div><div class="m-sous">Dév. back-end</div></div></div>
+        <div class="p2-pers"><span class="m-av">LC</span><div class="infos"><div class="m-nom">Léa C.</div><div class="m-sous">Dév. front-end</div></div></div>
+        <div class="p2-pers"><span class="m-av">OS</span><div class="infos"><div class="m-nom">Omar S.</div><div class="m-sous">Lead technique</div></div></div>
+        <div class="p2-pers"><span class="m-av">EJ</span><div class="infos"><div class="m-nom">Emma J.</div><div class="m-sous">Product designer</div></div></div></div>
+      <a class="p2-ajout">+ Membre</a>
+    </div>
+  </div>
+
+  <div class="m-legende">
+    <div><b>1</b>Un onglet par équipe (Applications, IA, AMOA) : plus de niveau Direction DSI.</div>
+    <div><b>2</b>Anne en tête : responsable, hors projet, mais comptée dans Congés &amp; capacité.</div>
+    <div><b>3</b>Les Product Owners en haut de chaque carte (1, 2 ou plus), les membres en dessous.</div>
+    <div><b>4</b>Une date de fin s'affiche en alerte ; dates et contrat se modifient dans la fiche.</div>
+  </div>
+</div>

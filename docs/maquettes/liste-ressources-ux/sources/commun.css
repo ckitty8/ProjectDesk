@@ -1,0 +1,20 @@
+/* Styles propres aux maquettes « Liste des ressources » (pistes UX, 2026-10-08) */
+.m-ecran { padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1200px; }
+.m-entete { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.m-barre { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.m-segment { display: inline-flex; border: 1px solid var(--bordure); border-radius: 8px; background: #fff; }
+.m-segment span { padding: 6px 14px; color: var(--discret); border-right: 1px solid var(--bordure); }
+.m-segment span:last-child { border-right: 0; } .m-segment span.on { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
+.m-recherche { display: flex; align-items: center; gap: 8px; height: 32px; width: 280px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 7px; background: #fff; color: var(--pale); }
+.m-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; display: inline-block; }
+.m-po { background: #FFF1D6; color: #8A5300; } .m-resp { background: #EDE6FA; color: #5B2DA0; } .m-membre { background: #EEF1F5; color: #4A5363; }
+.m-encours { background: #E3F5EC; color: #0B6B4F; } .m-conges { background: #E8EEFF; color: #0033AD; }
+.m-av { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex: 0 0 28px; background: #E8EEFF; color: var(--primaire-texte); }
+.m-av.po { background: #FFE2A8; color: #7A4700; } .m-av.resp { background: #DCCDF5; color: #4B2390; }
+.m-nom { font-weight: 500; } .m-sous { color: var(--discret); font-size: 12px; }
+.m-note { border: 1px dashed #C5B3EA; background: #FAF7FF; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #4B2390; }
+.m-annot { position: relative; } .m-annot::after { content: attr(data-n); position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.m-legende { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.m-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
+.m-titre-piste { display: inline-block; background: #141A26; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; }
+.m-segment span:first-child { border-radius: 7px 0 0 7px; } .p1-ligne .m-pill { justify-self: start; }
