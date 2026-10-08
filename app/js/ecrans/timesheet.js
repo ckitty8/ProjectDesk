@@ -1,7 +1,7 @@
 /* ============================================================
    Général › Timesheet (maquette 05-gTime.png) — lecture
    Heures déclarées par personne sur un mois, toutes équipes.
-   (La saisie se fait dans Mon dashboard › Mon timesheet.)
+   (La saisie se fait dans Mon dashboard › Gestion des ressources › Mon timesheet.)
    La saisie et la validation des heures sont MENSUELLES (porteur du
    projet, 2026-10-05) : une feuille par personne et par mois.
    ============================================================ */

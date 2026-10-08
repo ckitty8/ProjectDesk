@@ -1,5 +1,5 @@
 /* ============================================================
-   Mon dashboard › Mon timesheet › Saisir mes heures
+   Mon dashboard › Gestion des ressources › Mon timesheet › Saisir mes heures
    (maquette complements/mon-timesheet.png)
    - Saisie MENSUELLE : ses heures par jour du mois sur les projets où
      l'on est affecté (hors rôle Lecteur), puis « Soumettre le mois ».

@@ -36,9 +36,9 @@ const Coquille = (() => {
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
     { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road' },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
-      enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
-    { id: 'monTimesheet', libelle: 'Mon timesheet', icone: 'time',
-      enfants: [{ id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
+      // Mon timesheet rangé dans Gestion des ressources (demande du porteur 2026-10-08) : « groupe » = intertitre
+      enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' },
+        { groupe: 'Mon timesheet' }, { id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
     // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
     { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
@@ -50,8 +50,9 @@ const Coquille = (() => {
     const actif = etat.ecran === item.id && !item.enfants;
     const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}<span>${esc(item.libelle)}</span></a>`;
     if (!item.enfants) return html;
-    return html + `<div class="sous-menu">${item.enfants.map(e =>
-      `<a class="sous-lien${etat.ecran === e.id ? ' actif' : ''}" data-action="aller" data-ecran="${e.id}">${esc(e.libelle)}</a>`).join('')}</div>`;
+    return html + `<div class="sous-menu">${item.enfants.map(e => e.groupe
+      ? `<div class="sous-lien" style="cursor:default;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6F7C99;margin-top:4px">${esc(e.groupe)}</div>`
+      : `<a class="sous-lien${etat.ecran === e.id ? ' actif' : ''}" data-action="aller" data-ecran="${e.id}">${esc(e.libelle)}</a>`).join('')}</div>`;
   }
 
   function barreLaterale() {

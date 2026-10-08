@@ -81,7 +81,18 @@ const REPARTITION_SPRINT = [
   { categorie: 'Cérémonies / réunions', part: 15, couleur: '#B25E09', aide: 'Planning, daily, revue, rétrospective, affinage.' }
 ];
 
-const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES };
+/* Méthodes de gestion de projet (référentiel « methode », migration 022 ; demande du porteur 2026-10-08) :
+   choisies à la création du projet ; des menus dépendront de la méthode (gestion multi-projet).
+   Libellés système (renommables en Administration › Référentiels, retrouvés par leur clé). */
+const METHODES_PROJET = { SCRUM: 'Agile Scrum', KANBAN: 'Agile Kanban', CASCADE: 'Cascade', CYCLE_V: 'Cycle en V' };
+// Description affichée sous chaque méthode dans le formulaire de création (clé technique → texte)
+const DESCRIPTIONS_METHODES = {
+  scrum: 'Sprints de 2 semaines, backlog priorisé, vélocité.',
+  kanban: 'Flux continu, limites de travail en cours, lead time.',
+  cascade: 'Phases successives : besoin, conception, réalisation, recette.',
+  cycle_v: 'Cascade avec une phase de test en miroir de chaque phase de conception.'
+};
+const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES, methode: METHODES_PROJET };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
 const STATUTS_FEUILLE = {
@@ -203,3 +214,77 @@ const KPI_AGILE = [
       ['efficacite', 'Efficacité du flux', 'Temps de travail actif ÷ lead time.', 'Souvent 15–40 % ; le reste est de l’attente.'],
       ['bloque', 'Temps bloqué', 'Durée et nombre de blocages par élément.', 'À croiser avec les « Blocages » du daily.'],
       ['sle', 'Engagement de délai (SLE)', 'Ex. : « 85 % des éléments livrés en moins de 10 jours ».', 'Se déduit de l’historique des cycle times.'] ] } ];
+
+/* ============================================================
+   Organigramme des rôles Agile Scrum (Trucs et astuces, demande du porteur 2026-10-08)
+   Version détaillée : Product Ownership partagé entre PO fonctionnel et PO technique,
+   équipe de développement avec tech lead, développeurs, QA, et rôles d'appui (UX/UI, DevOps).
+   Sources : Scrum Guide 2020 (PO, Scrum Master, Developers) ; PO technique, tech lead et QA
+   = rôles d'organisation usuels des équipes Scrum en entreprise (non définis par le Scrum Guide).
+   famille → couleur de la carte (FAMILLES_ROLES_SCRUM).
+   ============================================================ */
+const FAMILLES_ROLES_SCRUM = {
+  metier: { libelle: 'Métier', couleur: '#4A5363' },
+  produit: { libelle: 'Produit', couleur: '#003CC8' },
+  facilitation: { libelle: 'Facilitation', couleur: '#7A3FC2' },
+  technique: { libelle: 'Technique', couleur: '#0F8A6B' },
+  qualite: { libelle: 'Qualité', couleur: '#B25E09' }
+};
+const ROLES_SCRUM = {
+  sponsor: { titre: 'Sponsor / Direction métier', famille: 'metier',
+    mission: 'Commanditaire : finance le produit et fixe le cap.',
+    actions: ['Arbitre budget et priorités stratégiques', 'Valide la roadmap avec les PO', 'Lève les blocages hors de l’équipe'],
+    ceremonies: ['Revue (jalons)'] },
+  partiesPrenantes: { titre: 'Parties prenantes & utilisateurs', famille: 'metier', pointille: true,
+    mission: 'Expriment les besoins et utilisent le produit.',
+    actions: ['Remontent besoins et irritants au PO fonctionnel', 'Testent les incréments livrés', 'Donnent leur avis en revue de sprint'],
+    ceremonies: ['Revue'] },
+  poFonctionnel: { titre: 'PO fonctionnel', famille: 'produit', sousTitre: 'Product Owner',
+    mission: 'Porte la vision produit et la valeur métier.',
+    actions: ['Rédige les user stories et critères d’acceptation', 'Priorise le backlog fonctionnel', 'Recette et accepte les fonctionnalités'],
+    lien: '↔ QA : critères d’acceptation', ceremonies: ['Planning', 'Affinage', 'Revue'] },
+  poTechnique: { titre: 'PO technique', famille: 'produit', sousTitre: 'Technical Product Owner',
+    mission: 'Porte le backlog technique et sa valeur.',
+    actions: ['Dette, architecture, sécurité, performance, montées de version', 'Co-priorise avec le PO fonctionnel un backlog unique', 'Interlocuteur infra, sécurité et architecture'],
+    lien: '↔ Tech lead : solutions et backlog technique', ceremonies: ['Planning', 'Affinage', 'Revue'] },
+  scrumMaster: { titre: 'Scrum Master', famille: 'facilitation', pointille: true, sousTitre: 'au service de toute l’équipe',
+    mission: 'Garant du cadre Scrum et de l’amélioration continue.',
+    actions: ['Anime les cérémonies (daily, rétro…)', 'Lève les obstacles, protège l’équipe des interruptions', 'Suit les KPI : vélocité, burndown, say/do'],
+    ceremonies: ['Toutes'] },
+  techLead: { titre: 'Tech lead', famille: 'technique', sousTitre: 'référent technique',
+    mission: 'Garant de la qualité technique de l’équipe.',
+    actions: ['Conçoit les solutions avec le PO technique', 'Revues de code, normes, choix techniques', 'Découpe et estime avec l’équipe, accompagne les développeurs'],
+    ceremonies: ['Planning', 'Affinage', 'Daily', 'Rétro'] },
+  developpeurs: { titre: 'Développeurs', famille: 'technique', sousTitre: 'front, back, mobile',
+    mission: 'Réalisent l’incrément du sprint.',
+    actions: ['Développent les user stories', 'Tests unitaires, revues croisées', 'Estiment et s’engagent sur le sprint'],
+    ceremonies: ['Toutes'] },
+  qa: { titre: 'QA / Testeurs', famille: 'qualite', sousTitre: 'assurance qualité',
+    mission: 'Garantissent que ce qui est livré fonctionne.',
+    actions: ['Stratégie et cas de test avec le PO fonctionnel', 'Automatisent la non-régression', 'Vérifient la Definition of Done, remontent les anomalies'],
+    ceremonies: ['Planning', 'Affinage', 'Daily', 'Revue'] },
+  uxUi: { titre: 'UX / UI', famille: 'produit', pointille: true, sousTitre: 'si besoin',
+    mission: 'Conçoivent l’expérience utilisateur.',
+    actions: ['Parcours et maquettes', 'Tests utilisateurs', 'Design system'],
+    ceremonies: ['Affinage', 'Revue'] },
+  devops: { titre: 'DevOps', famille: 'technique', pointille: true, sousTitre: 'si besoin',
+    mission: 'Industrialisent la livraison.',
+    actions: ['Intégration et déploiement continus (CI/CD)', 'Environnements de recette et de production', 'Supervision'],
+    ceremonies: ['Daily', 'Rétro'] }
+};
+/* Qui fait quoi : ● = responsable, ○ = contribue (colonnes = clés de ROLES_SCRUM) */
+const QUI_FAIT_QUOI_SCRUM = {
+  colonnes: ['poFonctionnel', 'poTechnique', 'scrumMaster', 'techLead', 'developpeurs', 'qa'],
+  lignes: [
+    ['Vision et roadmap du produit', '●', '○', '', '○', '', ''],
+    ['User stories et critères d’acceptation', '●', '○', '', '○', '○', '○'],
+    ['Backlog technique (dette, architecture, sécurité)', '○', '●', '', '●', '○', ''],
+    ['Priorisation du backlog', '●', '●', '', '○', '', ''],
+    ['Conception technique', '', '○', '', '●', '○', ''],
+    ['Développement et tests unitaires', '', '', '', '○', '●', ''],
+    ['Tests fonctionnels et non-régression', '○', '', '', '', '○', '●'],
+    ['Recette et acceptation', '●', '○', '', '', '', '○'],
+    ['Animation des cérémonies', '○', '○', '●', '', '', ''],
+    ['Levée des obstacles', '', '', '●', '○', '', '']
+  ]
+};

@@ -167,7 +167,7 @@ const Previsionnel = {
             <td class="num"><b>${this.format(totalReel)}</b></td><td class="num">${this.format(totalReel / CONFIG.HEURES_PAR_JOUR)}</td><td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
         </tbody></table></div>
       <div class="discret" style="font-size:12px">Capacité = jours ouvrés du sprint hors fériés et congés × ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h × capacité de la personne.
-        Les heures se saisissent par projet dans Mon timesheet › Saisir mes heures.</div>`;
+        Les heures se saisissent par projet dans Gestion des ressources › Mon timesheet › Saisir mes heures.</div>`;
   }
 };
 

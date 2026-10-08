@@ -221,3 +221,46 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .champ-daily .note-daily { min-height: 110px; border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 10px 12px; }
 .tableau-sprints td { padding: 4px 6px; } .tableau-sprints .champ { height: 28px; }
 .champ.champ-numero { width: 70px; height: 28px; }
+
+/* ---------- Organigramme des rôles Scrum (Trucs et astuces › Rôles Scrum) ----------
+   .org-noeud = une carte (ou un groupe) et ses enfants (.org-branches) : le parent descend un trait
+   vertical (::before de la liste), chaque enfant trace sa part du trait horizontal (::before / ::after
+   de son <li>) — technique classique sans image. Les listes DANS les cartes ne sont pas concernées. */
+.org { padding: 20px 16px; overflow-x: auto; }
+.org-haut { display: grid; grid-template-columns: 1fr 250px 1fr; align-items: center; }
+.org-cote { display: flex; justify-content: flex-end; align-items: center; }
+.org-tirets { width: 40px; border-top: 2px dashed #B8C0CF; }
+.org-trait { width: 2px; height: 20px; background: #B8C0CF; margin: 0 auto; }
+.org-cadre { border: 1px solid var(--bordure); border-radius: 12px; padding: 12px; background: var(--fond-doux); }
+.org-cadre-dev { background: #fff; }
+.org-cadre-titre { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--discret); text-align: center; margin-bottom: 6px; }
+.org-noeud { display: flex; flex-direction: column; align-items: center; }
+.org-groupe { border: 1px solid #B7C8F5; background: var(--primaire-clair); color: var(--primaire-texte); border-radius: 8px; padding: 6px 14px; font-weight: 600; font-size: 13px; }
+.org-branches { display: flex; justify-content: center; align-items: flex-start; padding: 20px 0 0; margin: 0; position: relative; }
+.org-branches::before { content: ''; position: absolute; top: 0; left: 50%; height: 20px; border-left: 2px solid #B8C0CF; }
+.org-branches > li { list-style: none; position: relative; padding: 20px 6px 0; }
+.org-branches > li::before, .org-branches > li::after { content: ''; position: absolute; top: 0; right: 50%; width: 50%; height: 20px; border-top: 2px solid #B8C0CF; }
+.org-branches > li::after { right: auto; left: 50%; border-left: 2px solid #B8C0CF; }
+.org-branches > li:first-child::before, .org-branches > li:last-child::after { border-top: 0 none; }
+.org-branches > li:last-child::before { border-right: 2px solid #B8C0CF; }
+.org-branches > li:last-child::after { border-left: 0 none; }
+.org-carte { width: 250px; text-align: left; background: #fff; border: 1px solid var(--bordure); border-top: 4px solid; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; box-shadow: 0 1px 2px rgba(10,22,51,.05); }
+.org-carte.pointille { border-style: dashed; border-top-style: solid; }
+.org-titre { font-weight: 700; font-size: 14px; }
+.org-sous-titre { color: var(--discret); font-size: 11.5px; }
+.org-mission { margin: 6px 0 4px; font-weight: 500; }
+.org-carte ul { margin: 0; padding-left: 16px; color: #3A4354; list-style: disc; }
+.org-carte li { margin: 1px 0; }
+.org-lien { margin-top: 6px; font-size: 11.5px; color: var(--primaire-texte); background: var(--primaire-clair); border-radius: 5px; padding: 2px 6px; display: inline-block; }
+.org-ceremonies { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.org-ceremonies span { font-size: 10.5px; border: 1px solid var(--bordure); border-radius: 10px; padding: 0 7px; color: var(--discret); }
+.org-pointille-exemple { width: 22px; height: 12px; border: 1.5px dashed var(--discret); border-radius: 3px; display: inline-block; }
+.tableau-roles td { white-space: normal; font-size: 12.5px; }
+.tableau-roles th.num, .tableau-roles td.num { text-align: center; }
+.tableau-roles td:first-child { width: 300px; }
+
+/* Choix de la méthode d'un nouveau projet (panneau « Nouveau projet ») : une carte par méthode */
+.choix-methodes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choix-methode { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--bordure); border-left: 4px solid; border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 12.5px; }
+.choix-methode > span { display: flex; flex-direction: column; gap: 2px; }
+.choix-methode:has(input:checked) { background: var(--primaire-clair); border-color: #B7C8F5; }

@@ -38,6 +38,8 @@ const Panneau = {
         ${editable ? champ('description', `<textarea class="champ" rows="2" placeholder="Description" <CHAMP>${esc(p.description || '')}</textarea>`)
           : p.description ? `<div>${esc(p.description)}</div>` : ''}
         <div class="infos">
+          <span>Méthode</span><span>${editable ? champ('methode', C.liste([{ valeur: '', libelle: '— à choisir —' }, ...valeursDe('methode').map(v => v.libelle)], p.methode || '', 'class="champ" style="width:auto" <CHAMP'))
+            : p.methode ? C.badgeRef('methode', p.methode) : '—'}</span>
           <span>Chef de projet</span><span class="ligne-flex">${editable ? champ('chefId', C.liste([{ valeur: '', libelle: '—' }, ...personnesEquipe], p.chefId || '', 'class="champ" style="width:auto" <CHAMP'))
             : chef ? C.avatar(chef.nom) + esc(chef.nom) : '—'}</span>
         </div>
@@ -50,9 +52,18 @@ const Panneau = {
     </aside>`;
   },
 
+  // Choix de la méthode à la création : une carte par valeur du référentiel « methode », avec sa description
+  choixMethode() {
+    const esc = C.esc;
+    return `<div class="choix-methodes">${valeursDe('methode').map(v => `<label class="choix-methode" style="border-left-color:${v.couleur}">
+      <input type="radio" name="methode" value="${esc(v.libelle)}" required>
+      <span><b>${esc(v.libelle)}</b><span class="discret">${esc(DESCRIPTIONS_METHODES[v.cle] || '')}</span></span></label>`).join('')}</div>`;
+  },
+
   // Formulaire de création ; équipe pré-remplie possible (choisie dans Liste des ressources :
   // v.equipeId ; sinon l'équipe ouverte).
-  // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef.
+  // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef ;
+  // + méthode obligatoire (2026-10-08 : Agile Scrum, Agile Kanban, Cascade, Cycle en V).
   // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
     const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
@@ -66,6 +77,7 @@ const Panneau = {
         <div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(v.nom || '')}" required></div>
         <div><label class="libelle">Description</label><textarea class="champ" name="description" rows="3">${esc(v.description || '')}</textarea></div>
         <div><label class="libelle">Chef de projet</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], moi && moi.equipeId === eqId ? moi.id : '', 'class="champ" name="chefId"')}</div>
+        <div><label class="libelle">Méthode de gestion du projet</label>${this.choixMethode()}</div>
         <input type="hidden" name="equipeId" value="${eqId}">
       </div>
       <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Créer le projet</button></div>

@@ -92,7 +92,9 @@ function amorcer() {
   const idPr = {}; bd.projets = [];
   PROJ.forEach(([code, nom, eq, kr, chef, avancement, debut, fin, statut, description]) => {
     const id = uuid(); idPr[code] = id;
-    bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, resultat_cle_id: idKr[kr], chef_id: idP[chef], debut, fin, statut, avancement });
+    // Méthode (migration 022) : une méthode différente selon le projet pour les écrans et les tests
+    const methode = ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'][bd.projets.length % 4];
+    bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, resultat_cle_id: idKr[kr], chef_id: idP[chef], debut, fin, statut, avancement, methode });
   });
   const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Lecteur'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
     ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Lecteur'],
@@ -128,18 +130,21 @@ function amorcer() {
   });
 
   // Référentiels et champs : identiques à la migration 002
-  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8]]
+  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8], ['methode', 'Méthodes projet', 9]]
     .map(([id, nom, ordre]) => ({ id, nom, ordre }));
   const V = { stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
     role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],
     // Types d'absence de la production (données du porteur, DAT 1.19 ; migration 008)
     abs: [['Congés validé', '#0F8A6B', 1, 'CV'], ['Congés prévisionnel', '#E07B00', 0, 'PR'], ['Jours férié', '#7B4A1E', 1, 'JF']],
     poste: ['Chef de projet', 'Product manager', 'Product designer', 'Dév. back-end', 'Dév. front-end', 'DevOps', 'Lead data', 'Data engineer', 'Data analyst', 'Lead mobile', 'Dév. iOS', 'Dév. Android'].map(l => [l, '#4A5363']),
-    contrat: [['CDI', '#0F8A6B'], ['CDD', '#003CC8'], ['Prestataire', '#B25E09'], ['Alternance', '#7A3FC2']] };
+    contrat: [['CDI', '#0F8A6B'], ['CDD', '#003CC8'], ['Prestataire', '#B25E09'], ['Alternance', '#7A3FC2']],
+    // Méthodes de gestion de projet (migration 022)
+    methode: [['Agile Scrum', '#003CC8', 1], ['Agile Kanban', '#0F8A6B', 1], ['Cascade', '#B25E09', 1], ['Cycle en V', '#7A3FC2', 1]] };
   bd.valeurs_referentiel = [];
   // Clés techniques des valeurs système (migration 007)
   const CLES_SYSTEME = { 'stp:Planifié': 'planifie', 'stp:En cours': 'en_cours', 'stp:À risque': 'a_risque', 'stp:En retard': 'en_retard', 'stp:Terminé': 'termine',
-    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie' };
+    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie',
+    'methode:Agile Scrum': 'scrum', 'methode:Agile Kanban': 'kanban', 'methode:Cascade': 'cascade', 'methode:Cycle en V': 'cycle_v' };
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
       cle: systeme ? CLES_SYSTEME[ref + ':' + libelle] : null })));

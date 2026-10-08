@@ -148,6 +148,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Mon dashboard › Trucs et astuces : menu à part, KPI Scrum et Kanban avec exemples', !ongletAstucesAdmin && await page.$$eval('.tableau-kpi', t => t.map(x => x.textContent).join(' '))
       .then(txt => ['Vélocité', 'Burndown', 'Lead time', 'Cycle time', 'WIP'].every(k => txt.includes(k)))
       && (await page.$$('.tableau-kpi .badge-reel')).length > 0 && (await page.$$('.tableau-kpi .badge-illustratif')).length > 0);
+    // Rôles Scrum : organigramme détaillé (PO fonctionnel, PO technique, tech lead, QA) et « qui fait quoi »
+    await page.click('[data-action="ongletAstuces"][data-onglet="roles"]'); await page.waitForTimeout(200);
+    verifier('Trucs et astuces › Rôles Scrum : organigramme détaillé et qui fait quoi', await page.evaluate(() => {
+      const titres = [...document.querySelectorAll('.org-carte .org-titre')].map(t => t.textContent);
+      return ['PO fonctionnel', 'PO technique', 'Scrum Master', 'Tech lead', 'QA / Testeurs', 'Développeurs'].every(t => titres.includes(t))
+        && !!document.querySelector('.tableau-roles') && document.querySelectorAll('.tableau-roles tbody tr').length === QUI_FAIT_QUOI_SCRUM.lignes.length;
+    }));
+    await capture('25-roles-scrum');
+    await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
+    // Menu : Mon timesheet rangé dans Gestion des ressources (intertitre), plus d'entrée à part
+    verifier('Menu : Mon timesheet dans Gestion des ressources', await page.evaluate(() => {
+      const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
+      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Mon timesheet') && t.includes('Saisir mes heures') && t.includes('Suivi de mes équipes'))
+        && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet');
+    }));
     // Jours fériés administrables : ajout, renommage, suppression
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterFerie"] input[name=jour]', '2026-05-25');
@@ -228,8 +243,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="nouveauProjet"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="creerProjet"] input[name=nom]', 'Projet de test');
     verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));
+    // Méthode obligatoire (migration 022) : sans choix, le formulaire ne part pas
+    await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(200);
+    verifier('Nouveau projet : méthode obligatoire (4 choix)', await page.$$eval('input[name=methode]', l => l.length) === 4 && !!(await page.$('form[data-action-envoi="creerProjet"]')));
+    await page.check('input[name=methode][value="Agile Kanban"]');
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
     verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');
+    verifier('Nouveau projet : méthode enregistrée et modifiable dans la fiche', await page.inputValue('.panneau select[data-champ="methode"]') === 'Agile Kanban'
+      && await page.evaluate(() => etat.d.projets.find(p => p.nom === 'Projet de test').methode === 'Agile Kanban'));
     await page.click('.fermer');
 
     // Bouton Aide : menu, guide de l'écran courant, fermeture

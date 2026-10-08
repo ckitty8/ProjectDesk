@@ -1,5 +1,5 @@
 /* ============================================================
-   Mon dashboard › Mon timesheet › Suivi de mes équipes
+   Mon dashboard › Gestion des ressources › Mon timesheet › Suivi de mes équipes
    (maquette docs/maquettes/mon-timesheet-suivi-equipes/)
    - Feuilles du mois des personnes de mes équipes (saisie mensuelle) :
      projets, heures saisies / attendues, complétude, statut.
