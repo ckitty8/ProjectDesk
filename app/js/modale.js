@@ -1,7 +1,8 @@
 /* ============================================================
    Fenêtres modales
    - affectation : assigner une ressource à des projets, avec un rôle
-                   (maquette : « Assigner une ressource »)
+                   (maquette : « Assigner une ressource ») ; m.role pré-choisit le
+                   rôle sur le projet d'origine (« + Ajouter un Product Owner »)
    - ressource   : fiche d'une personne (nom, poste, capacité, email)
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
@@ -34,7 +35,7 @@ const Modale = {
         const a = actuelles.find(x => x.projetId === p.id), coche = a || m.projetId === p.id;
         return `<label class="ligne-flex" style="padding:5px 0"><input type="checkbox" name="projet" value="${p.id}" ${coche ? 'checked' : ''}>
           ${C.code(p.code)}<span style="flex:1">${esc(p.nom)}</span>
-          ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : ROLES_PROJET.MEMBRE, `class="champ" style="width:auto;height:28px" name="role-${p.id}"`)}</label>`;
+          ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : (p.id === m.projetId && m.role) || ROLES_PROJET.MEMBRE, `class="champ" style="width:auto;height:28px" name="role-${p.id}"`)}</label>`;
       }).join('');
     }).join('');
     const nbCoches = actuelles.length + (m.projetId && !actuelles.some(x => x.projetId === m.projetId) ? 1 : 0);

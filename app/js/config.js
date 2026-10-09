@@ -122,10 +122,9 @@ const AIDES = {
   datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',
   recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
-  ressourcesUnite: 'Nombre de fiches de l’unité et de ses équipes ; « dont N en direct » = personnes rattachées à la direction elle-même.',
-  responsableRole: 'Unité : son responsable. Projet : son chef. Personne : son rôle sur le projet (Chef de projet et Membre peuvent le modifier, Lecteur le consulte).',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 »), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
-  statutUnite: 'Projet : son statut (Planifié, En cours…). Personne : « Actif » ou « Inactif » ; elle devient inactive dès qu’une date de fin est saisie, ou en cliquant sur « Actif » (date de fin = aujourd’hui). Une personne inactive n’apparaît plus dans la liste (bouton « Afficher les ressources inactives » pour la revoir) ; cliquer sur « Inactif » la réactive.',
+  productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
+  statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif » (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Le bouton « Masquer les ressources inactives » les retire de la liste.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
   aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',
@@ -155,9 +154,9 @@ const GUIDE_ECRANS = {
   mesProjets: ['Planning (Gantt) des projets où vous êtes affecté(e), avec votre rôle.', '« + Nouveau projet » crée un projet dans votre équipe ; un clic sur une barre ouvre le projet (nom, description, chef, membres).'],
   conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, congés, reste à prendre) et la capacité (en construction ; bouton « Méthode de calcul Scrum »).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
-  listeRessources: ['L’organisation complète : directions → équipes → projets → membres.',
-    '« + Ajouter une direction », puis sur chaque ligne « + Équipe », « + Projet », « + Membre ». Le crayon modifie ; la corbeille supprime une unité vide.',
-    'Onglets Postes et Types de contrat : les listes utilisées dans les fiches des personnes.'],
+  listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
+    'Une équipe : son responsable (même hors projet), ses projets et ses personnes sans projet. Un projet : ses Product Owners, puis ses membres. « Fiche » modifie une personne (dont ses dates d’arrivée et de départ).',
+    'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.', 'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
   suiviEquipes: ['Les feuilles de temps du mois des personnes de vos équipes : projets, heures saisies sur attendues, complétude, statut.',
     'Responsable d’équipe : validez ou renvoyez les feuilles soumises. Changez de mois avec les flèches.'],
@@ -174,9 +173,9 @@ const GUIDE_ECRANS = {
 };
 const GUIDES = {
   premiersPas: { titre: 'Premiers pas', paragraphes: [
-    '1. Mon dashboard › Liste des ressources : « + Ajouter une direction », puis sur la direction « + Équipe ».',
-    '2. Sur l’équipe : « + Membre » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',
-    '3. Sur chaque projet : « + Membre » pour affecter les personnes avec leur rôle (Chef de projet, Membre, Lecteur).',
+    '1. Mon dashboard › Liste des ressources : « + Ajouter une équipe », puis choisissez-la à gauche.',
+    '2. Sur l’équipe : « + Personne » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',
+    '3. Sur chaque projet : « + Ajouter un Product Owner » et « + Membre » pour affecter les personnes avec leur rôle (Chef de projet = Product Owner, Membre, Lecteur).',
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés & capacité : posez les absences ; Mon timesheet : saisissez les heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
