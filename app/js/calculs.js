@@ -160,6 +160,14 @@ const Calculs = (() => {
   function estPresentSur(r, debut, fin) {
     return (!r.dateArrivee || r.dateArrivee <= fin) && (!r.dateDepart || r.dateDepart >= debut);
   }
+  /* Présence d'une personne en clair (Liste des ressources) : remplace les champs date des
+     lignes, peu lisibles (maquette liste-ressources-ux, 2026-10-09). La date de fin prime :
+     « partie le … » si elle est passée, « jusqu'au … » sinon ; puis l'arrivée. */
+  function libellePresence(r, aujourdhui) {
+    if (r.dateDepart) return (r.dateDepart < aujourdhui ? 'partie le ' : 'jusqu’au ') + formatAvecAnnee(r.dateDepart);
+    if (r.dateArrivee) return (r.dateArrivee > aujourdhui ? 'arrive le ' : 'depuis le ') + formatAvecAnnee(r.dateArrivee);
+    return '';
+  }
 
   // Les jours hors présence (avant l'arrivée, après le départ) ne comptent pas dans la capacité.
   function capacitePeriode(ressources, debut, fin, absences, feries) {
@@ -287,7 +295,8 @@ const Calculs = (() => {
     lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
-    estPresent, estPresentSur, capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
+    estPresent, estPresentSur, libellePresence,
+    capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
     rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily,
     heuresAttenduesJours, previsionMois, partDe, heuresProjetPeriode, joursEnHeures, heuresEnJours
   };

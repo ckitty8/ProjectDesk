@@ -1,0 +1,63 @@
+<!-- Piste 1 — Arborescence épurée : Équipe → Projet → Product Owners → Membres (une liste lisible, sans champs de saisie dans les lignes) -->
+<style>
+.p1-equipe { background: #fff; border: 1px solid var(--bordure); border-radius: 10px; }
+.p1-tete { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--bordure-fine); }
+.p1-tete h2 { font-size: 16px; }
+.p1-resp { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #FAF7FF; border-bottom: 1px solid var(--bordure-fine); }
+.p1-projet { border-bottom: 1px solid var(--bordure-fine); }
+.p1-projet:last-child .p1-projet-tete { border-radius: 0 0 10px 10px; }
+.p1-projet-tete { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--fond-entete); }
+.p1-projet-tete .nom { font-weight: 600; font-size: 14px; }
+.p1-ligne { display: grid; grid-template-columns: 34px 1fr 200px 150px 110px 60px; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--bordure-fine); }
+.p1-ligne.po { padding-left: 40px; } .p1-ligne.membre { padding-left: 76px; }
+.p1-groupe { padding: 6px 16px 4px 40px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--pale); font-weight: 600; border-top: 1px solid var(--bordure-fine); }
+.p1-groupe.membres { padding-left: 76px; }
+.p1-replie { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.p1-plus { color: var(--pale); font-size: 16px; text-align: right; }
+</style>
+<div class="m-ecran">
+  <div class="m-entete">
+    <div><span class="m-titre-piste">Piste 1 · Arborescence épurée</span><h1>Liste des ressources</h1><div class="sous-titre">Équipes → projets → Product Owners → membres</div></div>
+    <div class="m-barre">
+      <span class="m-recherche">⌕ Rechercher une personne, un projet</span>
+      <button class="btn">Inactifs : masqués</button>
+      <button class="btn primaire m-annot" data-n="5">+ Ajouter ▾</button>
+    </div>
+  </div>
+  <div class="m-barre">
+    <span class="m-segment m-annot" data-n="1"><span class="on">Toutes les équipes</span><span>Applications</span><span>IA</span><span>AMOA</span></span>
+    <span class="discret" style="margin-left:8px">3 équipes · 3 projets · 16 personnes</span>
+  </div>
+
+  <div class="p1-equipe">
+    <div class="p1-tete"><span style="color:var(--discret)">▾</span><h2>Applications</h2><span class="discret">3 projets · 16 personnes</span><span style="flex:1"></span><a>+ Projet</a><a>+ Personne</a><span class="p1-plus">⋯</span></div>
+    <div class="p1-resp m-annot" data-n="2">
+      <span class="m-av resp">AN</span><div><div class="m-nom">Anne</div><div class="m-sous">Responsable applicatif · hors projet</div></div>
+      <span class="m-pill m-resp">Responsable de l'équipe</span><span class="m-pill m-conges">Visible dans Congés &amp; capacité</span>
+    </div>
+
+    <div class="p1-projet">
+      <div class="p1-projet-tete"><span style="color:var(--discret)">▾</span><span class="nom">VISTA</span><span class="m-pill m-encours">En cours</span><span class="discret">2 PO · 3 membres</span><span style="flex:1"></span><a>+ Membre</a><span class="p1-plus">⋯</span></div>
+      <div class="p1-groupe m-annot" data-n="3" style="width:fit-content;padding-right:20px">Product Owners</div>
+      <div class="p1-ligne po"><span class="m-av po">JR</span><div><span class="m-nom">Julie R.</span></div><span class="m-sous">Product owner · CDI</span><span class="m-sous">depuis janv. 2024</span><span class="m-pill m-po">PO</span><span class="p1-plus">⋯</span></div>
+      <div class="p1-ligne po"><span class="m-av po">ML</span><div><span class="m-nom">Marc L.</span></div><span class="m-sous">Product owner · Prestataire</span><span class="m-sous">depuis sept. 2025</span><span class="m-pill m-po">PO</span><span class="p1-plus">⋯</span></div>
+      <div class="p1-groupe membres">Membres</div>
+      <div class="p1-ligne membre"><span class="m-av">KB</span><span class="m-nom">Karim B.</span><span class="m-sous">Dév. back-end · CDI</span><span class="m-sous">depuis mars 2023</span><span class="m-pill m-membre">Membre</span><span class="p1-plus">⋯</span></div>
+      <div class="p1-ligne membre"><span class="m-av">ST</span><span class="m-nom">Sophie T.</span><span class="m-sous">Dév. front-end · CDI</span><span class="m-sous">depuis juin 2024</span><span class="m-pill m-membre">Membre</span><span class="p1-plus">⋯</span></div>
+      <div class="p1-ligne membre"><span class="m-av">LP</span><span class="m-nom">Lucas P.</span><span class="m-sous">DevOps · Prestataire</span><span class="m-sous m-annot" data-n="4" style="width:fit-content;padding-right:18px">part le 31/12</span><span class="m-pill m-membre">Membre</span><span class="p1-plus">⋯</span></div>
+    </div>
+    <div class="p1-projet"><div class="p1-projet-tete"><span style="color:var(--discret)">▸</span><span class="nom">CDO</span><span class="m-pill m-encours">En cours</span><span class="discret">1 PO · 3 membres</span><span style="flex:1"></span><span style="display:flex;gap:-6px"><span class="m-av po">NK</span><span class="m-av">TG</span><span class="m-av">YA</span><span class="m-av">RD</span></span></div></div>
+    <div class="p1-projet" style="border-bottom:0"><div class="p1-projet-tete"><span style="color:var(--discret)">▸</span><span class="nom">VI3P / V4</span><span class="m-pill m-encours">En cours</span><span class="discret">2 PO · 4 membres</span><span style="flex:1"></span><span style="display:flex"><span class="m-av po">PV</span><span class="m-av po">IM</span><span class="m-av">HF</span><span class="m-av">LC</span><span class="m-av">+2</span></span></div></div>
+  </div>
+
+  <div class="p1-equipe"><div class="p1-replie"><span style="color:var(--discret)">▸</span><h2>IA</h2><span class="discret">projets et personnes à saisir</span></div></div>
+  <div class="p1-equipe"><div class="p1-replie"><span style="color:var(--discret)">▸</span><h2>AMOA</h2><span class="discret">projets et personnes à saisir</span></div></div>
+
+  <div class="m-legende">
+    <div><b>1</b>Plus de niveau « Direction DSI » : on entre directement par équipe (filtre rapide).</div>
+    <div><b>2</b>Anne, responsable de l'équipe, hors projet : en tête d'équipe, comptée dans les congés.</div>
+    <div><b>3</b>Chaque projet : ses Product Owners (1, 2 ou plus), puis les membres en dessous.</div>
+    <div><b>4</b>Plus de champs date dans les lignes : dates et contrat dans la fiche (menu ⋯).</div>
+    <div><b>5</b>Un seul bouton « + Ajouter » (équipe, projet, personne) ; actions de ligne regroupées dans ⋯.</div>
+  </div>
+</div>
