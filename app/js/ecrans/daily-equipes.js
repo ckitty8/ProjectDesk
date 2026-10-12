@@ -59,8 +59,8 @@ Ecrans.dailyEquipes = {
     // Carte d'un membre : sa note du projet, ou « pas de daily » (avec son absence du jour si elle est posée)
     const carte = (r, p) => {
       const n = noteDe(r, p);
-      if (remplie(n)) return `<div class="carte" style="padding:14px 16px">
-        <div class="ligne-flex" style="margin-bottom:8px">${C.avatar(r.nom)}<b style="flex:1">${esc(r.nom)}</b>${C.code(p.code)}</div>
+      if (remplie(n)) return `<div class="carte encart-moyen">
+        <div class="ligne-flex" style="margin-bottom:8px">${C.avatar(r.nom)}<b class="extensible">${esc(r.nom)}</b>${C.code(p.code)}</div>
         <div style="line-height:1.55">${this.note(n.texte)}</div></div>`;
       const absence = absenceDe(r.id, jour);
       const motif = absence ? `Pas de daily · absent(e) (${esc(absence.type)})` : r.userId ? 'Pas encore de daily sur ce projet' : 'Pas de compte relié à sa fiche';
@@ -78,12 +78,14 @@ Ecrans.dailyEquipes = {
     return `
     <div class="ecran">
       ${entete}
-      <div class="ligne-flex" style="flex-wrap:wrap"><div class="puces">${puces}</div><span style="flex:1"></span>
+      <div class="ligne-flex" style="flex-wrap:wrap"><div class="puces">${puces}</div><span class="extensible"></span>
         <span class="discret">${blocages.length} blocage${blocages.length > 1 ? 's' : ''} signalé${blocages.length > 1 ? 's' : ''}</span></div>
-      ${blocages.length ? `<div class="carte" style="border-color:#F3C1C1;background:#FFF5F5;padding:12px 16px"><b style="color:var(--danger)">Blocages du jour</b>
-        <div style="margin-top:6px;display:grid;grid-template-columns:240px 1fr;gap:4px 12px">${blocages.map(b => `<span>${C.code(b.code)} ${esc(b.nom)}</span><span>${esc(b.texte)}</span>`).join('')}</div></div>` : ''}
+      ${blocages.length ? `<div class="carte encart-compact encart-blocages"><b class="texte-danger">Blocages du jour</b>
+        <div style="margin-top:6px;display:grid;grid-template-columns:240px 1fr;gap:4px 12px">${blocages.map(b => `<span>
+          ${C.code(b.code)} ${esc(b.nom)}</span><span>${esc(b.texte)}</span>`).join('')}</div></div>` : ''}
       ${projets.map(section).join('')}
-      <div class="discret" style="font-size:12px">Notes conservées à l’affichage sur ${JOURS_DAILY} jours. Vous voyez le daily de vos projets ; le responsable d’une unité voit tous les projets de son unité.</div>
+      <div class="discret texte-12">Notes conservées à l’affichage sur ${JOURS_DAILY} jours. Vous voyez le daily de vos projets ;
+        le responsable d’une unité voit tous les projets de son unité.</div>
     </div>`;
   }
 };
@@ -126,10 +128,11 @@ const ExportDaily = {
   feuilles(lignes, avecBlocages) {
     const date = jour => jour.split('-').reverse().join('/');
     const STYLE_STATUT = { 'Renseigné': 'vert', 'Absent(e)': 'gris', 'Sans compte': 'gris', 'Manquant': 'orange' };
+    // Quatre premières colonnes communes aux deux onglets : qui, quand, sur quel projet
+    const COLONNES_COMMUNES = [{ titre: 'Date', largeur: 12 }, { titre: 'Code projet', largeur: 11 }, { titre: 'Projet', largeur: 28 }, { titre: 'Personne', largeur: 22 }];
     const daily = {
       nom: 'Daily',
-      colonnes: [{ titre: 'Date', largeur: 12 }, { titre: 'Code projet', largeur: 11 }, { titre: 'Projet', largeur: 28 },
-        { titre: 'Personne', largeur: 22 }, { titre: 'Statut', largeur: 13 }, { titre: 'Hier', largeur: 45 },
+      colonnes: [...COLONNES_COMMUNES, { titre: 'Statut', largeur: 13 }, { titre: 'Hier', largeur: 45 },
         { titre: 'Aujourd’hui', largeur: 45 }, { titre: 'Blocages', largeur: 40 }, { titre: 'Absence', largeur: 18 }],
       lignes: lignes.map(l => [date(l.jour), l.projet.code, l.projet.nom, l.personne,
         { texte: l.statut, style: STYLE_STATUT[l.statut] }, l.champs.hier, l.champs.aujourdhui,
@@ -138,8 +141,7 @@ const ExportDaily = {
     if (!avecBlocages) return [daily];
     const blocages = {
       nom: 'Blocages',
-      colonnes: [{ titre: 'Date', largeur: 12 }, { titre: 'Code projet', largeur: 11 }, { titre: 'Projet', largeur: 28 },
-        { titre: 'Personne', largeur: 22 }, { titre: 'Blocage', largeur: 70 }],
+      colonnes: [...COLONNES_COMMUNES, { titre: 'Blocage', largeur: 70 }],
       lignes: lignes.flatMap(l => l.blocages.map(b => [date(l.jour), l.projet.code, l.projet.nom, l.personne, { texte: b, style: 'rouge' }]))
     };
     return [daily, blocages];

@@ -15,7 +15,10 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily }[m.type].call(this, m);
+    const corps = {
+      affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide,
+      methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily
+    }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -33,9 +36,10 @@ const Modale = {
       return `<div class="libelle" style="margin-top:10px">${esc(e.nom)}</div>` + projets.map(p => {
         // Coché : déjà affecté, ou projet d'où l'on vient (« + Membre »)
         const a = actuelles.find(x => x.projetId === p.id), coche = a || m.projetId === p.id;
-        return `<label class="ligne-flex" style="padding:5px 0"><input type="checkbox" name="projet" value="${p.id}" ${coche ? 'checked' : ''}>
-          ${C.code(p.code)}<span style="flex:1">${esc(p.nom)}</span>
-          ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : (p.id === m.projetId && m.role) || ROLES_PROJET.MEMBRE, `class="champ" style="width:auto;height:28px" name="role-${p.id}"`)}</label>`;
+        return `<label class="ligne-flex ligne-liste"><input type="checkbox" name="projet" value="${p.id}" ${coche ? 'checked' : ''}>
+          ${C.code(p.code)}<span class="extensible">${esc(p.nom)}</span>
+          ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : (p.id === m.projetId && m.role) || ROLES_PROJET.MEMBRE,
+            `class="champ champ-mini" name="role-${p.id}"`)}</label>`;
       }).join('');
     }).join('');
     const nbCoches = actuelles.length + (m.projetId && !actuelles.some(x => x.projetId === m.projetId) ? 1 : 0);
@@ -44,11 +48,12 @@ const Modale = {
     return `<form class="pile" style="gap:0;min-height:0;flex:1;display:flex;flex-direction:column" data-action-envoi="enregistrerAffectations">
       ${this.entete(m.projetId ? `Ajouter une ressource à ${projet(m.projetId).code}` : rId ? `Affectations de ${ressource(rId).nom}` : 'Assigner une ressource')}
       <div class="panneau-corps"><div><label class="libelle">Ressource</label>
-        ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— aucune fiche : créez la personne —' }, ...personnes], rId, 'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}
+        ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— aucune fiche : créez la personne —' }, ...personnes], rId,
+          'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}
         ${equipeNouvelle ? `<div style="margin-top:6px"><a data-action="nouvellePersonneAffectation" data-equipe="${equipeNouvelle}">+ Nouveau membre</a>
-          <span class="discret" style="font-size:12px">(créée dans ${esc(equipe(equipeNouvelle).nom)}, puis sélectionnée ici)</span></div>` : ''}</div>
+          <span class="discret texte-12">(créée dans ${esc(equipe(equipeNouvelle).nom)}, puis sélectionnée ici)</span></div>` : ''}</div>
         <div>${groupes || C.vide('Aucun projet modifiable.')}</div></div>
-      <div class="panneau-pied"><span class="discret" style="flex:1">${nbCoches} affectation(s)</span>
+      <div class="panneau-pied"><span class="discret extensible">${nbCoches} affectation(s)</span>
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer les affectations</button></div></form>`;
   },
 
@@ -62,14 +67,18 @@ const Modale = {
         <div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
         <div class="deux-colonnes"><div><label class="libelle">Poste</label>${this.listeReferentiel('poste', r.poste, 'poste')}</div>
           <div><label class="libelle">Type de contrat</label>${this.listeReferentiel('contrat', r.typeContrat, 'typeContrat')}</div></div>
-        <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
-        <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label><input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
+        <div><label class="libelle">Capacité (%)</label>
+          <input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
+        <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label>
+          <input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
           <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
         <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
         ${this.roleAccesFiche(r)}
-        <div class="discret">${r.userId ? 'Compte de connexion lié' : 'Pas encore de compte : le rôle s’appliquera à sa première connexion avec cet email'} · équipe ${esc(equipe(r.equipeId).nom)}.</div>
+        <div class="discret">${r.userId ? 'Compte de connexion lié' : 'Pas encore de compte : le rôle s’appliquera à sa première connexion avec cet email'}
+          · équipe ${esc(equipe(r.equipeId).nom)}.</div>
       </div>
-      <div class="panneau-pied">${m.id ? '<button type="button" class="btn danger" data-action="supprimerRessource" data-id="' + m.id + '">Supprimer</button><span style="flex:1"></span>' : ''}
+      <div class="panneau-pied">${m.id ? `<button type="button" class="btn danger" data-action="supprimerRessource" data-id="${m.id}">Supprimer</button>
+        <span class="extensible"></span>` : ''}
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
   },
 
@@ -126,7 +135,7 @@ const Modale = {
 
   /* ---------- Équipe : création / modification, membres et invitations ---------- */
   equipe(m) {
-    const esc = C.esc, e = m.id ? equipe(m.id) : { nom: '', prefixe: '', couleur: '#003CC8', type: m.typeUnite || 'equipe', parentId: m.parentId || null };
+    const esc = C.esc, e = m.id ? equipe(m.id) : { nom: '', prefixe: '', couleur: COULEURS.primaire, type: m.typeUnite || 'equipe', parentId: m.parentId || null };
     const libelleType = e.type === 'direction' ? 'Direction' : 'Équipe';
     // Directions proposées pour le rattachement (sauf l'unité elle-même)
     const directions = etat.d.equipes.filter(x => x.type === 'direction' && x.id !== m.id).map(x => ({ valeur: x.id, libelle: x.nom }));
@@ -134,32 +143,40 @@ const Modale = {
     const membres = (m.organisation && m.organisation.members) || [];
     const invitations = ((m.organisation && m.organisation.invitations) || []).filter(i => i.status === 'pending');
     const peutInviter = m.id && peutGererEquipe(m.id);
-    return `<div style="display:flex;flex-direction:column;min-height:0">
+    return `<div class="colonne-modale">
       ${this.entete(m.id ? libelleType + ' ' + e.nom : (e.type === 'direction' ? 'Nouvelle direction' : 'Nouvelle équipe'))}
       <div class="panneau-corps">
         <form class="pile" data-action-envoi="enregistrerEquipe" data-id="${m.id || ''}">
           <fieldset style="border:0;padding:0;margin:0;display:contents" ${etat.estAdmin ? '' : 'disabled'}>
           <div class="deux-colonnes"><div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(e.nom)}" required></div>
-            <div class="deux-colonnes"><div><label class="libelle">Préfixe projets</label><input class="champ" name="prefixe" value="${esc(e.prefixe)}" maxlength="4" required style="text-transform:uppercase"></div>
-              <div><label class="libelle">Couleur</label><input type="color" class="couleur-choix" style="width:100%;height:34px" name="couleur" value="${e.couleur}"></div></div></div>
-          <div class="deux-colonnes"><div><label class="libelle">Type</label>${C.liste([{ valeur: 'equipe', libelle: 'Équipe' }, { valeur: 'direction', libelle: 'Direction' }], e.type, 'class="champ" name="type"')}</div>
-            <div><label class="libelle">Rattachée à (équipe seulement)</label>${C.liste([{ valeur: '', libelle: '— aucune direction —' }, ...directions], e.parentId || '', 'class="champ" name="parentId"')}</div></div>
-          <div class="deux-colonnes"><div><label class="libelle">Statut</label>${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div>
-            <div>${m.id ? `<label class="libelle">Responsable</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}` : ''}</div></div>
-          <div class="discret" style="font-size:12px">Direction et équipe sont des espaces de travail (membres, projets) ; une direction peut en plus regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
+            <div class="deux-colonnes"><div><label class="libelle">Préfixe projets</label>
+              <input class="champ" name="prefixe" value="${esc(e.prefixe)}" maxlength="4" required style="text-transform:uppercase"></div>
+              <div><label class="libelle">Couleur</label>
+                <input type="color" class="couleur-choix" style="width:100%;height:34px" name="couleur" value="${e.couleur}"></div></div></div>
+          <div class="deux-colonnes"><div><label class="libelle">Type</label>
+            ${C.liste([{ valeur: 'equipe', libelle: 'Équipe' }, { valeur: 'direction', libelle: 'Direction' }], e.type, 'class="champ" name="type"')}</div>
+            <div><label class="libelle">Rattachée à (équipe seulement)</label>
+              ${C.liste([{ valeur: '', libelle: '— aucune direction —' }, ...directions], e.parentId || '', 'class="champ" name="parentId"')}</div></div>
+          <div class="deux-colonnes"><div><label class="libelle">Statut</label>
+            ${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div>
+            <div>${m.id ? `<label class="libelle">Responsable</label>
+              ${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}` : ''}</div></div>
+          <div class="discret texte-12">Direction et équipe sont des espaces de travail (membres, projets) ; une direction peut en plus
+            regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
           ${etat.estAdmin ? `<div style="text-align:right"><button class="btn primaire">${m.id ? 'Enregistrer' : 'Créer'}</button></div>`
-            : '<div class="discret" style="font-size:12px">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
+            : '<div class="discret texte-12">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
           </fieldset>
         </form>
         ${m.id ? `<div><div class="libelle">Membres (comptes de connexion)</div>
-          ${m.organisation ? membres.map(mb => `<div class="ligne-flex" style="padding:5px 0">${C.avatar(mb.user ? mb.user.name : '?')}
-            <span style="flex:1">${esc(mb.user ? mb.user.name + ' · ' + mb.user.email : mb.userId)}</span>${C.badge(mb.role, '#4A5363', '#F1F3F7')}</div>`).join('') : '<span class="pale">Chargement…</span>'}
-          ${invitations.map(i => `<div class="ligne-flex discret" style="padding:5px 0">✉ ${esc(i.email)} · ${esc(i.role)} · invitation en attente</div>`).join('')}</div>
+          ${m.organisation ? membres.map(mb => `<div class="ligne-flex ligne-liste">${C.avatar(mb.user ? mb.user.name : '?')}
+            <span class="extensible">${esc(mb.user ? mb.user.name + ' · ' + mb.user.email : mb.userId)}</span>
+              ${C.badgeTon(mb.role, 'neutre')}</div>`).join('') : '<span class="pale">Chargement…</span>'}
+          ${invitations.map(i => `<div class="ligne-flex discret ligne-liste">✉ ${esc(i.email)} · ${esc(i.role)} · invitation en attente</div>`).join('')}</div>
           ${peutInviter ? `<form class="ligne-flex" data-action-envoi="inviterDansEquipe" data-id="${m.id}">
             <input class="champ" type="email" name="email" placeholder="email@entreprise.fr" required>
-            ${C.liste([{ valeur: 'member', libelle: 'member' }, { valeur: 'admin', libelle: 'admin (valide les temps)' }], 'member', 'class="champ" name="role" style="width:auto"')}
+            ${C.liste([{ valeur: 'member', libelle: 'member' }, { valeur: 'admin', libelle: 'admin (valide les temps)' }], 'member', 'class="champ largeur-auto" name="role"')}
             <button class="btn">Inviter</button></form>
-            <div class="discret" style="font-size:12px">La personne invitée crée son compte avec cet email : l’invitation apparaît sur son écran de choix d’équipe.</div>` : ''}` : ''}
+            <div class="discret texte-12">La personne invitée crée son compte avec cet email : l’invitation apparaît sur son écran de choix d’équipe.</div>` : ''}` : ''}
       </div></div>`;
   },
 
@@ -176,8 +193,8 @@ const Modale = {
     const guide = m.sujet === 'ecran'
       ? { titre: 'Aide · ' + (ecran.titre || ''), paragraphes: GUIDE_ECRANS[etat.ecran] || ['Pas encore d’aide pour cet écran.'] }
       : GUIDES[m.sujet];
-    return `<div style="display:flex;flex-direction:column">${this.entete(guide.titre)}
-      <div class="panneau-corps">${guide.paragraphes.map(p => `<p style="margin:0">${esc(p)}</p>`).join('')}
+    return `<div class="colonne">${this.entete(guide.titre)}
+      <div class="panneau-corps">${guide.paragraphes.map(p => `<p class="sans-marge">${esc(p)}</p>`).join('')}
         <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
   },
 
@@ -186,7 +203,7 @@ const Modale = {
   methodeCapacite() {
     const n = Calculs.nombre, focus = Math.round(CONFIG.FACTEUR_FOCUS * 100);
     const bloc = (titre, lignes) => `<div><h3 style="margin:0 0 4px">${titre}</h3><ul style="margin:0;padding-left:18px">${lignes.map(l => `<li>${l}</li>`).join('')}</ul></div>`;
-    return `<div style="display:flex;flex-direction:column">${this.entete('Méthode de calcul · Scrum')}
+    return `<div class="colonne">${this.entete('Méthode de calcul · Scrum')}
       <div class="panneau-corps">
         ${bloc('Capacité par sprint', ['<b>Théorique</b> = jours ouvrés du sprint (hors week-ends et fériés) × capacité (%) de chaque membre',
           '<b>Disponible</b> = théorique − absences (demi-journée = 0,5) ; jours avant l’arrivée ou après le départ exclus'])}
@@ -212,18 +229,22 @@ const Modale = {
       <div class="ligne-flex"><input class="champ" readonly value="${esc(valeur)}" style="font-family:monospace;font-size:12px">
       <button type="button" class="btn petit" data-action="copierTexte" data-texte="${esc(valeur)}">Copier</button></div></div>`;
     const etape = (n, texte) => `<li style="margin-bottom:6px">${texte}</li>`;
-    return `<div style="display:flex;flex-direction:column">${this.entete('Power Automate · daily ' + p.code + ' · ' + p.nom)}
+    return `<div class="colonne">${this.entete('Power Automate · daily ' + p.code + ' · ' + p.nom)}
       <div class="panneau-corps">
         <ol style="margin:0;padding-left:18px">
           ${etape(1, 'Nouveau flux <b>planifié</b> : périodicité 1 jour, à l’heure réglée dans l’onglet (fuseau Paris).')}
-          ${etape(2, 'Action <b>HTTP</b> : méthode <b>POST</b>, l’URI et le corps ci-dessous, en-tête <span class="code">Content-Type</span> = <span class="code">application/json</span>.')}
-          ${etape(3, 'Action <b>Condition</b> : <span class="code">body(\'HTTP\')?[\'a_envoyer\']</span> est égal à <span class="code">true</span> (faux le week-end, un jour non coché ou un férié).')}
-          ${etape(4, 'Si oui : <b>Envoyer un e-mail (V2)</b> (Outlook pro ou perso, Gmail) — À : <span class="code">replace(body(\'HTTP\')?[\'destinataires\'], \',\', \';\')</span>, Objet : <span class="code">body(\'HTTP\')?[\'objet\']</span>, Corps : <span class="code">body(\'HTTP\')?[\'html\']</span>.')}
+          ${etape(2, `Action <b>HTTP</b> : méthode <b>POST</b>, l’URI et le corps ci-dessous,
+            en-tête <span class="code">Content-Type</span> = <span class="code">application/json</span>.`)}
+          ${etape(3, `Action <b>Condition</b> : <span class="code">body('HTTP')?['a_envoyer']</span> est égal à <span class="code">true</span>
+            (faux le week-end, un jour non coché ou un férié).`)}
+          ${etape(4, `Si oui : <b>Envoyer un e-mail (V2)</b> (Outlook pro ou perso, Gmail) —
+            À : <span class="code">replace(body('HTTP')?['destinataires'], ',', ';')</span>,
+            Objet : <span class="code">body('HTTP')?['objet']</span>, Corps : <span class="code">body('HTTP')?['html']</span>.`)}
         </ol>
         ${champ('URI', url)}
         ${champ('Corps (contient la clé secrète du projet : ne pas la diffuser)', corps)}
         <div class="ligne-flex"><button type="button" class="btn petit" data-action="renouvelerCleDaily" data-projet="${m.projetId}">Renouveler la clé</button>
-          <span class="discret" style="font-size:12px">l’ancienne clé cesse aussitôt de fonctionner : mettez le flux à jour</span></div>
+          <span class="discret texte-12">l’ancienne clé cesse aussitôt de fonctionner : mettez le flux à jour</span></div>
         <div><div class="libelle">Aperçu de l’e-mail du jour</div>
           <div class="carte" style="padding:12px 14px;max-height:260px;overflow:auto">${m.apercu ? m.apercu.html : '<span class="pale">Aperçu indisponible</span>'}</div></div>
       </div></div>`;
@@ -234,15 +255,17 @@ const Modale = {
      celui filtré à l'écran, sinon tous), options du fichier. Voir telechargerDailyExcel. */
   exportDaily(m) {
     const esc = C.esc;
-    const raccourci = (cle, libelle) => `<button type="button" class="puce${m.periode === cle ? ' active' : ''}" data-action="periodeExportDaily" data-periode="${cle}">${libelle}</button>`;
+    const raccourci = (cle, libelle) => `<button type="button" class="puce${m.periode === cle ? ' active' : ''}" data-action="periodeExportDaily" data-periode="${cle}">
+      ${libelle}</button>`;
     const projets = projetsDailyVisibles().map(p => `<label class="ligne-flex" style="padding:4px 0">
       <input type="checkbox" name="projet" value="${p.id}" ${m.projets.includes(p.id) ? 'checked' : ''}>${C.code(p.code)}<span>${esc(p.nom)}</span></label>`).join('');
     const option = (nom, libelle) => `<label class="ligne-flex" style="padding:3px 0"><input type="checkbox" name="${nom}" checked>${libelle}</label>`;
-    return `<form style="display:flex;flex-direction:column;min-height:0" data-action-envoi="telechargerDailyExcel">
+    return `<form class="colonne-modale" data-action-envoi="telechargerDailyExcel">
       ${this.entete('Exporter le daily en Excel')}
       <div class="panneau-corps">
         <div><div class="libelle">Période</div>
-          <div class="puces" style="margin-bottom:8px">${raccourci('jour', 'Ce jour')}${raccourci('semaine', 'Cette semaine')}${raccourci('mois', 'Ce mois')}${raccourci('moisPrecedent', 'Mois précédent')}</div>
+          <div class="puces" style="margin-bottom:8px">${raccourci('jour', 'Ce jour')}${raccourci('semaine', 'Cette semaine')}
+            ${raccourci('mois', 'Ce mois')}${raccourci('moisPrecedent', 'Mois précédent')}</div>
           <div class="deux-colonnes"><div><label class="libelle">Du</label><input class="champ" type="date" name="debut" value="${m.debut}" required></div>
             <div><label class="libelle">Au</label><input class="champ" type="date" name="fin" value="${m.fin}" required></div></div></div>
         <div><div class="libelle">Projets (ceux dont vous pouvez lire le daily)</div>${projets}</div>
@@ -251,7 +274,7 @@ const Modale = {
           ${option('manquants', 'Inclure les absents et les daily manquants')}
           ${option('blocages', 'Ajouter l’onglet « Blocages » : uniquement les blocages signalés')}</div>
       </div>
-      <div class="panneau-pied"><span style="flex:1"></span><button type="button" class="btn" data-action="fermer">Annuler</button>
+      <div class="panneau-pied"><span class="extensible"></span><button type="button" class="btn" data-action="fermer">Annuler</button>
         <button class="btn primaire">Télécharger le fichier Excel</button></div></form>`;
   },
 
@@ -264,20 +287,25 @@ const Modale = {
     const blocs = objs.map(o => {
       const krs = etat.d.resultatsCles.filter(k => k.objectifId === o.id);
       return `<div class="carte" style="padding:12px 14px">
-        <div class="ligne-flex">${C.code(o.code)}<b style="flex:1">${esc(o.titre)}</b>
-          ${modifiable ? C.liste(Object.keys(CONFIANCES).map(c => ({ valeur: c, libelle: 'Confiance ' + c })), o.confiance, `class="champ" style="width:auto;height:28px" data-action-change="confianceObjectif" data-id="${o.id}"`) : ''}</div>
-        ${krs.map(k => `<div class="ligne-flex" style="margin-top:8px">${C.code(k.code)}<span style="flex:1">${esc(k.libelle)}</span>
-          ${modifiable ? `<input type="number" min="0" max="100" class="saisie-heure" value="${k.progression}" data-action-change="progressionKr" data-id="${k.id}"> %` : k.progression + ' %'}</div>`).join('')}
+        <div class="ligne-flex">${C.code(o.code)}<b class="extensible">${esc(o.titre)}</b>
+          ${modifiable ? C.liste(Object.keys(CONFIANCES).map(c => ({ valeur: c, libelle: 'Confiance ' + c })), o.confiance,
+            `class="champ champ-mini" data-action-change="confianceObjectif" data-id="${o.id}"`) : ''}</div>
+        ${krs.map(k => `<div class="ligne-flex" style="margin-top:8px">${C.code(k.code)}<span class="extensible">${esc(k.libelle)}</span>
+          ${modifiable
+            ? `<input type="number" min="0" max="100" class="saisie-heure" value="${k.progression}" data-action-change="progressionKr" data-id="${k.id}"> %`
+            : k.progression + ' %'}</div>`).join('')}
         ${modifiable ? `<form class="ligne-flex" style="margin-top:8px" data-action-envoi="ajouterKr" data-objectif="${o.id}">
           <input class="champ" name="libelle" placeholder="Nouveau résultat clé (ex. Disponibilité 99,9 %)" required><button class="btn petit">Ajouter</button></form>` : ''}
       </div>`;
     }).join('');
-    return `<div style="display:flex;flex-direction:column;min-height:0">
+    return `<div class="colonne-modale">
       ${this.entete(`Objectifs ${equipe(eqId).nom} · T${periode.trimestre} ${periode.annee}`)}
       <div class="panneau-corps">
-        <div class="puces">${[1, 2, 3, 4].map(q => `<button class="puce${q === periode.trimestre ? ' active' : ''}" data-action="trimestreObjectifs" data-t="${q}">T${q}</button>`).join('')}</div>
+        <div class="puces">${[1, 2, 3, 4].map(q =>
+          `<button class="puce${q === periode.trimestre ? ' active' : ''}" data-action="trimestreObjectifs" data-t="${q}">T${q}</button>`).join('')}</div>
         ${blocs || C.vide('Aucun objectif sur ce trimestre.')}
-        ${modifiable ? `<form class="ligne-flex" data-action-envoi="ajouterObjectif"><input class="champ" name="titre" placeholder="Nouvel objectif (ex. Fiabiliser la plateforme)" required>
+        ${modifiable ? `<form class="ligne-flex" data-action-envoi="ajouterObjectif">
+          <input class="champ" name="titre" placeholder="Nouvel objectif (ex. Fiabiliser la plateforme)" required>
           <button class="btn primaire">Ajouter l’objectif</button></form>` : ''}
       </div></div>`;
   }
@@ -373,7 +401,8 @@ Object.assign(Actions, {
   ajouterObjectif(_, form) {
     const p = ui('objectifs', { annee: Number(Calculs.aujourdhui().slice(0, 4)), trimestre: Calculs.trimestreDe(Calculs.aujourdhui()) });
     const numero = etat.d.objectifs.filter(o => o.equipeId === etat.equipeCourante && o.annee === p.annee).length + 1;
-    executer(() => Api.creer('objectifs', { equipeId: etat.equipeCourante, annee: p.annee, trimestre: p.trimestre, code: 'O' + numero, titre: new FormData(form).get('titre') }), 'objectifs');
+    const objectif = { equipeId: etat.equipeCourante, annee: p.annee, trimestre: p.trimestre, code: 'O' + numero, titre: new FormData(form).get('titre') };
+    executer(() => Api.creer('objectifs', objectif), 'objectifs');
   },
   confianceObjectif: (d, el) => executer(() => Api.modifier('objectifs', { id: 'eq.' + d.id }, { confiance: el.value }), 'objectifs'),
   ajouterKr(d, form) {

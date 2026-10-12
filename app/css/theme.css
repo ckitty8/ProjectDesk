@@ -26,6 +26,9 @@ h2 { font-size: 15px; font-weight: 600; margin: 0; }
 .marque { display: flex; align-items: center; gap: 10px; padding: 16px 16px 14px; border-bottom: 1px solid rgba(255,255,255,.07); }
 .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--primaire); display: flex; align-items: flex-end; justify-content: center; gap: 3px; padding: 7px 6px; }
 .logo i { width: 4px; background: #fff; border-radius: 1px; display: block; }
+/* Les trois barres du logo (C.marque) ; la version « grand » sert aux écrans de connexion */
+.logo i:nth-child(1) { height: 8px; } .logo i:nth-child(2) { height: 14px; } .logo i:nth-child(3) { height: 11px; background: #9DB6FF; }
+.logo.grand { width: 32px; height: 32px; } .logo.grand i:nth-child(2) { height: 15px; }
 .marque-nom { color: #fff; font-weight: 600; font-size: 15px; }
 .laterale nav { flex: 1; overflow: auto; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
 .menu-titre { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6F7C9B; padding: 12px 10px 6px; display: flex; justify-content: space-between; }
@@ -379,3 +382,36 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .bloc-utilisateur .mention-propriete { font-size: 10.5px; color: var(--pale); margin: 0; padding: 0; border: 0; }
 .bloc-utilisateur .mention-propriete b { font-weight: 500; }
 .menu-aide-propos { padding: 6px 10px; font-size: 11.5px; color: var(--discret); }
+
+/* ============================================================
+   Utilitaires (revue qualité 2026-10-12) : mises en forme réutilisées par plusieurs écrans.
+   Règle : une mise en forme employée 3 fois ou plus devient une classe ici ; un attribut
+   style="…" n'est gardé que pour un réglage unique ou une valeur calculée (couleur d'une
+   équipe, largeur d'une barre). Placés en fin de fichier pour l'emporter à égalité.
+   ============================================================ */
+/* Texte */
+.texte-11 { font-size: 11px; } .texte-12 { font-size: 12px; } .texte-12-5 { font-size: 12.5px; }
+.poids-normal { font-weight: 400; } .texte-danger { color: var(--danger); }
+.centre, .tableau th.centre { text-align: center; }   /* « .tableau th » aligne à gauche par défaut */ .sans-retour { white-space: nowrap; }
+/* Mise en page */
+.extensible { flex: 1; } .entre { justify-content: space-between; }
+/* Champs : « select. » / « input. » pour l'emporter sur la largeur 100 % de input.champ, select.champ */
+.largeur-auto, input.largeur-auto, select.largeur-auto { width: auto; }
+.colonne { display: flex; flex-direction: column; } .colonne-modale { display: flex; flex-direction: column; min-height: 0; }
+.defilement { overflow: auto; } .ecran-large { max-width: 1500px; }
+.sans-marge { margin: 0; } .marge-bas { margin-bottom: 20px; } .retrait { padding-left: 18px; } .ligne-liste { padding: 5px 0; }
+/* Encarts (cartes d'information) : marges intérieures ; variante orange d'alerte */
+.encart-moyen { padding: 14px 16px; } .encart-compact { padding: 12px 16px; }
+.encart { padding: 16px; } .encart-alerte { background: #FFF8EC; border-color: #F3D9A8; }
+.encart-info { background: #F3F6FF; border-color: #B7C8F5; } .encart-blocages { background: #FFF5F5; border-color: #F3C1C1; }
+/* Ligne ou carte sélectionnée (sprint affiché, référentiel choisi, équipe ouverte) */
+.ligne-courante, .carte-choix.courante { background: #F3F6FF; } .carte-choix.courante { border-color: #B7C8F5; }
+.texte-attention { color: #8A4B00; }
+.pastille-ferie { background: #F1F3F7; border: 1px solid #D5DAE3; }
+/* Liste des référentiels (Administration › Référentiels) */
+.menu-lien.lien-referentiel { color: var(--texte); justify-content: space-between; }
+/* Variante violette des onglets réservés au créateur (★ Rôles, ★ Simulation des rôles) */
+.encart-createur { padding: 12px 16px; background: #F5F0FD; border-color: #D9C7F5; }
+/* Champs et boutons : liste déroulante compacte (en-têtes d'écran), bouton plein des écrans de connexion */
+select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: auto; height: 28px; }
+.btn-connexion { height: 38px; justify-content: center; }

@@ -36,105 +36,137 @@ const Calendrier = {
         <button class="puce${v.mode === 'equipe' ? ' active' : ''}" data-action="vueCalendrier" data-mode="equipe">Par équipe</button>
         <button class="puce${v.mode === 'projet' ? ' active' : ''}" data-action="vueCalendrier" data-mode="projet">Par projet</button></div>
       ${v.mode === 'projet' ? C.liste(this.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p ? p.id : '',
-        'class="champ" style="width:auto;height:30px" data-action-change="projetCalendrier"') : ''}</div>`;
+        'class="champ champ-compact" data-action-change="projetCalendrier"') : ''}</div>`;
   },
 
-  // Tableau personnes × jours ; editable = clic sur une case pour poser/retirer une absence
-  rendre(editable) {
-    const esc = C.esc, { annee, mois } = this.moisCourant();
-    const jours = Calculs.joursDuMois(annee, mois), fer = feries(), aujourd = Calculs.aujourdhui();
-    const types = valeursDe('abs', true);
-    const absence = {}; etat.d.absences.forEach(a => { absence[a.ressourceId + '|' + a.jour] = a; });
+  /* ---------- Tableau personnes × jours ----------
+     Les méthodes ci-dessous reçoivent le « contexte » du mois affiché (contexte()) : jours, fériés,
+     types d'absence, absences indexées par « personne|jour », et editable (clic pour poser/retirer). */
+  contexte(editable) {
+    const { annee, mois } = this.moisCourant();
+    const jours = Calculs.joursDuMois(annee, mois);
+    const absences = {};
+    etat.d.absences.forEach(a => { absences[a.ressourceId + '|' + a.jour] = a; });
+    return { editable, jours, fer: feries(), types: valeursDe('abs', true), absences, debut: jours[0], fin: jours[jours.length - 1] };
+  },
 
-    const entete = jours.map(j => {
-      const ferme = !Calculs.estJourOuvre(j, fer), d = Calculs.depuisIso(j);
+  // Ligne d'en-tête : initiale et numéro de chaque jour (week-end / férié grisé, aujourd'hui marqué)
+  enteteJours(ctx) {
+    const aujourd = Calculs.aujourdhui();
+    return ctx.jours.map(j => {
+      const ferme = !Calculs.estJourOuvre(j, ctx.fer), d = Calculs.depuisIso(j);
       return `<th class="${ferme ? 'ferme' : ''} ${j === aujourd ? 'aujourdhui' : ''}">${Calculs.JOURS_INITIALES[d.getDay()]}<br>${d.getDate()}</th>`;
     }).join('');
+  },
 
-    // Jour férié (table jours_feries) : affiché par défaut avec le type « Jours férié » (clé 'ferie',
-    // couleur et abrégé administrables) ; « F » gris si ce type est désactivé. Non cliquable, non décompté.
-    const typeFerie = types.find(x => x.libelle === ABSENCES.FERIE && x.actif);
-    const libelleFerie = j => ((etat.d.joursFeries || []).find(x => x.jour === j) || {}).libelle || 'Jour férié';
-    const caseFeriee = j => typeFerie
-      ? `<span class="case-absence" title="${esc(libelleFerie(j))}" style="color:${typeFerie.couleur};background:${C.teinte(typeFerie.couleur, .16)}">${esc(typeFerie.abrege || 'JF')}</span>`
-      : `<span title="${esc(libelleFerie(j))}">F</span>`;
+  /* Jour férié (table jours_feries) : affiché avec le type « Jours férié » (clé 'ferie', couleur et
+     abrégé administrables) ; « F » gris si ce type est désactivé. Non cliquable, non décompté. */
+  caseFeriee(ctx, j) {
+    const esc = C.esc, typeFerie = ctx.types.find(x => x.libelle === ABSENCES.FERIE && x.actif);
+    const libelle = ((etat.d.joursFeries || []).find(x => x.jour === j) || {}).libelle || 'Jour férié';
+    return typeFerie
+      ? `<span class="case-absence" title="${esc(libelle)}" style="color:${typeFerie.couleur};background:${C.teinte(typeFerie.couleur, .16)}">
+        ${esc(typeFerie.abrege || 'JF')}</span>`
+      : `<span title="${esc(libelle)}">F</span>`;
+  },
 
-    // Projets d'une personne (étiquettes à côté du nom, vue « Par équipe »)
-    const projetsDe = r => etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean);
-    // (au plus 3 étiquettes sur une ligne, puis « +N » ; liste complète en infobulle)
-    const etiquettes = r => {
-      const liste = projetsDe(r), MAX = 3;
-      return liste.slice(0, MAX).map(p => `<span class="etiquette" title="${esc(p.code + ' · ' + p.nom)}">${esc(p.nom)}</span>`).join('')
-        + (liste.length > MAX ? `<span class="etiquette" title="${esc(liste.slice(MAX).map(p => p.nom).join(', '))}">+${liste.length - MAX}</span>` : '');
-    };
+  // Projets d'une personne en étiquettes (vue « Par équipe ») : 3 au plus, puis « +N » ; liste complète en infobulle
+  etiquettes(r) {
+    const esc = C.esc, MAX = 3;
+    const liste = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean);
+    return liste.slice(0, MAX).map(p => `<span class="etiquette" title="${esc(p.code + ' · ' + p.nom)}">${esc(p.nom)}</span>`).join('')
+      + (liste.length > MAX ? `<span class="etiquette" title="${esc(liste.slice(MAX).map(p => p.nom).join(', '))}">+${liste.length - MAX}</span>` : '');
+  },
 
-    // Ligne d'une personne (niveau = retrait ; complement = étiquettes, mention « responsable »)
-    const lignePersonne = (r, niveau, complement = '') => {
-      let nb = 0;
-      const cases = jours.map(j => {
-        const ferme = !Calculs.estJourOuvre(j, fer);
-        if (ferme) return `<td class="ferme">${fer.has(j) ? caseFeriee(j) : ''}</td>`;
-        // Absence du jour ; demi-journée (duree 0,5) marquée « ½ » et comptée 0,5
-        const a = absence[r.id + '|' + j], t = a && types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
-        if (t) nb += demi ? 0.5 : 1;
-        const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}" style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
-        return editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>` : `<td>${contenu}</td>`;
-      }).join('');
-      // complément (étiquettes de projets, « responsable ») sur une 2e ligne : la colonne reste étroite
-      return `<tr data-personne="${r.id}"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}
-        <span><span>${esc(r.nom)}</span>${complement ? `<span class="nom-complement">${complement}</span>` : ''}</span></span></td>${cases}${editable ? `<td class="num" style="padding:0 10px;white-space:nowrap">${Calculs.nombre(nb)} j</td>` : ''}</tr>`;
-    };
-    const ligneGroupe = (contenu, niveau, secondaire) => `<tr class="groupe"><td colspan="${jours.length + (editable ? 2 : 1)}">
+  // Case d'une personne un jour ouvré : absence (demi-journée « ½ ») ; cliquable si editable. Renvoie { html, jours }
+  caseAbsence(ctx, r, j) {
+    const esc = C.esc, a = ctx.absences[r.id + '|' + j];
+    const t = a && ctx.types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
+    const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}"
+      style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">
+      ${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
+    const html = ctx.editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>`
+      : `<td>${contenu}</td>`;
+    return { html, jours: t ? (demi ? 0.5 : 1) : 0 };
+  },
+
+  // Ligne d'une personne (niveau = retrait ; complement = étiquettes, mention « responsable » sur une 2e ligne)
+  lignePersonne(ctx, r, niveau, complement = '') {
+    let total = 0;
+    const cases = ctx.jours.map(j => {
+      if (!Calculs.estJourOuvre(j, ctx.fer)) return `<td class="ferme">${ctx.fer.has(j) ? this.caseFeriee(ctx, j) : ''}</td>`;
+      const c = this.caseAbsence(ctx, r, j);
+      total += c.jours;
+      return c.html;
+    }).join('');
+    return `<tr data-personne="${r.id}"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}
+      <span><span>${C.esc(r.nom)}</span>${complement ? `<span class="nom-complement">${complement}</span>` : ''}</span></span></td>
+        ${cases}${ctx.editable ? `<td class="num" style="padding:0 10px;white-space:nowrap">${Calculs.nombre(total)} j</td>` : ''}</tr>`;
+  },
+
+  // Ligne de titre (unité, projet) sur toute la largeur ; secondaire = intertitre discret
+  ligneGroupe(ctx, contenu, niveau, secondaire) {
+    return `<tr class="groupe"><td colspan="${ctx.jours.length + (ctx.editable ? 2 : 1)}">
       <span class="ligne-flex" style="padding-left:${niveau * 16}px;${secondaire ? 'font-weight:500;color:var(--discret)' : ''}">${contenu}</span></td></tr>`;
+  },
 
-    // Synthèse d'un projet : absents / membres pour chaque jour ouvré (Calculs.absentsDuJour)
-    const membresDe = p => etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId).filter(id => estPresenteSur(id, jours[0], jours[jours.length - 1]));   // présents sur le mois affiché
-    const ligneSynthese = (p, niveau) => {
-      const ids = membresDe(p);
-      const cases = jours.map(j => {
-        if (!Calculs.estJourOuvre(j, fer)) return '<td class="ferme"></td>';
-        const s = Calculs.absentsDuJour(ids, j, etat.d.absences);
-        return s.niveau === 'aucun' ? '<td class="synthese-vide">·</td>'
-          : `<td class="synthese ${s.niveau}" title="${Calculs.nombre(s.absents)} absent(s) sur ${s.total}">${Calculs.nombre(s.absents)}/${s.total}</td>`;
-      }).join('');
-      return `<tr class="ligne-synthese"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.icone('projet', 14)}${esc(p.nom)}</span></td>${cases}${editable ? '<td></td>' : ''}</tr>`;
-    };
+  // Membres d'un projet présents sur le mois affiché
+  membresDe(ctx, p) {
+    return etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId)
+      .filter(id => estPresenteSur(id, ctx.debut, ctx.fin));
+  },
 
-    // Vue « Par équipe » : chaque personne une seule fois sous son unité (responsable en tête),
-    // puis la synthèse des absences par projet de l'unité (maquette conges-sans-doublon, pistes 2 et 3).
-    const unite = (e, niveau) => {
-      const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
-      const projets = etat.d.projets.filter(p => p.equipeId === e.id && membresDe(p).length);
-      const personnes = ressourcesPresentes(jours[0], jours[jours.length - 1]).filter(r => r.equipeId === e.id)
-        .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
-      const contenu = personnes.map(r => lignePersonne(r, niveau + 1,
-          (r.id === e.responsableId ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')
-        + sousEquipes.map(x => unite(x, niveau + 1)).join('')
-        + (projets.length ? ligneGroupe(`Projets — absents / membres par jour ${C.aide('syntheseProjets')}`, niveau + 1, true) + projets.map(p => ligneSynthese(p, niveau + 1)).join('') : '');
-      if (!contenu) return '';
-      return ligneGroupe(`${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${esc(e.nom)}`, niveau, false) + contenu;
-    };
+  // Synthèse d'un projet : absents / membres pour chaque jour ouvré (Calculs.absentsDuJour)
+  ligneSynthese(ctx, p, niveau) {
+    const ids = this.membresDe(ctx, p);
+    const cases = ctx.jours.map(j => {
+      if (!Calculs.estJourOuvre(j, ctx.fer)) return '<td class="ferme"></td>';
+      const s = Calculs.absentsDuJour(ids, j, etat.d.absences);
+      return s.niveau === 'aucun' ? '<td class="synthese-vide">·</td>'
+        : `<td class="synthese ${s.niveau}" title="${Calculs.nombre(s.absents)} absent(s) sur ${s.total}">${Calculs.nombre(s.absents)}/${s.total}</td>`;
+    }).join('');
+    return `<tr class="ligne-synthese"><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">
+      ${C.icone('projet', 14)}${C.esc(p.nom)}</span></td>${cases}${ctx.editable ? '<td></td>' : ''}</tr>`;
+  },
 
-    // Vue « Par projet » : les membres du projet choisi, une fois chacun, puis sa synthèse
-    const vue = this.vue();
-    let lignes;
-    if (vue.mode === 'projet') {
-      const p = this.projetChoisi();
-      lignes = p ? ligneGroupe(`${C.icone('projet', 14)}${C.code(p.code)} ${esc(p.nom)} <span class="discret" style="font-weight:400">${membresDe(p).length} membres</span>`, 0, false)
-        + membresDe(p).map(id => lignePersonne(ressource(id), 1)).join('') + ligneSynthese(p, 1) : '';
-    } else {
-      const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
-      lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
-    }
+  /* Vue « Par équipe » : chaque personne une seule fois sous son unité (responsable en tête), puis la
+     synthèse des absences par projet de l'unité (maquette conges-sans-doublon, pistes 2 et 3). */
+  unite(ctx, e, niveau) {
+    const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
+    const projets = etat.d.projets.filter(p => p.equipeId === e.id && this.membresDe(ctx, p).length);
+    const personnes = ressourcesPresentes(ctx.debut, ctx.fin).filter(r => r.equipeId === e.id)
+      .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
+    const responsable = r => r.id === e.responsableId ? '<span class="discret texte-11">responsable</span>' : '';
+    const contenu = personnes.map(r => this.lignePersonne(ctx, r, niveau + 1, responsable(r) + this.etiquettes(r))).join('')
+      + sousEquipes.map(x => this.unite(ctx, x, niveau + 1)).join('')
+      + (projets.length ? this.ligneGroupe(ctx, `Projets — absents / membres par jour ${C.aide('syntheseProjets')}`, niveau + 1, true)
+        + projets.map(p => this.ligneSynthese(ctx, p, niveau + 1)).join('') : '');
+    if (!contenu) return '';
+    const titre = `${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${C.esc(e.nom)}`;
+    return this.ligneGroupe(ctx, titre, niveau, false) + contenu;
+  },
 
-    return `<div class="calendrier"><table><thead><tr><th class="nom">Personne</th>${entete}${editable ? '<th>Total</th>' : ''}</tr></thead>
-      <tbody>${lignes || `<tr><td class="nom" colspan="${jours.length + 1}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
+  // Vue « Par projet » : les membres du projet choisi, une fois chacun, puis sa synthèse
+  lignesProjet(ctx) {
+    const p = this.projetChoisi();
+    if (!p) return '';
+    const membres = this.membresDe(ctx, p);
+    const titre = `${C.icone('projet', 14)}${C.code(p.code)} ${C.esc(p.nom)} <span class="discret poids-normal">${membres.length} membres</span>`;
+    return this.ligneGroupe(ctx, titre, 0, false) + membres.map(id => this.lignePersonne(ctx, ressource(id), 1)).join('') + this.ligneSynthese(ctx, p, 1);
+  },
+
+  // Tableau personnes × jours ; editable = clic sur une case pour poser/retirer une absence (Congés & capacité)
+  rendre(editable) {
+    const ctx = this.contexte(editable);
+    const lignes = this.vue().mode === 'projet' ? this.lignesProjet(ctx) : unitesRacines().map(e => this.unite(ctx, e, 0)).join('');
+    return `<div class="calendrier"><table><thead><tr><th class="nom">Personne</th>${this.enteteJours(ctx)}${editable ? '<th>Total</th>' : ''}</tr></thead>
+      <tbody>${lignes || `<tr><td class="nom" colspan="${ctx.jours.length + 1}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
   },
 
   legende() {
     return `<div class="ligne-flex discret" style="gap:14px">${valeursDe('abs').map(t =>
       `<span class="ligne-flex"><span class="pastille" style="background:${C.teinte(t.couleur, .2)};border:1px solid ${t.couleur}"></span>${C.esc(t.libelle)}</span>`).join('')}
-      <span class="ligne-flex"><span class="pastille" style="background:#F1F3F7;border:1px solid #D5DAE3"></span>Férié / week-end</span></div>`;
+      <span class="ligne-flex"><span class="pastille pastille-ferie"></span>Férié / week-end</span></div>`;
   }
 };
 
@@ -148,17 +180,20 @@ Ecrans.ressources = {
     const fiches = [...etat.d.ressources].sort((a, b) => estInactive(a) - estInactive(b) || a.nom.localeCompare(b.nom));
     const annuaire = fiches.map(r => {
       const eq = equipe(r.equipeId), inactif = estInactive(r);
-      const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
-      const fin = inactif ? ` <span class="discret" style="font-size:11px">fin le ${Calculs.formatAvecAnnee(r.dateDepart)}</span>` : '';
-      return `<tr${inactif ? ' style="color:var(--discret)"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
+      const codes = codesProjetsDe(r.id);
+      const fin = inactif ? ` <span class="discret texte-11">fin le ${Calculs.formatAvecAnnee(r.dateDepart)}</span>` : '';
+      return `<tr${inactif ? ' style="color:var(--discret)"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
+        <td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
         <td>${esc(r.poste || '—')}</td><td>${codes || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td>
         <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td></tr>`;
     }).join('');
     return `
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
-      <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
-      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2><span class="discret">${etat.d.ressources.length} personnes · ${etat.d.ressources.filter(estInactive).length} inactive(s)</span></div>
+      <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
+        ${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
+      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2>
+        <span class="discret">${etat.d.ressources.length} personnes · ${etat.d.ressources.filter(estInactive).length} inactive(s)</span></div>
         <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th><th>Statut</th></tr></thead>
         <tbody>${annuaire || `<tr><td colspan="6">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
     </div>`;

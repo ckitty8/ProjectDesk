@@ -18,7 +18,7 @@ Ecrans.mesProjets = {
 
     const actions = `<button class="btn" data-action="ouvrirObjectifs">Objectifs de l’équipe</button>
       <button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
-    const avertissement = !moi ? `<div class="carte" style="padding:14px 16px">Votre compte n’est lié à aucune fiche ressource.
+    const avertissement = !moi ? `<div class="carte encart-moyen">Votre compte n’est lié à aucune fiche ressource.
       Demandez à votre équipe de créer votre fiche (Liste des ressources) avec votre email : le lien se fait à la connexion.</div>` : '';
 
     // Échelle de temps : du 1er du mois du début le plus tôt à la fin du mois de l'échéance la plus tardive
@@ -50,7 +50,8 @@ Ecrans.mesProjets = {
       ${C.entete('Mes projets et Roadmap', `${lignes.length} projets dont ${nbChef} en tant que chef de projet · cliquez sur une barre pour ouvrir le projet`, actions)}
       ${avertissement}
       <div class="carte">${frise || C.vide('Aucun projet daté où vous êtes affecté(e).')}</div>
-      <div class="discret"><span style="color:var(--primaire)">—</span> Aujourd’hui, ${Calculs.formatCourt(jour)} &nbsp; Barre claire : durée planifiée · barre pleine : avancement</div>
+      <div class="discret"><span style="color:var(--primaire)">—</span> Aujourd’hui, ${Calculs.formatCourt(jour)} &nbsp;
+        Barre claire : durée planifiée · barre pleine : avancement</div>
     </div>`;
   }
 };

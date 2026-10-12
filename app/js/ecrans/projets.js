@@ -16,13 +16,13 @@ Ecrans.projets = {
 
     const puce = (id, nom, couleur) => `<button class="puce${u.equipe === id ? ' active' : ''}" data-action="filtrerEquipeProjets" data-id="${id}">
       ${C.pastille(couleur)}${esc(nom)}</button>`;
-    const filtres = puce('toutes', 'Toutes les équipes', '#8A93A3') + equipes.map(e => puce(e.id, e.nom, e.couleur)).join('');
+    const filtres = puce('toutes', 'Toutes les équipes', COULEURS.pale) + equipes.map(e => puce(e.id, e.nom, e.couleur)).join('');
 
     const lignes = equipes.filter(e => u.equipe === 'toutes' || e.id === u.equipe).map(e => {
       const siens = projets.filter(p => p.equipeId === e.id);
       if (!siens.length) return '';
       return `<tr class="groupe"><td colspan="6"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}
-          <span class="discret" style="font-weight:400">${siens.length} projets · ${Calculs.pourcent(Calculs.avancementMoyen(siens))} d’avancement moyen</span></span></td></tr>`
+          <span class="discret poids-normal">${siens.length} projets · ${Calculs.pourcent(Calculs.avancementMoyen(siens))} d’avancement moyen</span></span></td></tr>`
         + siens.map(p => this.ligneProjet(p)).join('');
     }).join('');
 
@@ -30,7 +30,8 @@ Ecrans.projets = {
     <div class="ecran">
       ${C.entete('Projets et Roadmap', `${projets.length} projets · objectifs et avancement par équipe`, `<div class="puces">${filtres}</div>`)}
       <div class="carte"><table class="tableau">
-        <thead><tr><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th><th>Échéance</th><th>Statut</th></tr></thead>
+        <thead><tr><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th>
+          <th>Échéance</th><th>Statut</th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="6">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
     </div>`;
   },
@@ -44,7 +45,8 @@ Ecrans.projets = {
         <td>${esc(p.nom)}<div>${C.code(p.code)}</div></td>
         <td>${obj ? `${esc(obj.code)} · ${esc(obj.titre)}<div class="discret">${esc(kr.code)} · ${esc(kr.libelle)}</div>` : '<span class="pale">—</span>'}</td>
         <td>${chef ? `<span class="ligne-flex">${C.avatar(chef.nom)}${esc(chef.nom)}</span>` : '<span class="pale">—</span>'}</td>
-        <td style="min-width:150px"><span class="ligne-flex">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}<span class="num" style="width:36px">${p.avancement}%</span></span></td>
+        <td style="min-width:150px"><span class="ligne-flex">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}
+          <span class="num" style="width:36px">${p.avancement}%</span></span></td>
         <td>${Calculs.formatCourt(p.fin)}</td><td>${C.badgeRef('stp', p.statut)}</td>
       </tr>`;
   }

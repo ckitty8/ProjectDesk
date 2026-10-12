@@ -20,6 +20,8 @@ const C = (() => {
   // Badge (statut, rôle...) : couleur de texte + fond teinté
   const badge = (texte, couleur, fond) =>
     `<span class="badge" style="color:${couleur};background:${fond || teinte(couleur)}">${esc(texte)}</span>`;
+  // Badge d'un ton de la palette (TONS, config.js) : neutre, succes, info, attention, violet
+  const badgeTon = (texte, ton) => badge(texte, TONS[ton].texte, TONS[ton].fond);
   // Badge d'une valeur de référentiel (couleur administrée)
   const badgeRef = (refId, libelle) => libelle ? badge(libelle, couleurDe(refId, libelle)) : '';
   const badgeFeuille = statut => { const s = STATUTS_FEUILLE[statut] || STATUTS_FEUILLE.en_saisie; return badge(s.libelle, s.texte, s.fond); };
@@ -27,20 +29,27 @@ const C = (() => {
   const pastille = couleur => `<span class="pastille" style="background:${couleur}"></span>`;
   const avatar = (nom, grand = false) => `<span class="avatar${grand ? ' grand' : ''}">${esc(Calculs.initiales(nom))}</span>`;
   const code = texte => `<span class="code">${esc(texte)}</span>`;
+  // Compte non relié à une fiche ressource (Daily, Saisir mes heures) : la marche à suivre
+  const compteSansFiche = () => `<div class="carte encart">Votre compte n’est lié à aucune fiche ressource :
+    renseignez l’email de votre compte sur votre fiche (Liste des ressources), puis reconnectez-vous.</div>`;
+  // Logo et nom de l'application (barre latérale ; « grand » sur les écrans de connexion)
+  const marque = (grand = false) => `<div class="marque"><div class="logo${grand ? ' grand' : ''}"><i></i><i></i><i></i></div>
+    <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div></div>`;
   /* Mention de propriété (maquette docs/maquettes/mention-ciritec/) : courte en bas du menu,
      complète (« logiciel propriétaire ») sur les écrans de connexion */
-  const mentionPropriete = (complete = false) => `<div class="mention-propriete">© ${CONFIG.ANNEE_DROITS} <b>${esc(CONFIG.PROPRIETAIRE)}</b> · Tous droits réservés${complete ? ` · ${esc(CONFIG.NOM_APPLICATION)} est un logiciel propriétaire` : ''}</div>`;
+  const mentionPropriete = (complete = false) => `<div class="mention-propriete">© ${CONFIG.ANNEE_DROITS} <b>${esc(CONFIG.PROPRIETAIRE)}</b>
+    · Tous droits réservés${complete ? ` · ${esc(CONFIG.NOM_APPLICATION)} est un logiciel propriétaire` : ''}</div>`;
 
   // Barre de progression (pourcentage 0-100)
-  const barre = (pct, couleur = '#003CC8', classe = '') =>
+  const barre = (pct, couleur = COULEURS.primaire, classe = '') =>
     `<span class="barre ${classe}"><span style="width:${Math.max(0, Math.min(100, pct))}%;background:${couleur}"></span></span>`;
 
   // Couleur de barre selon le statut du projet
   function couleurStatutProjet(statut) {
-    if (statut === STATUTS_PROJET.A_RISQUE) return '#D98A1C';
-    if (statut === STATUTS_PROJET.EN_RETARD) return '#D14343';
-    if (statut === STATUTS_PROJET.TERMINE) return '#0F8A6B';
-    return '#003CC8';
+    if (statut === STATUTS_PROJET.A_RISQUE) return COULEURS.alerte;
+    if (statut === STATUTS_PROJET.EN_RETARD) return COULEURS.danger;
+    if (statut === STATUTS_PROJET.TERMINE) return COULEURS.succes;
+    return COULEURS.primaire;
   }
 
   // Titre d'écran + sous-titre + zone d'actions à droite
@@ -108,9 +117,12 @@ const C = (() => {
   const boutonIcone = (nom, action, attributs, titre, desactive = false) =>
     `<button class="btn-icone" title="${esc(titre)}" ${desactive ? 'disabled' : `data-action="${action}" ${attributs}`}>${icone(nom)}</button>`;
   // Statut actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne
-  const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badge(libelles[0], '#0B6B4F', '#E3F5EC') : badge(libelles[1], '#4A5363', '#F1F3F7');
+  const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badgeTon(libelles[0], 'succes') : badgeTon(libelles[1], 'neutre');
 
-  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeFeuille, pastille, avatar, code, mentionPropriete, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
+  return {
+    aide, placerBulle, esc, teinte, badge, badgeTon, badgeRef, badgeFeuille, badgeActif, pastille, avatar, code, compteSansFiche,
+    marque, mentionPropriete, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone
+  };
 })();
 
 // Bulles ⓘ : positionnées à l'ouverture (voir C.placerBulle)

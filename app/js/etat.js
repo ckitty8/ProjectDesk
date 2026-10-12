@@ -40,7 +40,8 @@ const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
-  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
+  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
+  temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur'
 };
@@ -73,10 +74,12 @@ function rendre() {
 /* ---------- Chargement ---------- */
 // Couleur sûre : les couleurs viennent de la base et sont insérées dans des attributs style ;
 // toute valeur autre qu'un code hexadécimal #RRGGBB est remplacée (protection contre l'injection).
-const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
+const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : COULEURS.pale;
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
-const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
+const CLES_UNIQUES = {
+  envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
+  repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
@@ -148,6 +151,8 @@ function notifier(message, type = 'info') {
 }
 
 /* ---------- Démarrage : session, équipes, données ---------- */
+// Écran de connexion, sans session (pas connecté, ou retour d'un lien « Mot de passe oublié »)
+const versConnexion = () => majEtat({ chargement: false, session: null, ecran: 'connexion' });
 async function demarrer() {
   // Redémarrage complet (Actualiser, Réessayer) : une simulation en cours prend fin
   if (etat.reel) Object.assign(etat, etat.reel, { reel: null, simulation: null });
@@ -157,13 +162,13 @@ async function demarrer() {
     const jeton = Api.lireJetonReinitialisation();
     if (jeton) {
       etat.ui.connexion = { onglet: 'nouveau', jeton, erreur: null, envoye: false };
-      return majEtat({ chargement: false, session: null, ecran: 'connexion' });
+      return versConnexion();
     }
     const erreurRetour = Api.lireErreurRetour();          // échec de la connexion Google (?error=…)
     const session = await Api.lireSession();
     if (!session || !session.user) {
       if (erreurRetour) etat.ui.connexion = { ...(etat.ui.connexion || {}), erreur: messageConnexion({ message: erreurRetour }) };
-      return majEtat({ chargement: false, session: null, ecran: 'connexion' });
+      return versConnexion();
     }
     etat.session = session;
     await Api.executer('lier_ma_ressource').catch(() => {});      // lie le compte à sa fiche ressource (même email)
@@ -255,14 +260,14 @@ function peutEditerProjet(projet) {
 
 /* ---------- Accès pratiques aux données ---------- */
 const parId = (cle, id) => (etat.d[cle] || []).find(x => x.id === id) || null;
-const equipe = id => parId('equipes', id) || { nom: '—', couleur: '#8A93A3', prefixe: '??' };
+const equipe = id => parId('equipes', id) || { nom: '—', couleur: COULEURS.pale, prefixe: '??' };
 const ressource = id => parId('ressources', id);
 const projet = id => parId('projets', id);
 // Valeurs actives d'un référentiel (ex. 'stp'), triées
 const valeursDe = (refId, avecInactives = false) =>
   (etat.d.valeurs || []).filter(v => v.referentielId === refId && (avecInactives || v.actif));
 // Couleur associée à un libellé de référentiel
-function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : '#4A5363'; }
+function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : COULEURS.neutre; }
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
 /* Listes de personnes de tous les écrans (menus liés, règle du porteur 2026-10-06) : une personne
@@ -352,6 +357,18 @@ const noteProjet = (userId, projetId, jour) =>
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));
+// Codes des projets où la personne est affectée (badges « DA-08 MO-21 »), vide si aucun
+const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
+  .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
+/* Unités du haut de l'arborescence (sans parent, ou parent introuvable) : directions d'abord,
+   puis équipes isolées — ordre des arbres de Congés & capacité et de la Gestion des ressources */
+function unitesRacines() {
+  const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
+  return [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')];
+}
+// Modifie des champs d'un sprint existant (Capacité : points ; Administration › Sprints : dates, numéro…)
+const modifierSprint = (projetId, numero, valeurs) =>
+  executer(() => Api.modifier('sprints_projet', { projet_id: 'eq.' + projetId, numero: 'eq.' + numero }, valeurs), 'sprintsProjet');
 // Un projet n'a qu'un « Sprint N » par année (règle aussi garantie en base, migration 015)
 const sprintDejaPris = (projetId, annee, numeroSprint, saufNumero = null) => (etat.d.sprintsProjet || [])
   .some(s => s.projetId === projetId && s.numero !== saufNumero && Number(s.numeroSprint) === numeroSprint && anneeSprint(s) === annee);

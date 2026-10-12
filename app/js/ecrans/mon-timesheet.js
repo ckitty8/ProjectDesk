@@ -13,9 +13,9 @@ Ecrans.monTimesheet = {
   section: 'moi',
   rendre() {
     const esc = C.esc, moi = maRessource(), m = MoisTemps.courant(), cle = MoisTemps.cle(), fer = feries();
-    const entete = C.entete('Saisir mes heures', 'Votre temps du mois sur les projets où vous êtes affecté(e), puis soumettez le mois à votre chef d’équipe', MoisTemps.navigation());
-    if (!moi) return `<div class="ecran">${entete}<div class="carte" style="padding:16px">Votre compte n’est lié à aucune fiche ressource :
-      renseignez l’email de votre compte sur votre fiche (Liste des ressources), puis reconnectez-vous.</div></div>`;
+    const entete = C.entete('Saisir mes heures',
+      'Votre temps du mois sur les projets où vous êtes affecté(e), puis soumettez le mois à votre chef d’équipe', MoisTemps.navigation());
+    if (!moi) return `<div class="ecran">${entete}${C.compteSansFiche()}</div>`;
 
     const jours = Calculs.joursSemaineMois(m.annee, m.mois), statut = MoisTemps.statut(moi.id, cle);
     const verrouille = ['soumise', 'validee'].includes(statut);
@@ -33,7 +33,8 @@ Ecrans.monTimesheet = {
       const abs = absenceDe(moi.id, j);
       if (fer.has(j)) return `<td${classe(j)}><span class="jour-off" title="Jour férié">JF</span></td>`;
       if (!Calculs.estPresent(moi, j)) return `<td${classe(j)}><span class="jour-off" title="Hors période de présence">—</span></td>`;
-      if (abs && Calculs.dureeAbsence(abs) >= 1) return `<td${classe(j)}><span class="jour-off" style="background:${C.teinte(couleurDe('abs', abs.type))}" title="${esc(abs.type)}">Abs</span></td>`;
+      if (abs && Calculs.dureeAbsence(abs) >= 1) return `<td${classe(j)}>
+        <span class="jour-off" style="background:${C.teinte(couleurDe('abs', abs.type))}" title="${esc(abs.type)}">Abs</span></td>`;
       const h = heure(p.id, j);
       return `<td${classe(j)}><input class="saisie-mois" inputmode="decimal" value="${h ? Calculs.nombre(h) : ''}" ${verrouille ? 'disabled' : ''}
         title="${esc(abs ? abs.type + ' (demi-journée)' : '')}" data-action-change="saisirHeure" data-projet="${p.id}" data-jour="${j}"></td>`;
@@ -55,11 +56,11 @@ Ecrans.monTimesheet = {
           <th class="num">Total</th></tr></thead>
           <tbody>${lignes || `<tr><td colspan="${jours.length + 2}">${C.vide('Aucun projet : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur).')}</td></tr>`}
             <tr class="groupe"><td class="col-projet">Total du jour</td>${h.parJour.map((x, i) => `<td${classe(jours[i])}>${x ? Calculs.nombre(x) : ''}</td>`).join('')}
-              <td class="num" style="white-space:nowrap">${Calculs.nombre(h.total)} h</td></tr></tbody></table></div>
+              <td class="num sans-retour">${Calculs.nombre(h.total)} h</td></tr></tbody></table></div>
         <div class="carte-titre" style="border-top:1px solid var(--bordure-fine);border-bottom:0">
           <span class="ligne-flex">Statut : ${C.badgeFeuille(statut)}
             <b>${Calculs.nombre(h.total)} h</b><span class="discret">sur ${Calculs.nombre(attendu)} h attendues</span>
-            ${statut === 'a_completer' && feuille && feuille.commentaire ? `<span style="color:#8A4B00">« ${esc(feuille.commentaire)} »</span>` : ''}
+            ${statut === 'a_completer' && feuille && feuille.commentaire ? `<span class="texte-attention">« ${esc(feuille.commentaire)} »</span>` : ''}
             <span class="discret">JF = jour férié · Abs = absence posée (Congés & capacité) ; une demi-journée reste saisissable.</span></span>
           ${verrouille ? '' : '<button class="btn primaire" data-action="soumettreMois">Soumettre le mois</button>'}
         </div>

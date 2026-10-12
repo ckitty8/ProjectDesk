@@ -50,63 +50,82 @@ const Previsionnel = {
   format: n => n.toFixed(2).replace('.', ','),
 
   /* ---------- Onglet Prévisionnel ---------- */
-  prevision(r) {
-    const esc = C.esc, mois = this.mois(), fer = feries();
-    const parMois = mois.map(m => Calculs.previsionMois(r, m.annee, m.mois, etat.d.absences, fer));
-    const somme = valeurs => valeurs.reduce((a, b) => a + b, 0);
-    const cellules = valeurs => valeurs.map(v => `<td class="num">${this.format(this.enUnite(v))}</td>`).join('')
-      + `<td class="num"><b>${this.format(this.enUnite(somme(valeurs)))}</b></td>`;
-    const ligne = (libelle, pourcent, valeurs, classe = '') => `<tr class="${classe}"><td>${libelle}</td><td class="num">${pourcent}</td>${cellules(valeurs)}</tr>`;
-    const saisiePourcent = (valeur, attributs) => `<span style="white-space:nowrap"><input class="saisie-heure" style="width:62px" type="number" min="0" max="100" step="1" value="${valeur}" ${attributs}> %</span>`;
-    const disponibles = parMois.map(m => m.disponibles);
+  somme: valeurs => valeurs.reduce((a, b) => a + b, 0),
+  // Ligne du tableau : libellé, % cible, une valeur par mois (dans l'unité choisie) et le total
+  ligne(libelle, pourcent, valeurs, classe = '') {
+    const cellules = valeurs.map(v => `<td class="num">${this.format(this.enUnite(v))}</td>`).join('')
+      + `<td class="num"><b>${this.format(this.enUnite(this.somme(valeurs)))}</b></td>`;
+    return `<tr class="${classe}"><td>${libelle}</td><td class="num">${pourcent}</td>${cellules}</tr>`;
+  },
+  // Champ de saisie d'un pourcentage (0 à 100) suivi de « % »
+  saisiePourcent: (valeur, attributs) => `<span class="sans-retour">
+      <input class="saisie-heure" style="width:62px" type="number" min="0" max="100" step="1" value="${valeur}" ${attributs}> %</span>`,
 
-    // Un bloc par projet : ligne projet (% du temps), une ligne par type de tâche, sous-totaux
-    const projets = this.projetsDe(r);
-    const blocs = projets.map(p => {
-      const modifiable = peutPiloterProjet(p), part = this.part(p.id, r.id), types = this.types(p.id);
-      const duProjet = disponibles.map(v => Calculs.partDe(v, part));
-      const sommeTypes = somme(types.map(t => Number(t.part)));
-      const lignesTypes = types.map(t => ligne(modifiable
-          ? `<span class="ligne-flex" style="padding-left:18px"><input class="champ" style="height:28px;width:150px" value="${esc(t.libelle)}" data-action-change="renommerTypeTache" data-id="${t.id}">
-             <button class="btn petit" title="Supprimer ce type" data-action="supprimerTypeTache" data-id="${t.id}">✕</button></span>`
-          : `<span style="padding-left:18px">${esc(t.libelle)}</span>`,
-        modifiable ? saisiePourcent(Number(t.part), `data-action-change="partTypeTache" data-id="${t.id}"`) : Number(t.part) + ' %',
-        duProjet.map(v => Calculs.partDe(v, t.part)))).join('');
-      // Sous-total du tableur du porteur : « TT tous sauf US » (seulement si le projet a un type « US »)
-      const us = types.find(t => t.libelle.trim().toUpperCase() === 'US');
-      const horsUs = us ? ligne('<span style="padding-left:18px"><i>Total hors US</i></span>', (sommeTypes - Number(us.part)) + ' %',
-        duProjet.map(v => Calculs.partDe(v, sommeTypes - Number(us.part))), 'discret') : '';
-      const alerteTypes = types.length && sommeTypes !== 100 ? `<span style="color:var(--danger)">Σ ${sommeTypes} % ≠ 100 %</span>` : types.length ? 'Σ 100 %' : '';
-      const ajout = modifiable ? `<form class="ligne-flex" style="padding-left:18px" data-action-envoi="ajouterTypeTache" data-projet="${p.id}">
-          <input class="champ" style="height:28px;width:170px" name="libelle" placeholder="Nouveau type de tâche" required><button class="btn petit">Ajouter</button></form>` : '';
-      return `<tr class="groupe"><td><span class="ligne-flex">${C.code(p.code)}<b>${esc(p.nom)}</b>${modifiable ? '' : ' <span class="discret">(lecture)</span>'}</span></td>
-          <td class="num">${modifiable ? saisiePourcent(part, `data-action-change="partProjetPrevision" data-projet="${p.id}" data-ressource="${r.id}" style="width:62px;font-weight:600"`) : part + ' %'}</td>
-          ${duProjet.map(v => `<td class="num"><b>${this.format(this.enUnite(v))}</b></td>`).join('')}<td class="num"><b>${this.format(this.enUnite(somme(duProjet)))}</b></td></tr>
-        ${lignesTypes}${horsUs}
-        <tr><td>${ajout}</td><td class="num discret">${alerteTypes}</td><td colspan="${mois.length + 1}"></td></tr>`;
-    }).join('');
+  /* Bloc d'un projet : ligne projet (% du temps de la personne), une ligne par type de tâche,
+     sous-total « hors US », contrôle Σ = 100 % et ajout d'un type (si on pilote le projet) */
+  blocProjet(p, r, disponibles, nbMois) {
+    const esc = C.esc, modifiable = peutPiloterProjet(p), part = this.part(p.id, r.id), types = this.types(p.id);
+    const duProjet = disponibles.map(v => Calculs.partDe(v, part));
+    const sommeTypes = this.somme(types.map(t => Number(t.part)));
+    const lignesTypes = types.map(t => this.ligne(modifiable
+        ? `<span class="ligne-flex retrait">
+           <input class="champ" style="height:28px;width:150px" value="${esc(t.libelle)}" data-action-change="renommerTypeTache" data-id="${t.id}">
+           <button class="btn petit" title="Supprimer ce type" data-action="supprimerTypeTache" data-id="${t.id}">✕</button></span>`
+        : `<span class="retrait">${esc(t.libelle)}</span>`,
+      modifiable ? this.saisiePourcent(Number(t.part), `data-action-change="partTypeTache" data-id="${t.id}"`) : Number(t.part) + ' %',
+      duProjet.map(v => Calculs.partDe(v, t.part)))).join('');
+    // Sous-total du tableur du porteur : « TT tous sauf US » (seulement si le projet a un type « US »)
+    const us = types.find(t => t.libelle.trim().toUpperCase() === 'US');
+    const horsUs = us ? this.ligne('<span class="retrait"><i>Total hors US</i></span>', (sommeTypes - Number(us.part)) + ' %',
+      duProjet.map(v => Calculs.partDe(v, sommeTypes - Number(us.part))), 'discret') : '';
+    const alerteTypes = types.length && sommeTypes !== 100 ? `<span class="texte-danger">Σ ${sommeTypes} % ≠ 100 %</span>` : types.length ? 'Σ 100 %' : '';
+    const ajout = modifiable ? `<form class="ligne-flex retrait" data-action-envoi="ajouterTypeTache" data-projet="${p.id}">
+        <input class="champ" style="height:28px;width:170px" name="libelle" placeholder="Nouveau type de tâche" required><button class="btn petit">Ajouter</button></form>` : '';
+    return `<tr class="groupe"><td><span class="ligne-flex">${C.code(p.code)}<b>${esc(p.nom)}</b>${modifiable ? '' : ' <span class="discret">(lecture)</span>'}</span></td>
+        <td class="num">${modifiable
+          ? this.saisiePourcent(part, `data-action-change="partProjetPrevision" data-projet="${p.id}" data-ressource="${r.id}" style="width:62px;font-weight:600"`)
+          : part + ' %'}</td>
+        ${duProjet.map(v => `<td class="num"><b>${this.format(this.enUnite(v))}</b></td>`).join('')}
+        <td class="num"><b>${this.format(this.enUnite(this.somme(duProjet)))}</b></td></tr>
+      ${lignesTypes}${horsUs}
+      <tr><td>${ajout}</td><td class="num discret">${alerteTypes}</td><td colspan="${nbMois + 1}"></td></tr>`;
+  },
 
+  // Indicateurs : jours travaillés de la période, répartition des projets (doit faire 100 %), charge prévue
+  indicateursPrevision(r, parMois, projets, disponibles) {
+    const esc = C.esc, n = Calculs.nombre, somme = valeurs => this.somme(valeurs);
     const sommeParts = somme(projets.map(p => this.part(p.id, r.id)));
-    const capacite = r.capacite ?? 100;
-    const titreUnite = ui('previsionnel', { unite: 'jours' }).unite === 'heures' ? 'heures' : 'jours';
-    const kpis = `<div class="grille-kpi q3">
-      ${C.kpi('Jours travaillés', Calculs.nombre(somme(parMois.map(m => m.travailles))), `sur ${Calculs.nombre(somme(parMois.map(m => m.ouvres)))} jours ouvrés · ${Calculs.nombre(somme(parMois.map(m => m.conges)))} j de congés`)}
+    return `<div class="grille-kpi q3">
+      ${C.kpi('Jours travaillés', n(somme(parMois.map(m => m.travailles))),
+        `sur ${n(somme(parMois.map(m => m.ouvres)))} jours ouvrés · ${n(somme(parMois.map(m => m.conges)))} j de congés`)}
       ${C.kpi('Répartition des projets', `<span style="color:${sommeParts === 100 ? 'inherit' : 'var(--danger)'}">${sommeParts} %</span>`,
         projets.map(p => `${esc(p.nom)} ${this.part(p.id, r.id)} %`).join(' · ') + (sommeParts === 100 ? '' : ' · le total doit faire 100 %'))}
-      ${C.kpi('Charge prévue', Calculs.nombre(Calculs.partDe(somme(disponibles), sommeParts)) + ' j',
-        projets.map(p => `${esc(p.nom)} ${Calculs.nombre(Calculs.partDe(somme(disponibles), this.part(p.id, r.id)))} j`).join(' · '))}</div>`;
+      ${C.kpi('Charge prévue', n(Calculs.partDe(somme(disponibles), sommeParts)) + ' j',
+        projets.map(p => `${esc(p.nom)} ${n(Calculs.partDe(somme(disponibles), this.part(p.id, r.id)))} j`).join(' · '))}</div>`;
+  },
 
-    return `${kpis}
-      <div class="carte" style="overflow:auto"><table class="tableau" style="font-size:12.5px">
+  // Onglet Prévisionnel : indicateurs, puis tableau mois par mois (jours ouvrés, congés, travaillés, projets, total)
+  prevision(r) {
+    const mois = this.mois(), fer = feries();
+    const parMois = mois.map(m => Calculs.previsionMois(r, m.annee, m.mois, etat.d.absences, fer));
+    const disponibles = parMois.map(m => m.disponibles);
+    const projets = this.projetsDe(r);
+    const sommeParts = this.somme(projets.map(p => this.part(p.id, r.id)));
+    const capacite = r.capacite ?? 100;
+    const titreUnite = ui('previsionnel', { unite: 'jours' }).unite === 'heures' ? 'heures' : 'jours';
+    const blocs = projets.map(p => this.blocProjet(p, r, disponibles, mois.length)).join('');
+    return `${this.indicateursPrevision(r, parMois, projets, disponibles)}
+      <div class="carte defilement"><table class="tableau texte-12-5">
         <thead><tr><th style="min-width:200px">Répartition en ${titreUnite}</th><th class="num">% cible</th>
-          ${mois.map(m => `<th class="num">${Calculs.MOIS_COURTS[m.mois]}${m.mois === 0 || m === mois[0] ? ' ' + String(m.annee).slice(2) : ''}</th>`).join('')}<th class="num">Total</th></tr></thead>
+          ${mois.map(m => `<th class="num">${Calculs.MOIS_COURTS[m.mois]}${m.mois === 0 || m === mois[0] ? ' ' + String(m.annee).slice(2) : ''}</th>`).join('')}
+            <th class="num">Total</th></tr></thead>
         <tbody>
-          ${ligne('Jours ouvrés <span class="discret">(hors week-ends et fériés)</span>', '', parMois.map(m => m.ouvres))}
-          ${ligne('Congés / absences <span class="discret">(Congés & capacité)</span>', '', parMois.map(m => m.conges))}
-          ${ligne('<b>Jours travaillés</b>', '', parMois.map(m => m.travailles), 'groupe')}
-          ${capacite !== 100 ? ligne(`<b>Disponibles</b> <span class="discret">(capacité ${capacite} %)</span>`, '', disponibles, 'groupe') : ''}
+          ${this.ligne('Jours ouvrés <span class="discret">(hors week-ends et fériés)</span>', '', parMois.map(m => m.ouvres))}
+          ${this.ligne('Congés / absences <span class="discret">(Congés & capacité)</span>', '', parMois.map(m => m.conges))}
+          ${this.ligne('<b>Jours travaillés</b>', '', parMois.map(m => m.travailles), 'groupe')}
+          ${capacite !== 100 ? this.ligne(`<b>Disponibles</b> <span class="discret">(capacité ${capacite} %)</span>`, '', disponibles, 'groupe') : ''}
           ${blocs || `<tr><td colspan="${mois.length + 3}">${C.vide('Aucun projet en cours pour cette personne.')}</td></tr>`}
-          ${ligne('<b>TOTAL</b>', `<b>${sommeParts} %</b>`, disponibles.map(v => Calculs.partDe(v, sommeParts)), 'groupe')}
+          ${this.ligne('<b>TOTAL</b>', `<b>${sommeParts} %</b>`, disponibles.map(v => Calculs.partDe(v, sommeParts)), 'groupe')}
         </tbody></table></div>
       <div class="discret" style="font-size:12px;margin-top:8px">Calcul : jours travaillés × % du projet × % du type de tâche
         (× ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h par jour en « Heures »). Congés repris de Congés & capacité, fériés de l’Administration.
@@ -127,9 +146,10 @@ const Previsionnel = {
       || [...sprints].reverse().find(s => s.debut <= jour) || sprints[0];
   },
 
+  // Onglet Temps réel par sprint : heures prévues (capacité × % du projet) et heures saisies sur les dates du sprint, par projet
   reel(r) {
     const esc = C.esc, projets = this.projetsDe(r), ref = this.projetSprints(projets);
-    if (!ref) return `<div class="carte" style="padding:16px">Aucun sprint daté sur les projets de ${esc(r.nom)} :
+    if (!ref) return `<div class="carte encart">Aucun sprint daté sur les projets de ${esc(r.nom)} :
       renseignez les dates des sprints dans Mon dashboard › Administration › Sprints.</div>`;
     const sprints = sprintsDuProjet(ref.id), s = this.sprintChoisi(sprints), rang = sprints.indexOf(s), fer = feries();
     const capaciteH = Calculs.heuresAttenduesJours(r, Calculs.joursOuvresEntre(s.debut, s.fin, fer), etat.d.absences, fer);
@@ -141,12 +161,12 @@ const Previsionnel = {
     const h = n => Calculs.nombre(n) + ' h';
 
     const choixProjet = projets.filter(p => sprintsDuProjet(p.id).length).map(p => ({ valeur: p.id, libelle: `Sprints de ${p.nom}` }));
-    const navigation = `<div class="ligne-flex">${C.liste(choixProjet, ref.id, 'class="champ" style="width:auto" data-action-change="projetSprintsPrevision"')}
+    const navigation = `<div class="ligne-flex">${C.liste(choixProjet, ref.id, 'class="champ largeur-auto" data-action-change="projetSprintsPrevision"')}
       <button class="btn petit" data-action="sprintPrevision" data-numero="${(sprints[rang - 1] || s).numero}" ${rang > 0 ? '' : 'disabled'}>‹</button>
       <b>${esc(nomSprint(s))} · ${Calculs.formatCourt(s.debut)} → ${Calculs.formatAvecAnnee(s.fin)}</b>
       <button class="btn petit" data-action="sprintPrevision" data-numero="${(sprints[rang + 1] || s).numero}" ${rang < sprints.length - 1 ? '' : 'disabled'}>›</button></div>`;
 
-    return `<div class="carte" style="padding:12px 16px">${navigation}</div>
+    return `<div class="carte encart-compact">${navigation}</div>
       <div class="grille-kpi q3">
         ${C.kpi('Heures saisies', h(totalReel), `sur ${h(capaciteH)} de capacité`)}
         ${C.kpi('Taux de saisie', capaciteH ? Calculs.pourcent(totalReel / capaciteH * 100) : '—', `${h(Math.max(0, capaciteH - totalReel))} non saisies`, 'completude')}
@@ -160,13 +180,14 @@ const Previsionnel = {
           return `<tr><td><span class="ligne-flex">${C.code(l.p.code)}${esc(l.p.nom)}</span></td><td class="num">${l.cible} %</td>
             <td class="num">${this.format(l.prevu)}</td><td class="num"><b>${this.format(l.reel)}</b></td>
             <td class="num">${this.format(Calculs.heuresEnJours(l.reel))}</td><td class="num">${totalReel ? Calculs.nombre(pourcentReel(l)) + ' %' : '—'}</td>
-            <td class="num" style="color:${totalReel && Math.abs(ecart) > 5 ? 'var(--danger)' : 'inherit'}">${totalReel ? (ecart > 0 ? '+' : '') + Calculs.nombre(ecart) : '—'}</td>
+            <td class="num${totalReel && Math.abs(ecart) > 5 ? ' texte-danger' : ''}">${totalReel ? (ecart > 0 ? '+' : '') + Calculs.nombre(ecart) : '—'}</td>
             <td>${C.barre(l.prevu ? Math.min(100, l.reel / l.prevu * 100) : 0)}</td></tr>`;
         }).join('')}
           <tr class="groupe"><td><b>Total</b></td><td class="num">${lignes.reduce((t, l) => t + l.cible, 0)} %</td><td class="num">${this.format(totalPrevu)}</td>
-            <td class="num"><b>${this.format(totalReel)}</b></td><td class="num">${this.format(Calculs.heuresEnJours(totalReel))}</td><td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
+            <td class="num"><b>${this.format(totalReel)}</b></td><td class="num">${this.format(Calculs.heuresEnJours(totalReel))}</td>
+              <td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
         </tbody></table></div>
-      <div class="discret" style="font-size:12px">Capacité = jours ouvrés du sprint hors fériés et congés × ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h × capacité de la personne.
+      <div class="discret texte-12">Capacité = jours ouvrés du sprint hors fériés et congés × ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h × capacité de la personne.
         Les heures se saisissent par projet dans Gestion des ressources › Saisir mes heures.</div>`;
   }
 };
@@ -186,19 +207,20 @@ Ecrans.previsionnel = {
       'class="champ" style="width:280px" data-action-change="personnePrevision"');
     const mois = Previsionnel.mois(), unite = ui('previsionnel', { unite: 'jours' }).unite;
     const reglages = onglet === 'prevision' ? `
-      <div class="ligne-flex"><span class="libelle" style="margin:0">Période</span>
+      <div class="ligne-flex"><span class="libelle sans-marge">Période</span>
         <button class="btn petit" data-action="moisPrevision" data-sens="-1">‹</button>
         <b>${Calculs.libelleMois(mois[0].annee, mois[0].mois)} → ${Calculs.libelleMois(mois[mois.length - 1].annee, mois[mois.length - 1].mois)}</b>
         <button class="btn petit" data-action="moisPrevision" data-sens="1">›</button></div>
       <div class="puces"><button class="puce${unite === 'jours' ? ' active' : ''}" data-action="unitePrevision" data-unite="jours">Jours</button>
-        <button class="puce${unite === 'heures' ? ' active' : ''}" data-action="unitePrevision" data-unite="heures">Heures (${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h/j)</button></div>` : '';
+        <button class="puce${unite === 'heures' ? ' active' : ''}" data-action="unitePrevision" data-unite="heures">
+          Heures (${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h/j)</button></div>` : '';
 
     return `<div class="ecran" style="max-width:1320px">
       ${entete}
       <div class="puces">${puce('prevision', 'Prévisionnel')}${puce('reel', 'Temps réel par sprint')}</div>
-      <div class="carte" style="padding:12px 16px"><div class="ligne-flex" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div class="ligne-flex"><span class="libelle" style="margin:0">Personne</span>${choixPersonne}
-          <span class="discret" style="font-size:12px">(vous-même ou un membre de vos projets)</span></div>${reglages}</div></div>
+      <div class="carte encart-compact"><div class="ligne-flex" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div class="ligne-flex"><span class="libelle sans-marge">Personne</span>${choixPersonne}
+          <span class="discret texte-12">(vous-même ou un membre de vos projets)</span></div>${reglages}</div></div>
       ${onglet === 'prevision' ? Previsionnel.prevision(r) : Previsionnel.reel(r)}
     </div>`;
   }

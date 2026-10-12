@@ -16,13 +16,14 @@ const Roles = {
   /* Rôles affichés, du plus large au plus restreint : clé, libellé, couleur, ce que le rôle permet.
      Liste unique : reprise par la Simulation des rôles (simulation.js), hors Créateur. */
   LISTE: [
-    { cle: 'createur', libelle: 'Créateur', couleur: '#5B2A9E', description: 'Tous les droits sur toutes les équipes ; seul à nommer un administrateur.' },
-    { cle: 'admin', libelle: 'Administrateur', couleur: '#003CC8', description: 'Équipes, référentiels, jours fériés, comptes en attente.' },
-    { cle: 'responsable', libelle: 'Responsable d’équipe', couleur: '#7A3FC2', description: 'Son unité : valide les timesheets, lit tous les daily de l’unité, règle les envois.' },
-    { cle: 'chef', libelle: 'Chef de projet', couleur: '#0F8A6B', description: 'Ses projets : plan de charge, envoi du daily, sprints.' },
-    { cle: 'membre', libelle: 'Membre de projet', couleur: '#4A5363', description: 'Saisit son daily, ses heures et ses congés.' },
-    { cle: 'lecteur', libelle: 'Lecteur de projet', couleur: '#8A93A3', description: 'Consulte ses projets sans les modifier.' },
-    { cle: 'sansEquipe', libelle: 'Compte en attente', couleur: '#B25E09', description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.' }
+    { cle: 'createur', libelle: 'Créateur', couleur: COULEURS.createur, description: 'Tous les droits sur toutes les équipes ; seul à nommer un administrateur.' },
+    { cle: 'admin', libelle: 'Administrateur', couleur: COULEURS.primaire, description: 'Équipes, référentiels, jours fériés, comptes en attente.' },
+    { cle: 'responsable', libelle: 'Responsable d’équipe', couleur: COULEURS.violet,
+      description: 'Son unité : valide les timesheets, lit tous les daily de l’unité, règle les envois.' },
+    { cle: 'chef', libelle: 'Chef de projet', couleur: COULEURS.succes, description: 'Ses projets : plan de charge, envoi du daily, sprints.' },
+    { cle: 'membre', libelle: 'Membre de projet', couleur: COULEURS.neutre, description: 'Saisit son daily, ses heures et ses congés.' },
+    { cle: 'lecteur', libelle: 'Lecteur de projet', couleur: COULEURS.pale, description: 'Consulte ses projets sans les modifier.' },
+    { cle: 'sansEquipe', libelle: 'Compte en attente', couleur: COULEURS.orange, description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.' }
   ],
 
   /* Rôles d'une fiche ressource : liste de { cle, precision } (ex. Chef de projet · CDO).
@@ -72,7 +73,7 @@ const Roles = {
     const cartes = this.LISTE.map(role => {
       const personnes = groupes[role.cle];
       return `<div class="carte" style="padding:12px 14px;border-top:4px solid ${role.couleur}">
-        <div class="ligne-flex" style="justify-content:space-between"><b style="color:${role.couleur}">${esc(role.libelle)}</b>
+        <div class="ligne-flex entre"><b style="color:${role.couleur}">${esc(role.libelle)}</b>
           <span class="discret">${personnes.length}</span></div>
         <div class="discret" style="font-size:12px;margin:4px 0 8px">${esc(role.description)}</div>
         ${personnes.map(x => `<div style="padding:2px 0">${esc(x.nom)}${x.precision ? ` <span class="discret">· ${esc(x.precision)}</span>` : ''}</div>`).join('')
@@ -82,10 +83,11 @@ const Roles = {
       const roles = this.dePersonne(r);
       return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span></td>
         <td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(equipe(r.equipeId).nom)}</span></td>
-        <td>${r.userId ? C.badge('Oui', '#0B6B4F', '#E3F5EC') : '<span class="pale">pas de compte</span>'}</td>
-        <td><span class="ligne-flex" style="flex-wrap:wrap;gap:4px">${roles.map(x => this.badge(x.cle, x.precision)).join('') || '<span class="pale">aucun rôle</span>'}</span></td></tr>`;
+        <td>${r.userId ? C.badgeTon('Oui', 'succes') : '<span class="pale">pas de compte</span>'}</td>
+        <td><span class="ligne-flex" style="flex-wrap:wrap;gap:4px">
+          ${roles.map(x => this.badge(x.cle, x.precision)).join('') || '<span class="pale">aucun rôle</span>'}</span></td></tr>`;
     }).join('');
-    return `<div class="carte" style="padding:12px 16px;background:#F5F0FD;border-color:#D9C7F5">
+    return `<div class="carte encart-createur">
         <b>Qui a quel rôle.</b> Consultation : les rôles viennent des données (créateur, administrateurs, responsables des unités,
         affectations aux projets, comptes en attente). Ils se modifieront ici avec « Rôles et droits ».</div>
       <div class="grille-roles">${cartes}</div>

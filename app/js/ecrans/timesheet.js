@@ -49,7 +49,7 @@ function tableauFeuilles(equipes, avecValidation = false) {
     if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
     if (statut === 'soumise' && estResponsableDe(e.id)) totaux.aValider++;   // feuilles que JE peux valider
 
-    const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
+    const codes = codesProjetsDe(r.id);
     const boutons = statut === 'soumise' && estResponsableDe(e.id)
       ? `<button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Renvoyer</button>
          <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Valider</button>` : '';
@@ -57,7 +57,7 @@ function tableauFeuilles(equipes, avecValidation = false) {
       <td class="num"><b>${Calculs.nombre(saisi)} h</b> <span class="discret">/ ${Calculs.nombre(attendu)} h</span></td>
       <td style="width:18%">${C.barre(Math.min(100, completude))}</td>
       <td class="num">${attendu ? Calculs.pourcent(completude) : '—'}</td><td>${C.badgeFeuille(statut)}</td>
-      ${avecValidation ? `<td class="num" style="white-space:nowrap">${boutons}</td>` : ''}</tr>`;
+      ${avecValidation ? `<td class="num sans-retour">${boutons}</td>` : ''}</tr>`;
   };
 
   // Par équipe : les personnes présentes au moins un jour du mois (arrivée / date de fin)
@@ -86,7 +86,8 @@ Ecrans.timesheet = {
     const completude = t.attendu ? t.saisi / t.attendu * 100 : 0;
     return `
     <div class="ecran">
-      ${C.entete('Timesheet', `Heures déclarées par personne sur le mois · toutes équipes${valide ? ' · validation des feuilles de vos équipes' : ''}`, MoisTemps.navigation())}
+      ${C.entete('Timesheet', `Heures déclarées par personne sur le mois · toutes équipes${valide ? ' · validation des feuilles de vos équipes' : ''}`,
+        MoisTemps.navigation())}
       <div class="grille-kpi ${valide ? 'q4' : 'q3'}">${C.kpi('Heures saisies', Calculs.nombre(t.saisi) + ' h', `sur ${Calculs.nombre(t.attendu)} h attendues`)}
         ${C.kpi('Taux de complétude', Calculs.pourcent(completude), '', 'completude')}${C.kpi('Feuilles à compléter', t.aCompleter)}
         ${valide ? C.kpi('Feuilles à valider', t.aValider, '', 'aValider') : ''}</div>

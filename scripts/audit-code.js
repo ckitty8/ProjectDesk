@@ -19,10 +19,18 @@
         fonction appelée (Api.executer) existe dans les migrations (créée, non supprimée) ;
      7. classes CSS de theme.css jamais utilisées ;
      8. restes de mise au point : console.log, debugger.
-   AVERTISSEMENTS (à juger) — lisibilité :
-     9. fichier sans en-tête de commentaire ;
-    10. fonction de plus de LONGUEUR_MAX_FONCTION lignes ;
-    11. ligne de plus de LONGUEUR_MAX_LIGNE caractères.
+     9 à 11. lisibilité : fichier sans en-tête de commentaire, fonction de plus de
+        LONGUEUR_MAX_FONCTION lignes, ligne de plus de LONGUEUR_MAX_LIGNE caractères ;
+    12. fonction ou méthode de LIGNES_SANS_COMMENTAIRE lignes ou plus sans commentaire juste au-dessus
+        (les méthodes rendre() des écrans sont décrites par l'en-tête du fichier) ;
+    13. code en double : même ligne de code (LONGUEUR_DOUBLON caractères ou plus) à deux endroits ;
+    14. couleur en dur (#RRGGBB) hors de config.js (palette COULEURS / TONS) et de theme.css ;
+    15. même style="…" écrit 3 fois ou plus : en faire une classe de theme.css (section Utilitaires) ;
+    16. TODO / FIXME laissé dans le code.
+   AVERTISSEMENTS (à juger) :
+    17. ligne de commentaire qui ressemble à du code mis de côté (code commenté).
+   Revue qualité du 2026-10-12 (porteur : « une application propre ») : les contrôles 9 à 16 sont
+   passés d'avertissements à erreurs une fois le code nettoyé, pour qu'il le reste.
 
    Aucune dépendance : Node.js seul. Le script n'écrit rien, il signale.
    Limite : l'analyse est textuelle (noms recherchés dans le code) ; un nom construit
@@ -36,7 +44,9 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const lire = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const LONGUEUR_MAX_FONCTION = 60;
-const LONGUEUR_MAX_LIGNE = 260;
+const LONGUEUR_MAX_LIGNE = 180;
+const LIGNES_SANS_COMMENTAIRE = 10;
+const LONGUEUR_DOUBLON = 70;
 
 const erreurs = [], avertissements = [];
 
@@ -203,17 +213,70 @@ for (const [fichier, texte] of Object.entries(sources)) {
   if (/\bdebugger\b/.test(sansCommentaires(texte))) erreurs.push(`${fichier} : debugger oublié`);
 }
 
-/* ---------- 9 à 11. Lisibilité (avertissements) ---------- */
+/* ---------- 9 à 12. Lisibilité ---------- */
+// Début de fonction : « function nom( », « nom(…) { » (méthode) ou « nom = (…) => { » / « nom: (…) => { »
+const DEBUT_FONCTION = /^(\s*)(?:async\s+)?(?:function\s+(\w+)\s*\(|(\w+)\s*\([^)]*\)\s*\{$|(?:const\s+)?(\w+)\s*[:=]\s*(?:async\s*)?\(?[\w,\s{}=]*\)?\s*=>\s*\{$)/;
+const MOTS_CLES = ['if', 'for', 'while', 'switch', 'catch'];
 for (const [fichier, texte] of Object.entries(sources)) {
-  if (!texte.trimStart().startsWith('/*')) avertissements.push(`${fichier} : pas d'en-tête de commentaire`);
+  if (!texte.trimStart().startsWith('/*')) erreurs.push(`${fichier} : pas d'en-tête de commentaire`);
   const lignes = texte.split('\n');
-  lignes.forEach((l, i) => { if (l.length > LONGUEUR_MAX_LIGNE) avertissements.push(`${fichier}:${i + 1} : ligne de ${l.length} caractères`); });
-  // Longueur d'une fonction : de sa ligne de début à la ligne fermante au même retrait
+  lignes.forEach((l, i) => { if (l.length > LONGUEUR_MAX_LIGNE) erreurs.push(`${fichier}:${i + 1} : ligne de ${l.length} caractères (> ${LONGUEUR_MAX_LIGNE})`); });
   lignes.forEach((l, i) => {
-    const m = l.match(/^(\s*)(?:async\s+)?(?:function\s+(\w+)|(\w+)\s*\([^)]*\)\s*\{$)/);
-    if (!m || !(m[2] || m[3]) || ['if', 'for', 'while', 'switch', 'catch'].includes(m[3])) return;
+    const m = l.match(DEBUT_FONCTION);
+    if (!m || MOTS_CLES.includes(m[3])) return;
+    const nom = m[2] || m[3] || m[4];
+    // Fonction écrite sur une seule ligne : rien à mesurer
+    if ((l.match(/\{/g) || []).length === (l.match(/\}/g) || []).length) return;
+    // Longueur : de la ligne de début à la ligne fermante au même retrait
     const fin = lignes.findIndex((x, j) => j > i && x.startsWith(m[1] + '}'));
-    if (fin - i > LONGUEUR_MAX_FONCTION) avertissements.push(`${fichier}:${i + 1} : fonction « ${m[2] || m[3]} » de ${fin - i} lignes (> ${LONGUEUR_MAX_FONCTION})`);
+    if (fin < 0) return;
+    if (fin - i > LONGUEUR_MAX_FONCTION) erreurs.push(`${fichier}:${i + 1} : fonction « ${nom} » de ${fin - i} lignes (> ${LONGUEUR_MAX_FONCTION}) : la découper`);
+    // Commentaire attendu dans les 3 lignes au-dessus (ou en fin de ligne), sauf rendre() d'un écran
+    const auDessus = lignes.slice(Math.max(0, i - 3), i).join('\n');
+    if (fin - i >= LIGNES_SANS_COMMENTAIRE && nom !== 'rendre' && !/\/\/|\*\//.test(auDessus) && !l.includes('//')) {
+      erreurs.push(`${fichier}:${i + 1} : fonction « ${nom} » (${fin - i} lignes) sans commentaire qui dit ce qu'elle fait`);
+    }
+  });
+}
+
+/* ---------- 13. Code en double ---------- */
+// Une même ligne de code (hors commentaires) à deux endroits : à mettre dans une fonction partagée
+const vues = new Map();
+for (const [fichier, texte] of Object.entries(sources)) {
+  sansCommentaires(texte).split('\n').forEach((l, i) => {
+    const code = l.trim();
+    if (code.length < LONGUEUR_DOUBLON) return;
+    if (!vues.has(code)) vues.set(code, []);
+    vues.get(code).push(`${fichier}:${i + 1}`);
+  });
+}
+vues.forEach((endroits, code) => {
+  if (endroits.length > 1) erreurs.push(`Code en double (${endroits.join(', ')}) : « ${code.slice(0, 80)}… »`);
+});
+
+/* ---------- 14 à 16. Couleurs, styles répétés, TODO ---------- */
+const stylesVus = new Map();
+for (const [fichier, texte] of Object.entries(sources)) {
+  const code = sansCommentaires(texte);
+  // excel.js : couleurs du fichier Excel produit (format du classeur, pas de l'écran)
+  if (!fichier.endsWith('config.js') && !fichier.endsWith('excel.js')) {
+    const couleurs = [...new Set(code.match(/#[0-9A-Fa-f]{6}\b/g) || [])];
+    if (couleurs.length) erreurs.push(`${fichier} : couleur(s) en dur ${couleurs.join(', ')} : utiliser COULEURS / TONS (config.js) ou une classe CSS`);
+  }
+  // Styles écrits tels quels (sans ${…}) : comptés sur toute l'application
+  if (!fichier.endsWith('excel.js')) (code.match(/style="[^"$]+"/g) || []).forEach(st => stylesVus.set(st, (stylesVus.get(st) || 0) + 1));
+  if (/\b(TODO|FIXME)\b/.test(texte)) erreurs.push(`${fichier} : TODO / FIXME laissé dans le code (ouvrir un ticket ou traiter)`);
+}
+stylesVus.forEach((nombre, st) => {
+  if (nombre >= 3) erreurs.push(`${st} écrit ${nombre} fois : en faire une classe dans theme.css (section Utilitaires)`);
+});
+
+/* ---------- 17. Code commenté (avertissement) ---------- */
+// Une ligne « // … » qui finit par « x; » ou « ) { » (sans l'espace du « ; » français), ou une déclaration :
+// du code mis de côté ? Le code inutile se supprime (l'historique git le garde).
+for (const [fichier, texte] of Object.entries(sources)) {
+  texte.split('\n').forEach((l, i) => {
+    if (/^\s*\/\/\s*(?:(?:const|let|var|return)\s+\w.*[;=)]\s*|.*[\w)\]'"`];\s*|.*\)\s*\{\s*)$/.test(l)) avertissements.push(`${fichier}:${i + 1} : code commenté ? « ${l.trim().slice(0, 70)} »`);
   });
 }
 

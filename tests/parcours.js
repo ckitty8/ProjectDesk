@@ -37,7 +37,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
   let reponsePrompt = 'Merci de compléter';
   page.on('dialog', d => d.accept(d.type() === 'prompt' ? reponsePrompt : undefined));
 
-  const capture = async nom => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(CAPTURES, nom + '.png') }); };
+  /* Capture d'un écran. Le message temporaire (notification) est masqué : il disparaît au bout de
+     quelques secondes et rendrait les captures différentes d'un lancement à l'autre. */
+  const capture = async nom => {
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { document.getElementById('notification').style.visibility = 'hidden'; });
+    await page.screenshot({ path: path.join(CAPTURES, nom + '.png') });
+    await page.evaluate(() => { document.getElementById('notification').style.visibility = ''; });
+  };
   const aller = async ecran => { await page.click(`[data-action="aller"][data-ecran="${ecran}"]`); await page.waitForTimeout(250); };
   const texte = () => page.textContent('#app');
 

@@ -17,33 +17,36 @@ const Administration = {
     const lignes = etat.d.equipes.map(e => {
       const resp = ressource(e.responsableId);
       const peutModifier = modifiable && peutGererEquipe(e.id);
-      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td><td>${resp ? esc(resp.nom) : '<span class="pale">—</span>'}</td>
+      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td>
+        <td>${resp ? esc(resp.nom) : '<span class="pale">—</span>'}</td>
         <td>${ressourcesActives().filter(r => r.equipeId === e.id).length}</td><td>${etat.d.projets.filter(p => p.equipeId === e.id).length}</td>
         <td class="num">${peutModifier ? `<a data-action="modifierEquipe" data-id="${e.id}">Modifier</a>` : ''}</td></tr>`;
     }).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Équipes ${C.aide('rolesEquipe')}</h2>
         ${modifiable && etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleEquipe">+ Nouvelle équipe</button>' : ''}</div>
       <table class="tableau"><thead><tr><th>Équipe</th><th>Responsable</th><th>Membres</th><th>Projets</th><th></th></tr></thead>
-      <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration).')}</td></tr>`}</tbody></table></div>`;
+      <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration).')}</td></tr>`}
+      </tbody></table></div>`;
   },
 
   // Référentiels et leurs valeurs ; modifiable = renommer, recolorer, activer, ajouter
   referentiels(modifiable) {
     const esc = C.esc, refId = ui('referentiels', { id: 'stp' }).id;
     const ref = etat.d.referentiels.find(r => r.id === refId) || etat.d.referentiels[0];
-    const gauche = etat.d.referentiels.map(r => `<a class="menu-lien" style="color:var(--texte);justify-content:space-between;${r.id === ref.id ? 'background:#F3F6FF' : ''}"
+    const gauche = etat.d.referentiels.map(r => `<a class="menu-lien lien-referentiel${r.id === ref.id ? ' ligne-courante' : ''}"
       data-action="choisirReferentiel" data-id="${r.id}"><span>${esc(r.nom)}</span><span class="pale">${valeursDe(r.id, true).length}</span></a>`).join('');
     const valeurs = valeursDe(ref.id, true).map((v, i) => `
       <tr><td class="pale">${i + 1}</td>
         <td>${modifiable ? `<input class="champ" value="${esc(v.libelle)}" data-action-change="renommerValeur" data-id="${v.id}">` : esc(v.libelle)}
           ${v.systeme ? '<span class="pale" title="Utilisée par les calculs : renommable (les données suivent), non supprimable"> · système</span>' : ''}</td>
         <td>${modifiable ? `<input type="color" class="couleur-choix" value="${v.couleur}" data-action-change="colorerValeur" data-id="${v.id}">` : C.pastille(v.couleur)}</td>
-        <td>${modifiable ? `<button class="interrupteur${v.actif ? ' actif' : ''}" data-action="basculerValeur" data-id="${v.id}"></button>` : (v.actif ? 'Oui' : '<span class="pale">Non</span>')}</td></tr>`).join('');
+        <td>${modifiable ? `<button class="interrupteur${v.actif ? ' actif' : ''}" data-action="basculerValeur" data-id="${v.id}"></button>`
+          : (v.actif ? 'Oui' : '<span class="pale">Non</span>')}</td></tr>`).join('');
     return `<div style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start">
       <div class="carte" style="padding:8px">${gauche}</div>
       <div class="carte"><div class="carte-titre"><h2>${esc(ref.nom)} ${valeursDe(ref.id, true).some(v => v.systeme) ? C.aide('referentielSysteme') : ''}</h2></div>
         <table class="tableau"><thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead><tbody>${valeurs}</tbody></table>
-        ${modifiable ? `<form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterValeur" data-ref="${ref.id}">
+        ${modifiable ? `<form class="ligne-flex encart-compact" data-action-envoi="ajouterValeur" data-ref="${ref.id}">
           <input class="champ" name="libelle" placeholder="Nouvelle valeur" required><button class="btn">Ajouter</button></form>` : ''}</div></div>`;
   }
 };
@@ -84,6 +87,6 @@ Object.assign(Actions, {
   ajouterValeur(d, form) {
     const libelle = new FormData(form).get('libelle').trim();
     const ordre = valeursDe(d.ref, true).length + 1;
-    executer(() => Api.creer('valeurs_referentiel', { referentielId: d.ref, libelle, ordre, couleur: '#4A5363' }), 'valeurs');
+    executer(() => Api.creer('valeurs_referentiel', { referentielId: d.ref, libelle, ordre, couleur: COULEURS.neutre }), 'valeurs');
   }
 });

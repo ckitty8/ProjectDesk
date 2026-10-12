@@ -90,7 +90,8 @@ Ecrans.listeRessources = {
       }).join('');
       return `<div class="noeud-groupe">
         <a class="noeud equipe${actif('equipe', e.id)}" data-action="choisirNoeud" data-type="equipe" data-id="${e.id}" data-nom="${esc(e.nom.toLowerCase())}"
-          data-recherche="${esc(`${e.nom} ${noms(personnes.filter(r => !etat.d.affectations.some(a => a.ressourceId === r.id)))}`.toLowerCase())}">${esc(e.nom)} <span class="compte">${personnes.length}</span></a>
+          data-recherche="${esc(`${e.nom} ${noms(personnes.filter(r => !etat.d.affectations.some(a => a.ressourceId === r.id)))}`.toLowerCase())}">
+            ${esc(e.nom)} <span class="compte">${personnes.length}</span></a>
         ${responsable ? `<a class="noeud personne" data-action="choisirNoeud" data-type="equipe" data-id="${e.id}" data-recherche="${esc(responsable.nom.toLowerCase())}">
           ${C.avatar(responsable.nom)}<span>${esc(responsable.nom)}</span> <span class="compte">responsable</span></a>` : ''}
         ${projets}</div>`;
@@ -123,21 +124,24 @@ Ecrans.listeRessources = {
     const vide = !personnes.length && !projets.length && !etat.d.equipes.some(x => x.parentId === e.id);
     const boutons = [
       admin || estResponsableDe(e.id) ? `<button class="btn" data-action="modifierEquipe" data-id="${e.id}">Modifier l’équipe</button>` : '',
-      admin ? C.boutonIcone('supprimer', 'supprimerEquipe', `data-id="${e.id}"`, vide ? 'Supprimer l’équipe' : 'Équipe non vide : retirez d’abord ses projets et ses membres', !vide) : ''
+      admin ? C.boutonIcone('supprimer', 'supprimerEquipe', `data-id="${e.id}"`,
+        vide ? 'Supprimer l’équipe' : 'Équipe non vide : retirez d’abord ses projets et ses membres', !vide) : ''
     ].join('');
     const lignesProjets = projets.map(p => {
       const { productOwners, membres } = this.rolesDuProjet(p, ressources);
       return `<tr class="cliquable" data-action="choisirNoeud" data-type="projet" data-id="${p.id}"><td>${C.code(p.code)}</td><td><b style="font-weight:500">${esc(p.nom)}</b></td>
-        <td>${C.badgeRef('stp', p.statut)}</td><td>${esc(productOwners.map(r => r.nom).join(', ')) || '<span class="pale">—</span>'}</td><td class="num">${membres.length}</td></tr>`;
+        <td>${C.badgeRef('stp', p.statut)}</td><td>${esc(productOwners.map(r => r.nom).join(', ')) || '<span class="pale">—</span>'}</td>
+          <td class="num">${membres.length}</td></tr>`;
     }).join('');
     return `
       <div class="carte detail-entete"><div><h2 class="detail-titre">${esc(e.nom)} ${C.code(e.prefixe)}</h2>
-        <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)</div></div><span style="flex:1"></span>${boutons}</div>
+        <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)</div></div><span class="extensible"></span>${boutons}</div>
       ${responsable ? this.carteResponsable(responsable, affectee(responsable)) : ''}
       <div class="carte"><div class="carte-titre"><h2>Projets</h2>${membre ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : ''}</div>
         <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
-      <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</div>
+      <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>
+        ${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</div>
         ${this.tableauPersonnes('equipe:' + e.id, personnes.map(r => ({ r })), 'Aucune personne.')}
         ${personnes.length ? this.legendeAcces() : ''}</div>`;
   },
@@ -147,8 +151,8 @@ Ecrans.listeRessources = {
     const esc = C.esc, editable = estMembreDe(r.equipeId) || etat.estAdmin;
     return `<div class="carte detail-entete responsable">${C.avatar(r.nom, true)}
       <div><div class="nom-personne">${esc(r.nom)}</div><div class="discret">Responsable de l’équipe${r.poste ? ' · ' + esc(r.poste) : ''}</div></div>
-      <span style="flex:1"></span>${affecte ? '' : C.badge('Hors projet', '#5B2DA0', '#EDE6FA')}
-      ${estInactive(r) ? C.badgeActif(false, ['Actif', 'Inactif']) : C.badge('Comptée dans Congés & capacité', '#0033AD', '#E8EEFF')}
+      <span class="extensible"></span>${affecte ? '' : C.badgeTon('Hors projet', 'violet')}
+      ${estInactive(r) ? C.badgeActif(false, ['Actif', 'Inactif']) : C.badgeTon('Comptée dans Congés & capacité', 'info')}
       ${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</div>`;
   },
 
@@ -158,17 +162,19 @@ Ecrans.listeRessources = {
     const { productOwners, membres } = this.rolesDuProjet(p, ressources);
     const departs = [...productOwners, ...membres.map(m => m.r)].filter(r => r.dateDepart && r.dateDepart >= Calculs.aujourdhui()).length;
     const cartesPo = productOwners.map(r => `<div class="carte-po">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
-        <div class="nom-personne">${esc(r.nom)}</div><div class="discret">${esc([r.typeContrat, Calculs.libellePresence(r, Calculs.aujourdhui())].filter(Boolean).join(' · '))}</div></div>
+        <div class="nom-personne">${esc(r.nom)}</div><div class="discret">
+          ${esc([r.typeContrat, Calculs.libellePresence(r, Calculs.aujourdhui())].filter(Boolean).join(' · '))}</div></div>
         ${estMembreDe(r.equipeId) || etat.estAdmin ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</div>`).join('');
     const indicateur = (n, libelle) => `<div><b>${n}</b><span class="discret">${libelle}</span></div>`;
     return `
       <div class="carte detail-entete"><div><a class="discret" data-action="choisirNoeud" data-type="equipe" data-id="${p.equipeId}">${esc(equipe(p.equipeId).nom)} ›</a>
-        <h2 class="detail-titre">${esc(p.nom)} ${C.code(p.code)} ${C.badgeRef('stp', p.statut)}</h2></div><span style="flex:1"></span>
+        <h2 class="detail-titre">${esc(p.nom)} ${C.code(p.code)} ${C.badgeRef('stp', p.statut)}</h2></div><span class="extensible"></span>
         <div class="detail-kpi">${indicateur(productOwners.length, 'Product Owners')}${indicateur(membres.length, 'membres')}${indicateur(departs, 'départ(s) prévu(s)')}</div>
         <button class="btn" data-action="ouvrirProjet" data-id="${p.id}">${editable ? 'Modifier le projet' : 'Voir le projet'}</button></div>
       <div class="carte"><div class="carte-titre"><h2>Product Owners ${C.aide('productOwners')}</h2><span class="discret">rôle « ${esc(ROLES_PROJET.CHEF)} »</span></div>
         <div class="cartes-po">${cartesPo || '<span class="pale">Aucun Product Owner.</span>'}
-          ${editable ? `<a class="carte-po ajout" data-action="assigner" data-projet="${p.id}" data-role="${esc(ROLES_PROJET.CHEF)}">+ Ajouter un Product Owner</a>` : ''}</div></div>
+          ${editable ? `<a class="carte-po ajout" data-action="assigner" data-projet="${p.id}" data-role="${esc(ROLES_PROJET.CHEF)}">
+            + Ajouter un Product Owner</a>` : ''}</div></div>
       <div class="carte"><div class="carte-titre"><h2>Membres</h2>${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</div>
         ${this.tableauPersonnes('projet:' + p.id, membres, 'Aucun membre.', true)}</div>`;
   },
@@ -190,7 +196,8 @@ Ecrans.listeRessources = {
     };
     const corps = section('actifs', 'Actifs', lignes.filter(x => !estInactive(x.r)), '')
       + section('inactifs', 'Inactifs', lignes.filter(x => estInactive(x.r)), ' · date de fin saisie');
-    return `<div class="defilement-x"><table class="tableau tableau-personnes"><thead><tr><th>Personne</th><th>Poste</th><th>Accès ${C.aide('roleAcces')}</th><th>${deProjet ? 'Rôle sur le projet' : 'Projets'}</th>
+    return `<div class="defilement-x"><table class="tableau tableau-personnes"><thead><tr><th>Personne</th><th>Poste</th>
+      <th>Accès ${C.aide('roleAcces')}</th><th>${deProjet ? 'Rôle sur le projet' : 'Projets'}</th>
         <th>Présence ${C.aide('datesPresence')}</th><th>Statut ${C.aide('statutPersonne')}</th><th></th></tr></thead>
       <tbody>${corps || `<tr><td colspan="${nbColonnes}">${C.vide(texteVide)}</td></tr>`}</tbody></table></div>`;
   },
@@ -198,11 +205,14 @@ Ecrans.listeRessources = {
   lignePersonne({ r, role }, deProjet) {
     const esc = C.esc, editable = estMembreDe(r.equipeId) || etat.estAdmin, badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
     const acces = ROLES_ACCES[roleAcces(r)];
-    return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
+    return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}><td><span class="ligne-flex">
+      ${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
       <td>${esc(r.poste || '—')}</td><td>${C.badge(acces.libelle, acces.texte, acces.fond)}</td>
       <td class="projets-personne">${deProjet ? C.badgeRef('role', role) : this.projetsDe(r)}</td>
       <td class="${r.dateDepart ? 'presence-fin' : 'discret'}">${esc(Calculs.libellePresence(r, Calculs.aujourdhui())) || '<span class="pale">—</span>'}</td>
-      <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}" title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">${badge}</button>` : badge}</td>
+      <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}"
+        title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">
+        ${badge}</button>` : badge}</td>
       <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</td></tr>`;
   },
   // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
@@ -224,14 +234,15 @@ Ecrans.listeRessources = {
     const esc = C.esc, admin = etat.estAdmin;
     const lignes = valeursDe(refId, true).map(v => {
       const n = etat.d.ressources.filter(r => r[champ] === v.libelle).length;
-      return `<tr><td><span class="ligne-flex">${C.pastille(v.couleur)}${esc(v.libelle)}</span></td><td class="num" style="text-align:center">${n}</td>
-        <td>${admin ? `<button class="lien-btn" title="Activer / désactiver" data-action="basculerValeur" data-id="${v.id}">${C.badgeActif(v.actif)}</button>` : C.badgeActif(v.actif)}</td>
+      return `<tr><td><span class="ligne-flex">${C.pastille(v.couleur)}${esc(v.libelle)}</span></td><td class="num centre">${n}</td>
+        <td>${admin ? `<button class="lien-btn" title="Activer / désactiver" data-action="basculerValeur" data-id="${v.id}">
+          ${C.badgeActif(v.actif)}</button>` : C.badgeActif(v.actif)}</td>
         <td class="num">${admin ? C.boutonIcone('modifier', 'renommerValeurListe', `data-id="${v.id}"`, 'Renommer (met à jour les fiches)')
           + C.boutonIcone('supprimer', 'supprimerValeurListe', `data-id="${v.id}"`, n ? 'Valeur utilisée : passez-la en Inactive' : 'Supprimer', !!n) : ''}</td></tr>`;
     }).join('');
     return `<div class="carte"><div class="carte-titre"><h2>${esc(titre)}</h2>
         ${admin ? `<a data-action="ajouterValeurListe" data-ref="${refId}">+ Ajouter</a>` : '<span class="discret">Utilisés dans les fiches ressources</span>'}</div>
-      <table class="tableau"><thead><tr><th>Nom</th><th style="text-align:center">Ressources</th><th>Statut ${C.aide('valeursListe')}</th><th class="num">Actions</th></tr></thead>
+      <table class="tableau"><thead><tr><th>Nom</th><th class="centre">Ressources</th><th>Statut ${C.aide('valeursListe')}</th><th class="num">Actions</th></tr></thead>
       <tbody>${lignes || `<tr><td colspan="4">${C.vide('Aucune valeur.')}</td></tr>`}</tbody></table></div>`;
   }
 };
@@ -267,7 +278,7 @@ Object.assign(Actions, {
   // Postes et types de contrat
   ajouterValeurListe(d) {
     const libelle = (prompt(d.ref === 'poste' ? 'Nouveau poste :' : 'Nouveau type de contrat :') || '').trim();
-    if (libelle) executer(() => Api.creer('valeurs_referentiel', { referentielId: d.ref, libelle, ordre: valeursDe(d.ref, true).length + 1, couleur: '#4A5363' }), 'valeurs');
+    if (libelle) executer(() => Api.creer('valeurs_referentiel', { referentielId: d.ref, libelle, ordre: valeursDe(d.ref, true).length + 1, couleur: COULEURS.neutre }), 'valeurs');
   },
   renommerValeurListe(d) {
     const v = parId('valeurs', d.id), libelle = (prompt('Nouveau nom :', v.libelle) || '').trim();

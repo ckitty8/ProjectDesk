@@ -17,6 +17,7 @@ const Panneau = {
     return etat.panneau.type === 'nouveauProjet' ? this.nouveauProjet(etat.panneau) : this.projet(projet(etat.panneau.id));
   },
 
+  // Panneau latéral d'un projet : statut, avancement, dates, équipe projet ; champs modifiables si on peut éditer le projet
   projet(p) {
     if (!p) return '';
     const esc = C.esc, eq = equipe(p.equipeId), chef = ressource(p.chefId);
@@ -30,7 +31,7 @@ const Panneau = {
     const champ = (nom, html) => editable ? html.replace('<CHAMP', `data-action-change="majProjet" data-champ="${nom}" data-id="${p.id}"`) : '';
     const personnesEquipe = chefsPossibles(p.equipeId).map(r => ({ valeur: r.id, libelle: r.nom }));
     return `<aside class="panneau">
-      <div class="panneau-entete"><div style="flex:1"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
+      <div class="panneau-entete"><div class="extensible"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
           ${editable ? champ('nom', `<input class="champ" style="font-size:16px;font-weight:600;margin-top:4px" value="${esc(p.nom)}" required <CHAMP>`)
             : `<h2 style="font-size:18px;margin-top:4px">${esc(p.nom)}</h2>`}</div>
         <button class="fermer" data-action="fermer" title="Fermer">✕</button></div>
@@ -38,13 +39,16 @@ const Panneau = {
         ${editable ? champ('description', `<textarea class="champ" rows="2" placeholder="Description" <CHAMP>${esc(p.description || '')}</textarea>`)
           : p.description ? `<div>${esc(p.description)}</div>` : ''}
         <div class="infos">
-          <span>Méthode</span><span>${editable ? champ('methode', C.liste([{ valeur: '', libelle: '— à choisir —' }, ...valeursDe('methode').map(v => v.libelle)], p.methode || '', 'class="champ" style="width:auto" <CHAMP'))
+          <span>Méthode</span><span>${editable ? champ('methode', C.liste([{ valeur: '', libelle: '— à choisir —' }, ...valeursDe('methode').map(v => v.libelle)],
+            p.methode || '', 'class="champ largeur-auto" <CHAMP'))
             : p.methode ? C.badgeRef('methode', p.methode) : '—'}</span>
-          <span>Chef de projet</span><span class="ligne-flex">${editable ? champ('chefId', C.liste([{ valeur: '', libelle: '—' }, ...personnesEquipe], p.chefId || '', 'class="champ" style="width:auto" <CHAMP'))
+          <span>Chef de projet</span><span class="ligne-flex">
+            ${editable ? champ('chefId', C.liste([{ valeur: '', libelle: '—' }, ...personnesEquipe], p.chefId || '', 'class="champ largeur-auto" <CHAMP'))
             : chef ? C.avatar(chef.nom) + esc(chef.nom) : '—'}</span>
         </div>
-        ${note ? `<div class="discret" style="font-size:12px">${note}</div>` : ''}
-        <div><div class="libelle">Équipe projet</div>${membres.map(a => { const r = ressource(a.ressourceId); return r ? `<div class="ligne-flex" style="padding:5px 0">${C.avatar(r.nom)}<span style="flex:1">${esc(r.nom)}</span>${C.badgeRef('role', a.role)}</div>` : ''; }).join('') || '<span class="pale">Aucun membre.</span>'}
+        ${note ? `<div class="discret texte-12">${note}</div>` : ''}
+        <div><div class="libelle">Équipe projet</div>${membres.map(a => { const r = ressource(a.ressourceId); return r ? `<div class="ligne-flex ligne-liste">
+          ${C.avatar(r.nom)}<span class="extensible">${esc(r.nom)}</span>${C.badgeRef('role', a.role)}</div>` : ''; }).join('') || '<span class="pale">Aucun membre.</span>'}
           ${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</div>
         ${editable && estMembreDe(p.equipeId) ? `<div style="border-top:1px solid var(--bordure-fine);padding-top:12px">
           <button class="btn danger" data-action="supprimerProjet" data-id="${p.id}">Supprimer le projet</button></div>` : ''}
@@ -70,13 +74,15 @@ const Panneau = {
     const personnes = chefsPossibles(eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
     const moi = maRessource();
     return `<aside class="panneau"><form class="pile" style="height:100%;gap:0" data-action-envoi="creerProjet">
-      <div class="panneau-entete"><div><div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</div><h2 style="font-size:18px;margin-top:4px">Nouveau projet</h2></div>
+      <div class="panneau-entete"><div><div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
+        <h2 style="font-size:18px;margin-top:4px">Nouveau projet</h2></div>
         <button type="button" class="fermer" data-action="fermer">✕</button></div>
       <div class="panneau-corps">
         <div><label class="libelle">Code</label><input class="champ" name="code" value="${Calculs.prochainCodeProjet(eq.prefixe, etat.d.projets)}" required></div>
         <div><label class="libelle">Nom</label><input class="champ" name="nom" value="${esc(v.nom || '')}" required></div>
         <div><label class="libelle">Description</label><textarea class="champ" name="description" rows="3">${esc(v.description || '')}</textarea></div>
-        <div><label class="libelle">Chef de projet</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], moi && moi.equipeId === eqId ? moi.id : '', 'class="champ" name="chefId"')}</div>
+        <div><label class="libelle">Chef de projet</label>
+          ${C.liste([{ valeur: '', libelle: '—' }, ...personnes], moi && moi.equipeId === eqId ? moi.id : '', 'class="champ" name="chefId"')}</div>
         <div><label class="libelle">Méthode de gestion du projet</label>${this.choixMethode()}</div>
         <input type="hidden" name="equipeId" value="${eqId}">
       </div>

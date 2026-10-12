@@ -27,6 +27,9 @@ const Excel = (() => {
   // 0 normal · 1 en-tête (blanc sur bleu ProjectDesk) · 2-4 fonds de statut · 5 texte rouge
   const STYLES = { normal: 0, entete: 1, vert: 2, gris: 3, orange: 4, rouge: 5 };
 
+  // Espace de noms des fichiers de relations du classeur (_rels/.rels et workbook.xml.rels)
+  const XMLNS_RELATIONS = 'http://schemas.openxmlformats.org/package/2006/relationships';
+
   const STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <fonts count="3">
@@ -105,20 +108,23 @@ const Excel = (() => {
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
   <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-  ${feuilles.map((f, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}
+  ${feuilles.map((f, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml"
+    ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}
 </Types>`,
       '_rels/.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationships xmlns="${XMLNS_RELATIONS}">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
 </Relationships>`,
       'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>${feuilles.map((f, i) => `<sheet name="${echapper(f.nom)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets>
-  <definedNames>${feuilles.map((f, i) => `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${echapper(f.nom)}'!$A$1:$${lettreColonne(f.colonnes.length - 1)}$${f.lignes.length + 1}</definedName>`).join('')}</definedNames>
+  <definedNames>${feuilles.map((f, i) => `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">`
+    + `'${echapper(f.nom)}'!$A$1:$${lettreColonne(f.colonnes.length - 1)}$${f.lignes.length + 1}</definedName>`).join('')}</definedNames>
 </workbook>`,
       'xl/_rels/workbook.xml.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  ${feuilles.map((f, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}
+<Relationships xmlns="${XMLNS_RELATIONS}">
+  ${feuilles.map((f, i) => `<Relationship Id="rId${i + 1}"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}
   <Relationship Id="rId${feuilles.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>`,
       'xl/styles.xml': STYLES_XML

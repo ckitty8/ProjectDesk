@@ -14,10 +14,13 @@
    ============================================================ */
 'use strict';
 
-const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
+const http = require('http'), fs = require('fs'), path = require('path');
 const RACINE = path.resolve(__dirname, '..');
 const PORT = Number(process.argv[2] || process.env.PORT || 8123);
-const uuid = () => crypto.randomUUID();
+/* Identifiants numérotés au format UUID (et non tirés au hasard) : l'ordre des données, donc les
+   captures d'écran, est le même à chaque lancement — une différence de capture vient du code. */
+let compteurUuid = 0;
+const uuid = () => '00000000-0000-4000-8000-' + String(++compteurUuid).padStart(12, '0');
 const maintenant = () => new Date().toISOString();
 
 /* ---------- Données de démonstration (maquette) ---------- */

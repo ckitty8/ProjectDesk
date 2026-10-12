@@ -21,7 +21,8 @@ const Coquille = (() => {
     prev: 'M4 20V11M10 20V5M16 20v-6M2 20h20',
     idee: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3'
   };
-  const icone = nom => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONES[nom]}"></path></svg>`;
+  const icone = nom => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="${ICONES[nom]}"></path></svg>`;
 
   // Menus : id d'écran, libellé, icône ; « enfants » = sous-menu
   // Suivi de mes équipes (identifiant de section : general) : même ordre que Mon dashboard (demande du porteur 2026-10-12) — Daily, Projets, Ressources
@@ -53,21 +54,20 @@ const Coquille = (() => {
   function lienMenu(item) {
     const actif = etat.ecran === item.id && !item.enfants;
     const alerte = item.alerte ? item.alerte() : 0;
-    const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}<span>${esc(item.libelle)}</span>${alerte ? `<span class="pastille-alerte">${alerte}</span>` : ''}</a>`;
+    const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}
+      <span>${esc(item.libelle)}</span>${alerte ? `<span class="pastille-alerte">${alerte}</span>` : ''}</a>`;
     if (!item.enfants) return html;
     return html + `<div class="sous-menu">${item.enfants.map(e =>
       `<a class="sous-lien${etat.ecran === e.id ? ' actif' : ''}" data-action="aller" data-ecran="${e.id}">${esc(e.libelle)}</a>`).join('')}</div>`;
   }
 
+  // Barre latérale : logo, menus des deux sections (filtrés selon le rôle), bloc équipe et utilisateur
   function barreLaterale() {
     const eq = equipe(etat.equipeCourante);
     const nom = etat.session.user.name || etat.session.user.email;
     return `
     <aside class="laterale${ui('menuLateral', { ouvert: false }).ouvert ? ' ouverte' : ''}">
-      <div class="marque">
-        <div class="logo"><i style="height:8px"></i><i style="height:14px"></i><i style="height:11px;background:#9DB6FF"></i></div>
-        <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div>
-      </div>
+      ${C.marque()}
       <nav>
         <div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${MENU_GENERAL.map(lienMenu).join('')}
@@ -87,6 +87,7 @@ const Coquille = (() => {
     </aside>`;
   }
 
+  // En-tête de l'écran : fil d'Ariane, badge Lecture seule / Édition selon la section, recherche, Aide
   function enTete(ecran) {
     const general = ecran.section === 'general';
     return `
@@ -94,7 +95,7 @@ const Coquille = (() => {
       <button class="btn bouton-menu" data-action="basculerMenuLateral" aria-label="Menu" title="Menu">☰</button>
       <div class="fil"><span class="discret">${general ? 'Suivi de mes équipes' : 'Mon dashboard'}</span><span class="sep">/</span>
         <b>${esc(ecran.titre)}</b>
-        ${general ? C.badge('Lecture seule', '#4A5363', '#F1F3F7') : C.badge('Édition', '#0033AD', '#E8EEFF')}</div>
+        ${general ? C.badgeTon('Lecture seule', 'neutre') : C.badgeTon('Édition', 'info')}</div>
       <div class="ligne-flex">
         <div class="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, une personne…<span>⌘K</span></div>
         ${menuAide()}</div>
@@ -104,15 +105,20 @@ const Coquille = (() => {
   // Bouton « Aide » et son menu (guides : config.js, GUIDE_ECRANS et GUIDES)
   function menuAide() {
     const ouvert = ui('menuAide', { ouvert: false }).ouvert;
-    const entree = (sujet, icone, libelle) => `<a class="menu-aide-entree" data-action="ouvrirAide" data-sujet="${sujet}"><span class="menu-aide-icone">${icone}</span>${libelle}</a>`;
+    const entree = (sujet, icone, libelle) => `<a class="menu-aide-entree" data-action="ouvrirAide" data-sujet="${sujet}">
+      <span class="menu-aide-icone">${icone}</span>${libelle}</a>`;
     return `<div class="menu-aide">
       <button class="btn" data-action="basculerMenuAide" aria-expanded="${ouvert}"><span class="menu-aide-icone">?</span> Aide</button>
       ${ouvert ? `<div class="menu-aide-liste">
         ${entree('ecran', '▶', 'Aide sur cet écran')}${entree('premiersPas', '⚑', 'Premiers pas')}${entree('roles', '⛨', 'Rôles et droits')}
-        ${CONFIG.CONTACT_AIDE ? `<div class="menu-aide-sep"></div><a class="menu-aide-entree" href="mailto:${esc(CONFIG.CONTACT_AIDE)}?subject=ProjectDesk"><span class="menu-aide-icone">✉</span>Contacter l’administrateur</a>` : ''}
+        ${CONFIG.CONTACT_AIDE ? `<div class="menu-aide-sep"></div><a class="menu-aide-entree" href="mailto:${esc(CONFIG.CONTACT_AIDE)}?subject=ProjectDesk">
+          <span class="menu-aide-icone">✉</span>Contacter l’administrateur</a>` : ''}
         <div class="menu-aide-sep"></div><div class="menu-aide-propos">À propos : ${esc(CONFIG.NOM_APPLICATION)} © ${CONFIG.ANNEE_DROITS} ${esc(CONFIG.PROPRIETAIRE)}</div>
       </div>` : ''}</div>`;
   }
+
+  // Écran de Mon dashboard ouvert sans équipe, alors qu'il en demande une (sauf écran permis sans équipe)
+  const attendUneEquipe = ecran => ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis());
 
   // « Mon dashboard » demande une équipe ouverte (cas d'un administrateur sans équipe)
   function sansEquipe() {
@@ -138,7 +144,7 @@ const Coquille = (() => {
       ${ui('menuLateral', { ouvert: false }).ouvert ? '<div class="voile voile-menu" data-action="basculerMenuLateral"></div>' : ''}
       <main class="principal">
         ${enTete(ecran)}
-        <div class="contenu">${Simulation.bandeau()}${ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis()) ? sansEquipe() : ecran.rendre()}</div>
+        <div class="contenu">${Simulation.bandeau()}${attendUneEquipe(ecran) ? sansEquipe() : ecran.rendre()}</div>
       </main>
       ${etat.panneau ? `<div class="voile" data-action="fermer"></div>${Panneau.rendre()}` : ''}
       ${etat.modale ? `<div class="voile" data-action="fermer"></div>${Modale.rendre()}` : ''}

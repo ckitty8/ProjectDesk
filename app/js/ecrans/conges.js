@@ -29,15 +29,20 @@ Ecrans.conges = {
     const ouvres = MOIS.map((_, m) => Calculs.joursDuMois(annee, m).filter(j => !Calculs.estWeekend(j)).length);
     const reste = v => `<b class="${v < 0 ? 'reste-negatif' : 'reste-positif'}">${v > 0 ? '+' : ''}${n(v)}</b>`;
 
+    // Ligne d'une personne : 12 mois (jours travaillés, congés), total, objectif et reste à prendre
     const lignePersonne = (r, objectif, niveau) => {
       // Arrivée / départ dans l'année : mention sous le nom ; mois hors présence affichés « — »
       const rc = Calculs.recapJoursTravailles(r.id, annee, etat.d.absences, fer, objectif, r);
       const dansAnnee = d => d && d.startsWith(String(annee));
-      const mentions = [dansAnnee(r.dateArrivee) ? 'arrivée le ' + Calculs.formatCourt(r.dateArrivee) : '', dansAnnee(r.dateDepart) ? 'départ le ' + Calculs.formatCourt(r.dateDepart) : '']
-        .filter(Boolean).map(t => `<span class="discret" style="font-size:11px">${t}</span>`).join('');
+      const mentions = [dansAnnee(r.dateArrivee) ? 'arrivée le ' + Calculs.formatCourt(r.dateArrivee) : '',
+        dansAnnee(r.dateDepart) ? 'départ le ' + Calculs.formatCourt(r.dateDepart) : '']
+        .filter(Boolean).map(t => `<span class="discret texte-11">${t}</span>`).join('');
       return { rc, html: `<tr><td class="nom"><span class="ligne-flex" style="padding-left:${niveau * 16}px">${C.avatar(r.nom)}${esc(r.nom)}${mentions}</span></td>
-        ${rc.mois.map(m => m.ouvres ? `<td>${n(m.travailles)}</td><td class="conge">${m.conges ? n(m.conges) : '·'}</td>` : '<td class="pale">—</td><td class="conge pale">—</td>').join('')}
-        <td class="tot">${n(rc.travailles)}</td><td class="tot conge">${n(rc.conges)}</td><td class="tot">${reste(rc.reste)}${rc.objectif !== objectif ? `<div class="discret" style="font-size:10px;font-weight:400">sur ${n(rc.objectif)} j</div>` : ''}</td></tr>` };
+        ${rc.mois.map(m => m.ouvres ? `<td>${n(m.travailles)}</td>
+          <td class="conge">${m.conges ? n(m.conges) : '·'}</td>` : '<td class="pale">—</td><td class="conge pale">—</td>').join('')}
+        <td class="tot">${n(rc.travailles)}</td><td class="tot conge">
+          ${n(rc.conges)}</td><td class="tot">${reste(rc.reste)}
+          ${rc.objectif !== objectif ? `<div class="discret" style="font-size:10px;font-weight:400">sur ${n(rc.objectif)} j</div>` : ''}</td></tr>` };
     };
     // Unité : ligne de groupe avec son objectif (modifiable par un admin ou le responsable), ses personnes, son total
     const unite = (e, niveau) => {
@@ -46,7 +51,8 @@ Ecrans.conges = {
       const sous = etat.d.equipes.filter(x => x.parentId === e.id).map(x => unite(x, niveau + 1)).join('');
       if (!personnes.length && !sous) return '';
       const champObjectif = modifiable
-        ? `<input type="number" min="1" max="366" step="0.5" class="champ objectif-client" value="${objectif}" data-action-change="objectifTravail" data-equipe="${e.id}" data-annee="${annee}">`
+        ? `<input type="number" min="1" max="366" step="0.5" class="champ objectif-client" value="${objectif}"
+            data-action-change="objectifTravail" data-equipe="${e.id}" data-annee="${annee}">`
         : `<b>${n(objectif)}</b>`;
       const somme = f => personnes.reduce((s, p) => s + f(p.rc), 0);
       const total = personnes.length ? `<tr class="total"><td class="nom" style="padding-left:${(niveau + 1) * 16 + 12}px">Total ${esc(e.nom)}</td>
@@ -55,17 +61,17 @@ Ecrans.conges = {
       return `<tr class="groupe"><td colspan="${MOIS.length * 2 + 4}"><span class="ligne-flex" style="padding-left:${niveau * 16}px">
           ${C.icone(e.type === 'direction' ? 'direction' : 'equipe', 14)}${C.pastille(e.couleur)}${esc(e.nom)}
           <span class="discret" style="font-weight:400;margin-left:14px">Jours attendus par le client</span>${champObjectif}
-          <span class="discret" style="font-weight:400">jours / personne</span>${C.aide('objectifClient')}</span></td></tr>`
+          <span class="discret poids-normal">jours / personne</span>${C.aide('objectifClient')}</span></td></tr>`
         + personnes.map(p => p.html).join('') + total + sous;
     };
-    const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
-    const lignes = [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')].map(e => unite(e, 0)).join('');
+    const lignes = unitesRacines().map(e => unite(e, 0)).join('');
 
     return `<div class="carte"><div class="carte-titre"><div class="ligne-flex">
         <button class="btn" data-action="calendrierAujourdhui">Aujourd’hui</button>
-        <button class="btn" data-action="anneePrecedente">‹</button><b style="min-width:60px;text-align:center">${annee}</b><button class="btn" data-action="anneeSuivante">›</button>
+        <button class="btn" data-action="anneePrecedente">‹</button><b style="min-width:60px;text-align:center">${annee}</b>
+          <button class="btn" data-action="anneeSuivante">›</button>
         <h2 style="margin-left:14px">Jours travaillés et congés ${C.aide('recapTravail')}</h2></div></div>
-      <div style="overflow:auto"><table class="recap-travail">
+      <div class="defilement"><table class="recap-travail">
         <thead><tr><th class="nom" rowspan="2">Personne</th>${MOIS.map(m => `<th colspan="2">${m}</th>`).join('')}
           <th rowspan="2">Total<br>travaillé</th><th rowspan="2">Total<br>congés</th><th rowspan="2">Reste à<br>prendre</th></tr>
           <tr>${MOIS.map(() => '<th>T</th><th class="conge">C</th>').join('')}</tr>
@@ -77,14 +83,15 @@ Ecrans.conges = {
 
   rendre() {
     const esc = C.esc, pinceau = this.pinceau(), annee = Calendrier.moisCourant().annee;
-    const pinceaux = [...valeursDe('abs').map(t => ({ id: t.libelle, libelle: t.libelle, couleur: t.couleur })), { id: 'effacer', libelle: 'Effacer', couleur: '#B3BAC7' }]
+    const pinceaux = [...valeursDe('abs').map(t => ({ id: t.libelle, libelle: t.libelle, couleur: t.couleur })), { id: 'effacer', libelle: 'Effacer', couleur: COULEURS.effacer }]
       .map(p => `<button class="puce${p.id === pinceau ? ' active' : ''}" data-action="choisirPinceau" data-id="${esc(p.id)}">
         <span class="pastille" style="background:${C.teinte(p.couleur, .2)};border:1px solid ${p.couleur}"></span>${esc(p.libelle)}</button>`).join('');
 
     // Contenu de chaque onglet
     const onglet = this.onglet();
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
-    const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div><div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
+    const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
+      <div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     const recapAnnuel = this.recap(annee);
     const onglets = C.onglets([
       { id: 'grille', libelle: 'Grille mensuelle' },
@@ -96,7 +103,8 @@ Ecrans.conges = {
 
     return `
     <div class="ecran">
-      ${C.entete('Congés & capacité', onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences, récapitulatif annuel et capacité')}
+      ${C.entete('Congés & capacité', onglet === 'grille'
+        ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences, récapitulatif annuel et capacité')}
       ${onglets}
       ${{ grille, recap: recapAnnuel, capacite }[onglet] || grille}
     </div>`;

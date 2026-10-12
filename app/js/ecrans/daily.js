@@ -32,12 +32,13 @@ Ecrans.daily = {
     return { absence, absentJournee, renseignes: projets.filter(p => this.texte(p.id, jour).trim()).length };
   },
 
+  // Carte du daily d'un projet : état (renseigné / à saisir / absent), rappel de la veille, zone de saisie
   carteProjet(p, jour, absentJournee) {
     const esc = C.esc, champs = Calculs.decouperDaily(this.texte(p.id, jour));
     const veille = Calculs.decouperDaily(this.texte(p.id, this.decaler(jour, -1))).aujourdhui.split('\n')[0];
     const rempli = champs.hier.trim() || champs.aujourdhui.trim() || champs.blocages.trim();
-    const etatCarte = absentJournee ? C.badge('Absent(e)', '#4A5363', '#F1F3F7')
-      : rempli ? C.badge('Renseigné', '#0B6B4F', '#E3F5EC') : C.badge('À saisir', '#8A4B00', '#FFF3E0');
+    const etatCarte = absentJournee ? C.badgeTon('Absent(e)', 'neutre')
+      : rempli ? C.badgeTon('Renseigné', 'succes') : C.badgeTon('À saisir', 'attention');
     const entete = `<div class="carte-titre"><span class="ligne-flex">${C.code(p.code)}<h2 style="font-size:15px">${esc(p.nom)}</h2></span>${etatCarte}</div>`;
     if (absentJournee && !rempli) return `<div class="carte">${entete}</div>`;   // carte repliée un jour d'absence
     const champ = (cle, titre, aide) => `<label class="champ-daily" style="padding:8px 0 0"><span class="libelle">${titre}</span>
@@ -56,8 +57,7 @@ Ecrans.daily = {
       <button class="btn" data-action="dailyAujourdhui">Aujourd’hui</button>
       <button class="btn" data-action="dailyDecaler" data-sens="-1" title="Jour précédent">‹</button>
       <button class="btn" data-action="dailyDecaler" data-sens="1" title="Jour suivant">›</button>`);
-    if (!maRessource()) return `<div class="ecran">${entete}<div class="carte" style="padding:16px">Votre compte n’est lié à aucune fiche ressource :
-      renseignez l’email de votre compte sur votre fiche (Liste des ressources), puis reconnectez-vous.</div></div>`;
+    if (!maRessource()) return `<div class="ecran">${entete}${C.compteSansFiche()}</div>`;
     const projets = mesProjetsDaily(), b = this.bilan(jour, projets);
 
     // Historique : 12 derniers jours ouvrés jusqu'à aujourd'hui
@@ -65,7 +65,7 @@ Ecrans.daily = {
     if (Calculs.estWeekend(j)) j = this.decaler(j, -1);
     for (let i = 0; i < 12; i++) { historique.push(j); j = this.decaler(j, -1); }
 
-    const bandeau = b.absence ? `<div class="carte" style="padding:12px 16px;background:#FFF8EC;border-color:#F3D9A8">
+    const bandeau = b.absence ? `<div class="carte encart-compact encart-alerte">
       ${b.absentJournee ? `Vous êtes en <b>${esc(b.absence.type)}</b> ce jour : aucun daily attendu.`
         : `Demi-journée de <b>${esc(b.absence.type)}</b> ce jour : la saisie reste ouverte.`}</div>` : '';
 
@@ -73,12 +73,13 @@ Ecrans.daily = {
     <div class="ecran ecran-daily">
       <div class="pile" style="gap:16px">
         ${entete}
-        <div class="carte" style="padding:12px 16px"><div class="ligne-flex" style="justify-content:space-between">
-          <span class="ligne-flex"><h2 style="font-size:16px;margin:0">${Calculs.formatLong(jour)}</h2>${estAujourdhui ? C.badge('Aujourd’hui', '#0033AD', '#E8EEFF') : ''}</span>
+        <div class="carte encart-compact"><div class="ligne-flex entre">
+          <span class="ligne-flex"><h2 style="font-size:16px;margin:0">${Calculs.formatLong(jour)}</h2>${estAujourdhui ? C.badgeTon('Aujourd’hui', 'info') : ''}</span>
           <span class="ligne-flex"><b id="daily-bilan">${b.absentJournee ? 'Absent(e)' : `${b.renseignes} / ${projets.length} projets renseignés`}</b>
             <span class="discret" id="etat-sauvegarde">· enregistrement automatique</span></span></div></div>
         ${bandeau}
-        ${projets.map(p => this.carteProjet(p, jour, b.absentJournee)).join('') || `<div class="carte">${C.vide('Aucun projet en cours : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur).')}</div>`}
+        ${projets.map(p => this.carteProjet(p, jour, b.absentJournee)).join('') || `<div class="carte">
+          ${C.vide('Aucun projet en cours : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur).')}</div>`}
       </div>
       <div class="carte historique">
         <div class="carte-titre"><h2>Historique ${C.aide('dailyVisibilite')}</h2></div>
@@ -86,7 +87,8 @@ Ecrans.daily = {
           const bh = this.bilan(h, projets);
           return `<a class="${h === jour ? 'actif' : ''}" data-action="dailyAller" data-jour="${h}">
             <b>${Calculs.formatLong(h).split(' ').slice(0, 3).join(' ')}</b>
-            <div>${bh.absentJournee ? C.badge(bh.absence.type, couleurDe('abs', bh.absence.type)) : `<span class="${bh.renseignes ? '' : 'pale'}">${bh.renseignes} / ${projets.length} projets</span>`}</div></a>`;
+            <div>${bh.absentJournee ? C.badge(bh.absence.type, couleurDe('abs', bh.absence.type)) : `<span class="${bh.renseignes ? '' : 'pale'}">
+              ${bh.renseignes} / ${projets.length} projets</span>`}</div></a>`;
         }).join('')}
       </div>
     </div>`;
@@ -105,7 +107,7 @@ async function enregistrerNoteProjet(projetId, jour, texte) {
     const bilan = document.getElementById('daily-bilan'), projets = mesProjetsDaily();
     if (bilan) bilan.textContent = `${Ecrans.daily.bilan(jour, projets).renseignes} / ${projets.length} projets renseignés`;
   } catch (e) {
-    if (indicateur) indicateur.innerHTML = '· <span style="color:var(--danger)">●</span> échec : ' + C.esc(e.message);
+    if (indicateur) indicateur.innerHTML = '· <span class="texte-danger">●</span> échec : ' + C.esc(e.message);
   }
 }
 

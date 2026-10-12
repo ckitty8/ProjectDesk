@@ -296,7 +296,8 @@ const Calculs = (() => {
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, libellePresence,
-    capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois, debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
+    capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois,
+    debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,
     rubriquesDaily, estRubriqueBlocages, blocagesDaily, decouperDaily, composerDaily,
     heuresAttenduesJours, previsionMois, partDe, heuresProjetPeriode, joursEnHeures, heuresEnJours
   };

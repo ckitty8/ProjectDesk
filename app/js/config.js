@@ -112,6 +112,18 @@ const DESCRIPTIONS_METHODES = {
 const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES, methode: METHODES_PROJET };
 
 // Statuts techniques (contraintes CHECK en base) et leur affichage
+/* Palette de l'application (charte de la maquette pilotage-projet/) : couleurs utilisées par le code.
+   Les couleurs des équipes et des valeurs de référentiel sont, elles, en base (administrables). */
+const COULEURS = {
+  primaire: '#003CC8', barreClaire: '#8CA6E8', succes: '#0F8A6B', alerte: '#D98A1C', danger: '#D14343',
+  violet: '#7A3FC2', createur: '#5B2A9E', orange: '#B25E09', neutre: '#4A5363', pale: '#8A93A3', effacer: '#B3BAC7'
+};
+// Tons des badges : couleur du texte et du fond (C.badgeTon)
+const TONS = {
+  neutre: { texte: '#4A5363', fond: '#F1F3F7' }, succes: { texte: '#0B6B4F', fond: '#E3F5EC' },
+  info: { texte: '#0033AD', fond: '#E8EEFF' }, attention: { texte: '#8A4B00', fond: '#FFF3E0' },
+  violet: { texte: '#5B2DA0', fond: '#EDE6FA' }
+};
 const STATUTS_FEUILLE = {
   en_saisie: { libelle: 'En saisie', fond: '#E8EEFF', texte: '#0033AD' },
   soumise: { libelle: 'Soumise', fond: '#F1E9FB', texte: '#5E2CA5' },
@@ -129,30 +141,45 @@ if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);
    être une fonction quand le texte dépend d'un libellé administrable.
    ============================================================ */
 const AIDES = {
-  sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule — seule exception : les responsables d’équipe y valident les feuilles de temps de leurs équipes (Timesheet).',
+  sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule — seule exception : ' +
+    'les responsables d’équipe y valident les feuilles de temps de leurs équipes (Timesheet).',
   sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les sprints des projets.',
   avancementMoyen: 'Moyenne de l’avancement (%) des projets non terminés.',
   projetsRisque: 'Projets au statut « À risque » ou « En retard ».',
-  tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
+  tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés ` +
+    `et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
   projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
-  pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
-  datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',
-  recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
-  objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
-  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 »), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
-  productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
-  statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif » (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
-  roleAcces: 'Ce que la personne peut voir et faire. Il se choisit dans sa fiche : Administrateur (par le créateur), Responsable d’équipe ou Membre (par un administrateur ou un responsable de l’équipe). Le rôle Lecteur se donne projet par projet. « Chef de projet » vient de ses projets ; « Pas encore de compte » : la personne ne s’est jamais connectée avec l’email de sa fiche.',
+  pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. ' +
+    'Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
+  datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni ' +
+    'en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',
+  recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée ' +
+    'compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
+  objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ' +
+    'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
+  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
+    '»), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
+  productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
+    `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
+  statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
+    '» (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
+  roleAcces: 'Ce que la personne peut voir et faire. Il se choisit dans sa fiche : Administrateur (par le créateur), Responsable d’équipe ou Membre (par ' +
+    'un administrateur ou un responsable de l’équipe). Le rôle Lecteur se donne projet par projet. « Chef de projet » ' +
+      'vient de ses projets ; « Pas encore de compte » : la personne ne s’est jamais connectée avec l’email de sa fiche.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
-  completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
+  completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, ` +
+    `absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
   aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',
-  dailyVisibilite: 'Un daily par projet. Il est lu (Suivi de mes équipes › Daily des équipes) par les personnes affectées au projet, par le responsable de l’unité du projet et des unités au-dessus, et par les administrateurs. Un jour de congé d’une journée, aucun daily n’est attendu.',
+  dailyVisibilite: 'Un daily par projet. Il est lu (Suivi de mes équipes › Daily des équipes) par les personnes affectées au projet, par le ' +
+    'responsable de l’unité du projet et des unités au-dessus, et par les administrateurs. Un jour de congé d’une journée, aucun daily n’est attendu.',
   referentielSysteme: 'Valeurs « système » : utilisées par les calculs et les droits. Renommables (les données suivent), désactivables, mais non supprimables.',
   joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
   rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
   syntheseProjets: 'Pour chaque projet de l’unité : nombre de membres absents ce jour / nombre de membres. Orange = au moins un absent ; rouge = plus de la moitié.',
   avancementProjet: 'Avancement (%) du projet.',
-  envoiDaily: 'Chaque projet en cours choisit son mode. Power Automate : votre flux planifié lit le daily du projet (adresse + clé du projet) et l’envoie depuis votre boîte, pro ou perso. Envoi direct : l’application envoie l’e-mail à l’heure choisie. Réglable par le chef du projet, les responsables de son unité et les administrateurs.'
+  envoiDaily: 'Chaque projet en cours choisit son mode. Power Automate : votre flux planifié lit le daily du projet (adresse + clé du projet) et l’envoie ' +
+    'depuis votre boîte, pro ou perso. Envoi direct : l’application envoie l’e-mail à l’heure ' +
+      'choisie. Réglable par le chef du projet, les responsables de son unité et les administrateurs.'
 };
 
 /* ============================================================
@@ -164,28 +191,38 @@ const GUIDE_ECRANS = {
   dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés, objectifs (OKR) du trimestre, progression par trimestre et projets à surveiller.',
     'Choisissez le trimestre avec les boutons T1 à T4. Survolez les ⓘ pour le détail des calculs.'],
   projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
-  ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.', 'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés & capacité.'],
+  ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.',
+    'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés & capacité.'],
   administration: ['Consultation des équipes et des référentiels.', 'Pour les modifier (administrateurs) : Mon dashboard › Administration.'],
   timesheet: ['Heures déclarées par personne sur un mois (saisie mensuelle), avec la complétude et le statut de chaque feuille.', 'Changez de mois avec les flèches.'],
-  dailyEquipes: ['Le daily de vos projets pour un jour donné, et les blocages signalés. Le responsable d’une unité voit tous les projets de son unité et des équipes rattachées.', 'Filtrez par projet ; changez de jour avec les flèches. Les absents (congés) sont signalés.'],
-  daily: ['Un daily par projet où vous êtes affecté(e) : Hier, Aujourd’hui, Blocages ; tapez, il s’enregistre automatiquement.', 'Un jour de congé (Congés & capacité), aucun daily n’est attendu. Le champ « Hier » rappelle ce que vous aviez prévu la veille.'],
-  mesProjets: ['Planning (Gantt) des projets où vous êtes affecté(e), avec votre rôle.', '« + Nouveau projet » crée un projet dans votre équipe ; un clic sur une barre ouvre le projet (nom, description, chef, membres).'],
-  conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, congés, reste à prendre) et la capacité (en construction ; bouton « Méthode de calcul Scrum »).',
+  dailyEquipes: ['Le daily de vos projets pour un jour donné, et les blocages signalés. Le responsable d’une unité voit tous les projets ' +
+    'de son unité et des équipes rattachées.', 'Filtrez par projet ; changez de jour avec les flèches. Les absents (congés) sont signalés.'],
+  daily: ['Un daily par projet où vous êtes affecté(e) : Hier, Aujourd’hui, Blocages ; tapez, il s’enregistre automatiquement.',
+    'Un jour de congé (Congés & capacité), aucun daily n’est attendu. Le champ « Hier » rappelle ce que vous aviez prévu la veille.'],
+  mesProjets: ['Planning (Gantt) des projets où vous êtes affecté(e), avec votre rôle.',
+    '« + Nouveau projet » crée un projet dans votre équipe ; un clic sur une barre ouvre le projet (nom, description, chef, membres).'],
+  conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, ' +
+    'congés, reste à prendre) et la capacité (en construction ; bouton « Méthode de calcul Scrum »).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
-    'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle d’accès. Un projet : ses Product Owners, puis ses membres. Actifs et Inactifs se replient d’un clic.',
+    'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle ' +
+      'd’accès. Un projet : ses Product Owners, puis ses membres. Actifs et Inactifs se replient d’un clic.',
     '« Fiche » modifie une personne : dates d’arrivée et de départ, rôle d’accès (Administrateur, Responsable d’équipe, Membre), ses projets.',
     'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
-  monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.', 'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
+  monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.',
+    'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
   previsionnel: ['Réservé aux chefs de projet : choisissez une personne (vous-même ou un membre de vos projets) pour prévoir la répartition de son temps entre ses projets.',
-    'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet × % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
+    'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
+      '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
-  monAdmin: ['Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
+  monAdmin: ['Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
+    'chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',
     'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
     'Les KPI Agile sont dans le menu Mon dashboard › Trucs et astuces.'],
-  astuces: ['Deux thèmes en haut : « Agile » (KPI Scrum et Kanban, rôles Scrum) et « Roadmap » (construire et faire vivre une roadmap).', 'KPI Agile : choisissez un projet en haut ; chaque KPI est illustré par un exemple calculé sur ce projet (« réel » si les données existent, sinon « illustratif »).'],
+  astuces: ['Deux thèmes en haut : « Agile » (KPI Scrum et Kanban, rôles Scrum) et « Roadmap » (construire et faire vivre une roadmap).',
+    'KPI Agile : choisissez un projet en haut ; chaque KPI est illustré par un exemple calculé sur ce projet (« réel » si les données existent, sinon « illustratif »).'],
   choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).']
 };
 const GUIDES = {
@@ -212,8 +249,10 @@ const GUIDES = {
    ============================================================ */
 const KPI_AGILE = [
     { titre: 'Scrum', kpi: [
-      ['velocite', 'Vélocité', 'Points (ou éléments du backlog) terminés par sprint ; moyenne glissante des 3 derniers sprints.', 'Sert à prévoir ; ne se compare pas entre équipes.'],
-      ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).', 'Onglet Congés & capacité › Capacité ; calcul type : (disponible − cérémonies) × focus.'],
+      ['velocite', 'Vélocité', 'Points (ou éléments du backlog) terminés par sprint ; moyenne glissante des 3 derniers sprints.',
+        'Sert à prévoir ; ne se compare pas entre équipes.'],
+      ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).',
+        'Onglet Congés & capacité › Capacité ; calcul type : (disponible − cérémonies) × focus.'],
       ['engagement', 'Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
       ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = éléments trop gros.'],
       ['burnup', 'Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
@@ -227,9 +266,11 @@ const KPI_AGILE = [
       ['leadTime', 'Lead time', 'Délai entre la demande et la livraison.', 'Ce que vit le demandeur ; à suivre en médiane et 85e centile.'],
       ['cycleTime', 'Cycle time', 'Délai entre le début du travail et la livraison.', 'Ce que maîtrise l’équipe ; base des engagements de délai.'],
       ['debit', 'Débit (throughput)', 'Nombre d’éléments terminés par semaine.', 'Sert aux prévisions (méthode Monte-Carlo).'],
-      ['wip', 'Travail en cours (WIP)', 'Nombre d’éléments en cours, par colonne.', 'Loi de Little : cycle time moyen = WIP ÷ débit ; limiter le WIP raccourcit les délais.'],
+      ['wip', 'Travail en cours (WIP)', 'Nombre d’éléments en cours, par colonne.',
+        'Loi de Little : cycle time moyen = WIP ÷ débit ; limiter le WIP raccourcit les délais.'],
       ['cfd', 'Diagramme de flux cumulé (CFD)', 'Nombre d’éléments par état, cumulé dans le temps.', 'Une bande qui s’élargit = goulet d’étranglement.'],
-      ['age', 'Âge du travail en cours', 'Depuis combien de jours chaque élément est en cours.', 'Repère les éléments qui s’enlisent avant qu’ils ne dépassent le délai.'],
+      ['age', 'Âge du travail en cours', 'Depuis combien de jours chaque élément est en cours.',
+        'Repère les éléments qui s’enlisent avant qu’ils ne dépassent le délai.'],
       ['efficacite', 'Efficacité du flux', 'Temps de travail actif ÷ lead time.', 'Souvent 15–40 % ; le reste est de l’attente.'],
       ['bloque', 'Temps bloqué', 'Durée et nombre de blocages par élément.', 'À croiser avec les « Blocages » du daily.'],
       ['sle', 'Engagement de délai (SLE)', 'Ex. : « 85 % des éléments livrés en moins de 10 jours ».', 'Se déduit de l’historique des cycle times.'] ] } ];
@@ -264,7 +305,8 @@ const ROLES_SCRUM = {
     lien: '↔ QA : critères d’acceptation', ceremonies: ['Planning', 'Affinage', 'Revue'] },
   poTechnique: { titre: 'PO technique', famille: 'produit', sousTitre: 'Technical Product Owner',
     mission: 'Porte le backlog technique et sa valeur.',
-    actions: ['Dette, architecture, sécurité, performance, montées de version', 'Co-priorise avec le PO fonctionnel un backlog unique', 'Interlocuteur infra, sécurité et architecture'],
+    actions: ['Dette, architecture, sécurité, performance, montées de version',
+      'Co-priorise avec le PO fonctionnel un backlog unique', 'Interlocuteur infra, sécurité et architecture'],
     lien: '↔ Tech lead : solutions et backlog technique', ceremonies: ['Planning', 'Affinage', 'Revue'] },
   scrumMaster: { titre: 'Scrum Master', famille: 'facilitation', pointille: true, sousTitre: 'au service de toute l’équipe',
     mission: 'Garant du cadre Scrum et de l’amélioration continue.',
@@ -317,7 +359,8 @@ const QUI_FAIT_QUOI_SCRUM = {
    ============================================================ */
 const ROADMAP_ASTUCES = {
   definition: 'Une roadmap dit où l’on va et pourquoi — pas la liste des tâches datées.',
-  precision: 'Elle traduit les objectifs (OKR) en grandes étapes ; le détail vit dans le backlog et les sprints. Sa précision diminue avec l’horizon : sûr pour le trimestre, indicatif au-delà.',
+  precision: 'Elle traduit les objectifs (OKR) en grandes étapes ; le détail vit dans le backlog et ' +
+    'les sprints. Sa précision diminue avec l’horizon : sûr pour le trimestre, indicatif au-delà.',
   // Chaîne de la vision au sprint : [étape, explication, couleur]
   chaine: [
     ['Vision', 'Pourquoi le produit existe (3 à 5 ans)', '#003CC8'],

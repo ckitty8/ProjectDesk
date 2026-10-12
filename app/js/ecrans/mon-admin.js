@@ -47,10 +47,11 @@ Ecrans.monAdmin = {
     else if (u.onglet === 'feries' && etat.estAdmin) corps = this.feries();
     else if (u.onglet === 'envoiDaily' && regleEnvois) corps = this.envoiDaily();
     else corps = this.sprints();
-    const parties = [etat.estAdmin && 'comptes en attente', 'sprints des projets', gereEquipes && 'équipes', etat.estAdmin && 'référentiels et jours fériés'].filter(Boolean).join(', ');
+    const parties = [etat.estAdmin && 'comptes en attente', 'sprints des projets', gereEquipes && 'équipes',
+      etat.estAdmin && 'référentiels et jours fériés'].filter(Boolean).join(', ');
     const sousTitre = parties.charAt(0).toUpperCase() + parties.slice(1);
     return `
-    <div class="ecran" style="max-width:1500px">
+    <div class="ecran ecran-large">
       ${C.entete('Administration', sousTitre)}
       ${onglets}${corps}
     </div>`;
@@ -73,26 +74,28 @@ Ecrans.monAdmin = {
     const defaut = { equipe: proposee ? proposee.equipeId : '', fiche: proposee ? proposee.id : '', role: 'member' };
     return { ...defaut, ...(ui('comptes')[compte.userId] || {}) };
   },
+  // Onglet Comptes en attente : une ligne par inscrit sans équipe, choix de l'équipe, de la fiche et du rôle, puis « Donner l'accès »
   comptes() {
     const esc = C.esc, comptes = etat.comptesEnAttente;
     if (!comptes.length) return `<div class="carte">${C.vide('Aucun compte en attente : toutes les personnes inscrites ont accès à une équipe.')}</div>`;
     const equipes = etat.d.equipes.filter(e => e.actif !== false).map(e => ({ valeur: e.id, libelle: e.nom }));
+    // Une ligne par compte : équipe, fiche ressource (proposée si l'email ou le prénom correspond), rôle, boutons
     const ligne = c => {
-      const choix = this.choixCompte(c), attr = champ => `class="champ" style="width:auto" data-action-change="choisirCompte" data-compte="${c.userId}" data-champ="${champ}"`;
+      const choix = this.choixCompte(c), attr = champ => `class="champ largeur-auto" data-action-change="choisirCompte" data-compte="${c.userId}" data-champ="${champ}"`;
       const fiches = ressourcesActives().filter(r => !r.userId && r.equipeId === choix.equipe).map(r => ({ valeur: r.id, libelle: r.nom + (r.email ? '' : ' (sans email)') }));
       const actions = c.invite
-        ? `${C.badge('Accès donné · en attente de sa connexion', '#0B6B4F', '#E3F5EC')}`
+        ? `${C.badgeTon('Accès donné · en attente de sa connexion', 'succes')}`
         : `<button class="btn petit primaire" data-action="donnerAcces" data-compte="${c.userId}">Donner l’accès</button>`;
       return `<tr><td><span class="ligne-flex">${C.avatar(c.nom || c.email)}<span><b>${esc(c.nom || '—')}</b>
-          <div class="discret" style="font-size:12px">${esc(c.email)}</div></span></span></td>
+          <div class="discret texte-12">${esc(c.email)}</div></span></span></td>
         <td>${Calculs.formatAvecAnnee((c.inscritLe || '').slice(0, 10))}</td>
         <td>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...equipes], choix.equipe, attr('equipe'))}</td>
         <td>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...fiches, { valeur: 'nouvelle', libelle: '+ Créer sa fiche' }], choix.fiche, attr('fiche'))}</td>
         <td>${C.liste([{ valeur: 'member', libelle: 'Membre' }, { valeur: 'admin', libelle: 'Admin d’équipe' }], choix.role, attr('role'))}</td>
-        <td class="num" style="white-space:nowrap"><button class="btn petit" data-action="ignorerCompte" data-compte="${c.userId}">Ignorer</button> ${actions}</td></tr>`;
+        <td class="num sans-retour"><button class="btn petit" data-action="ignorerCompte" data-compte="${c.userId}">Ignorer</button> ${actions}</td></tr>`;
     };
     const enAttente = comptes.filter(c => !c.invite).length;
-    return `${enAttente ? `<div class="carte" style="padding:12px 16px;background:#FFF8EC;border-color:#F3D9A8">
+    return `${enAttente ? `<div class="carte encart-compact encart-alerte">
         <b>${enAttente} personne${enAttente > 1 ? 's se sont inscrites et attendent' : ' s’est inscrite et attend'} un accès.</b>
         Choisissez l’équipe et la fiche ressource, puis « Donner l’accès » : la personne entre dans l’application à sa prochaine
         connexion (ou en cliquant « Actualiser »), sans autre démarche.</div>` : ''}
@@ -113,7 +116,7 @@ Ecrans.monAdmin = {
     const p = parId('projets', ui('monAdmin', {}).projetSprints) || projets.find(x => x.nom === 'CDO') || projets[0];
     if (!p) return `<div class="carte">${C.vide('Aucun projet.')}</div>`;
     const selecteur = C.liste(projets.map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p.id,
-      'class="champ" style="width:auto;height:30px" data-action-change="projetSprints"');
+      'class="champ champ-compact" data-action-change="projetSprints"');
     // Affichage par année (demande du porteur, 2026-10-05) : années des sprints du projet + année en cours
     const annee = Number(ui('monAdmin', {}).anneeSprints) || Number(Calculs.aujourdhui().slice(0, 4));
     const annees = [...new Set([...sprintsDuProjet(p.id).map(anneeSprint), annee, Number(Calculs.aujourdhui().slice(0, 4))])].sort();
@@ -128,8 +131,9 @@ Ecrans.monAdmin = {
     const sprints = sprintsDuProjet(p.id).filter(s => anneeSprint(s) === annee);
     const attr = (s, champ) => `data-action-change="majSprint" data-projet="${p.id}" data-numero="${s.numero}" data-champ="${champ}"`;
     const numeroSuivant = Math.max(0, ...sprints.map(s => Number(s.numeroSprint) || 0)) + 1;
+    // Une ligne par sprint : champs modifiables (ou texte en lecture), « en cours », suppression
     const ligne = s => {
-      const enCours = s.debut <= jour && jour <= s.fin ? ' <span class="discret" style="font-size:11px">en cours</span>' : '';
+      const enCours = s.debut <= jour && jour <= s.fin ? ' <span class="discret texte-11">en cours</span>' : '';
       return editable
         ? `<tr><td><span class="ligne-flex">Sprint<input class="champ champ-numero" type="number" min="1" value="${s.numeroSprint || ''}" ${attr(s, 'numeroSprint')}></span></td>
             <td><input class="champ champ-numero" type="number" min="2000" max="2100" value="${anneeSprint(s)}" ${attr(s, 'annee')}></td>
@@ -140,13 +144,16 @@ Ecrans.monAdmin = {
         : `<tr><td>${s.numeroSprint ? 'Sprint ' + s.numeroSprint : '<span class="pale">—</span>'}${enCours}</td><td>${anneeSprint(s)}</td>
             <td>${esc(s.nom || '')}</td><td>${f(s.debut)}</td><td>${f(s.fin)}</td><td></td></tr>`;
     };
-    const ajout = editable ? `<tr class="ligne-ajout"><td><span class="ligne-flex">Sprint<input class="champ champ-numero" type="number" min="1" name="numeroSprint" form="ajout-sprint" value="${numeroSuivant}" required></span></td>
+    const ajout = editable ? `<tr class="ligne-ajout"><td><span class="ligne-flex">Sprint<input class="champ champ-numero" type="number" min="1"
+        name="numeroSprint" form="ajout-sprint" value="${numeroSuivant}" required></span></td>
         <td><input class="champ champ-numero" type="number" min="2000" max="2100" name="annee" form="ajout-sprint" value="${annee}" required></td>
         <td><input class="champ" name="nom" form="ajout-sprint" placeholder="Version (ex. V3.2)"></td>
         <td><input class="champ champ-date" type="date" name="debut" form="ajout-sprint" required></td>
         <td><input class="champ champ-date" type="date" name="fin" form="ajout-sprint" required></td>
         <td><button class="btn primaire" form="ajout-sprint" title="Ajouter le sprint">+</button></td></tr>` : '';
-    return `<div><div class="discret" style="margin:4px 0 8px">${editable ? 'Saisissez le numéro du sprint, son année, le nom de la version, la date de début et la date de fin.' : 'Lecture seule : vous ne pouvez pas modifier ce projet.'} ${C.aide('sprintsProjet')}</div>
+    return `<div><div class="discret" style="margin:4px 0 8px">
+      ${editable ? 'Saisissez le numéro du sprint, son année, le nom de la version, la date de début et la date de fin.'
+        : 'Lecture seule : vous ne pouvez pas modifier ce projet.'} ${C.aide('sprintsProjet')}</div>
       ${editable ? `<form id="ajout-sprint" data-action-envoi="ajouterSprint" data-projet="${p.id}"></form>` : ''}
       <table class="tableau tableau-sprints"><thead><tr><th>Sprint</th><th>Année</th><th>Version</th><th>Début</th><th>Fin</th><th></th></tr></thead>
         <tbody>${sprints.map(ligne).join('') || (editable ? '' : `<tr><td colspan="6" class="pale">Aucun sprint en ${annee}.</td></tr>`)}${ajout}</tbody></table></div>`;
@@ -162,6 +169,7 @@ Ecrans.monAdmin = {
     const esc = C.esc;
     const projets = etat.d.projets.filter(p => projetEnCours(p) && peutPiloterProjet(p)).sort(parCode);
     const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V']];
+    // Une ligne par projet en cours : mode d'envoi, heure, jours, sauf fériés, destinataires
     const ligne = p => {
       const r = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.projetId === p.id) || {}) };
       const attr = champ => `data-action-change="majEnvoiDaily" data-projet="${p.id}" data-champ="${champ}"`;
@@ -169,28 +177,34 @@ Ecrans.monAdmin = {
       const detail = r.mode === 'power_automate'
         ? `<button class="btn petit" data-action="configurerPowerAutomate" data-projet="${p.id}">Configurer le flux</button>
            <div class="discret" style="font-size:12px;margin-top:4px">votre flux lit le daily puis l’envoie depuis votre boîte</div>`
-        : r.mode === 'direct' ? '<span class="discret" style="font-size:12px">L’application enverra l’e-mail à l’heure choisie — <b>à venir</b> (étape 2 : service d’envoi à créer)</span>'
+        : r.mode === 'direct'
+          ? '<span class="discret texte-12">L’application enverra l’e-mail à l’heure choisie — <b>à venir</b> (étape 2 : service d’envoi à créer)</span>'
         : '<span class="pale">—</span>';
       return `<tr><td><span class="ligne-flex">${C.pastille(equipe(p.equipeId).couleur)}${C.code(p.code)}<b>${esc(p.nom)}</b></span></td>
         <td>${C.liste(MODES_ENVOI_DAILY, r.mode, `class="champ" style="height:30px;width:150px" ${attr('mode')}`)}</td>
         <td><input class="champ" type="time" style="height:30px;width:120px" value="${esc(r.heure)}" ${actif ? '' : 'disabled'} ${attr('heure')}></td>
-        <td><div class="puces" style="flex-wrap:nowrap;gap:4px">${JOURS.map(([n, l]) => `<button class="puce${jours.includes(String(n)) ? ' active' : ''}" ${actif ? '' : 'disabled'}
+        <td><div class="puces" style="flex-wrap:nowrap;gap:4px">
+          ${JOURS.map(([n, l]) => `<button class="puce${jours.includes(String(n)) ? ' active' : ''}" ${actif ? '' : 'disabled'}
           data-action="basculerJourEnvoi" data-projet="${p.id}" data-jour="${n}" style="width:28px;justify-content:center;padding:0">${l}</button>`).join('')}</div></td>
-        <td style="white-space:nowrap"><label class="ligne-flex"><input type="checkbox" ${r.sansFeries ? 'checked' : ''} ${actif ? '' : 'disabled'} ${attr('sansFeries')}> sauf fériés</label></td>
-        <td><input class="champ" style="height:30px" placeholder="email1@…, email2@…" value="${esc(r.destinataires || '')}" ${actif ? '' : 'disabled'} ${attr('destinataires')}></td>
+        <td class="sans-retour"><label class="ligne-flex">
+          <input type="checkbox" ${r.sansFeries ? 'checked' : ''} ${actif ? '' : 'disabled'} ${attr('sansFeries')}> sauf fériés</label></td>
+        <td><input class="champ" style="height:30px" placeholder="email1@…, email2@…" value="${esc(r.destinataires || '')}"
+          ${actif ? '' : 'disabled'} ${attr('destinataires')}></td>
         <td>${detail}</td></tr>`;
     };
     return `<div class="carte"><div class="carte-titre"><h2>Envoi du daily par e-mail ${C.aide('envoiDaily')}</h2>
         <span class="discret">contenu : le daily du projet du jour — blocages en tête, puis Hier / Aujourd’hui / Blocages de chacun, sans note, absents</span></div>
-      <table class="tableau"><thead><tr><th>Projet</th><th>Mode</th><th>Heure</th><th>Jours</th><th>Fériés</th><th style="width:22%">Destinataires</th><th style="width:20%">Mise en place</th></tr></thead>
+      <table class="tableau"><thead><tr><th>Projet</th><th>Mode</th><th>Heure</th><th>Jours</th><th>Fériés</th>
+        <th style="width:22%">Destinataires</th><th style="width:20%">Mise en place</th></tr></thead>
       <tbody>${projets.map(ligne).join('') || `<tr><td colspan="7">${C.vide('Aucun projet en cours dont vous réglez l’envoi.')}</td></tr>`}</tbody></table></div>`;
   },
 
+  // Onglet Jours fériés : liste par année, ajout (date, libellé) et suppression
   feries() {
     const esc = C.esc, annees = [...new Set(etat.d.joursFeries.map(f => f.jour.slice(0, 4)))].sort();
     const annee = ui('feries', { annee: Calculs.aujourdhui().slice(0, 4) }).annee;
     const lignes = etat.d.joursFeries.filter(f => f.jour.startsWith(annee)).map(f => `<tr>
-        <td><input type="date" class="champ" style="width:auto" value="${f.jour}" data-action-change="dateFerie" data-jour="${f.jour}"></td>
+        <td><input type="date" class="champ largeur-auto" value="${f.jour}" data-action-change="dateFerie" data-jour="${f.jour}"></td>
         <td><input class="champ" value="${esc(f.libelle)}" data-action-change="libelleFerie" data-jour="${f.jour}"></td>
         <td class="num">${C.boutonIcone('supprimer', 'supprimerFerie', `data-jour="${f.jour}"`, 'Supprimer ce jour férié')}</td></tr>`).join('');
     const puces = [...new Set([...annees, annee])].sort().map(a =>
@@ -198,10 +212,11 @@ Ecrans.monAdmin = {
     return `<div class="carte"><div class="carte-titre"><h2>Jours fériés ${C.aide('joursFeries')}</h2><div class="puces">${puces}</div></div>
       <table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th class="num"></th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="3">${C.vide('Aucun jour férié pour ' + annee + '.')}</td></tr>`}</tbody></table>
-      <form class="ligne-flex" style="padding:12px 16px" data-action-envoi="ajouterFerie">
-        <input type="date" class="champ" name="jour" required style="width:auto"><input class="champ" name="libelle" placeholder="Libellé (ex. Lundi de Pentecôte)" required>
+      <form class="ligne-flex encart-compact" data-action-envoi="ajouterFerie">
+        <input type="date" class="champ largeur-auto" name="jour" required><input class="champ" name="libelle" placeholder="Libellé (ex. Lundi de Pentecôte)" required>
         <button class="btn">Ajouter</button></form>
-      <div class="discret" style="font-size:12px;padding:0 16px 14px">Affichés dans les calendriers avec le type « ${esc(ABSENCES.FERIE)} » ; non comptés comme jours ouvrés (capacité, timesheet).</div></div>`;
+      <div class="discret" style="font-size:12px;padding:0 16px 14px">Affichés dans les calendriers avec le type « ${esc(ABSENCES.FERIE)} » ;
+        non comptés comme jours ouvrés (capacité, timesheet).</div></div>`;
   },
 
 };
@@ -264,7 +279,8 @@ Object.assign(Actions, {
   majEnvoiDaily(d, el) {
     const actuel = { ...ENVOI_DAILY_DEFAUT, ...((etat.d.envoisDaily || []).find(x => x.projetId === d.projet) || {}) };
     const valeur = el.type === 'checkbox' ? el.checked : el.value.trim();
-    const ligne = { projetId: d.projet, mode: actuel.mode, heure: actuel.heure, jours: actuel.jours, sansFeries: actuel.sansFeries, destinataires: actuel.destinataires, [d.champ]: valeur };
+    const ligne = { projetId: d.projet, mode: actuel.mode, heure: actuel.heure, jours: actuel.jours, sansFeries: actuel.sansFeries,
+      destinataires: actuel.destinataires, [d.champ]: valeur };
     // destinataires et jours peuvent être vides (aucun destinataire, aucun jour) : on garde ''
     executer(() => Api.creer('envois_daily_projet', ligne, 'projet_id', ['destinataires', 'jours']), 'envoisDaily');
   },
@@ -301,6 +317,7 @@ Object.assign(Actions, {
       form.reset(); majUi('monAdmin', { anneeSprints: annee }, { rendre: false });
     }, 'sprintsProjet');
   },
+  // Modification d'un champ d'un sprint (numéro, année, version, dates) avec ses contrôles : dates obligatoires, fin après début, « Sprint N » unique par année
   majSprint(d, el) {
     const s = (etat.d.sprintsProjet || []).find(x => x.projetId === d.projet && x.numero === Number(d.numero));
     const brut = el.value.trim(), entier = ['numeroSprint', 'annee'].includes(d.champ);
@@ -311,7 +328,7 @@ Object.assign(Actions, {
     if (fin < debut) return annuler('La date de fin précède la date de début');
     const numeroSprint = d.champ === 'numeroSprint' ? valeur : s.numeroSprint, annee = d.champ === 'annee' ? valeur : anneeSprint(s);
     if (numeroSprint && sprintDejaPris(d.projet, annee, numeroSprint, s.numero)) return annuler(`Le sprint ${numeroSprint} existe déjà en ${annee} pour ce projet`);
-    executer(() => Api.modifier('sprints_projet', { projet_id: 'eq.' + d.projet, numero: 'eq.' + d.numero }, { [d.champ]: valeur }), 'sprintsProjet');
+    modifierSprint(d.projet, d.numero, { [d.champ]: valeur });
   },
   supprimerSprint(d) {
     if (!confirm('Supprimer ce sprint ? Ses points et sa répartition saisis seront supprimés.')) return;

@@ -20,8 +20,8 @@ Ecrans.astuces = {
   sansEquipePermis: () => true,                  // utile même sans équipe ouverte
   // Thèmes (gros boutons du haut) : clé, libellé, ce qu'il contient, couleur et symbole de l'icône
   THEMES: [
-    { cle: 'agile', libelle: 'Agile', detail: 'KPI Scrum et Kanban · Rôles Scrum', couleur: '#0F8A6B', symbole: '↻' },
-    { cle: 'roadmap', libelle: 'Roadmap', detail: 'Construire et faire vivre une roadmap', couleur: '#7A3FC2', symbole: '➜' }
+    { cle: 'agile', libelle: 'Agile', detail: 'KPI Scrum et Kanban · Rôles Scrum', couleur: COULEURS.succes, symbole: '↻' },
+    { cle: 'roadmap', libelle: 'Roadmap', detail: 'Construire et faire vivre une roadmap', couleur: COULEURS.violet, symbole: '➜' }
   ],
 
   rendre() {
@@ -32,7 +32,7 @@ Ecrans.astuces = {
     const agile = `<div class="puces">${puce('kpi', 'KPI Agile')}${puce('roles', 'Rôles Scrum (organigramme)')}</div>
       ${onglet === 'roles' ? this.organigramme() : this.contenu()}`;
     return `
-    <div class="ecran" style="max-width:1500px">
+    <div class="ecran ecran-large">
       ${C.entete('Trucs et astuces', 'Fiches pratiques : agilité (KPI, rôles Scrum) et roadmap')}
       <div class="themes">${themes}</div>
       ${theme === 'roadmap' ? this.roadmap() : agile}
@@ -50,14 +50,15 @@ Ecrans.astuces = {
     const methodes = R.methodes.map(([methode, ...colonnes]) => `<tr><td><b>${esc(methode)}</b></td>${colonnes.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
     const liste = (titre, couleur, lignes) => `<div class="carte"><div class="carte-titre"><h2 style="color:${couleur}">${titre}</h2></div>
       <ul class="liste-conseils">${lignes.map(l => `<li>${esc(l)}</li>`).join('')}</ul></div>`;
-    return `<div class="carte" style="padding:14px 16px"><b>${esc(R.definition)}</b><div class="discret" style="font-size:12.5px">${esc(R.precision)}</div></div>
+    return `<div class="carte encart-moyen"><b>${esc(R.definition)}</b><div class="discret texte-12-5">${esc(R.precision)}</div></div>
       <div class="carte"><div class="carte-titre"><h2>De la vision au sprint</h2></div><div class="chaine">${chaine}</div></div>
       <div class="grille-formats">${formats}</div>
       <div class="carte"><div class="carte-titre"><h2>Selon la méthode du projet</h2><span class="discret">méthode choisie à la création du projet</span></div>
-        <div class="defilement-x"><table class="tableau"><thead><tr><th>Méthode</th><th>Format conseillé</th><th>Unité de planification</th><th>Revue de la roadmap</th></tr></thead>
+        <div class="defilement-x"><table class="tableau"><thead><tr><th>Méthode</th><th>Format conseillé</th><th>Unité de planification</th>
+          <th>Revue de la roadmap</th></tr></thead>
         <tbody>${methodes}</tbody></table></div></div>
-      <div class="grille-conseils">${liste('✔ Bonnes pratiques', '#0B6B4F', R.bonnesPratiques)}${liste('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
-      <div class="carte" style="padding:12px 16px"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : la roadmap se construit dans <b>Projets et Roadmap</b> (Gantt),
+      <div class="grille-conseils">${liste('✔ Bonnes pratiques', TONS.succes.texte, R.bonnesPratiques)}${liste('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
+      <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : la roadmap se construit dans <b>Projets et Roadmap</b> (Gantt),
         la méthode du projet se choisit à sa création, la capacité se vérifie dans <b>Plan de charge</b> et les objectifs se suivent
         dans le <b>Dashboard général</b> (OKR).</div>`;
   },
@@ -77,6 +78,7 @@ Ecrans.astuces = {
       <div class="org-ceremonies">${r.ceremonies.map(c => `<span>${esc(c)}</span>`).join('')}</div></div>`;
   },
 
+  // Onglet Rôles Scrum : légende, organigramme (sponsor → équipe Scrum → équipe de développement) et tableau « qui fait quoi »
   organigramme() {
     const esc = C.esc, carte = cle => this.carteRole(cle);
     const legende = Object.values(FAMILLES_ROLES_SCRUM).map(f => `<span class="ligne-flex">${C.pastille(f.couleur)}${esc(f.libelle)}</span>`).join('')
@@ -84,13 +86,15 @@ Ecrans.astuces = {
     const tableau = `<table class="tableau tableau-roles"><thead><tr><th>Activité</th>
         ${QUI_FAIT_QUOI_SCRUM.colonnes.map(c => `<th class="num">${esc(ROLES_SCRUM[c].titre)}</th>`).join('')}</tr></thead>
       <tbody>${QUI_FAIT_QUOI_SCRUM.lignes.map(([activite, ...marques]) => `<tr><td><b>${esc(activite)}</b></td>
-        ${marques.map(m => `<td class="num" style="font-size:16px;color:${m === '●' ? 'var(--primaire)' : 'var(--discret)'}">${m}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-    return `<div class="carte" style="padding:14px 16px"><div class="ligne-flex" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
-        <div><b>Organigramme d’une équipe Scrum</b><div class="discret" style="font-size:12.5px">Le Product Ownership est partagé entre un PO fonctionnel et un PO technique,
+        ${marques.map(m => `<td class="num" style="font-size:16px;color:${m === '●' ? 'var(--primaire)' : 'var(--discret)'}">
+          ${m}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    return `<div class="carte encart-moyen"><div class="ligne-flex" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><b>Organigramme d’une équipe Scrum</b><div class="discret texte-12-5">Le Product Ownership est partagé entre un PO fonctionnel et un PO technique,
           qui priorisent ensemble un backlog unique. Le Scrum Master sert toute l’équipe sans la diriger.</div></div>
         <div class="ligne-flex" style="gap:14px;font-size:12.5px">${legende}</div></div></div>
       <div class="carte org">
-        <div class="org-haut"><div class="org-cote">${carte('partiesPrenantes')}<span class="org-tirets" title="besoins et retours"></span></div>${carte('sponsor')}<div></div></div>
+        <div class="org-haut"><div class="org-cote">${carte('partiesPrenantes')}<span class="org-tirets" title="besoins et retours"></span></div>
+          ${carte('sponsor')}<div></div></div>
         <div class="org-trait"></div>
         <div class="org-cadre"><div class="org-cadre-titre">Équipe Scrum</div>
           <div class="org-noeud"><div class="org-groupe">Product Ownership <span class="discret">· backlog unique co-priorisé</span></div>
@@ -116,14 +120,15 @@ Ecrans.astuces = {
     if (!choisi) return `<div class="carte">${C.vide('Aucun projet avec des membres : les exemples ont besoin d’un projet.')}</div>`;
     const ex = this.exemplesKpi(choisi);
     const selecteur = C.liste(projets.map(p => ({ valeur: p.id, libelle: `${p.code} · ${p.nom}` })), choisi.id,
-      'class="champ" style="width:auto" data-action-change="projetAstuces"');
+      'class="champ largeur-auto" data-action-change="projetAstuces"');
     const sections = KPI_AGILE.map(sec => `<div class="carte"><div class="carte-titre"><h2>${esc(sec.titre)}</h2></div>
       <table class="tableau tableau-kpi"><thead><tr><th>Indicateur</th><th>Définition / formule</th><th>Comment le lire</th><th>Exemple · ${esc(choisi.nom)}</th></tr></thead>
       <tbody>${sec.kpi.map(([cle, nom, def, lecture]) => `<tr><td><b>${esc(nom)}</b></td><td>${esc(def)}</td><td class="discret">${esc(lecture)}</td>
         <td>${ex[cle] || ''}</td></tr>`).join('')}</tbody></table></div>`).join('');
-    return `<div class="carte" style="padding:14px 16px"><div class="ligne-flex" style="justify-content:space-between">
-        <div><b>KPI Agile — Scrum et Kanban</b><div class="discret" style="font-size:12.5px">Les exemples sont calculés sur le projet choisi.
-          <span class="badge-reel">réel</span> = données du projet ; <span class="badge-illustratif">illustratif</span> = exemple à défaut de données suivies dans l’application.</div></div>
+    return `<div class="carte encart-moyen"><div class="ligne-flex entre">
+        <div><b>KPI Agile — Scrum et Kanban</b><div class="discret texte-12-5">Les exemples sont calculés sur le projet choisi.
+          <span class="badge-reel">réel</span> = données du projet ;
+          <span class="badge-illustratif">illustratif</span> = exemple à défaut de données suivies dans l’application.</div></div>
         <div class="ligne-flex"><span class="discret">Projet d’exemple</span>${selecteur}</div></div></div>${sections}`;
   },
 
@@ -145,7 +150,8 @@ Ecrans.astuces = {
       burndown: illu(`${velo} points sur 10 jours ouvrés → pente idéale ${n(velo / 10)} point/jour ; au jour 5, il devrait rester ≈ ${n(velo / 2)} points.`),
       burnup: illu(`Release de 120 points, ${velo * 3} livrés en 3 sprints ; si 10 points s’ajoutent au périmètre, la ligne cible monte à 130.`),
       objectif: illu('4 objectifs de sprint atteints sur les 5 derniers sprints → 80 %.'),
-      focus: reel(`Capacité engageable ce sprint : (${n(cap.disponible)} − ${n(scrum.ceremonies)} j de cérémonies) × ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % = <b>${n(scrum.engageable)} j</b>`)
+      focus: reel(`Capacité engageable ce sprint : (${n(cap.disponible)} − ${n(scrum.ceremonies)} j de cérémonies) × ${Math.round(CONFIG.FACTEUR_FOCUS * 100)} % = <b>
+        ${n(scrum.engageable)} j</b>`)
         + `<br>${illu(`vélocité ${velo} points ÷ ${n(cap.disponible)} j = ${n(cap.disponible ? velo / cap.disponible : 0)} point/jour-homme.`)}`,
       debordement: illu(`3 points non terminés sur ${velo} engagés → ${Math.round(3 / velo * 100)} % de débordement.`),
       defauts: illu('2 anomalies remontées en recette après la livraison du sprint.'),

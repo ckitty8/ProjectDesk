@@ -19,15 +19,23 @@ code et de la documentation, on **propose** (sans l'appliquer) ce qui touche à 
 node scripts/audit-code.js
 ```
 
-Il signale en **erreur** (à corriger toutes) :
-- fichier JS non chargé par `app/index.html`, ou version `?v=` différente de la dernière version du DAT ;
-- lien cassé : `data-action…` vers une action inexistante ; action, fonction, constante, méthode
-  d'écran ou d'objet, fonction `Calculs.…` ou composant `C.…` **jamais utilisé** (code mort) ;
-- menu sans écran, écran inaccessible, écran sans guide d'aide (`GUIDE_ECRANS`) ;
-- table chargée ou fonction SQL appelée par l'application mais absente des migrations ;
-- classe CSS jamais utilisée ; `console.log` ou `debugger` oublié.
+Résultat attendu : « ✔ Code vérifié : aucune erreur, 0 avertissement ». Il signale en **erreur** :
 
-Et en **avertissement** (à juger) : fichier sans en-tête, fonction trop longue, ligne trop longue.
+| Contrôle | Règle |
+|---|---|
+| Fichiers et versions | chaque fichier JS chargé par `app/index.html` ; `?v=` = dernière version du DAT |
+| Liens cassés | `data-action…` vers une action inexistante ; menu sans écran, écran inaccessible ou sans guide d'aide |
+| Code mort | action, fonction, constante, méthode d'écran ou d'objet, fonction `Calculs.…`, composant `C.…`, classe CSS **jamais utilisés** |
+| Base | table chargée ou fonction SQL appelée par l'application absente des migrations |
+| Restes de mise au point | `console.log`, `debugger`, `TODO` / `FIXME` (y compris en commentaire) |
+| En-tête | chaque fichier commence par un bloc `/* ==== … ==== */` qui dit à quoi il sert |
+| Longueur | ligne > **180** caractères ; fonction > **60** lignes (la découper en méthodes nommées) |
+| Commentaires | fonction ou méthode de **10 lignes ou plus** sans commentaire juste au-dessus (sauf `rendre()` d'un écran, décrit par l'en-tête) |
+| Doublons | même ligne de code (≥ 70 caractères) à deux endroits : la mettre dans une fonction partagée |
+| Couleurs | `#RRGGBB` en dur hors de `config.js` (palette `COULEURS`, tons de badge `TONS`) et de `theme.css` |
+| Styles | même `style="…"` écrit 3 fois ou plus : en faire une classe (section « Utilitaires » de `theme.css`) |
+
+Et en **avertissement** (à juger) : ligne de commentaire qui ressemble à du code mis de côté.
 
 Pour chaque erreur de code mort : vérifier avec `grep -rn "<nom>" app/` puis **supprimer** le
 code (et son commentaire). Ne jamais construire un nom d'action ou de fonction par concaténation :
@@ -35,16 +43,33 @@ le contrôle ne le verrait pas, et un développeur non plus.
 
 ## 2. Code : relecture humaine (lisibilité)
 
-Relire les fichiers modifiés depuis la dernière revue (`git log --stat`), puis survoler les autres.
-Pour chaque fichier, vérifier :
-- **en-tête** `/* ==== … ==== */` qui dit à quoi sert le fichier et d'où vient le besoin (maquette, date) ;
+Relire **tous** les fichiers modifiés depuis la dernière revue (`git log --stat`), puis survoler les
+autres. La question à se poser : *un développeur qui découvre le projet comprend-il ce fichier sans
+aide ?* Pour chaque fichier, vérifier :
+- **en-tête** `/* ==== … ==== */` : à quoi sert le fichier, d'où vient le besoin (maquette, date) ;
 - **un commentaire par fonction non triviale** : ce qu'elle fait et pourquoi ;
 - **règles métier** (formule, seuil, liste) commentées avec leur source ;
 - **noms en français** cohérents avec les tables SQL ; pas d'abréviation obscure ;
+- **découpage** : un écran = un objet `Ecrans.x` avec `rendre()` court qui assemble des méthodes
+  nommées (`indicateurs()`, `carteMembres()`, `lignePersonne()`…) ; les données calculées une fois
+  (`donnees()`, `contexte()`) puis passées aux méthodes — jamais une fonction de 80 lignes de gabarits ;
+- **HTML lisible** : gabarits coupés entre les balises (une ligne ≈ un bloc), pas de mise en forme en
+  dur : classes de `theme.css` ; `style="…"` seulement pour un réglage unique ou une valeur calculée
+  (couleur d'une équipe, largeur d'une barre) ;
+- **couleurs** : `COULEURS` / `TONS` (`config.js`), `C.badgeTon(texte, 'succes')` pour un badge ;
 - **pas d'astuce « clever »** : une ligne qu'il faut relire trois fois est réécrite en plusieurs lignes ;
-- **pas de code commenté** laissé « au cas où », pas de `TODO` sans ticket, pas de paramètre inutilisé ;
-- fonctions signalées « trop longues » : découper si la fonction mélange plusieurs responsabilités
-  (calcul + rendu, plusieurs blocs indépendants), sinon laisser et le dire dans le rapport.
+- **pas de code commenté** laissé « au cas où », pas de paramètre ni d'import inutilisé
+  (y compris dans `tests/` et `scripts/`).
+
+### Non-régression visuelle d'un nettoyage
+
+Un nettoyage ne doit **rien** changer à l'écran. Les captures de `tests/parcours.js` sont
+reproductibles (identifiants numérotés dans le serveur simulé, notifications masquées à la capture) :
+1. partir d'un dépôt propre (`git status` vide) ;
+2. nettoyer, puis `node tests/parcours.js` ;
+3. `git status docs/maquettes/etat-actuel` : **aucune capture modifiée**. Une capture modifiée =
+   un changement visuel à comprendre (souvent une classe moins prioritaire qu'un sélecteur existant,
+   ex. `select.champ` l'emporte sur `.largeur-auto`) et à corriger avant de continuer.
 
 ## 3. Cohérence entre les pages et liens entre elles
 
@@ -53,8 +78,8 @@ Pour chaque fichier, vérifier :
   - calculs dans `app/js/calculs.js` : chercher dans `app/js/ecrans/` des calculs refaits
     (`HEURES_PAR_JOUR`, `* capacite`, sommes de jours, filtres de présence…) ;
   - listes de personnes : `ressourcesPresentes` / `ressourcesActives` (DAT § 2, menus liés) ;
-  - droits d'affichage : fonctions de `etat.js` (`peutPiloterProjet`, `peutLireDailyProjet`…), miroir
-    des règles RLS ; jamais un test de rôle recopié dans un écran ;
+  - droits d'affichage : fonctions de `etat.js` (`peutPiloterProjet`, `peutGererEquipe`, `peutLireDailyProjet`…), miroir
+    des règles RLS ; jamais un test de rôle recopié dans un écran ; liste des rôles : `Roles.LISTE` (`roles.js`) ;
   - listes métier : référentiels en base (`valeursDe`), jamais une liste en dur dans un écran.
 - Une même notion porte **le même nom** partout (menu, titre d'écran, DAT, guide d'aide).
 - Les écrans de la section **Suivi de mes équipes** (ex-« Général ») restent en lecture seule, hors validation des feuilles de temps (contrôle du parcours).

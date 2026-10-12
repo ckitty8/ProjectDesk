@@ -52,7 +52,9 @@ const Simulation = {
     const r = ressourceId ? ressource(ressourceId) : null;
     const equipeSimulee = r && cle !== 'sansEquipe' ? equipe(r.equipeId) : null;
     etat.simulation = { cle, ressourceId: r ? r.id : null };
-    etat.session = { ...etat.reel.session, user: { id: r && r.userId ? r.userId : 'simulation', name: r ? r.nom : 'Compte de test', email: r && r.email ? r.email : 'compte.sans.equipe@exemple.fr' } };
+    const utilisateur = { id: r && r.userId ? r.userId : 'simulation', name: r ? r.nom : 'Compte de test',
+      email: r && r.email ? r.email : 'compte.sans.equipe@exemple.fr' };
+    etat.session = { ...etat.reel.session, user: utilisateur };
     etat.estCreateur = false;
     etat.estAdmin = cle === 'admin';
     etat.organisations = equipeSimulee ? [{ id: equipeSimulee.id, name: equipeSimulee.nom }] : [];
@@ -83,8 +85,8 @@ const Simulation = {
       : this.personnes(role.cle).map(p => ({ valeur: `${role.cle}|${p.valeur}`, libelle: `${role.libelle} — ${p.libelle}` })));
     return `<div class="bandeau-simulation">
       <span>★ <b>Simulation</b> : vous voyez l’application en tant que ${this.libelleEnCours()} — lecture seule, rien n’est enregistré</span>
-      <span style="flex:1"></span>
-      ${C.liste([{ valeur: '', libelle: 'Changer de rôle…' }, ...choix], '', 'class="champ" style="width:auto;height:28px" data-action-change="changerSimulation"')}
+      <span class="extensible"></span>
+      ${C.liste([{ valeur: '', libelle: 'Changer de rôle…' }, ...choix], '', 'class="champ champ-mini" data-action-change="changerSimulation"')}
       <button class="btn petit" data-action="arreterSimulation">Revenir à mon rôle de créateur</button></div>`;
   },
 
@@ -103,12 +105,12 @@ const Simulation = {
         <button class="btn primaire" style="margin-top:10px;width:100%" data-action="demarrerSimulation" data-role="${role.cle}"
           ${sansPersonne || personnes.length ? '' : 'disabled'}>Voir l’application en tant que ${esc(role.libelle.toLowerCase())}</button></div>`;
     }).join('');
-    return `<div class="carte" style="padding:12px 16px;background:#F5F0FD;border-color:#D9C7F5">
+    return `<div class="carte encart-createur">
         <b>Réservé au créateur.</b> Choisissez un rôle et une personne qui l’a : l’application s’affiche exactement comme pour elle
         (menus, écrans, boutons, données visibles). <b>Lecture seule</b> : pendant la simulation rien n’est enregistré, pour ne jamais
         modifier les données réelles avec vos droits de créateur.</div>
       <div class="grille-simulation">${cartes}</div>
-      <div class="discret" style="font-size:12px">Les rôles Direction, Projet, Utilisateur et Lecture seule s’ajouteront ici avec « Rôles et droits ».</div>`;
+      <div class="discret texte-12">Les rôles Direction, Projet, Utilisateur et Lecture seule s’ajouteront ici avec « Rôles et droits ».</div>`;
   }
 };
 
