@@ -1,0 +1,43 @@
+<!-- Variante A : une colonne par équipe (tableau de bord), cartes projet dedans -->
+<style>
+.a-cols { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; align-items: start; }
+.a-eq { background: #fff; border: 1px solid var(--bordure); border-radius: 12px; }
+.a-eq > .a-eq-t { border-radius: 11px 11px 0 0; }
+.a-eq-t { background: #0A1633; color: #fff; padding: 12px 14px; }
+.a-eq-t h2 { color: #fff; font-size: 16px; display: flex; justify-content: space-between; }
+.a-eq-t .resp { margin-top: 8px; font-size: 12px; color: #AEB9D3; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.a-eq-t .resp .pers { color: #fff; background: rgba(255,255,255,.1); padding: 2px 8px 2px 2px; border-radius: 12px; }
+.a-pr { margin: 10px; border: 1px solid var(--bordure); border-radius: 10px; }
+.a-pr-t { padding: 10px 12px; border-bottom: 1px solid var(--bordure-fine); }
+.a-pr-t b { font-size: 14px; } .a-pr-t .chefs { margin-top: 6px; font-size: 12px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.a-m { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 12px; border-bottom: 1px solid var(--bordure-fine); font-size: 12.5px; }
+.a-m .sous { color: var(--discret); font-size: 11.5px; grid-column: 1; }
+.a-ajout { display: block; padding: 8px 12px; color: var(--primaire); font-size: 12.5px; }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="v2-titre">Variante A · une colonne par équipe</span><h1>Ressources</h1><div class="sous-titre">Équipe → Projet → Membres, côte à côte</div></div>
+    <div class="actions-ecran"><span class="v2-rech">⌕ Rechercher</span><button class="btn">+ Personne</button><button class="btn primaire">+ Équipe</button></div></div>
+  <div class="a-cols">
+    <div class="a-eq"><div class="a-eq-t v2-annot" data-n="1"><h2>Applications <span style="font-weight:400;font-size:12px;color:#AEB9D3">2 projets</span></h2>
+      <div class="resp">Responsables <span class="pers"><span class="avatar">AC</span>Anne Caselli</span><a style="color:#9DB6FF">+ responsable</a></div></div>
+      <div class="a-pr"><div class="a-pr-t v2-annot" data-n="2"><b>VISTA</b> <span class="code">APP-02</span><div class="chefs"><span class="v2-lbl">Chefs</span><span class="pers"><span class="avatar">CH</span>Christelle</span><a>+ chef</a></div></div>
+        <div class="a-m v2-annot" data-n="3"><span class="pers"><span class="avatar">CH</span><b style="font-weight:500">Christelle</b></span><span class="v2-role r-chef">Chef de projet</span><span class="sous">Chef de projet · Admin</span><span class="ok">Actif</span></div>
+        <div class="a-m"><span class="pers"><span class="avatar">TH</span><b style="font-weight:500">Thomas</b></span><span class="v2-role r-mb">Membre</span><span class="sous">Chef de projet</span><span class="ok">Actif</span></div>
+        <a class="a-ajout">+ Membre</a></div>
+      <div class="a-pr"><div class="a-pr-t"><b>CDO</b> <span class="code">APP-01</span><div class="chefs"><span class="v2-lbl">Chefs</span><span class="pers"><span class="avatar">NO</span>Nouha</span><a>+ chef</a></div></div>
+        <div class="a-m"><span class="pers"><span class="avatar">NO</span><b style="font-weight:500">Nouha</b></span><span class="v2-role r-chef">Chef de projet</span><span class="sous">Lead technique</span><span class="ok">Actif</span></div>
+        <a class="a-ajout">+ Membre</a></div>
+      <a class="a-ajout" style="border-top:1px solid var(--bordure-fine)">+ Projet</a></div>
+    <div class="a-eq"><div class="a-eq-t"><h2>IA <span style="font-weight:400;font-size:12px;color:#AEB9D3">0 projet</span></h2><div class="resp">Responsables <span style="color:#7F8BA8">aucun</span><a style="color:#9DB6FF">+ responsable</a></div></div>
+      <div style="padding:20px;text-align:center" class="discret">Aucun projet<br><a>+ Projet</a></div></div>
+    <div class="a-eq"><div class="a-eq-t"><h2>AMOA <span style="font-weight:400;font-size:12px;color:#AEB9D3">0 projet</span></h2><div class="resp">Responsables <span style="color:#7F8BA8">aucun</span><a style="color:#9DB6FF">+ responsable</a></div></div>
+      <div style="padding:20px;text-align:center" class="discret">Aucun projet<br><a>+ Projet</a></div></div>
+  </div>
+  <div class="carte v2-annot" data-n="4" style="padding:12px 16px;background:#FFF8EC;border-color:#F3D9A8"><b>Sans affectation</b> <span class="discret">·</span> <span class="pers"><span class="avatar">CK</span>Cerine KERARMA</span> <span class="discret">DevOps</span> <a>Affecter</a></div>
+  <div class="v2-legende">
+    <div><b>1</b>Une colonne par équipe, ses responsables dans l'en-tête sombre.</div>
+    <div><b>2</b>Chaque projet est une carte, ses chefs en haut.</div>
+    <div><b>3</b>Les membres en lignes compactes : nom, rôle, poste, statut.</div>
+    <div><b>4</b>« Sans affectation » en bandeau sous les équipes.</div>
+  </div>
+</div>

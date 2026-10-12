@@ -1,0 +1,42 @@
+<!-- Variante C : organigramme graphique (boîtes reliées) -->
+<style>
+.c-arbre { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.c-eqs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; position: relative; }
+.c-boite { background: #fff; border: 2px solid var(--bordure); border-radius: 12px; padding: 10px 12px; text-align: center; }
+.c-eq { border-color: #003CC8; } .c-eq h2 { font-size: 16px; }
+.c-eq .resp { margin-top: 6px; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.c-lien { width: 2px; height: 18px; background: #C9D0DC; margin: 0 auto; }
+.c-prs { display: flex; gap: 12px; justify-content: center; }
+.c-pr { border-color: #D98A1C; min-width: 190px; }
+.c-pr b { font-size: 14px; } .c-pr .chef { margin-top: 4px; font-size: 12px; }
+.c-mbs { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--bordure); display: flex; flex-direction: column; gap: 4px; text-align: left; font-size: 12px; }
+.c-mbs .l { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.c-barre { position: absolute; top: -18px; left: 16.6%; right: 16.6%; height: 18px; border: 2px solid #C9D0DC; border-bottom: 0; border-radius: 8px 8px 0 0; }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="v2-titre">Variante C · organigramme</span><h1>Ressources</h1><div class="sous-titre">Un vrai organigramme : équipes, projets, personnes reliés</div></div>
+    <div class="actions-ecran"><span class="v2-rech">⌕ Rechercher</span><button class="btn">− Zoom +</button><button class="btn primaire">+ Équipe</button></div></div>
+  <div class="c-arbre">
+    <div class="c-boite" style="background:#0A1633;color:#fff;border-color:#0A1633">ProjectDesk <span style="color:#AEB9D3;font-size:12px">· 3 équipes · 2 projets · 6 personnes</span></div>
+    <div class="c-lien" style="height:36px"></div>
+    <div class="c-eqs"><div class="c-barre"></div>
+      <div><div class="c-boite c-eq v2-annot" data-n="1"><h2>Applications</h2><div class="resp"><span class="pers"><span class="avatar">AC</span>Anne Caselli</span><a>+</a></div></div>
+        <div class="c-lien"></div>
+        <div class="c-prs">
+          <div class="c-boite c-pr v2-annot" data-n="2"><b>VISTA</b><div class="chef">Chef : <span class="pers"><span class="avatar">CH</span>Christelle</span></div>
+            <div class="c-mbs v2-annot" data-n="3"><div class="l"><span class="pers"><span class="avatar">CH</span>Christelle</span><span class="v2-role r-chef">Chef</span></div><div class="l"><span class="pers"><span class="avatar">TH</span>Thomas</span><span class="v2-role r-mb">Membre</span></div><a>+ Membre</a></div></div>
+          <div class="c-boite c-pr"><b>CDO</b><div class="chef">Chef : <span class="pers"><span class="avatar">NO</span>Nouha</span></div>
+            <div class="c-mbs"><div class="l"><span class="pers"><span class="avatar">NO</span>Nouha</span><span class="v2-role r-chef">Chef</span></div><a>+ Membre</a></div></div>
+        </div></div>
+      <div><div class="c-boite c-eq"><h2>IA</h2><div class="resp pale">aucun responsable · <a>+</a></div></div><div class="c-lien"></div><div class="c-boite" style="border-style:dashed"><a>+ Projet</a></div></div>
+      <div><div class="c-boite c-eq"><h2>AMOA</h2><div class="resp pale">aucun responsable · <a>+</a></div></div><div class="c-lien"></div><div class="c-boite" style="border-style:dashed"><a>+ Projet</a></div></div>
+    </div>
+    <div class="carte v2-annot" data-n="4" style="margin-top:28px;padding:10px 16px;background:#FFF8EC;border-color:#F3D9A8;width:100%"><b>Sans affectation</b> · <span class="pers"><span class="avatar">CK</span>Cerine KERARMA</span> <span class="discret">DevOps</span> <a>Affecter</a></div>
+  </div>
+  <div class="v2-legende">
+    <div><b>1</b>Chaque équipe est une boîte reliée, avec ses responsables.</div>
+    <div><b>2</b>Sous l'équipe, ses projets en boîtes, avec leurs chefs.</div>
+    <div><b>3</b>Dans chaque projet, ses membres et leur rôle ; clic sur une personne = sa fiche (poste, statut).</div>
+    <div><b>4</b>« Sans affectation » en bas de l'organigramme.</div>
+  </div>
+</div>

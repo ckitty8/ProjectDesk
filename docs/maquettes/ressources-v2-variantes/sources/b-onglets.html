@@ -1,0 +1,28 @@
+<!-- Variante B : un onglet par équipe, projets en accordéon -->
+<style>
+.b-eq { background: #fff; border: 1px solid var(--bordure); border-radius: 12px; }
+.b-resp { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--bordure-fine); }
+.b-pr { border-bottom: 1px solid var(--bordure-fine); }
+.b-pr-t { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--fond-entete); }
+.b-pr-t b { font-size: 15px; }
+.b-pr table { width: 100%; border-collapse: collapse; } .b-pr td { padding: 8px 16px; border-top: 1px solid var(--bordure-fine); }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="v2-titre">Variante B · un onglet par équipe</span><h1>Ressources</h1><div class="sous-titre">Choisissez une équipe ; ses projets se déplient</div></div>
+    <div class="actions-ecran"><span class="v2-rech">⌕ Rechercher</span><button class="btn">+ Personne</button><button class="btn primaire">+ Équipe</button></div></div>
+  <div class="onglets v2-annot" data-n="1" style="width:fit-content;padding-right:16px"><button class="onglet actif">Applications <span class="compte">5</span></button><button class="onglet">IA <span class="compte">0</span></button><button class="onglet">AMOA <span class="compte">0</span></button><button class="onglet">Sans affectation <span class="compte">1</span></button></div>
+  <div class="b-eq">
+    <div class="b-resp v2-annot" data-n="2"><span class="v2-lbl">Responsables de l'équipe</span><span class="pers"><span class="avatar">AC</span><b style="font-weight:500">Anne Caselli</b></span><a>+ responsable</a><span style="flex:1"></span><a>+ Projet</a><a>Modifier l'équipe</a></div>
+    <div class="b-pr"><div class="b-pr-t v2-annot" data-n="3"><span>▾</span><b>VISTA</b><span class="code">APP-02</span><span class="v2-lbl" style="margin-left:14px">Chefs</span><span class="pers"><span class="avatar">CH</span>Christelle</span><a>+ chef</a><span style="flex:1"></span><span class="discret">2 personnes</span><a>+ Membre</a></div>
+      <table><tbody>
+        <tr><td style="width:30%"><span class="pers"><span class="avatar">CH</span>Christelle</span></td><td>Chef de projet</td><td><span class="v2-role r-chef">Chef de projet</span> <span class="v2-role r-admin">Admin</span></td><td><span class="ok">Actif</span></td><td class="v2-act" style="text-align:right"><a>Fiche</a><a class="pale">Retirer</a></td></tr>
+        <tr><td><span class="pers"><span class="avatar">TH</span>Thomas</span></td><td>Chef de projet</td><td><span class="v2-role r-mb">Membre</span></td><td><span class="ok">Actif</span></td><td class="v2-act" style="text-align:right"><a>Fiche</a><a class="pale">Retirer</a></td></tr>
+      </tbody></table></div>
+    <div class="b-pr" style="border:0"><div class="b-pr-t"><span>▸</span><b>CDO</b><span class="code">APP-01</span><span class="v2-lbl" style="margin-left:14px">Chefs</span><span class="pers"><span class="avatar">NO</span>Nouha</span><span style="flex:1"></span><span class="discret">1 personne</span><a>+ Membre</a></div></div>
+  </div>
+  <div class="v2-legende">
+    <div><b>1</b>Un onglet par équipe (et un pour « Sans affectation ») : on ne voit qu'une équipe à la fois.</div>
+    <div><b>2</b>Les responsables de l'équipe en tête de l'onglet.</div>
+    <div><b>3</b>Chaque projet se déplie : ses chefs sur la ligne, ses membres dessous (poste, rôle, statut).</div>
+  </div>
+</div>
