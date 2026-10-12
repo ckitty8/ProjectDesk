@@ -119,14 +119,13 @@ Object.assign(Actions, {
   // Retour au sprint en cours (choix par défaut de sprintChoisi)
   capaciteAujourdhui: () => majUi('capacite', { numero: null }),
 
-  /* Saisie des points d'un sprint (engagés ou terminés) : upsert sur (projet, numéro) ;
-     un champ vidé enregistre « non saisi » (null). */
+  /* Saisie des points d'un sprint (engagés ou terminés) : mise à jour du sprint existant ;
+     un champ vidé enregistre « non saisi » (null). Jamais de création ici : les sprints sont
+     créés à la main par le chef de projet (Administration › Sprints, porteur 2026-10-12). */
   saisirPoints(d, el) {
     const valeur = el.value === '' ? null : Number(el.value);
     if (valeur !== null && !(valeur >= 0)) return notifier('Nombre de points invalide', 'erreur');
-    const ligne = { ...Capacite.saisieSprint(d.projet, Number(d.numero)), projetId: d.projet, numero: Number(d.numero), [d.champ]: valeur };
-    delete ligne.modifiePar; delete ligne.modifieLe;
-    executer(() => Api.creer('sprints_projet', ligne, 'projet_id,numero'), 'sprintsProjet');
+    executer(() => Api.modifier('sprints_projet', { projet_id: 'eq.' + d.projet, numero: 'eq.' + d.numero }, { [d.champ]: valeur }), 'sprintsProjet');
   },
   /* Jours réels d'une catégorie pour un sprint : upsert ; un champ vidé supprime la saisie */
   saisirRepartition(d, el) {
