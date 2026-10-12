@@ -1,6 +1,6 @@
 # Spécifications — Ressources (socle de ProjectDesk)
 
-> **Statut : brouillon en cours de rédaction avec le porteur (2026-10-12).** Le porteur repart de
+> **Statut : brouillon en cours de rédaction avec le porteur (2026-10-12) — réponses aux 6 premières questions intégrées.** Le porteur repart de
 > zéro sur la gestion des ressources : elle conditionne tout le reste de l'application.
 > Aucune maquette ni aucun code tant que ce document n'est pas validé. Les points marqués
 > **[À décider]** attendent la réponse du porteur.
@@ -30,29 +30,55 @@ chef d'un projet et membre d'un autre.
 
 - **Poste** : son métier (Chef de projet, Lead technique, Développeur…) — liste administrable.
   Le poste est descriptif : il ne donne aucun droit.
-- **Rôle / accès** : ce qu'elle peut faire dans l'application (voir § 2 et § 4).
-- **Statut** : Actif / Inactif.
+- **Rôle / accès** : voir § 5.
+- **Statut** : Actif / Inactif (voir § 6).
+
+**Rattachement** (décision du 2026-10-12) : une personne **n'appartient pas à une équipe**. Elle
+est rattachée **seulement par ce qu'elle fait** :
+- responsable d'une ou plusieurs équipes ;
+- chef de projet, membre ou lecteur d'un ou plusieurs projets.
+
+Une personne sans aucune affectation figure dans une liste « Sans affectation ».
 
 ## 4. Qui gère les ressources
 
-Les **administrateurs**, **responsables d'équipe** et **chefs de projet** peuvent ajouter,
-affecter, modifier et supprimer des ressources. Les membres non.
+| Qui | Périmètre |
+|-----|-----------|
+| Administrateur | tout |
+| Responsable d'équipe | les personnes de **ses équipes** (de leurs projets) |
+| Chef de projet | les personnes de **ses projets** |
+| Membre, Lecteur | rien |
 
-## 5. Questions ouvertes
+Gérer = ajouter, affecter, modifier, passer inactive. **Supprimer** définitivement une personne
+est réservé aux **administrateurs** (cela efface ses congés, heures et daily).
 
-1. **[À décider] Périmètre de gestion** : un responsable gère-t-il seulement les ressources de
-   ses équipes, et un chef de projet seulement celles de ses projets ? (l'administrateur : tout)
-2. **[À décider] Rattachement d'une personne** : une personne appartient-elle à une équipe
-   (même sans projet, ex. un responsable), ou seulement aux projets où elle travaille ?
-3. **[À décider] Rôle / accès** : est-il **déduit** de ses affectations (responsable de…, chef
-   de…, membre de…) plus la case « Administrateur », ou **choisi** à part ?
-4. **[À décider] Lecteur** : garde-t-on un rôle « Lecteur » sur un projet (consulte sans modifier) ?
-5. **[À décider] Inactif** : une personne devient-elle inactive par une date de départ, par un
-   simple bouton, ou les deux ? Que deviennent ses affectations ?
-6. **[À décider] Supprimer** : supprimer une personne efface ses absences, heures et daily ;
-   faut-il plutôt la passer « Inactive » et réserver la suppression aux administrateurs ?
+## 5. Rôles et accès aux écrans
 
-## 6. Écart avec l'application actuelle (pour information)
+- Un **rôle** donne accès à certains **écrans** (ex. un rôle ouvre Mon dashboard, un autre non).
+- Chaque rôle contient la **liste des profils** (personnes) qui l'ont.
+- Les rôles d'affectation restent : responsable d'équipe, chef de projet, membre, **lecteur**.
+- **Lecteur** sur un projet : consulte sans modifier ; il **n'a pas accès au menu Mon dashboard**.
+- Les rôles se cumulent (un administrateur peut aussi être responsable, chef ou membre).
+
+## 6. Statut Actif / Inactif
+
+- Une personne devient inactive par une **date de départ** ou par un **bouton** (les deux).
+- Une personne inactive **garde ses affectations** (historique) mais **n'apparaît plus** nulle
+  part dans l'application (listes, sélecteurs, congés, timesheet, daily).
+
+## 7. Questions ouvertes
+
+1. **[À décider] DSI** : Thomas et les fiches de Cerine sont rattachés à DSI (voir § 8). Une fois
+   le rattachement à une équipe supprimé (§ 3), il suffit de les affecter à des projets ; quelle
+   fiche de Cerine garder (3 fiches) ?
+2. **[À décider] Liste des rôles et écrans** : quels rôles (ex. Administrateur, Responsable,
+   Chef de projet, Membre, Lecteur) et quels écrans pour chacun ? Le rôle d'une personne est-il
+   **choisi** par un administrateur (liste des profils dans le rôle) ou **déduit** de ses
+   affectations ?
+3. **[À décider] Congés & timesheet** : aujourd'hui groupés par équipe d'appartenance. Sans
+   appartenance, une personne apparaîtra sous **chaque équipe** de ses projets : est-ce voulu ?
+
+## 8. Écart avec l'application actuelle (pour information)
 
 - **DSI** existe en base comme « direction » (une ligne de `equipes`, et une organisation de
   connexion Neon Auth). Elle porte 3 fiches (Thomas ; Cerine Kerarma en double, dont « Cerine
@@ -62,5 +88,9 @@ affecter, modifier et supprimer des ressources. Les membres non.
 - Équipe : **un seul** responsable désigné aujourd'hui (`equipes.responsable_id`) → à étendre à plusieurs.
 - Projet : un « chef » sur la fiche projet (`projets.chef_id`) **plus** des affectations
   « Chef de projet » → à unifier (plusieurs chefs par les affectations).
-- Personne : rattachée à **une** équipe (`ressources.equipe_id`).
+- Personne : rattachée à **une** équipe (`ressources.equipe_id`) → n'est plus une appartenance ;
+  les droits d'équipe (aujourd'hui : membres de l'organisation de connexion de l'équipe) devront
+  venir des rôles et affectations.
+- Rôles : aujourd'hui fixes (administrateur, owner / admin / member d'une équipe, rôle sur projet) ;
+  les écrans accessibles par rôle sont à créer.
 - Toute évolution de la base sera une migration additive, sans perte de données (règle n°8).
