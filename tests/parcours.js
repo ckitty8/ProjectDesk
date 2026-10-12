@@ -370,39 +370,63 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');
-    /* Liste des ressources (piste 3, 2026-10-09) : navigation à gauche, détail à droite.
-       Projet PF-12 : Product Owner (rôle Chef de projet) puis membres. */
-    const noeud = (type, nom) => `#nav-ressources .noeud.${type}:has-text("${nom}")`;
-    verifier('Liste des ressources : navigation (équipes, projets) et détail de l’équipe ouverte', !!(await page.$(noeud('equipe', 'Data')))
-      && !!(await page.$(noeud('projet', 'Migration Kubernetes'))) && (await page.textContent('#detail-ressources')).includes('Responsable de l’équipe'));
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
-    const [poPf12, membresPf12] = await page.$$eval('#detail-ressources .carte', c => [c[1].textContent, c[2].textContent]);
-    verifier('Liste des ressources : projet → Product Owners puis membres', poPf12.includes('Product Owners') && poPf12.includes('Julien Dubois')
-      && membresPf12.includes('Thomas Bernard') && membresPf12.includes('Membre') && !membresPf12.includes('Julien Dubois'));
-    // Date de fin saisie dans la fiche : la personne reste affichée « Inactif » (masquable avec le bouton)
+    /* Liste des ressources (spécification Ressources, maquette ressources-v2/1-liste.png) :
+       Équipe (responsables) → Projet (chefs) → Membres ; « Sans affectation » ; inactifs masqués */
+    const ligneDe = (niveau, texte) => `#arbre-ressources tr.${niveau}:has-text("${texte}")`;
+    const texteDe = async (niveau, texte) => ((await page.$(ligneDe(niveau, texte))) ? page.textContent(ligneDe(niveau, texte)) : '');
+    const membresDe = nomProjet => page.evaluate(n => {
+      const lignes = [...document.querySelectorAll('#arbre-ressources tbody tr')];
+      const i = lignes.findIndex(tr => tr.className === 'niveau-projet' && tr.textContent.includes(n)), res = [];
+      for (let j = i + 1; i >= 0 && j < lignes.length && lignes[j].className === 'niveau-personne'; j++) res.push(lignes[j].textContent.replace(/\s+/g, ' ').trim());
+      return res;
+    }, nomProjet);
+    const idDe = nom => page.evaluate(n => etat.d.ressources.find(r => r.nom === n).id, nom);
+    const equipePf = await texteDe('niveau-equipe', 'Plateforme');
+    verifier('Liste des ressources : équipe avec plusieurs responsables', equipePf.includes('Camille Laurent') && equipePf.includes('Julien Dubois'));
+    const membresPf12 = await membresDe('Migration Kubernetes');
+    verifier('Liste des ressources : projet → chefs de projet puis membres (poste, rôle, statut)',
+      (await texteDe('niveau-projet', 'Migration Kubernetes')).includes('Julien Dubois')
+      && membresPf12.some(l => l.includes('Thomas Bernard') && l.includes('Membre') && l.includes('Actif'))
+      && membresPf12.some(l => l.includes('Julien Dubois') && l.includes('Chef de projet')));
+    // Responsable ajouté puis retiré (table responsables_equipe)
+    const idSarah = await idDe('Sarah Petit');
+    await page.click(`${ligneDe('niveau-equipe', 'Data')} [data-action="ajouterResponsable"]`);
+    await page.selectOption('form[data-action-envoi="enregistrerResponsable"] select[name=ressource]', idSarah);
+    await page.click('form[data-action-envoi="enregistrerResponsable"] .btn.primaire'); await page.waitForTimeout(400);
+    const sarahResponsable = (await texteDe('niveau-equipe', 'Data')).includes('Sarah Petit');
+    await page.click(`${ligneDe('niveau-equipe', 'Data')} [data-action="retirerResponsable"][data-ressource="${idSarah}"]`); await page.waitForTimeout(400);
+    verifier('Liste des ressources : responsable d’équipe ajouté puis retiré', sarahResponsable && !(await texteDe('niveau-equipe', 'Data')).includes('Sarah Petit'));
+    // « + chef » : affectation pré-réglée Chef de projet ; « Retirer » enlève du projet
+    const idLea = await idDe('Léa Moreau');
+    await page.click(`${ligneDe('niveau-projet', 'Migration Kubernetes')} [data-action="assigner"][data-role]`); await page.waitForTimeout(200);
+    await page.selectOption('select[name=ressource]', idLea); await page.waitForTimeout(200);
+    await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
+    const leaChef = (await texteDe('niveau-projet', 'Migration Kubernetes')).includes('Léa Moreau');
+    const affLea = await page.evaluate(id => etat.d.affectations.find(a => a.ressourceId === id && projet(a.projetId).code === 'PF-12').id, idLea);
+    await page.click(`[data-action="retirerAffectation"][data-id="${affLea}"]`); await page.waitForTimeout(400);
+    verifier('Liste des ressources : « + chef » ajoute un chef de projet, « Retirer » l’enlève du projet',
+      leaChef && !(await membresDe('Migration Kubernetes')).some(l => l.includes('Léa Moreau')));
+    // Fiche : passer inactif → la personne disparaît de la liste ; section « Inactifs » (administrateur) → réactiver
     const idFin = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
-    const ligneFin = `#detail-ressources tr[data-ressource="${idFin}"]`;
+    const ligneFin = `#arbre-ressources tr[data-ressource="${idFin}"]`;
+    const ouvrirFiche = async id => { await page.click(`#arbre-ressources tr[data-ressource="${id}"] [data-action="modifierRessource"] >> nth=0`); await page.waitForTimeout(150); };
+    const reactiver = async id => {
+      if (!(await page.$(`#arbre-ressources tr[data-ressource="${id}"]`))) { await page.click('[data-action="replierInactifs"]'); await page.waitForTimeout(150); }
+      await ouvrirFiche(id); await page.click('.modale [data-action="basculerActifRessource"]'); await page.waitForTimeout(400);
+    };
     const poserFin = async jour => {
-      await page.click(`${ligneFin} [data-action="modifierRessource"]`);
+      await ouvrirFiche(idFin);
       await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateDepart]', jour);
       await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
     };
-    await poserFin('2026-09-30');
-    const revue = (await page.textContent(ligneFin)).includes('Inactif') && (await page.textContent(ligneFin)).includes('partie le 30 sept. 2026');
-    // Sections Actifs / Inactifs repliables (demande du porteur, 2026-10-12)
-    const dansInactifs = await page.$eval(ligneFin, tr => { let x = tr.previousElementSibling; while (x && !x.classList.contains('groupe')) x = x.previousElementSibling; return !!x && x.textContent.includes('Inactifs'); });
-    const sectionInactifs = '#detail-ressources [data-action="replierSection"][data-id$=":inactifs"]';
-    await page.click(sectionInactifs); await page.waitForTimeout(150);
-    const masquee = !(await page.$(ligneFin)) && !!(await page.$('#detail-ressources tr[data-ressource]'));
-    await page.click(sectionInactifs); await page.waitForTimeout(150);
-    verifier('Liste des ressources : date de fin (fiche) → section « Inactifs » repliable, présence en clair',
-      masquee && revue && dansInactifs && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
-    // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
-    const reactivee = await page.evaluate(id => !ressource(id).dateDepart, idFin);
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
-    const inactivee = await page.evaluate(id => ressource(id).dateDepart === Calculs.aujourdhui(), idFin);
-    verifier('Liste des ressources : statut Actif / Inactif cliquable', reactivee && inactivee);
+    await ouvrirFiche(idFin);
+    const ficheRoles = await page.textContent('.modale');
+    await page.click('.modale [data-action="basculerActifRessource"]'); await page.waitForTimeout(400);
+    const masque = !(await page.$(ligneFin)) && await page.evaluate(id => ressource(id).dateDepart === Calculs.aujourdhui(), idFin);
+    await reactiver(idFin);
+    verifier('Fiche : rôles déduits des affectations ; « Passer inactif » masque la personne, « Réactiver » la remontre',
+      ficheRoles.includes('Rôles') && ficheRoles.includes('Migration Kubernetes') && masque
+      && await page.evaluate(id => !ressource(id).dateDepart, idFin) && !!(await page.$(ligneFin)));
     // Menus liés (signalé le 2026-10-06) : une personne partie le 30/09 disparaît des périodes APRÈS son
     // départ (octobre : grille, timesheet, suivi, annuaire) mais reste visible AVANT (septembre)
     await poserFin('2026-09-30');
@@ -431,80 +455,52 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Personne partie le 30/09 : absente des écrans d’octobre, présente en septembre et dans le récap annuel',
       visibleDans.length === 0 && avantDepart && avantDepartTs && recapAnnee, 'visible en octobre dans : ' + visibleDans.join(', ') + ' · fin = ' + await page.evaluate(id => ressource(id).dateDepart, idFin) + ' · ' + nomFin);
     await page.evaluate(() => { const d = new Date(); majUi('calendrier', { annee: d.getFullYear(), mois: d.getMonth() }); });
-    await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
+    await aller('listeRessources');
+    await reactiver(idFin);
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
-    /* Rôle d'accès (maquette role-acces/, 2026-10-12) : colonne « Accès », choix dans la fiche.
-       Camille (administratrice, owner de Plateforme) passe Thomas Responsable, puis Membre. */
-    await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
-    const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
-    const ligneThomas = `#detail-ressources tr[data-ressource="${idThomas}"]`;
-    const accesThomas = async () => (await page.$eval(`${ligneThomas} td:nth-child(3)`, td => td.textContent.trim()));
-    const choisirRole = async role => {
-      await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
-      await page.check(`input[name=roleAcces][value=${role}]`);
-      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(500);
-    };
-    const accesInitial = await accesThomas();
-    await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
-    const adminGrise = await page.$eval('input[name=roleAcces][value=admin]', i => i.disabled);
-    const sansLecteur = !(await page.$('input[name=roleAcces][value=lecteur]'));
+    // Administrateur : case réservée au créateur (grisée pour Camille, administratrice)
+    await ouvrirFiche(idFin);
+    verifier('Fiche : case Administrateur réservée au créateur', await page.$eval('input[name=administrateur]', i => i.disabled));
     await page.click('.modale .fermer');
-    await choisirRole('responsable');
-    const responsable = (await accesThomas()) === 'Responsable d’équipe';
-    await choisirRole('membre');
-    verifier('Rôle d’accès : colonne Accès, Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
-      accesInitial === 'Membre' && adminGrise && sansLecteur && responsable && (await accesThomas()) === 'Membre'
-      && await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member', idThomas)
-      && (await page.textContent('#detail-ressources')).includes('Pas encore de compte'));
-    // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
-    // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
-    const creerUnite = async (nom, prefixe, type, parent) => {
-      await page.click('[data-action="nouvelleUnite"]');
-      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', nom);
-      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', prefixe);
-      await page.selectOption('select[name=type]', type);
-      if (parent) await page.selectOption('select[name=parentId]', { label: parent });
-      await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
-    };
-    const supprimerUnite = async nom => { await page.click(noeud('equipe', nom)); await page.click('#detail-ressources [data-action="supprimerEquipe"]'); await page.waitForTimeout(400); };
-    await creerUnite('Direction Test', 'DT', 'direction');
-    const directionVideVisible = !!(await page.$(noeud('equipe', 'Direction Test')));
-    await creerUnite('Équipe Test', 'ET', 'equipe', 'Direction Test');
-    verifier('Liste des ressources : direction masquée, ses équipes listées directement', directionVideVisible
-      && !(await page.$(noeud('equipe', 'Direction Test'))) && !!(await page.$(noeud('equipe', 'Équipe Test'))));
-    await supprimerUnite('Équipe Test'); await supprimerUnite('Direction Test');
-    verifier('Liste des ressources : unités vides supprimées', !(await page.$(noeud('equipe', 'Équipe Test'))) && !(await page.$(noeud('equipe', 'Direction Test'))));
-    await page.click(noeud('equipe', 'Data')); await page.waitForTimeout(150);
+    // Équipe : création, suppression d'une équipe vide
+    await page.click('[data-action="nouvelleUnite"]');
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Équipe Test');
+    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'ET');
+    await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
+    const equipeCreee = !!(await page.$(ligneDe('niveau-equipe', 'Équipe Test')));
+    await page.click(`${ligneDe('niveau-equipe', 'Équipe Test')} [data-action="supprimerEquipe"]`); await page.waitForTimeout(400);
+    verifier('Liste des ressources : équipe créée puis supprimée (vide)', equipeCreee && !(await page.$(ligneDe('niveau-equipe', 'Équipe Test')))
+      && !(await page.$(`${ligneDe('niveau-equipe', 'Data')} [data-action="supprimerEquipe"]`)));
     // Chef de projet : personnes de l'équipe et de la direction qui la regroupe (Plateforme regroupe Data)
     verifier('Chef de projet possible : personnes de l’équipe et de sa direction', await page.evaluate(() => {
       const data = etat.d.equipes.find(e => e.nom === 'Data'), noms = chefsPossibles(data.id).map(r => r.nom);
       return noms.includes('Hugo Martin') && noms.includes('Julien Dubois') && !noms.includes('Inès Roux');
     }));
-    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
+    // « + Personne » (administrateur) → « Sans affectation » → « Affecter »
+    await page.click('[data-action="nouvelleRessource"]');
+    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Zoé Test');
+    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
+    const idZoe = await idDe('Zoé Test');
+    const sansAffectation = await page.evaluate(id => {
+      const lignes = [...document.querySelectorAll('#arbre-ressources tbody tr')];
+      const i = lignes.findIndex(tr => tr.textContent.includes('Sans affectation'));
+      return i >= 0 && lignes.slice(i + 1).some(tr => tr.dataset.ressource === id);
+    }, idZoe);
+    verifier('Liste des ressources : nouvelle personne dans « Sans affectation »', sansAffectation);
     await capture('12-liste-ressources');
-    // Recherche : une personne → son équipe et ses projets seulement
-    await page.fill('#nav-ressources input', 'sarah'); await page.waitForTimeout(150);
-    const visibles = await page.$$eval('#nav-ressources [data-recherche]', l => l.filter(n => n.offsetParent).map(n => n.textContent.trim()));
-    verifier('Liste des ressources : recherche d’une personne (son équipe et ses projets)', visibles.some(t => t.startsWith('Data'))
-      && visibles.some(t => t.startsWith('Entrepôt')) && !visibles.some(t => t.startsWith('Mobile') || t.startsWith('Hugo')));
-    await page.fill('#nav-ressources input', ''); await page.waitForTimeout(150);
-    await page.click('#nav-ressources [data-action="choisirNoeud"][data-type="postes"]'); await page.waitForTimeout(200);
-    await capture('18-postes');
-    reponsePrompt = 'Développeur back-end';
-    await page.click('tr:has-text("Dév. back-end") [data-action="renommerValeurListe"]'); await page.waitForTimeout(400);
-    reponsePrompt = 'Merci de compléter';
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
-    verifier('Postes : renommage propagé aux fiches ressources', (await texte()).includes('Développeur back-end'));
-    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
+    // Recherche : une personne → son équipe et son projet restent visibles
+    await page.fill('.recherche-champ input', 'sarah'); await page.waitForTimeout(150);
+    const visibles = await page.$$eval('#arbre-ressources tbody tr', l => l.filter(tr => !tr.hidden).map(tr => tr.textContent.replace(/\s+/g, ' ').trim()));
+    verifier('Liste des ressources : recherche d’une personne (avec son équipe et ses projets)', visibles.some(t => t.includes('Sarah Petit'))
+      && visibles.some(t => t.includes('Entrepôt')) && !visibles.some(t => t.includes('Inès Roux')));
+    await page.fill('.recherche-champ input', ''); await page.waitForTimeout(150);
+    await page.click(`${ligneDe('niveau-projet', 'Migration Kubernetes')} [data-action="assigner"]:not([data-role])`); await page.waitForTimeout(200);
     await page.selectOption('select[name=ressource]', { index: 3 }); await page.waitForTimeout(200);
     await page.check('input[name=projet] >> nth=0');
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
     verifier('Affectation enregistrée (modale fermée)', !(await page.$('.modale')));
     // « + Membre » → « + Nouveau membre » → retour à l'affectation, personne sélectionnée
-    await page.click(noeud('projet', 'Portail développeurs')); await page.waitForTimeout(200);
-    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
+    await page.click(`${ligneDe('niveau-projet', 'Portail développeurs')} [data-action="assigner"]:not([data-role])`); await page.waitForTimeout(200);
     await page.click('[data-action="nouvellePersonneAffectation"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');
     await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
@@ -514,7 +510,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
     // Projet modifiable depuis la Liste des ressources : nom, dates
-    await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
+    await page.click(`${ligneDe('niveau-projet', 'Portail développeurs')} [data-action="ouvrirProjet"]`); await page.waitForTimeout(200);
     await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
     verifier('Projet : nom modifié depuis Liste des ressources',
       await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));
@@ -636,7 +632,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
     verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
     await page.click('[data-action="aller"][data-ecran="listeRessources"]'); await page.waitForTimeout(200);
-    verifier('Admin sans équipe : Liste des ressources ouverte (navigation par équipe)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#nav-ressources')));
+    verifier('Admin sans équipe : Liste des ressources ouverte (équipes → projets → membres)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#arbre-ressources')));
     await page.click('[data-action="aller"][data-ecran="monAdmin"]'); await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]');
     await page.click('[data-action="nouvelleEquipe"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');

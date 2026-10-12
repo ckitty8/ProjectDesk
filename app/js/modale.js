@@ -15,7 +15,7 @@
 const Modale = {
   rendre() {
     const m = etat.modale;
-    const corps = { affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily }[m.type].call(this, m);
+    const corps = { affectation: this.affectation, ressource: this.ressource, responsable: this.responsable, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide, methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
   entete: titre => `<div class="panneau-entete"><h2>${C.esc(titre)}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>`,
@@ -52,76 +52,68 @@ const Modale = {
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer les affectations</button></div></form>`;
   },
 
-  /* ---------- Fiche ressource ---------- */
+  /* ---------- Fiche d'une personne (maquette docs/maquettes/ressources-v2/2-fiche.png) ----------
+     Poste, contrat, capacité, dates, email ; ses rôles, déduits de ses affectations (responsable
+     d'équipes, rôle sur des projets) qu'on retire ou ajoute ici ; case Administrateur (créateur
+     seulement) ; Passer inactif / Réactiver ; Supprimer (administrateurs). */
   ressource(m) {
     const esc = C.esc, r = m.id ? ressource(m.id) : { equipeId: m.equipeId, capacite: 100 };
+    const statut = m.id ? C.badgeActif(!estInactive(r), ['Actif', 'Inactif']) : '';
+    const boutons = m.id ? `<button type="button" class="btn" data-action="basculerActifRessource" data-id="${m.id}">${estInactive(r) ? 'Réactiver' : 'Passer inactif'}</button>
+        ${etat.estAdmin ? `<button type="button" class="btn danger" data-action="supprimerRessource" data-id="${m.id}">Supprimer</button>` : ''}<span style="flex:1"></span>` : '';
     // data-retour-projet : création lancée depuis « + Membre » → retour à l'affectation ensuite
     return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-retour-projet="${m.retourProjet || ''}">
-      ${this.entete(m.id ? 'Fiche de ' + r.nom : 'Nouveau membre · ' + equipe(r.equipeId).nom)}
+      <div class="panneau-entete"><h2>${esc(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne')} ${statut}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>
       <div class="panneau-corps">
-        <div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
+        <div class="deux-colonnes"><div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
+          <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div></div>
         <div class="deux-colonnes"><div><label class="libelle">Poste</label>${this.listeReferentiel('poste', r.poste, 'poste')}</div>
           <div><label class="libelle">Type de contrat</label>${this.listeReferentiel('contrat', r.typeContrat, 'typeContrat')}</div></div>
-        <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
         <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label><input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
           <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
-        <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
-        ${this.roleAccesFiche(r)}
-        <div class="discret">${r.userId ? 'Compte de connexion lié' : 'Pas encore de compte : le rôle s’appliquera à sa première connexion avec cet email'} · équipe ${esc(equipe(r.equipeId).nom)}.</div>
+        <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
+        ${m.id ? this.rolesFiche(r) : ''}
+        <label class="ligne-flex case-admin"><input type="checkbox" name="administrateur" ${estAdministrateur(r) ? 'checked' : ''} ${etat.estCreateur && r.userId ? '' : 'disabled'}>
+          <b style="font-weight:500">Administrateur</b><span class="discret">— accès à tout (réservé au créateur${r.userId ? '' : ' ; la personne doit s’être connectée une fois'})</span></label>
       </div>
-      <div class="panneau-pied">${m.id ? '<button type="button" class="btn danger" data-action="supprimerRessource" data-id="' + m.id + '">Supprimer</button><span style="flex:1"></span>' : ''}
+      <div class="panneau-pied">${boutons}
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
   },
-
-  /* Rôle d'accès de la personne (maquette docs/maquettes/role-acces/2-fiche-role.png).
-     Choix : Administrateur (créateur seulement, compte lié), Responsable d'équipe (compte
-     membre de l'équipe), Membre, Lecteur (administrateur ou responsable de l'équipe).
-     Le responsable désigné de l'équipe (fiche équipe) le reste : son rôle se change là.
-     Les rôles sur les projets (Chef de projet, Membre, Lecteur) sont rappelés en dessous. */
-  roleAccesFiche(r) {
-    const esc = C.esc, actuel = this.roleAccesChoisi(r);
-    const gere = etat.estAdmin || estResponsableDe(r.equipeId), designe = !!r.id && estResponsableDesigne(r);
-    const possible = {
-      admin: etat.estCreateur && !!r.userId,
-      responsable: gere && !!membreOrganisation(r),
-      membre: gere && !designe
-    };
-    const cartes = ['admin', 'responsable', 'membre'].map(cle => {
-      const a = ROLES_ACCES[cle], libelle = cle === 'membre' ? 'Membre de l’équipe' : a.libelle;
-      return `<label class="choix-role${cle === actuel ? ' actif' : ''}${possible[cle] || cle === actuel ? '' : ' grise'}">
-        <input type="radio" name="roleAcces" value="${cle}" ${cle === actuel ? 'checked' : ''} ${possible[cle] ? '' : 'disabled'}>
-        <span><b>${esc(libelle)}</b><span class="discret">${esc(a.description)}</span></span></label>`;
-    }).join('');
-    const projets = r.id ? etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId)) : [];
-    const note = designe ? 'Responsable désigné de l’équipe : à changer dans la fiche de l’équipe.'
-      : !gere ? 'Modifiable par un administrateur ou un responsable de l’équipe.' : '';
-    return `<div><label class="libelle">Rôle d’accès ${C.aide('roleAcces')}</label><div class="choix-roles">${cartes}</div>
-        ${note ? `<div class="discret" style="font-size:12px;margin-top:6px">${esc(note)}</div>` : ''}</div>
-      ${r.id ? `<div class="projets-fiche"><b>Sur ses projets</b> (le rôle de projet s’ajoute au rôle d’accès) :
-        ${projets.map(a => C.badgeRef('role', `${projet(a.projetId).nom} · ${a.role}`)).join(' ') || '<span class="pale">aucun</span>'}
-        &nbsp;<a data-action="assigner" data-ressource="${r.id}">Modifier ses projets</a></div>` : ''}`;
-  },
-  // Rôle coché dans la fiche : son rôle d'accès, « Chef de projet » et « sans compte » ramenés au choix possible
-  roleAccesChoisi(r) {
-    if (!r.id) return 'membre';
-    if (estAdministrateur(r)) return 'admin';
-    if (estResponsableEquipe(r)) return 'responsable';
-    return 'membre';
+  // Rôles d'une personne, déduits de ses affectations (spécification § 5)
+  rolesFiche(r) {
+    const esc = C.esc;
+    const responsable = (etat.d.responsablesEquipe || []).filter(x => x.ressourceId === r.id).map(x => {
+      const e = equipe(x.equipeId);
+      return `<div class="ligne-flex ligne-role">${C.badge('Responsable', '#5B2DA0', '#EDE6FA')}<span>de <b style="font-weight:500">${esc(e.nom)}</b></span><span style="flex:1"></span>
+        ${peutGererEquipe(e) ? `<a class="discret" data-action="retirerResponsable" data-equipe="${e.id}" data-ressource="${r.id}">Retirer</a>` : ''}</div>`;
+    });
+    const projets = etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId)).map(a => {
+      const p = projet(a.projetId);
+      return `<div class="ligne-flex ligne-role">${C.badgeRef('role', a.role)}<span>de <b style="font-weight:500">${esc(p.nom)}</b> <span class="discret">(${esc(equipe(p.equipeId).nom)})</span></span>
+        <span style="flex:1"></span>${peutGererProjet(p) ? `<a class="discret" data-action="retirerAffectation" data-id="${a.id}">Retirer</a>` : ''}</div>`;
+    });
+    return `<div class="roles-fiche"><label class="libelle">Rôles (déduits de ses affectations) ${C.aide('roleProjet')}</label>
+      ${[...responsable, ...projets].join('') || '<div class="pale">Aucune affectation.</div>'}
+      <div class="ligne-flex" style="margin-top:6px"><a data-action="assigner" data-ressource="${r.id}">+ Affecter à un projet</a><span class="pale">·</span>
+        <a data-action="ajouterResponsable" data-ressource="${r.id}">+ Responsable d’une équipe</a></div></div>`;
   },
 
-  /* Rôle d'accès hors fiche : liste des administrateurs (créateur) et rôle dans l'organisation
-     Neon Auth de l'équipe (admin = responsable, member sinon ; le propriétaire « owner » le reste).
-     La base et Neon Auth refusent ce que l'utilisateur n'a pas le droit de faire. */
-  async appliquerRoleAcces(r, role) {
-    if (r.userId && etat.estCreateur && (role === 'admin') !== estAdministrateur(r)) {
-      if (role === 'admin') await Api.creer('administrateurs', { userId: r.userId });
-      else await Api.supprimer('administrateurs', { user_id: 'eq.' + r.userId });
-    }
-    const m = membreOrganisation(r), roleOrganisation = role === 'responsable' ? 'admin' : 'member';
-    if (m && m.role !== 'owner' && role !== 'admin' && m.role !== roleOrganisation) {
-      await Api.modifierRoleMembre(r.equipeId, m.id, roleOrganisation);
-      await chargerRoles();
-    }
+  /* ---------- Responsable d'une équipe (table responsables_equipe) ----------
+     Ouvert depuis une équipe (équipe connue : choisir la personne) ou depuis une fiche
+     (personne connue : choisir l'équipe parmi celles que l'on gère). */
+  responsable(m) {
+    const deja = (etat.d.responsablesEquipe || []).filter(x => (m.equipeId && x.equipeId === m.equipeId) || (m.ressourceId && x.ressourceId === m.ressourceId));
+    const personnes = ressourcesActives().filter(r => !deja.some(x => x.ressourceId === r.id)).sort((a, b) => a.nom.localeCompare(b.nom))
+      .map(r => ({ valeur: r.id, libelle: r.nom }));
+    const equipes = etat.d.equipes.filter(e => peutGererEquipe(e) && !deja.some(x => x.equipeId === e.id)).map(e => ({ valeur: e.id, libelle: e.nom }));
+    const titre = m.equipeId ? 'Responsable de ' + equipe(m.equipeId).nom : 'Responsable d’une équipe · ' + ressource(m.ressourceId).nom;
+    return `<form data-action-envoi="enregistrerResponsable" data-equipe="${m.equipeId || ''}" data-ressource="${m.ressourceId || ''}">
+      ${this.entete(titre)}
+      <div class="panneau-corps">${m.equipeId
+        ? `<div><label class="libelle">Personne</label>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...personnes], '', 'class="champ" name="ressource" required')}</div>`
+        : `<div><label class="libelle">Équipe</label>${C.liste([{ valeur: '', libelle: '— choisir —' }, ...equipes], '', 'class="champ" name="equipe" required')}</div>`}
+        <div class="discret">Une équipe peut avoir plusieurs responsables ; une personne peut être responsable de plusieurs équipes.</div></div>
+      <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Ajouter</button></div></form>`;
   },
 
   /* ---------- Équipe : création / modification, membres et invitations ---------- */
@@ -312,13 +304,16 @@ Object.assign(Actions, {
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
-    // Rôle d'accès coché (absent si aucun choix n'était modifiable) : appliqué hors fiche (appliquerRoleAcces)
-    const role = f.roleAcces; delete f.roleAcces;
+    // Case Administrateur (créateur seulement) : ligne de la table administrateurs, hors fiche
+    const administrateur = f.administrateur === 'on'; delete f.administrateur;
     executer(async () => {
       if (d.id) {
         const r = ressource(d.id);
         await Api.modifier('ressources', { id: 'eq.' + d.id }, f);
-        if (role) await Modale.appliquerRoleAcces(r, role);
+        if (etat.estCreateur && r.userId && administrateur !== estAdministrateur(r)) {
+          if (administrateur) await Api.creer('administrateurs', { userId: r.userId });
+          else await Api.supprimer('administrateurs', { user_id: 'eq.' + r.userId });
+        }
         etat.modale = null; return;
       }
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
@@ -327,6 +322,12 @@ Object.assign(Actions, {
     }, 'ressources', 'administrateurs');
   },
 
+  // Nouveau responsable d'une équipe : depuis l'équipe (personne choisie) ou depuis la fiche (équipe choisie)
+  enregistrerResponsable(d, form) {
+    const f = Object.fromEntries(new FormData(form));
+    const equipeId = d.equipe || f.equipe, ressourceId = d.ressource || f.ressource;
+    executer(async () => { await Api.creer('responsables_equipe', { equipeId, ressourceId }); etat.modale = d.ressource ? { type: 'ressource', id: d.ressource } : null; }, 'responsablesEquipe');
+  },
   // Depuis la fenêtre d'affectation : créer la personne puis y revenir
   nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, retourProjet: etat.modale.projetId || '' } }),
   supprimerRessource(d) {

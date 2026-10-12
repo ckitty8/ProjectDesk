@@ -42,7 +42,8 @@ const TABLES = {
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint', temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
-  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur'
+  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
+  responsablesEquipe: 'responsables_equipe'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -77,7 +78,8 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#8A93A3';
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = { envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero', repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id' };
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
+  responsablesEquipe: 'equipe_id,ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -283,24 +285,25 @@ const chefsPossibles = equipeId => {
 };
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 
-/* ---------- Rôle d'accès d'une personne (maquette role-acces/, 2026-10-12) ---------- */
-// Son compte dans l'organisation Neon Auth de son équipe ({ id, role }), connu pour mes équipes
-const membreOrganisation = r => (etat.membresEquipe[r.equipeId] || []).find(m => r.userId && m.userId === r.userId) || null;
+/* ---------- Ressources : rôles et périmètres (docs/specifications/ressources.md) ---------- */
+// Administrateur (ou créateur) : la personne a un compte inscrit dans administrateurs / createur
 const estAdministrateur = r => !!r.userId && [...(etat.d.administrateurs || []), ...(etat.d.createur || [])].some(a => a.userId === r.userId);
-// Responsable : désigné sur une équipe (responsable_id), ou owner / admin de l'organisation de son équipe
-const estResponsableDesigne = r => etat.d.equipes.some(e => e.responsableId === r.id);
-const estResponsableEquipe = r => estResponsableDesigne(r) || ['owner', 'admin'].includes((membreOrganisation(r) || {}).role);
-/* Rôle d'accès affiché (clé de ROLES_ACCES) : le plus large qu'elle a. Sans compte de connexion,
-   la personne n'a aucun accès, quel que soit le rôle prévu. Un rôle inconnu de l'écran (ex.
-   liste des administrateurs illisible pour un non-administrateur) se lit comme le suivant. */
-function roleAcces(r) {
-  if (!r.userId) return 'sansCompte';
-  if (estAdministrateur(r)) return 'admin';
-  if (estResponsableEquipe(r)) return 'responsable';
-  const chef = etat.d.projets.some(p => p.chefId === r.id)
-    || etat.d.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
-  return chef ? 'chef' : 'membre';
+// Personne active au sens de la Liste des ressources : aucune date de départ saisie (spécification § 6)
+const nonInactive = id => { const r = ressource(id); return !!r && !estInactive(r); };
+// Responsables d'une équipe (1 ou plusieurs, table responsables_equipe), personnes non inactives
+const responsablesDe = equipeId => (etat.d.responsablesEquipe || []).filter(x => x.equipeId === equipeId && nonInactive(x.ressourceId))
+  .map(x => ressource(x.ressourceId)).sort((a, b) => a.nom.localeCompare(b.nom));
+// Chefs d'un projet (1 ou plusieurs) : affectations « Chef de projet », personnes non inactives
+const chefsDuProjet = p => etat.d.affectations.filter(a => a.projetId === p.id && a.role === ROLES_PROJET.CHEF && nonInactive(a.ressourceId))
+  .map(a => ressource(a.ressourceId)).sort((a, b) => a.nom.localeCompare(b.nom));
+/* Périmètre de gestion (spécification § 4, miroir pour l'affichage) : administrateur → tout ;
+   responsable d'une équipe (fiche dans responsables_equipe, ou owner / admin de son organisation)
+   → l'équipe et ses projets ; chef d'un projet → ce projet. */
+function peutGererEquipe(e) {
+  const moi = maRessource();
+  return etat.estAdmin || estResponsableDe(e.id) || (!!moi && (etat.d.responsablesEquipe || []).some(x => x.equipeId === e.id && x.ressourceId === moi.id));
 }
+const peutGererProjet = p => peutGererEquipe(equipe(p.equipeId)) || suisChefDuProjet(p);
 
 /* ---------- Daily par projet (migration 018) ---------- */
 // Absence d'une personne un jour donné (Congés & capacité), ou null

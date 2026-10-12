@@ -66,6 +66,8 @@ function amorcer() {
   bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; e.actif = true; });
   // Unités (migration 006) : Plateforme est une direction (espace de travail) qui regroupe Data
   bd.equipes.forEach((e, i) => { e.type = i === 0 ? 'direction' : 'equipe'; e.parent_id = i === 1 ? bd.equipes[0].id : null; });
+  // Responsables d'équipe (migration 027) : reprise du responsable désigné, plus un 2e responsable pour Plateforme
+  bd.responsables_equipe = bd.equipes.map(e => ({ equipe_id: e.id, ressource_id: e.responsable_id })).concat([{ equipe_id: idEq.pf, ressource_id: idP.jd }]);
   bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; });
 
   const OBJ = [['pf', 'O1', 'Fiabiliser la plateforme', 'haute', [['KR1.1', 'Disponibilité 99,9 %', 80], ['KR1.2', 'Temps de rétablissement < 30 min', 62], ['KR1.3', 'Onboarding dév. < 1 jour', 20]]],
@@ -283,11 +285,6 @@ async function auth(req, res, chemin, url) {
     case '/organization/invite-member': {
       invitations.push({ id: uuid(), organizationId: corps.organizationId, email: corps.email, role: corps.role, status: 'pending' }); return envoyer(res, 200, {});
     }
-    case '/organization/update-member-role': {
-      const m = membres.find(x => x.id === corps.memberId && x.organizationId === corps.organizationId);
-      if (!m) return envoyer(res, 400, { message: 'Membre introuvable' });
-      m.role = corps.role; return envoyer(res, 200, m);
-    }
     case '/organization/list-user-invitations':
       return envoyer(res, 200, invitations.filter(i => i.email === moi.email).map(i => ({ ...i, organizationName: organisations.find(o => o.id === i.organizationId).name })));
     case '/organization/accept-invitation': case '/organization/reject-invitation': {
@@ -301,7 +298,7 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'], createur: ['user_id'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'], createur: ['user_id'], responsables_equipe: ['equipe_id', 'ressource_id'] };
 function filtrer(lignes, params) {
   let r = lignes;
   // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne
