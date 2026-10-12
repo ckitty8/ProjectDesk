@@ -3,6 +3,10 @@
 **ProjectDesk** : application web multi-projets et multi-équipes (OKR, projets et roadmap, ressources,
 congés et capacité, timesheet, daily), sur Neon (Postgres, Auth, Data API) et Vercel.
 
+> **© 2026 CIRITEC. Tous droits réservés.** ProjectDesk est un logiciel propriétaire de CIRITEC :
+> toute reproduction, modification, diffusion ou utilisation sans autorisation écrite de CIRITEC
+> est interdite. Conditions : [`LICENSE`](LICENSE).
+
 ## Contenu
 
 | Élément | Description |
@@ -12,6 +16,7 @@ congés et capacité, timesheet, daily), sur Neon (Postgres, Auth, Data API) et 
 | [`docs/DAT.md`](docs/DAT.md) | Document d'Architecture Technique : architecture, menus, modèle de données, règles métier. |
 | [`docs/maquettes/`](docs/maquettes/) | Maquette de référence `pilotage-projet/` (+ compléments) et captures de l'état actuel. |
 | [`tests/`](tests/) | Serveur Neon simulé et parcours de test de bout en bout (Playwright). |
+| [`LICENSE`](LICENSE) | Licence propriétaire : ProjectDesk appartient à CIRITEC, tous droits réservés. |
 | [`CLAUDE.md`](CLAUDE.md) | Règles de travail permanentes du projet. |
 | [`vercel.json`](vercel.json) | Déploiement Vercel (la racine du site ouvre `app/`). |
 | [`scripts/verifier-docs.js`](scripts/verifier-docs.js) | Vérification de la cohérence documentation ↔ code, à lancer après chaque commit. |
