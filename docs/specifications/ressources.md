@@ -105,8 +105,8 @@ Aucune. (Doublon Cerine : le porteur garde les deux fiches, 2026-10-12.)
 
 - Équipe : plusieurs responsables (`responsables_equipe`, migration 027) ; l'ancien champ unique n'est plus modifiable (DAT 2.02).
 - Projet : chefs unifiés en affectations « Chef de projet » (DAT 2.02) ; le champ de la fiche projet
-  n'est plus modifiable. Reste : Christelle, inscrite chef de CDO seulement sur la fiche, à reporter
-  en affectation (écriture en base : accord du porteur requis, règle n°8).
+  n'est plus modifiable. Christelle, inscrite chef de CDO seulement sur la fiche, a été ajoutée en
+  affectation « Chef de projet » de CDO le 2026-10-12 (accord du porteur, règle n°8 ; affectations 3 → 4).
 - Personne : rattachée à **une** équipe (`ressources.equipe_id`) → n'est plus une appartenance ;
   les droits d'équipe (aujourd'hui : membres de l'organisation de connexion de l'équipe) devront
   venir des rôles et affectations.
