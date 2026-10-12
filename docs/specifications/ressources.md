@@ -20,6 +20,9 @@
 | Membre | un projet | **1 ou plusieurs** par projet | travailler dans **plusieurs projets** |
 | Administrateur | toute l'application | — | **cumuler** : être aussi responsable, chef de projet ou membre |
 
+**DSI n'est pas une équipe** (porteur, 2026-10-12) : elle disparaît de partout (listes, menus,
+sélecteurs, congés, timesheet…). Il n'y a pas de niveau au-dessus des équipes.
+
 Les rôles se **cumulent** : une même personne peut être administrateur, responsable d'une équipe,
 chef d'un projet et membre d'un autre.
 
@@ -50,6 +53,11 @@ affecter, modifier et supprimer des ressources. Les membres non.
    faut-il plutôt la passer « Inactive » et réserver la suppression aux administrateurs ?
 
 ## 6. Écart avec l'application actuelle (pour information)
+
+- **DSI** existe en base comme « direction » (une ligne de `equipes`, et une organisation de
+  connexion Neon Auth). Elle porte 3 fiches (Thomas ; Cerine Kerarma en double, dont « Cerine
+  KERARMA ») et regroupe Applications, IA, AMOA. Sa suppression demande d'abord de décider où vont
+  ces personnes (et leurs comptes de connexion) — **[À décider]**.
 
 - Équipe : **un seul** responsable désigné aujourd'hui (`equipes.responsable_id`) → à étendre à plusieurs.
 - Projet : un « chef » sur la fiche projet (`projets.chef_id`) **plus** des affectations
