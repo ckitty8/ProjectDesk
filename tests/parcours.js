@@ -159,9 +159,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('25-roles-scrum');
     await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
     // Menu : Mon timesheet rangé dans Gestion des ressources (intertitre), plus d'entrée à part
-    verifier('Menu : Mon timesheet dans Gestion des ressources, section « Suivi de mes équipes » renommée', await page.evaluate(() => {
+    verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
-      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Mon timesheet') && t.includes('Saisir mes heures'))
+      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Saisir mes heures') && !t.includes('Mon timesheet'))
         && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet')
         && document.querySelector('.menu-titre').textContent.includes('Suivi de mes équipes');
     }));

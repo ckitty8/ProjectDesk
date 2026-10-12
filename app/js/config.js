@@ -176,7 +176,7 @@ const GUIDES = {
     '2. Sur l’équipe : « + Membre » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',
     '3. Sur chaque projet : « + Membre » pour affecter les personnes avec leur rôle (Chef de projet, Membre, Lecteur).',
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
-    '5. Congés & capacité : posez les absences ; Mon timesheet : saisissez les heures ; Daily : notez l’avancement du jour.'] },
+    '5. Congés & capacité : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
     'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (Timesheet).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
