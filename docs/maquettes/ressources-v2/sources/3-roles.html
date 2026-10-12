@@ -1,0 +1,36 @@
+<style>
+.r3 { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 16px; align-items: start; }
+.r3 table { width: 100%; border-collapse: collapse; }
+.r3 th, .r3 td { padding: 9px 10px; border-bottom: 1px solid var(--bordure-fine); text-align: center; }
+.r3 th { font-size: 11px; color: var(--discret); text-transform: uppercase; letter-spacing: .04em; background: var(--fond-entete); }
+.r3 td:first-child, .r3 th:first-child { text-align: left; }
+.r3 .lect { font-size: 10.5px; color: var(--discret); display: block; }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="v2-titre">Maquette 3 · Administration › ★ Rôles et menus (créateur)</span><h1>Administration</h1><div class="sous-titre">Onglet visible uniquement du créateur</div></div></div>
+  <div class="onglets"><button class="onglet">Équipes</button><button class="onglet">Référentiels</button><button class="onglet">Jours fériés</button><button class="onglet actif v2-annot" data-n="1">★ Rôles et menus</button></div>
+  <div class="r3">
+    <div class="carte v2-annot" data-n="2"><div class="carte-titre"><h2>Menus ouverts par rôle</h2><span class="discret">Cochez ce que chaque rôle voit</span></div>
+      <table><thead><tr><th>Menu</th><th>Admin</th><th>Responsable</th><th>Chef de projet</th><th>Membre</th><th>Lecteur</th></tr></thead><tbody>
+        <tr><td>Suivi de mes équipes</td><td>☑</td><td>☑</td><td>☑</td><td>☑</td><td>☑<span class="lect">lecture seule</span></td></tr>
+        <tr><td>Mon dashboard</td><td>☑</td><td>☑</td><td>☑</td><td>☑</td><td>☐</td></tr>
+        <tr><td>Liste des ressources</td><td>☑<span class="lect">tout</span></td><td>☑<span class="lect">ses équipes</span></td><td>☑<span class="lect">ses projets</span></td><td>☐</td><td>☐</td></tr>
+        <tr><td>Plan de charge</td><td>☑</td><td>☑</td><td>☑</td><td>☐</td><td>☐</td></tr>
+        <tr><td>Valider les timesheets</td><td>☑</td><td>☑</td><td>☐</td><td>☐</td><td>☐</td></tr>
+        <tr><td>Administration</td><td>☑</td><td>☐</td><td>☐</td><td>☐</td><td>☐</td></tr>
+      </tbody></table></div>
+    <div class="carte v2-annot" data-n="3"><div class="carte-titre"><h2>Qui a quel rôle</h2><span class="discret">calculé automatiquement</span></div>
+      <div style="padding:10px 16px;display:flex;flex-direction:column;gap:10px">
+        <div><span class="v2-role r-admin">Administrateur</span> <span class="discret">2</span><div style="margin-top:4px">Christelle · vous ★ (créateur)</div></div>
+        <div><span class="v2-role r-resp">Responsable</span> <span class="discret">1</span><div style="margin-top:4px">Anne Caselli <span class="pale">(Applications)</span></div></div>
+        <div><span class="v2-role r-chef">Chef de projet</span> <span class="discret">2</span><div style="margin-top:4px">Christelle <span class="pale">(VISTA)</span> · Nouha <span class="pale">(CDO)</span></div></div>
+        <div><span class="v2-role r-mb">Membre</span> <span class="discret">1</span><div style="margin-top:4px">Thomas <span class="pale">(VISTA)</span></div></div>
+        <div><span class="v2-role r-lect">Lecteur</span> <span class="discret">0</span><div style="margin-top:4px" class="pale">personne</div></div>
+      </div></div>
+  </div>
+  <div class="v2-legende">
+    <div><b>1</b>Nouvel onglet d'Administration, visible du créateur seulement.</div>
+    <div><b>2</b>Le tableau des menus par rôle : une case cochée = le rôle voit ce menu.</div>
+    <div><b>3</b>La liste des profils de chaque rôle, tenue à jour automatiquement à partir des affectations.</div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<style>
+.f-voile { position: absolute; inset: 0; background: rgba(10,22,51,.35); }
+.f-fen { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 640px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(10,22,51,.3); }
+.f-tete { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--bordure); }
+.f-bloc { padding: 14px 20px; border-bottom: 1px solid var(--bordure-fine); }
+.f-ligne { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.f-leg { position: absolute; left: 24px; right: 24px; top: 760px; background: #fff; border-radius: 8px; padding: 10px 14px; }
+</style>
+<div style="position:relative;min-height:1000px">
+<div class="f-voile"></div><span class="v2-titre" style="position:absolute;left:24px;top:8px">Maquette 2 · fiche d'une personne</span>
+<div class="f-fen">
+  <div class="f-tete"><span class="avatar grand">TH</span><div style="flex:1"><b style="font-size:16px">Thomas</b><div class="discret">thomas_lelievre@yahoo.fr</div></div>
+    <span class="badge v2-annot" data-n="1" style="color:#0B6B4F;background:#E3F5EC">Actif</span><span class="pale">✕</span></div>
+  <div class="f-bloc"><div class="deux-colonnes"><div><label class="libelle">Poste</label><select class="champ"><option>Chef de projet</option></select></div><div><label class="libelle">Type de contrat</label><select class="champ"><option>Prestataire</option></select></div></div>
+    <div class="deux-colonnes" style="margin-top:10px"><div><label class="libelle">Arrivée</label><input class="champ" value="—"></div><div><label class="libelle">Départ</label><input class="champ" value="—"></div></div></div>
+  <div class="f-bloc v2-annot" data-n="2"><label class="libelle">Rôles (déduits de ses affectations)</label>
+    <div class="f-ligne"><span class="v2-role r-mb">Membre</span><span>de <b style="font-weight:500">VISTA</b> (Applications)</span><span style="flex:1"></span><a class="pale">Retirer</a></div>
+    <div class="f-ligne"><a>+ Affecter à un projet</a><span class="pale">·</span><a>+ Responsable d'une équipe</a></div></div>
+  <div class="f-bloc v2-annot" data-n="3"><label class="ligne-flex" style="gap:8px"><input type="checkbox"> <b style="font-weight:500">Administrateur</b> <span class="discret">— accès à tout (réservé au créateur)</span></label></div>
+  <div style="display:flex;gap:8px;padding:12px 20px"><button class="btn v2-annot" data-n="4">Passer inactif</button><button class="btn danger" disabled title="Réservé aux administrateurs">Supprimer</button><span style="flex:1"></span><button class="btn">Fermer</button><button class="btn primaire">Enregistrer</button></div>
+</div>
+<div class="f-leg v2-legende">
+  <div><b>1</b>Statut Actif / Inactif en tête de fiche.</div>
+  <div><b>2</b>Ses rôles viennent de ses affectations : on affecte ou on retire ici, le rôle suit tout seul.</div>
+  <div><b>3</b>Seul « Administrateur » se coche à la main.</div>
+  <div><b>4</b>« Passer inactif » : elle disparaît de partout mais garde son historique. Supprimer : administrateurs seulement.</div>
+</div></div>

@@ -1,0 +1,20 @@
+/* Maquettes « Ressources v2 » (2026-10-12) — d'après docs/specifications/ressources.md */
+.v2-titre { display: inline-block; background: #141A26; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; }
+.v2-rech { display: flex; align-items: center; gap: 8px; height: 32px; width: 260px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 7px; background: #fff; color: var(--pale); }
+.v2-t { width: 100%; border-collapse: collapse; background: #fff; }
+.v2-t th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); font-weight: 500; text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--bordure); background: var(--fond-entete); }
+.v2-t td { padding: 9px 12px; border-bottom: 1px solid var(--bordure-fine); vertical-align: middle; }
+.v2-eq td { background: #EEF2FB; border-top: 2px solid #C9D5F2; }
+.v2-eq .nom { font-size: 15px; font-weight: 700; }
+.v2-pr td { background: var(--fond-entete); }
+.v2-pr .nom { font-weight: 600; padding-left: 22px; display: inline-block; }
+.v2-mb td:first-child { padding-left: 52px; }
+.v2-lbl { font-size: 11px; color: var(--discret); text-transform: uppercase; letter-spacing: .05em; margin-right: 6px; }
+.v2-pers { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
+.v2-pers .avatar { width: 20px; height: 20px; flex-basis: 20px; font-size: 9px; }
+.v2-role { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.r-resp { background: #EDE6FA; color: #5B2DA0; } .r-chef { background: #FFF1D6; color: #8A5300; } .r-mb { background: #E3F5EC; color: #0B6B4F; } .r-lect { background: #F1F3F7; color: #4A5363; } .r-admin { background: #E8EEFF; color: #0033AD; }
+.v2-act a { margin-left: 12px; font-size: 12.5px; }
+.v2-annot { position: relative; } .v2-annot::after { content: attr(data-n); position: absolute; top: -9px; right: -12px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; z-index: 2; }
+.v2-legende { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.v2-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
