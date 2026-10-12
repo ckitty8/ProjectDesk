@@ -293,9 +293,16 @@ const nonInactive = id => { const r = ressource(id); return !!r && !estInactive(
 // Responsables d'une équipe (1 ou plusieurs, table responsables_equipe), personnes non inactives
 const responsablesDe = equipeId => (etat.d.responsablesEquipe || []).filter(x => x.equipeId === equipeId && nonInactive(x.ressourceId))
   .map(x => ressource(x.ressourceId)).sort((a, b) => a.nom.localeCompare(b.nom));
-// Chefs d'un projet (1 ou plusieurs) : affectations « Chef de projet », personnes non inactives
-const chefsDuProjet = p => etat.d.affectations.filter(a => a.projetId === p.id && a.role === ROLES_PROJET.CHEF && nonInactive(a.ressourceId))
-  .map(a => ressource(a.ressourceId)).sort((a, b) => a.nom.localeCompare(b.nom));
+// La personne est-elle l'un des responsables de l'équipe ? (table responsables_equipe, migration 027)
+const estDansResponsables = (ressourceId, equipeId) => (etat.d.responsablesEquipe || []).some(x => x.ressourceId === ressourceId && x.equipeId === equipeId);
+/* Chefs d'un projet (Product Owners, 1 ou plusieurs) : affectations « Chef de projet », personnes non
+   inactives. Le champ « Chef de projet » de la fiche projet (projets.chef_id) est retiré depuis 2.02 :
+   un chef encore inscrit seulement sur la fiche reste compté (rien n'est perdu), en lecture seule. */
+const chefsDuProjet = p => {
+  const ids = etat.d.affectations.filter(a => a.projetId === p.id && a.role === ROLES_PROJET.CHEF && nonInactive(a.ressourceId)).map(a => a.ressourceId);
+  if (p.chefId && nonInactive(p.chefId) && !ids.includes(p.chefId)) ids.push(p.chefId);
+  return ids.map(ressource).sort((a, b) => a.nom.localeCompare(b.nom));
+};
 /* Périmètre de gestion (spécification § 4, miroir pour l'affichage) : administrateur → tout ;
    responsable d'une équipe (fiche dans responsables_equipe, ou owner / admin de son organisation)
    → l'équipe et ses projets ; chef d'un projet → ce projet. */
@@ -319,13 +326,13 @@ const mesProjetsDaily = () => {
 };
 
 /* Suis-je responsable de l'unité du projet ou d'une unité au-dessus (ex. Anne, responsable
-   d'Applications) ? Responsable = fiche responsable_id de l'unité, ou owner/admin de son
+   d'Applications) ? Responsable = inscrit dans responsables_equipe, ou owner/admin de son
    organisation. On remonte les unités parentes (10 niveaux au plus, garde-fou contre une boucle). */
 function suisResponsableDuProjet(p) {
   const moi = maRessource();
   let e = equipe(p.equipeId);
   for (let niveau = 0; e.id && niveau < 10; niveau++) {
-    if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
+    if ((moi && estDansResponsables(moi.id, e.id)) || estResponsableDe(e.id)) return true;
     e = equipe(e.parentId);
   }
   return false;
@@ -337,10 +344,10 @@ const monAffectation = p => { const moi = maRessource(); return moi ? etat.d.aff
    administrateur, affecté(e) au projet, ou responsable de son unité ou d'une unité parente. */
 const peutLireDailyProjet = p => etat.estAdmin || !!monAffectation(p) || suisResponsableDuProjet(p);
 
-/* Chef du projet : fiche « chef » du projet ou affectation « Chef de projet » */
+/* Chef du projet : l'un de ses Product Owners (chefsDuProjet) */
 function suisChefDuProjet(p) {
-  const moi = maRessource(), aff = monAffectation(p);
-  return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
+  const moi = maRessource();
+  return !!moi && chefsDuProjet(p).some(r => r.id === moi.id);
 }
 /* Qui pilote un projet — règle l'envoi de son daily et son plan de charge (même règle
    que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,

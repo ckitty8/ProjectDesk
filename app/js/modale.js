@@ -123,7 +123,6 @@ const Modale = {
     const libelleType = e.type === 'direction' ? 'Direction' : 'Équipe';
     // Directions proposées pour le rattachement (sauf l'unité elle-même)
     const directions = etat.d.equipes.filter(x => x.type === 'direction' && x.id !== m.id).map(x => ({ valeur: x.id, libelle: x.nom }));
-    const personnes = m.id ? ressourcesActives().filter(r => r.equipeId === m.id).map(r => ({ valeur: r.id, libelle: r.nom })) : [];
     const membres = (m.organisation && m.organisation.members) || [];
     const invitations = ((m.organisation && m.organisation.invitations) || []).filter(i => i.status === 'pending');
     const peutInviter = m.id && (etat.estAdmin || estResponsableDe(m.id));
@@ -138,10 +137,11 @@ const Modale = {
           <div class="deux-colonnes"><div><label class="libelle">Type</label>${C.liste([{ valeur: 'equipe', libelle: 'Équipe' }, { valeur: 'direction', libelle: 'Direction' }], e.type, 'class="champ" name="type"')}</div>
             <div><label class="libelle">Rattachée à (équipe seulement)</label>${C.liste([{ valeur: '', libelle: '— aucune direction —' }, ...directions], e.parentId || '', 'class="champ" name="parentId"')}</div></div>
           <div class="deux-colonnes"><div><label class="libelle">Statut</label>${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div>
-            <div>${m.id ? `<label class="libelle">Responsable</label>${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}` : ''}</div></div>
+            <div>${m.id ? `<label class="libelle">Responsables</label><div class="discret" style="padding-top:8px">${C.esc(responsablesDe(m.id).map(r => r.nom).join(', ') || '—')}
+              · se gèrent dans Liste des ressources (« + Responsable »)</div>` : ''}</div></div>
           <div class="discret" style="font-size:12px">Direction et équipe sont des espaces de travail (membres, projets) ; une direction peut en plus regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
           ${etat.estAdmin ? `<div style="text-align:right"><button class="btn primaire">${m.id ? 'Enregistrer' : 'Créer'}</button></div>`
-            : '<div class="discret" style="font-size:12px">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
+            : '<div class="discret" style="font-size:12px">Nom, préfixe et couleur : modifiables par un administrateur.</div>'}
           </fieldset>
         </form>
         ${m.id ? `<div><div class="libelle">Membres (comptes de connexion)</div>
@@ -348,7 +348,6 @@ Object.assign(Actions, {
     const f = Object.fromEntries(new FormData(form)); f.prefixe = f.prefixe.toUpperCase(); f.actif = f.actif !== 'false';
     // Une direction n'est rattachée à rien ; champ vide = pas de rattachement (la base contrôle aussi)
     f.parentId = f.type === 'direction' ? null : (f.parentId || null);
-    if (f.responsableId === '') f.responsableId = null;
     await executer(async () => {
       if (d.id) { await Api.modifier('equipes', { id: 'eq.' + d.id }, f); }
       else {

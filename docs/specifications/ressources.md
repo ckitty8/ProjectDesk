@@ -99,9 +99,10 @@ Aucune. (Doublon Cerine : le porteur garde les deux fiches, 2026-10-12.)
   de DSI (sans compte ni donnée) supprimée ; ligne `equipes`, membres, invitations et organisation
   de connexion DSI supprimés. Compteurs vérifiés : projets 2, affectations 3, absences 155, temps 1.
 
-- Équipe : **un seul** responsable désigné aujourd'hui (`equipes.responsable_id`) → à étendre à plusieurs.
-- Projet : un « chef » sur la fiche projet (`projets.chef_id`) **plus** des affectations
-  « Chef de projet » → à unifier (plusieurs chefs par les affectations).
+- Équipe : plusieurs responsables (`responsables_equipe`, migration 027) ; l'ancien champ unique n'est plus modifiable (DAT 2.02).
+- Projet : chefs unifiés en affectations « Chef de projet » (DAT 2.02) ; le champ de la fiche projet
+  n'est plus modifiable. Reste : Christelle, inscrite chef de CDO seulement sur la fiche, à reporter
+  en affectation (écriture en base : accord du porteur requis, règle n°8).
 - Personne : rattachée à **une** équipe (`ressources.equipe_id`) → n'est plus une appartenance ;
   les droits d'équipe (aujourd'hui : membres de l'organisation de connexion de l'équipe) devront
   venir des rôles et affectations.

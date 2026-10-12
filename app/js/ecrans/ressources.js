@@ -106,9 +106,9 @@ const Calendrier = {
       const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && membresDe(p).length);
       const personnes = ressourcesPresentes(jours[0], jours[jours.length - 1]).filter(r => r.equipeId === e.id)
-        .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
+        .sort((a, b) => estDansResponsables(b.id, e.id) - estDansResponsables(a.id, e.id));
       const contenu = personnes.map(r => lignePersonne(r, niveau + 1,
-          (r.id === e.responsableId ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')
+          (estDansResponsables(r.id, e.id) ? '<span class="discret" style="font-size:11px">responsable</span>' : '') + etiquettes(r))).join('')
         + sousEquipes.map(x => unite(x, niveau + 1)).join('')
         + (projets.length ? ligneGroupe(`Projets — absents / membres par jour ${C.aide('syntheseProjets')}`, niveau + 1, true) + projets.map(p => ligneSynthese(p, niveau + 1)).join('') : '');
       if (!contenu) return '';

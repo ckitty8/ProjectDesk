@@ -37,13 +37,13 @@ Ecrans.projets = {
 
   // Ligne d'un projet (un clic ouvre le panneau de détail)
   ligneProjet(p) {
-    const esc = C.esc, chef = ressource(p.chefId);
+    const esc = C.esc, chefs = chefsDuProjet(p);
     const kr = parId('resultatsCles', p.resultatCleId), obj = kr ? parId('objectifs', kr.objectifId) : null;
     return `
       <tr class="cliquable" data-action="ouvrirProjet" data-id="${p.id}">
         <td>${esc(p.nom)}<div>${C.code(p.code)}</div></td>
         <td>${obj ? `${esc(obj.code)} · ${esc(obj.titre)}<div class="discret">${esc(kr.code)} · ${esc(kr.libelle)}</div>` : '<span class="pale">—</span>'}</td>
-        <td>${chef ? `<span class="ligne-flex">${C.avatar(chef.nom)}${esc(chef.nom)}</span>` : '<span class="pale">—</span>'}</td>
+        <td>${chefs.length ? `<span class="ligne-flex">${chefs.map(r => C.avatar(r.nom) + esc(r.nom)).join(' ')}</span>` : '<span class="pale">—</span>'}</td>
         <td style="min-width:150px"><span class="ligne-flex">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}<span class="num" style="width:36px">${p.avancement}%</span></span></td>
         <td>${Calculs.formatCourt(p.fin)}</td><td>${C.badgeRef('stp', p.statut)}</td>
       </tr>`;

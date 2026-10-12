@@ -150,7 +150,7 @@ Ecrans.listeRessources = {
       return `<div class="carte-po">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
         <div class="nom-personne">${esc(r.nom)}</div><div class="discret">${esc(r.poste || '—')}</div></div>
         <a data-action="modifierRessource" data-id="${r.id}">Fiche</a>
-        ${gere ? `<a class="discret" data-action="retirerAffectation" data-id="${a.id}">Retirer</a>` : ''}</div>`;
+        ${a ? (gere ? `<a class="discret" data-action="retirerAffectation" data-id="${a.id}">Retirer</a>` : '') : '<span class="pale" title="Chef inscrit sur l’ancienne fiche projet">fiche projet</span>'}</div>`;
     }).join('');
     const indicateur = (n, libelle) => `<div><b>${n}</b><span class="discret">${libelle}</span></div>`;
     return `

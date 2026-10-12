@@ -40,8 +40,8 @@ const Roles = {
       const p = projet(a.projetId);
       if (p && roleProjet[a.role]) roles.push({ cle: roleProjet[a.role], precision: p.nom });
     });
-    // Chef désigné sur la fiche projet sans affectation « Chef de projet »
-    etat.d.projets.filter(p => p.chefId === r.id && !roles.some(x => x.cle === 'chef' && x.precision === p.nom))
+    // Chef encore inscrit seulement sur l'ancienne fiche projet (chefsDuProjet, etat.js)
+    etat.d.projets.filter(p => chefsDuProjet(p).some(c => c.id === r.id) && !roles.some(x => x.cle === 'chef' && x.precision === p.nom))
       .forEach(p => roles.push({ cle: 'chef', precision: p.nom }));
     return roles;
   },

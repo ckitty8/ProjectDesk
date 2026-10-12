@@ -532,6 +532,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
     // Projet modifiable depuis la Liste des ressources : nom, dates
     await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
+    // Doublons retirés (DAT 2.02) : plus de chef unique sur la fiche projet ni de responsable unique sur l'équipe
+    const sansChefUnique = !(await page.$('.panneau [data-champ="chefId"]')) && (await page.textContent('.panneau')).includes('Product Owners');
+    const sansResponsableUnique = await page.evaluate(() => {
+      majEtat({ modale: { type: 'equipe', id: etat.d.equipes[0].id, organisation: null } });
+      const ok = !document.querySelector('.modale [name=responsableId]'); etat.modale = null; return ok;
+    });
+    verifier('Doublons retirés : ni chef unique sur la fiche projet, ni responsable unique sur l’équipe', sansChefUnique && sansResponsableUnique);
     await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
     verifier('Projet : nom modifié depuis Liste des ressources',
       await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));

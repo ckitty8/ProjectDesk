@@ -15,15 +15,14 @@ const Administration = {
   equipes(modifiable) {
     const esc = C.esc;
     const lignes = etat.d.equipes.map(e => {
-      const resp = ressource(e.responsableId);
       const peutModifier = modifiable && (etat.estAdmin || estResponsableDe(e.id));
-      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td><td>${resp ? esc(resp.nom) : '<span class="pale">—</span>'}</td>
+      return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td><td>${esc(responsablesDe(e.id).map(r => r.nom).join(', ')) || '<span class="pale">—</span>'}</td>
         <td>${ressourcesActives().filter(r => r.equipeId === e.id).length}</td><td>${etat.d.projets.filter(p => p.equipeId === e.id).length}</td>
         <td class="num">${peutModifier ? `<a data-action="modifierEquipe" data-id="${e.id}">Modifier</a>` : ''}</td></tr>`;
     }).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Équipes ${C.aide('rolesEquipe')}</h2>
         ${modifiable && etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleEquipe">+ Nouvelle équipe</button>' : ''}</div>
-      <table class="tableau"><thead><tr><th>Équipe</th><th>Responsable</th><th>Membres</th><th>Projets</th><th></th></tr></thead>
+      <table class="tableau"><thead><tr><th>Équipe</th><th>Responsables</th><th>Membres</th><th>Projets</th><th></th></tr></thead>
       <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration).')}</td></tr>`}</tbody></table></div>`;
   },
 
