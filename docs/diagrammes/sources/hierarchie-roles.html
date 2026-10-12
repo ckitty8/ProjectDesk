@@ -1,0 +1,83 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Hiérarchie des rôles</title>
+<style>
+body { margin: 0; font-family: Inter, "Segoe UI", Arial, sans-serif; color: #18202E; background: #F5F7FB; }
+.page { width: 1500px; padding: 28px 32px; box-sizing: border-box; }
+h1 { margin: 0; font-size: 26px; } .sous { color: #5A6478; margin: 4px 0 20px; font-size: 14px; }
+.grille { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; }
+.carte { background: #fff; border: 1px solid #DDE2EC; border-radius: 14px; padding: 18px 20px; }
+.carte h2 { margin: 0 0 12px; font-size: 16px; }
+.niveau { display: flex; gap: 12px; align-items: stretch; margin: 0 auto; }
+.role { flex: 1; border-radius: 10px; padding: 10px 14px; color: #fff; }
+.role b { font-size: 15px; } .role .q { font-size: 11.5px; opacity: .85; margin-top: 2px; } .role ul { margin: 6px 0 0; padding-left: 16px; font-size: 12.5px; line-height: 1.45; }
+.fleche { text-align: center; color: #9AA3B5; font-size: 18px; line-height: 20px; }
+.c-createur { background: #5B2A9E; } .c-admin { background: #003CC8; } .c-resp { background: #7A3FC2; }
+.c-chef { background: #0F8A6B; } .c-membre { background: #4A5363; } .c-lecteur { background: #8A93A3; } .c-attente { background: #B25E09; }
+.manuel, .deduit { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 9px; margin-left: 6px; vertical-align: 2px; background: rgba(255,255,255,.22); }
+.org { display: flex; flex-direction: column; align-items: center; }
+.boite { border: 2px solid; border-radius: 10px; padding: 8px 14px; background: #fff; text-align: center; font-size: 13px; min-width: 230px; }
+.boite .t { font-weight: 700; font-size: 14px; } .lien { width: 2px; height: 16px; background: #C9D0DC; }
+.puce { display: inline-block; font-size: 11.5px; color: #fff; border-radius: 9px; padding: 1px 8px; margin: 3px 2px 0; }
+.projets { display: flex; gap: 14px; }
+.note { font-size: 12.5px; color: #3A4456; background: #F7F2FE; border: 1px solid #DCCDF5; border-radius: 10px; padding: 10px 12px; margin-top: 14px; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border-bottom: 1px solid #EDF0F5; padding: 7px 8px; text-align: center; } th:first-child, td:first-child { text-align: left; }
+th { font-size: 11.5px; color: #fff; } th.v { background: none; color: #5A6478; text-transform: uppercase; letter-spacing: .04em; }
+.oui { color: #0B6B4F; font-weight: 600; } .non { color: #B4BBC8; } .part { color: #8A5300; font-weight: 600; }
+.legende { font-size: 12px; color: #5A6478; margin-top: 8px; }
+</style></head><body><div class="page">
+<h1>ProjectDesk · hiérarchie des profils et des rôles</h1>
+<div class="sous">Spécification Ressources validée le 2026-10-12 · les rôles se cumulent : une personne voit les menus de tous ses rôles</div>
+<div class="grille">
+  <div class="carte"><h2>Les rôles, du plus large au plus restreint</h2>
+    <div class="niveau"><div class="role c-createur"><b>Créateur</b><span class="manuel">unique</span><div class="q">propriétaire de l'application (table createur)</div>
+      <ul><li>Tout, sur toutes les équipes</li><li>Seul à cocher « Administrateur » sur une fiche</li><li>Onglets ★ : Rôles, Simulation des rôles, Rôles et menus (à venir, étape 3)</li></ul></div></div>
+    <div class="fleche">▼</div>
+    <div class="niveau"><div class="role c-admin"><b>Administrateur</b><span class="manuel">coché à la main</span><div class="q">par le créateur, dans la fiche de la personne</div>
+      <ul><li>Tout : équipes, projets, personnes, Administration</li><li>Supprimer définitivement une personne ; voir « Sans affectation » et « Inactifs »</li></ul></div></div>
+    <div class="fleche">▼</div>
+    <div class="niveau"><div class="role c-resp"><b>Responsable d'équipe</b><span class="deduit">déduit</span><div class="q">1 ou plusieurs par équipe · peut l'être de plusieurs équipes</div>
+      <ul><li>Ses équipes et leurs projets : ajouter, affecter, modifier, passer inactif</li><li>Valide les timesheets ; lit les daily de ses équipes</li></ul></div></div>
+    <div class="fleche">▼</div>
+    <div class="niveau"><div class="role c-chef"><b>Chef de projet</b><span class="deduit">déduit</span><div class="q">1 ou plusieurs par projet · peut l'être de plusieurs projets</div>
+      <ul><li>Ses projets : ajouter, affecter, modifier les personnes (une personne créée est affectée à un de ses projets)</li><li>Plan de charge, envoi du daily</li></ul></div></div>
+    <div class="fleche">▼</div>
+    <div class="niveau">
+      <div class="role c-membre"><b>Membre</b><span class="deduit">déduit</span><div class="q">travaille sur 1 ou plusieurs projets</div>
+        <ul><li>Son daily, ses heures, ses congés</li><li>Suivi de mes équipes en lecture</li></ul></div>
+      <div class="role c-lecteur"><b>Lecteur</b><span class="deduit">déduit</span><div class="q">sur un projet</div>
+        <ul><li>Consulte sans modifier</li><li>Pas de Mon dashboard</li></ul></div></div>
+    <div class="fleche">▼</div>
+    <div class="niveau"><div class="role c-attente"><b>Compte en attente</b><div class="q">inscrit, sans accès tant qu'un administrateur ne l'a pas donné</div></div></div>
+  </div>
+
+  <div>
+    <div class="carte"><h2>Où s'attache chaque rôle : Équipe → Projet → Membres</h2>
+      <div class="org">
+        <div class="boite" style="border-color:#0A1633;background:#0A1633;color:#fff"><span class="t">ProjectDesk</span><br><span class="puce c-createur">Créateur</span><span class="puce c-admin">Administrateurs</span> <span style="font-size:12px;opacity:.8">: tout</span></div>
+        <div class="lien"></div>
+        <div class="boite" style="border-color:#7A3FC2"><span class="t">Équipe</span> <span style="color:#5A6478">(ex. Applications, IA, AMOA)</span><br><span class="puce c-resp">Responsable(s) d'équipe</span></div>
+        <div class="lien"></div>
+        <div class="projets">
+          <div class="org"><div class="boite" style="border-color:#0F8A6B;min-width:200px"><span class="t">Projet</span> <span style="color:#5A6478">(ex. VISTA)</span><br><span class="puce c-chef">Chef(s) de projet</span></div><div class="lien"></div>
+            <div class="boite" style="border-color:#C9D0DC;min-width:200px"><span class="t">Personnes</span><br><span class="puce c-membre">Membres</span><span class="puce c-lecteur">Lecteurs</span></div></div>
+          <div class="org"><div class="boite" style="border-color:#0F8A6B;min-width:200px"><span class="t">Projet</span> <span style="color:#5A6478">(ex. CDO)</span><br><span class="puce c-chef">Chef(s) de projet</span></div><div class="lien"></div>
+            <div class="boite" style="border-color:#C9D0DC;min-width:200px"><span class="t">Personnes</span><br><span class="puce c-membre">Membres</span><span class="puce c-lecteur">Lecteurs</span></div></div>
+        </div>
+      </div>
+      <div class="note"><b>Une personne n'appartient pas à une équipe</b> : elle y figure par ce qu'elle fait (responsable d'une équipe ; chef, membre ou lecteur d'un projet). Sans aucune affectation → « Sans affectation ».<br>
+        <b>Cumul</b> : un administrateur peut aussi être responsable d'une équipe, chef d'un projet et membre d'un autre.<br>
+        <b>Poste</b> (Développeur, Lead technique…) : descriptif, ne donne aucun droit. <b>Inactif</b> (date de départ ou bouton) : garde ses affectations, n'apparaît plus nulle part.</div>
+    </div>
+    <div class="carte" style="margin-top:22px"><h2>Menus par rôle (réglage par défaut, modifiable par le créateur)</h2>
+      <table><thead><tr><th class="v">Menu</th><th class="c-admin">Admin</th><th class="c-resp">Respons.</th><th class="c-chef">Chef</th><th class="c-membre">Membre</th><th class="c-lecteur">Lecteur</th></tr></thead><tbody>
+        <tr><td>Suivi de mes équipes (dashboard, organigramme, daily, projets)</td><td class="oui">oui</td><td class="oui">oui</td><td class="oui">oui</td><td class="oui">oui</td><td class="part">lecture</td></tr>
+        <tr><td>Mon dashboard (daily, congés, saisir mes heures)</td><td class="oui">oui</td><td class="oui">oui</td><td class="oui">oui</td><td class="oui">oui</td><td class="non">non</td></tr>
+        <tr><td>Liste des ressources (gérer les personnes)</td><td class="oui">tout</td><td class="part">ses équipes</td><td class="part">ses projets</td><td class="non">non</td><td class="non">non</td></tr>
+        <tr><td>Plan de charge</td><td class="oui">oui</td><td class="oui">oui</td><td class="oui">oui</td><td class="non">non</td><td class="non">non</td></tr>
+        <tr><td>Valider les timesheets</td><td class="oui">oui</td><td class="oui">oui</td><td class="non">non</td><td class="non">non</td><td class="non">non</td></tr>
+        <tr><td>Administration</td><td class="oui">oui</td><td class="non">non</td><td class="non">non</td><td class="non">non</td><td class="non">non</td></tr>
+      </tbody></table>
+      <div class="legende">Le créateur voit tout. « déduit » : le rôle vient des affectations ; seul Administrateur se coche à la main.</div>
+    </div>
+  </div>
+</div></div></body></html>
