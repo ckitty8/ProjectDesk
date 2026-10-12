@@ -4,6 +4,8 @@ Application web multi-projets et multi-équipes : objectifs (OKR), projets et ro
 ressources, congés et capacité, timesheet, daily (les demandes sont gérées dans Azure DevOps).
 Architecture, écrans, tables et droits : [`docs/DAT.md`](../docs/DAT.md).
 
+© 2026 CIRITEC. Tous droits réservés — logiciel propriétaire, voir [`LICENSE`](../LICENSE).
+
 ## Lancer en local
 
 L'application est statique (HTML/CSS/JS, sans build). Elle doit être servie par un serveur web
