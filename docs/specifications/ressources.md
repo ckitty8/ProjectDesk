@@ -1,6 +1,6 @@
 # Spécifications — Ressources (socle de ProjectDesk)
 
-> **Statut : brouillon en cours de rédaction avec le porteur (2026-10-12) — réponses aux 6 premières questions intégrées.** Le porteur repart de
+> **Statut : validée par le porteur le 2026-10-12, avec les maquettes `docs/maquettes/ressources-v2/` (liste, fiche, rôles et menus).** Le porteur repart de
 > zéro sur la gestion des ressources : elle conditionne tout le reste de l'application.
 > Aucune maquette ni aucun code tant que ce document n'est pas validé. Les points marqués
 > **[À décider]** attendent la réponse du porteur.
@@ -86,8 +86,7 @@ actuel (vues « Par équipe » — chaque personne une seule fois — et « Par 
 
 ## 7. Questions ouvertes
 
-1. **[À décider] Doublon Cerine** : il reste deux fiches dans Applications — « Cerine KERARMA »
-   (compte de connexion lié) et « Cerine Kerarma » (sans compte, arrivée le 23/03/2026). Laquelle garder ?
+Aucune. (Doublon Cerine : le porteur garde les deux fiches, 2026-10-12.)
 
 ## 8. Écart avec l'application actuelle (pour information)
 
