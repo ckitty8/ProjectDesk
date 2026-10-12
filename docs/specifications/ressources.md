@@ -60,6 +60,9 @@ est réservé aux **administrateurs** (cela efface ses congés, heures et daily)
 - **Lecteur** sur un projet : consulte sans modifier ; il **n'a pas accès au menu Mon dashboard**.
 - Les rôles se cumulent (un administrateur peut aussi être responsable, chef ou membre).
 
+**Congés & capacité, timesheet** (porteur, 2026-10-12) : déjà gérés, on garde le fonctionnement
+actuel (vues « Par équipe » — chaque personne une seule fois — et « Par projet », sans doublon).
+
 ## 6. Statut Actif / Inactif
 
 - Une personne devient inactive par une **date de départ** ou par un **bouton** (les deux).
@@ -74,8 +77,6 @@ est réservé aux **administrateurs** (cela efface ses congés, heures et daily)
    Chef de projet, Membre, Lecteur) et quels écrans pour chacun ? Le rôle d'une personne est-il
    **choisi** par un administrateur (liste des profils dans le rôle) ou **déduit** de ses
    affectations ?
-3. **[À décider] Congés & timesheet** : aujourd'hui groupés par équipe d'appartenance. Sans
-   appartenance, une personne apparaîtra sous **chaque équipe** de ses projets : est-ce voulu ?
 
 ## 8. Écart avec l'application actuelle (pour information)
 
