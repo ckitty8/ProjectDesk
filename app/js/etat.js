@@ -273,6 +273,14 @@ const estInactive = r => !!r.dateDepart;
 const ressourcesPresentes = (debut, fin = debut) => (etat.d.ressources || []).filter(r => Calculs.estPresentSur(r, debut, fin));
 const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); return !!r && Calculs.estPresentSur(r, debut, fin); };
 const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
+/* Chefs de projet possibles d'une équipe : ses personnes actives et celles de la direction qui la
+   regroupe (ex. Thomas, rattaché à la direction DSI, pour un projet de l'équipe Applications).
+   Depuis 1.91 la direction n'est plus affichée dans Liste des ressources (consigne du porteur) :
+   ses personnes doivent rester choisissables pour les projets de ses équipes. */
+const chefsPossibles = equipeId => {
+  const unites = [equipeId, equipe(equipeId).parentId].filter(Boolean);
+  return ressourcesActives().filter(r => unites.includes(r.equipeId));
+};
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 
 /* ---------- Daily par projet (migration 018) ---------- */

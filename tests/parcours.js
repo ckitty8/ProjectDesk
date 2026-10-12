@@ -448,6 +448,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await supprimerUnite('Équipe Test'); await supprimerUnite('Direction Test');
     verifier('Liste des ressources : unités vides supprimées', !(await page.$(noeud('equipe', 'Équipe Test'))) && !(await page.$(noeud('equipe', 'Direction Test'))));
     await page.click(noeud('equipe', 'Data')); await page.waitForTimeout(150);
+    // Chef de projet : personnes de l'équipe et de la direction qui la regroupe (Plateforme regroupe Data)
+    verifier('Chef de projet possible : personnes de l’équipe et de sa direction', await page.evaluate(() => {
+      const data = etat.d.equipes.find(e => e.nom === 'Data'), noms = chefsPossibles(data.id).map(r => r.nom);
+      return noms.includes('Hugo Martin') && noms.includes('Julien Dubois') && !noms.includes('Inès Roux');
+    }));
     verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
     await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
     await capture('12-liste-ressources');
