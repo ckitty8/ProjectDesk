@@ -20,8 +20,8 @@
 | Membre | un projet | **1 ou plusieurs** par projet | travailler dans **plusieurs projets** |
 | Administrateur | toute l'application | — | **cumuler** : être aussi responsable, chef de projet ou membre |
 
-**DSI n'est pas une équipe** (porteur, 2026-10-12) : elle disparaît de partout (listes, menus,
-sélecteurs, congés, timesheet…). Il n'y a pas de niveau au-dessus des équipes.
+**DSI n'est pas une équipe** (porteur, 2026-10-12) : **supprimée le 2026-10-12** (base, application,
+connexion). Il n'y a pas de niveau au-dessus des équipes.
 
 Les rôles se **cumulent** : une même personne peut être administrateur, responsable d'une équipe,
 chef d'un projet et membre d'un autre.
@@ -68,9 +68,8 @@ est réservé aux **administrateurs** (cela efface ses congés, heures et daily)
 
 ## 7. Questions ouvertes
 
-1. **[À décider] DSI** : Thomas et les fiches de Cerine sont rattachés à DSI (voir § 8). Une fois
-   le rattachement à une équipe supprimé (§ 3), il suffit de les affecter à des projets ; quelle
-   fiche de Cerine garder (3 fiches) ?
+1. **[À décider] Doublon Cerine** : il reste deux fiches dans Applications — « Cerine KERARMA »
+   (compte de connexion lié) et « Cerine Kerarma » (sans compte, arrivée le 23/03/2026). Laquelle garder ?
 2. **[À décider] Liste des rôles et écrans** : quels rôles (ex. Administrateur, Responsable,
    Chef de projet, Membre, Lecteur) et quels écrans pour chacun ? Le rôle d'une personne est-il
    **choisi** par un administrateur (liste des profils dans le rôle) ou **déduit** de ses
@@ -80,10 +79,11 @@ est réservé aux **administrateurs** (cela efface ses congés, heures et daily)
 
 ## 8. Écart avec l'application actuelle (pour information)
 
-- **DSI** existe en base comme « direction » (une ligne de `equipes`, et une organisation de
-  connexion Neon Auth). Elle porte 3 fiches (Thomas ; Cerine Kerarma en double, dont « Cerine
-  KERARMA ») et regroupe Applications, IA, AMOA. Sa suppression demande d'abord de décider où vont
-  ces personnes (et leurs comptes de connexion) — **[À décider]**.
+- **DSI supprimée le 2026-10-12** (sauvegarde Neon « sauvegarde-avant-suppression-dsi-2026-10-12 ») :
+  Applications, IA, AMOA détachées ; fiches Thomas et « Cerine KERARMA » rattachées à Applications
+  et leurs comptes ajoutés à l'équipe Applications (accès conservé) ; fiche « Cerine Kerarma » vide
+  de DSI (sans compte ni donnée) supprimée ; ligne `equipes`, membres, invitations et organisation
+  de connexion DSI supprimés. Compteurs vérifiés : projets 2, affectations 3, absences 155, temps 1.
 
 - Équipe : **un seul** responsable désigné aujourd'hui (`equipes.responsable_id`) → à étendre à plusieurs.
 - Projet : un « chef » sur la fiche projet (`projets.chef_id`) **plus** des affectations
