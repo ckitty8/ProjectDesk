@@ -1,0 +1,22 @@
+/* Maquettes « Ajouter une personne » (2026-10-12) : une seule fenêtre, partout */
+.ap-voile { position: absolute; inset: 0; background: rgba(10,22,51,.35); }
+.ap-fen { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(10,22,51,.3); }
+.ap-tete { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--bordure); }
+.ap-corps { padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+.ap-etape { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--pale); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.ap-etape b { width: 18px; height: 18px; border-radius: 50%; background: var(--primaire); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px; }
+.ap-seg { display: inline-flex; border: 1px solid var(--bordure); border-radius: 8px; overflow: hidden; }
+.ap-seg span { padding: 7px 14px; color: var(--discret); } .ap-seg span.on { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
+.ap-liste { border: 1px solid var(--bordure); border-radius: 8px; max-height: 170px; overflow: hidden; }
+.ap-ligne { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--bordure-fine); }
+.ap-ligne.on { background: var(--primaire-clair); } .ap-ligne:last-child { border-bottom: 0; }
+.ap-proj { display: grid; grid-template-columns: 24px 70px 1fr 170px; align-items: center; gap: 8px; padding: 6px 0; }
+.ap-groupe { font-size: 11px; color: var(--discret); font-weight: 600; margin-top: 4px; }
+.ap-deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ap-pied { display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--bordure); }
+.ap-onglets { display: flex; gap: 20px; border-bottom: 1px solid var(--bordure); padding: 0 20px; }
+.ap-onglets span { padding: 10px 2px; color: var(--discret); border-bottom: 2px solid transparent; } .ap-onglets span.on { color: var(--texte); border-color: var(--primaire); font-weight: 500; }
+.ap-annot { position: relative; } .ap-annot::after { content: attr(data-n); position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ap-legende { position: absolute; left: 24px; right: 24px; top: 740px; background: #fff; border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.ap-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
+.ap-titre { position: absolute; left: 24px; top: 8px; background: #141A26; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }

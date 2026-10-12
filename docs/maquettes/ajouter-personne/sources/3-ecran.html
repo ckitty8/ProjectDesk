@@ -1,0 +1,29 @@
+<style>.ap-mini{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ap-carte{background:#fff;border:1px solid var(--bordure);border-radius:10px}</style>
+<div class="ecran" style="max-width:1200px">
+  <div><span class="ma-t" style="display:inline-block;background:#141A26;color:#fff;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px">Maquette 3 · mêmes mots, même bouton</span><h1 style="margin-top:6px">Liste des ressources</h1></div>
+  <div class="ap-mini">
+    <div class="ap-carte"><div class="carte-titre"><h2>Équipe IA · Personnes</h2><button class="btn primaire petit ap-annot" data-n="1">+ Ajouter une personne</button></div>
+      <table class="tableau"><thead><tr><th>Personne</th><th>Accès</th><th>Projets</th><th></th></tr></thead><tbody>
+      <tr><td><span class="ligne-flex"><span class="avatar">SL</span>Sarah Lemoine</span></td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Membre</span></td><td class="discret">Assistant RH · PO</td><td class="num"><a>Fiche</a> <a class="pale">Retirer</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">TB</span>Thomas B.</span></td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Membre</span></td><td class="pale">hors projet</td><td class="num"><a>Fiche</a> <a class="pale">Retirer</a></td></tr>
+      </tbody></table></div>
+    <div class="ap-carte"><div class="carte-titre"><h2>Projet VISTA · Personnes</h2><button class="btn primaire petit ap-annot" data-n="1">+ Ajouter une personne</button></div>
+      <table class="tableau"><thead><tr><th>Personne</th><th>Rôle sur le projet</th><th></th></tr></thead><tbody>
+      <tr><td><span class="ligne-flex"><span class="avatar">CH</span>Christelle</span></td><td class="ap-annot" data-n="2" style="width:fit-content"><select class="champ" style="height:28px;width:auto"><option>Product Owner</option></select></td><td class="num"><a>Fiche</a> <a class="pale">Retirer</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">TH</span>Thomas</span></td><td><select class="champ" style="height:28px;width:auto"><option>Membre</option></select></td><td class="num"><a>Fiche</a> <a class="pale">Retirer</a></td></tr>
+      </tbody></table></div>
+  </div>
+  <div class="ap-carte ap-annot" data-n="3"><div class="carte-titre"><h2>Fiche de Thomas · onglets</h2></div>
+    <div class="ap-onglets"><span>Identité</span><span class="on">Équipe &amp; projets</span><span>Accès</span></div>
+    <div style="padding:14px 20px;display:grid;grid-template-columns:260px 1fr;gap:20px">
+      <div><label class="libelle">Équipe de rattachement</label><select class="champ"><option>Applications</option></select></div>
+      <div><label class="libelle">Projets et rôle</label>
+        <div class="ap-proj"><input type="checkbox" checked><span class="code">APP-02</span><span>VISTA</span><select class="champ" style="height:30px"><option>Membre</option></select></div>
+        <div class="ap-proj"><input type="checkbox"><span class="code">APP-01</span><span>CDO</span><select class="champ" style="height:30px"><option>Membre</option></select></div></div>
+    </div></div>
+  <div class="ma-legende" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;color:var(--discret)">
+    <div><b style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#E5484D;color:#fff;font-size:10.5px;align-items:center;justify-content:center;margin-right:6px">1</b>Partout le même mot (« Personne ») et le même bouton, qui ouvre la même fenêtre.</div>
+    <div><b style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#E5484D;color:#fff;font-size:10.5px;align-items:center;justify-content:center;margin-right:6px">2</b>Le rôle sur le projet se change directement dans la liste ; « Retirer » enlève du projet.</div>
+    <div><b style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#E5484D;color:#fff;font-size:10.5px;align-items:center;justify-content:center;margin-right:6px">3</b>Dans la fiche, un onglet « Équipe &amp; projets » rassemble tout : plus de fenêtre « Affectations » à part.</div>
+  </div>
+</div>
