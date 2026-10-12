@@ -158,7 +158,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await capture('25-roles-scrum');
     await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
-    // Menu : Mon timesheet rangé dans Gestion des ressources (intertitre), plus d'entrée à part
+    // Menu : Saisir mes heures rangé dans Gestion des ressources (sans intertitre), plus d'entrée à part
     verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
       return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Saisir mes heures') && !t.includes('Mon timesheet'))
@@ -370,33 +370,42 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
 
     await aller('listeRessources');
-    // Début / Fin saisis sur la ligne ; une date de fin rend la personne inactive et la masque
-    verifier('Liste des ressources : colonnes Début, Fin et Statut', await page.evaluate(() =>
-      ['Début', 'Fin', 'Statut'].every(t => [...document.querySelectorAll('#table-unites thead th')].some(e => e.textContent.trim().startsWith(t)))));
-    await page.click('[data-action="toutDeplier"]'); await page.waitForTimeout(150);
-    const champFin = 'input[data-action-change="dateRessource"][data-champ="dateDepart"]';
-    const idFin = await page.getAttribute(champFin + ' >> nth=0', 'data-id');
-    await page.fill(champFin + ' >> nth=0', '2026-09-30'); await page.press(champFin + ' >> nth=0', 'Tab'); await page.waitForTimeout(400);
-    // Date de fin → la personne reste dans la liste, statut « Inactif » (demande du 2026-10-06) ;
-    // le bouton « Masquer les ressources inactives » la cache, puis « Afficher » la remontre
-    const revue = !!(await page.$(`${champFin}[data-id="${idFin}"]`)) && (await page.textContent(`tr:has(${champFin}[data-id="${idFin}"])`)).includes('Inactif');
-    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
-    const masquee = !(await page.$(`${champFin}[data-id="${idFin}"]`));
-    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
-    verifier('Liste des ressources : date de fin saisie → reste affichée « Inactif » (masquable avec le bouton)',
-      masquee && revue && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
+    /* Liste des ressources (piste 3, 2026-10-09) : navigation à gauche, détail à droite.
+       Projet PF-12 : Product Owner (rôle Chef de projet) puis membres. */
+    const noeud = (type, nom) => `#nav-ressources .noeud.${type}:has-text("${nom}")`;
+    verifier('Liste des ressources : navigation (équipes, projets) et détail de l’équipe ouverte', !!(await page.$(noeud('equipe', 'Data')))
+      && !!(await page.$(noeud('projet', 'Migration Kubernetes'))) && (await page.textContent('#detail-ressources')).includes('Responsable de l’équipe'));
+    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
+    const [poPf12, membresPf12] = await page.$$eval('#detail-ressources .carte', c => [c[1].textContent, c[2].textContent]);
+    verifier('Liste des ressources : projet → Product Owners puis membres', poPf12.includes('Product Owners') && poPf12.includes('Julien Dubois')
+      && membresPf12.includes('Thomas Bernard') && membresPf12.includes('Membre') && !membresPf12.includes('Julien Dubois'));
+    // Date de fin saisie dans la fiche : la personne reste affichée « Inactif » (masquable avec le bouton)
+    const idFin = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
+    const ligneFin = `#detail-ressources tr[data-ressource="${idFin}"]`;
+    const poserFin = async jour => {
+      await page.click(`${ligneFin} [data-action="modifierRessource"]`);
+      await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateDepart]', jour);
+      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
+    };
+    await poserFin('2026-09-30');
+    const revue = (await page.textContent(ligneFin)).includes('Inactif') && (await page.textContent(ligneFin)).includes('partie le 30 sept. 2026');
+    // Sections Actifs / Inactifs repliables (demande du porteur, 2026-10-12)
+    const dansInactifs = await page.$eval(ligneFin, tr => { let x = tr.previousElementSibling; while (x && !x.classList.contains('groupe')) x = x.previousElementSibling; return !!x && x.textContent.includes('Inactifs'); });
+    const sectionInactifs = '#detail-ressources [data-action="replierSection"][data-id$=":inactifs"]';
+    await page.click(sectionInactifs); await page.waitForTimeout(150);
+    const masquee = !(await page.$(ligneFin)) && !!(await page.$('#detail-ressources tr[data-ressource]'));
+    await page.click(sectionInactifs); await page.waitForTimeout(150);
+    verifier('Liste des ressources : date de fin (fiche) → section « Inactifs » repliable, présence en clair',
+      masquee && revue && dansInactifs && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
     // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
     const reactivee = await page.evaluate(id => !ressource(id).dateDepart, idFin);
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
     const inactivee = await page.evaluate(id => ressource(id).dateDepart === Calculs.aujourdhui(), idFin);
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
-    verifier('Liste des ressources : statut Actif / Inactif cliquable ; plus de statut sur les unités', reactivee && inactivee
-      && await page.evaluate(() => !document.querySelector('#table-unites tr[data-id]:not([data-id*=":"]) .badge') || true)
-      && !(await page.$$eval('#table-unites tbody tr', l => l.filter(tr => /direction|équipe/.test(tr.textContent) && /Active|Inactive/.test(tr.textContent)).length)));
+    verifier('Liste des ressources : statut Actif / Inactif cliquable', reactivee && inactivee);
     // Menus liés (signalé le 2026-10-06) : une personne partie le 30/09 disparaît des périodes APRÈS son
     // départ (octobre : grille, timesheet, suivi, annuaire) mais reste visible AVANT (septembre)
-    await page.fill(`${champFin}[data-id="${idFin}"]`, '2026-09-30'); await page.press(`${champFin}[data-id="${idFin}"]`, 'Tab'); await page.waitForTimeout(400);
+    await poserFin('2026-09-30');
     const nomFin = await page.evaluate(id => ressource(id).nom, idFin);
     const visibleDans = [];
     await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 9 }); majUi('moisTemps', { annee: 2026, mois: 9 }); });
@@ -425,42 +434,77 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
-    const lignesUnites = async () => page.$$eval('#table-unites tbody tr', t => t.filter(x => x.style.display !== 'none').map(x => x.textContent.replace(/\s+/g, ' ').replace(/^[^A-Za-zÀ-ÿ]+/, '').trim()));
-    const ligneVisible = async debut => (await lignesUnites()).some(l => l.startsWith(debut));
-    verifier('Liste des ressources : direction → équipe → projet', await ligneVisible('Plateforme') && await ligneVisible('Data')
-      && !!(await page.$('#table-unites tr[data-chemin~="' + (await page.getAttribute('#table-unites tr:has-text("Data DA")', 'data-id')) + '"]')));
-    await page.click('tr:has-text("PF-12") [data-action="deplierProjetArbre"]'); await page.waitForTimeout(200);
-    await capture('12-liste-ressources');
-    verifier('Liste des ressources : membres d’un projet avec leur rôle', (await lignesUnites()).some(l => /Chef de projet|Membre/.test(l) && !l.startsWith('PF')));
-    await page.fill('.recherche-champ input', 'data'); await page.waitForTimeout(150);
-    verifier('Liste des ressources : recherche (unité et son contenu)', await ligneVisible('Data') && !(await ligneVisible('Mobile')));
-    await page.fill('.recherche-champ input', ''); await page.waitForTimeout(150);
-    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('button.btn-icone[disabled][title$="retirez d’abord ses projets et ses membres"]')));
-    await page.click('[data-action="nouvelleUnite"][data-type="direction"]');
-    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Test');
-    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'DT');
-    await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Liste des ressources : direction ajoutée', await ligneVisible('Direction Test'));
-    await page.click('tr:has-text("Direction Test") [data-action="nouvelleUnite"][data-type="equipe"]');
-    verifier('Liste des ressources : « + Équipe » pré-rattache à la direction',
-      (await page.$eval('select[name=parentId]', s => s.options[s.selectedIndex].text)) === 'Direction Test');
+    /* Rôle d'accès (maquette role-acces/, 2026-10-12) : colonne « Accès », choix dans la fiche.
+       Camille (administratrice, owner de Plateforme) passe Thomas Responsable, puis Membre. */
+    await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
+    const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
+    const ligneThomas = `#detail-ressources tr[data-ressource="${idThomas}"]`;
+    const accesThomas = async () => (await page.$eval(`${ligneThomas} td:nth-child(3)`, td => td.textContent.trim()));
+    const choisirRole = async role => {
+      await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
+      await page.check(`input[name=roleAcces][value=${role}]`);
+      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(500);
+    };
+    const accesInitial = await accesThomas();
+    await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
+    const adminGrise = await page.$eval('input[name=roleAcces][value=admin]', i => i.disabled);
+    const sansLecteur = !(await page.$('input[name=roleAcces][value=lecteur]'));
     await page.click('.modale .fermer');
-    await page.click('tr:has-text("Direction Test") [data-action="supprimerEquipe"]'); await page.waitForTimeout(400);
-    verifier('Liste des ressources : direction vide supprimée', !(await ligneVisible('Direction Test')));
-    await page.click('[data-action="ongletListeRessources"][data-id="postes"]'); await page.waitForTimeout(200);
+    await choisirRole('responsable');
+    const responsable = (await accesThomas()) === 'Responsable d’équipe';
+    await choisirRole('membre');
+    verifier('Rôle d’accès : colonne Accès, Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
+      accesInitial === 'Membre' && adminGrise && sansLecteur && responsable && (await accesThomas()) === 'Membre'
+      && await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member', idThomas)
+      && (await page.textContent('#detail-ressources')).includes('Pas encore de compte'));
+    // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
+    // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
+    const creerUnite = async (nom, prefixe, type, parent) => {
+      await page.click('[data-action="nouvelleUnite"]');
+      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', nom);
+      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', prefixe);
+      await page.selectOption('select[name=type]', type);
+      if (parent) await page.selectOption('select[name=parentId]', { label: parent });
+      await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
+    };
+    const supprimerUnite = async nom => { await page.click(noeud('equipe', nom)); await page.click('#detail-ressources [data-action="supprimerEquipe"]'); await page.waitForTimeout(400); };
+    await creerUnite('Direction Test', 'DT', 'direction');
+    const directionVideVisible = !!(await page.$(noeud('equipe', 'Direction Test')));
+    await creerUnite('Équipe Test', 'ET', 'equipe', 'Direction Test');
+    verifier('Liste des ressources : direction masquée, ses équipes listées directement', directionVideVisible
+      && !(await page.$(noeud('equipe', 'Direction Test'))) && !!(await page.$(noeud('equipe', 'Équipe Test'))));
+    await supprimerUnite('Équipe Test'); await supprimerUnite('Direction Test');
+    verifier('Liste des ressources : unités vides supprimées', !(await page.$(noeud('equipe', 'Équipe Test'))) && !(await page.$(noeud('equipe', 'Direction Test'))));
+    await page.click(noeud('equipe', 'Data')); await page.waitForTimeout(150);
+    // Chef de projet : personnes de l'équipe et de la direction qui la regroupe (Plateforme regroupe Data)
+    verifier('Chef de projet possible : personnes de l’équipe et de sa direction', await page.evaluate(() => {
+      const data = etat.d.equipes.find(e => e.nom === 'Data'), noms = chefsPossibles(data.id).map(r => r.nom);
+      return noms.includes('Hugo Martin') && noms.includes('Julien Dubois') && !noms.includes('Inès Roux');
+    }));
+    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
+    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
+    await capture('12-liste-ressources');
+    // Recherche : une personne → son équipe et ses projets seulement
+    await page.fill('#nav-ressources input', 'sarah'); await page.waitForTimeout(150);
+    const visibles = await page.$$eval('#nav-ressources [data-recherche]', l => l.filter(n => n.offsetParent).map(n => n.textContent.trim()));
+    verifier('Liste des ressources : recherche d’une personne (son équipe et ses projets)', visibles.some(t => t.startsWith('Data'))
+      && visibles.some(t => t.startsWith('Entrepôt')) && !visibles.some(t => t.startsWith('Mobile') || t.startsWith('Hugo')));
+    await page.fill('#nav-ressources input', ''); await page.waitForTimeout(150);
+    await page.click('#nav-ressources [data-action="choisirNoeud"][data-type="postes"]'); await page.waitForTimeout(200);
     await capture('18-postes');
     reponsePrompt = 'Développeur back-end';
     await page.click('tr:has-text("Dév. back-end") [data-action="renommerValeurListe"]'); await page.waitForTimeout(400);
     reponsePrompt = 'Merci de compléter';
-    await page.click('[data-action="ongletListeRessources"][data-id="organisation"]'); await page.click('[data-action="toutDeplier"]'); await page.waitForTimeout(200);
+    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
     verifier('Postes : renommage propagé aux fiches ressources', (await texte()).includes('Développeur back-end'));
-    await page.click('tr:has-text("PF-12") [data-action="assigner"]'); await page.waitForTimeout(200);
+    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
     await page.selectOption('select[name=ressource]', { index: 3 }); await page.waitForTimeout(200);
     await page.check('input[name=projet] >> nth=0');
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
     verifier('Affectation enregistrée (modale fermée)', !(await page.$('.modale')));
     // « + Membre » → « + Nouveau membre » → retour à l'affectation, personne sélectionnée
-    await page.click('tr:has-text("PF-17") [data-action="assigner"]'); await page.waitForTimeout(200);
+    await page.click(noeud('projet', 'Portail développeurs')); await page.waitForTimeout(200);
+    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
     await page.click('[data-action="nouvellePersonneAffectation"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');
     await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
@@ -469,8 +513,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
     verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
-    // Projet modifiable depuis l'arborescence : nom, dates
-    await page.click('tr:has-text("PF-17") [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
+    // Projet modifiable depuis la Liste des ressources : nom, dates
+    await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
     verifier('Projet : nom modifié depuis Liste des ressources',
       await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));
@@ -592,7 +636,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
     verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
     await page.click('[data-action="aller"][data-ecran="listeRessources"]'); await page.waitForTimeout(200);
-    verifier('Admin sans équipe : Liste des ressources ouverte (arborescence)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#table-unites')));
+    verifier('Admin sans équipe : Liste des ressources ouverte (navigation par équipe)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#nav-ressources')));
     await page.click('[data-action="aller"][data-ecran="monAdmin"]'); await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]');
     await page.click('[data-action="nouvelleEquipe"]');
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');

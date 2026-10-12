@@ -1,0 +1,41 @@
+<!-- Maquette 2 : choix du rôle d'accès dans la fiche de la personne -->
+<style>
+.mf-voile { position: absolute; inset: 0; background: rgba(10,22,51,.35); }
+.mf-fiche { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 640px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(10,22,51,.3); }
+.mf-tete { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--bordure); }
+.mf-corps { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.mf-deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mf-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mf-role { border: 1px solid var(--bordure); border-radius: 8px; padding: 9px 12px; display: flex; gap: 10px; align-items: flex-start; }
+.mf-role.on { border-color: var(--primaire); background: var(--primaire-clair); }
+.mf-role b { display: block; font-weight: 600; } .mf-role span { font-size: 12px; color: var(--discret); }
+.mf-pied { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--bordure); }
+.ma-annot { position: relative; } .ma-annot::after { content: attr(data-n); position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.mf-legende { position: absolute; left: 24px; bottom: 18px; right: 24px; background: #fff; border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.mf-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
+</style>
+<div style="position:relative;height:100%;min-height:948px">
+  <div class="mf-voile"></div>
+  <div class="mf-fiche">
+    <div class="mf-tete"><h2>Fiche de Thomas</h2><span class="pale">✕</span></div>
+    <div class="mf-corps">
+      <div class="mf-deux"><div><label class="libelle">Nom complet</label><input class="champ" value="Thomas"></div><div><label class="libelle">Email</label><input class="champ" value="thomas@entreprise.fr"></div></div>
+      <div class="mf-deux"><div><label class="libelle">Poste</label><input class="champ" value="Chef de projet"></div><div><label class="libelle">Équipe</label><input class="champ" value="Applications"></div></div>
+      <div class="ma-annot" data-n="1"><label class="libelle">Rôle d'accès ⓘ</label>
+        <div class="mf-roles">
+          <label class="mf-role"><input type="radio" name="r"><div><b>Administrateur</b><span>Tous les écrans et l'Administration</span></div></label>
+          <label class="mf-role"><input type="radio" name="r"><div><b>Responsable d'équipe</b><span>Valide les timesheets, lit tous les daily de l'équipe</span></div></label>
+          <label class="mf-role on"><input type="radio" name="r" checked><div><b>Membre de l'équipe</b><span>Son daily, ses heures, ses congés</span></div></label>
+          <label class="mf-role"><input type="radio" name="r"><div><b>Lecteur</b><span>Consulte, ne modifie rien</span></div></label>
+        </div></div>
+      <div class="ma-annot" data-n="2" style="background:var(--fond-doux);border-radius:8px;padding:10px 12px;font-size:12.5px">
+        <b>Sur ses projets</b> (le rôle de projet s'ajoute au rôle d'accès) : <span class="badge" style="color:#0B6B4F;background:#E3F5EC">VI3P / V4 · Membre</span> &nbsp;<a>Modifier ses projets</a></div>
+      <div class="discret" style="font-size:12px">Compte de connexion lié · invité dans l'équipe Applications.</div>
+    </div>
+    <div class="mf-pied"><button class="btn">Annuler</button><button class="btn primaire">Enregistrer</button></div>
+  </div>
+  <div class="mf-legende">
+    <div><b>1</b>Rôle d'accès choisi dans la fiche : il définit ce que la personne voit et peut modifier.</div>
+    <div><b>2</b>Chef de projet / Membre / Lecteur restent définis projet par projet.</div>
+  </div>
+</div>

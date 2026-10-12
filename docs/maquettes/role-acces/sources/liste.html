@@ -1,0 +1,41 @@
+<!-- Maquette 1 : colonne « Accès » dans les tableaux de personnes (Liste des ressources) -->
+<style>
+.ma-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; display: inline-block; }
+.ma-admin { background: #E8EEFF; color: #0033AD; } .ma-resp { background: #EDE6FA; color: #5B2DA0; } .ma-chef { background: #FFF1D6; color: #8A5300; }
+.ma-membre { background: #E3F5EC; color: #0B6B4F; } .ma-lecteur { background: #F1F3F7; color: #4A5363; } .ma-sans { background: #FDECEC; color: #A32020; }
+.ma-annot { position: relative; } .ma-annot::after { content: attr(data-n); position: absolute; top: -9px; right: -12px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ma-legende { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.ma-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
+.ma-titre { display: inline-block; background: #141A26; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; }
+.ma-cles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; padding: 12px 16px; font-size: 12px; color: var(--discret); }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="ma-titre">Maquette · rôle d'accès</span><h1>Liste des ressources</h1><div class="sous-titre">Applications › personnes de l'équipe</div></div>
+    <div class="actions-ecran"></div></div>
+  <div class="carte"><div class="carte-titre"><h2>Membres de l'équipe Applications</h2><a>+ Personne</a></div>
+    <table class="tableau"><thead><tr><th>Personne</th><th>Poste</th><th class="ma-annot" data-n="1" style="padding-right:22px">Accès ⓘ</th><th>Projets</th><th>Présence</th><th>Statut</th><th></th></tr></thead><tbody>
+      <tr class="groupe"><td colspan="7"><span class="ma-annot" data-n="4" style="padding-right:18px">▾ Actifs <span class="pale" style="font-weight:400">(5)</span></span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">AC</span><b style="font-weight:500">Anne Caselli</b></span></td><td>Product manager</td><td><span class="ma-pill ma-resp">Responsable d'équipe</span></td><td class="pale">hors projet</td><td class="pale">—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Actif</span></td><td class="num"><a>Fiche</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CH</span><b style="font-weight:500">Christelle</b></span></td><td>Chef de projet</td><td><span class="ma-pill ma-admin">Administrateur</span></td><td>VISTA · PO</td><td class="pale">—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Actif</span></td><td class="num"><a>Fiche</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">NO</span><b style="font-weight:500">Nouha</b></span></td><td>Lead technique</td><td><span class="ma-pill ma-chef">Chef de projet</span></td><td>CDO · PO</td><td class="pale">—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Actif</span></td><td class="num"><a>Fiche</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">TH</span><b style="font-weight:500">Thomas</b></span></td><td>Chef de projet</td><td><span class="ma-pill ma-membre">Membre</span></td><td>VI3P / V4 · Membre</td><td class="pale">—</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Actif</span></td><td class="num"><a>Fiche</a></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CK</span><b style="font-weight:500">Cerine Kerarma</b></span></td><td>DevOps</td><td class="ma-annot" data-n="2" style="width:fit-content;padding-right:22px"><span class="ma-pill ma-sans">Pas encore de compte</span></td><td class="pale">hors projet</td><td class="discret">depuis le 23 mars 2026</td><td><span class="badge" style="color:#0B6B4F;background:#E3F5EC">Actif</span></td><td class="num"><a>Fiche</a></td></tr>
+      <tr class="groupe"><td colspan="7">▾ Inactifs <span class="pale" style="font-weight:400">(1) · date de fin passée ou saisie</span></td></tr>
+      <tr style="opacity:.6"><td><span class="ligne-flex"><span class="avatar">LH</span><b style="font-weight:500">Lenaic Houssou</b></span></td><td>Dév. back-end</td><td><span class="ma-pill ma-lecteur">Lecteur</span></td><td>VISTA · Lecteur</td><td style="color:var(--alerte)">partie le 30 sept. 2026</td><td><span class="badge" style="color:#4A5363;background:#F1F3F7">Inactif</span></td><td class="num"><a>Fiche</a></td></tr>
+    </tbody></table>
+    <div class="ma-cles ma-annot" data-n="3" style="border-top:1px solid var(--bordure-fine)">
+      <div><span class="ma-pill ma-admin">Administrateur</span> tout voir, tout gérer</div>
+      <div><span class="ma-pill ma-resp">Responsable d'équipe</span> son équipe : timesheets, daily, congés</div>
+      <div><span class="ma-pill ma-chef">Chef de projet</span> ses projets : membres, plan de charge</div>
+      <div><span class="ma-pill ma-membre">Membre</span> son daily, ses heures, ses congés</div>
+      <div><span class="ma-pill ma-lecteur">Lecteur</span> consulte, ne modifie rien</div>
+      <div><span class="ma-pill ma-sans">Pas encore de compte</span> fiche sans connexion</div>
+    </div></div>
+  <div class="ma-legende">
+    <div><b>1</b>Nouvelle colonne « Accès » : le rôle qui définit ce que la personne peut voir et faire.</div>
+    <div><b>2</b>Fiche sans compte de connexion : la personne n'a encore aucun accès.</div>
+    <div><b>3</b>Rappel de ce qu'ouvre chaque rôle, sous le tableau.</div>
+    <div><b>4</b>Deux sections repliables : Actifs, puis Inactifs (un clic sur ▾ / ▸) ; même principe dans les membres d'un projet.</div>
+    <div>Le rôle se choisit dans la fiche de la personne (maquette 2).</div>
+  </div>
+</div>

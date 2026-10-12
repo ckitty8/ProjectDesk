@@ -283,6 +283,11 @@ async function auth(req, res, chemin, url) {
     case '/organization/invite-member': {
       invitations.push({ id: uuid(), organizationId: corps.organizationId, email: corps.email, role: corps.role, status: 'pending' }); return envoyer(res, 200, {});
     }
+    case '/organization/update-member-role': {
+      const m = membres.find(x => x.id === corps.memberId && x.organizationId === corps.organizationId);
+      if (!m) return envoyer(res, 400, { message: 'Membre introuvable' });
+      m.role = corps.role; return envoyer(res, 200, m);
+    }
     case '/organization/list-user-invitations':
       return envoyer(res, 200, invitations.filter(i => i.email === moi.email).map(i => ({ ...i, organizationName: organisations.find(o => o.id === i.organizationId).name })));
     case '/organization/accept-invitation': case '/organization/reject-invitation': {

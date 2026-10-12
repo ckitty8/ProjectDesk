@@ -223,7 +223,7 @@ async function chargerRoles() {
       const org = await Api.lireOrganisation(e.id);
       const moi = (org.members || []).find(m => m.userId === etat.session.user.id);
       if (moi) roles[e.id] = moi.role;
-      membres[e.id] = (org.members || []).map(m => ({ userId: m.userId, nom: m.user ? m.user.name || m.user.email : '?', role: m.role }));
+      membres[e.id] = (org.members || []).map(m => ({ id: m.id, userId: m.userId, nom: m.user ? m.user.name || m.user.email : '?', role: m.role }));
     } catch (err) { /* équipe illisible : rôle inconnu */ }
   }));
   etat.rolesEquipe = roles;
@@ -273,7 +273,34 @@ const estInactive = r => !!r.dateDepart;
 const ressourcesPresentes = (debut, fin = debut) => (etat.d.ressources || []).filter(r => Calculs.estPresentSur(r, debut, fin));
 const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); return !!r && Calculs.estPresentSur(r, debut, fin); };
 const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
+/* Chefs de projet possibles d'une équipe : ses personnes actives et celles de la direction qui la
+   regroupe (ex. Thomas, rattaché à la direction DSI, pour un projet de l'équipe Applications).
+   Depuis 1.90 la direction n'est plus affichée dans Liste des ressources (consigne du porteur) :
+   ses personnes doivent rester choisissables pour les projets de ses équipes. */
+const chefsPossibles = equipeId => {
+  const unites = [equipeId, equipe(equipeId).parentId].filter(Boolean);
+  return ressourcesActives().filter(r => unites.includes(r.equipeId));
+};
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
+
+/* ---------- Rôle d'accès d'une personne (maquette role-acces/, 2026-10-12) ---------- */
+// Son compte dans l'organisation Neon Auth de son équipe ({ id, role }), connu pour mes équipes
+const membreOrganisation = r => (etat.membresEquipe[r.equipeId] || []).find(m => r.userId && m.userId === r.userId) || null;
+const estAdministrateur = r => !!r.userId && [...(etat.d.administrateurs || []), ...(etat.d.createur || [])].some(a => a.userId === r.userId);
+// Responsable : désigné sur une équipe (responsable_id), ou owner / admin de l'organisation de son équipe
+const estResponsableDesigne = r => etat.d.equipes.some(e => e.responsableId === r.id);
+const estResponsableEquipe = r => estResponsableDesigne(r) || ['owner', 'admin'].includes((membreOrganisation(r) || {}).role);
+/* Rôle d'accès affiché (clé de ROLES_ACCES) : le plus large qu'elle a. Sans compte de connexion,
+   la personne n'a aucun accès, quel que soit le rôle prévu. Un rôle inconnu de l'écran (ex.
+   liste des administrateurs illisible pour un non-administrateur) se lit comme le suivant. */
+function roleAcces(r) {
+  if (!r.userId) return 'sansCompte';
+  if (estAdministrateur(r)) return 'admin';
+  if (estResponsableEquipe(r)) return 'responsable';
+  const chef = etat.d.projets.some(p => p.chefId === r.id)
+    || etat.d.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
+  return chef ? 'chef' : 'membre';
+}
 
 /* ---------- Daily par projet (migration 018) ---------- */
 // Absence d'une personne un jour donné (Congés & capacité), ou null
