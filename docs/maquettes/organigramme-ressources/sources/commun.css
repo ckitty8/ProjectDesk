@@ -1,0 +1,31 @@
+/* Maquettes « Organigramme des ressources » (2026-10-12) : organigramme de cartes par équipe */
+.og-titre { display: inline-block; background: #141A26; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; }
+.og-barre { display: flex; gap: 8px; align-items: center; }
+.og-rech { display: flex; align-items: center; gap: 8px; height: 32px; width: 280px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 7px; background: #fff; color: var(--pale); }
+.og-racine { margin: 0 auto; width: fit-content; background: #141A26; color: #fff; border-radius: 10px; padding: 10px 18px; text-align: center; }
+.og-racine small { display: block; color: #AEB9D3; font-size: 11.5px; }
+.og-liens { position: relative; height: 34px; }
+.og-liens::before { content: ''; position: absolute; left: 50%; top: 0; height: 17px; border-left: 2px solid #C9D0DC; }
+.og-liens::after { content: ''; position: absolute; left: 16.6%; right: 16.6%; top: 17px; height: 17px; border: 2px solid #C9D0DC; border-bottom: 0; border-radius: 8px 8px 0 0; }
+.og-colonnes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; position: relative; }
+.og-eq { background: #fff; border: 1px solid var(--bordure); border-top: 4px solid var(--c); border-radius: 10px; }
+.og-eq-tete { padding: 12px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--bordure-fine); }
+.og-eq-tete h2 { font-size: 16px; flex: 1; }
+.og-resp { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #FAF7FF; font-size: 12.5px; border-bottom: 1px solid var(--bordure-fine); }
+.og-proj { margin: 10px 12px; border: 1px solid var(--bordure); border-radius: 8px; }
+.og-proj-tete { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.og-proj-tete b { flex: 1; font-weight: 600; }
+.og-pers { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 10px 10px; }
+.og-p { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 3px; border-radius: 14px; background: var(--fond-doux); border: 1px solid var(--bordure-fine); font-size: 12px; }
+.og-p .avatar { width: 20px; height: 20px; flex-basis: 20px; font-size: 9px; }
+.og-p.po { background: #FFF6E3; border-color: #F6DDAA; } .og-p.po .avatar { background: #FFE2A8; color: #7A4700; }
+.og-p.ajout { background: none; border: 1px dashed var(--bordure); color: var(--primaire); padding: 3px 10px; }
+.og-p.inactif { opacity: .5; }
+.og-hors { padding: 4px 14px 12px; }
+.og-hors .libelle { margin-bottom: 6px; }
+.og-pied { display: flex; gap: 14px; padding: 10px 14px; border-top: 1px solid var(--bordure-fine); font-size: 12.5px; }
+.og-annot { position: relative; } .og-annot::after { content: attr(data-n); position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; z-index: 3; }
+.og-legende { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 12px; color: var(--discret); }
+.og-legende b { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #E5484D; color: #fff; font-size: 10.5px; align-items: center; justify-content: center; margin-right: 6px; }
+.og-pop { position: absolute; z-index: 4; background: #fff; border: 1px solid var(--bordure); border-radius: 10px; box-shadow: 0 12px 36px rgba(10,22,51,.2); }
+.og-sugg div { display: flex; align-items: center; gap: 8px; padding: 7px 12px; font-size: 12.5px; } .og-sugg div.on { background: var(--primaire-clair); }
