@@ -8,10 +8,11 @@
      Types de contrat. Le niveau « direction » n'est plus affiché
      (consigne du porteur : « on oublie la direction DSI ») ;
    - à droite, le détail de ce qui est choisi :
-       équipe  → responsable (hors projet), projets, personnes sans projet ;
+       équipe  → responsable (hors projet), projets, membres de l'équipe ;
        projet  → Product Owners (rôle « Chef de projet »), puis membres ;
        Postes / Types de contrat → référentiels « poste » et « contrat ».
-   Les dates de présence se modifient dans la fiche de la personne.
+   Tableaux de personnes : rôle d'accès (maquette role-acces/), sections Actifs / Inactifs
+   repliables. Dates de présence et rôle d'accès se modifient dans la fiche de la personne.
    Écran ouvert sans équipe pour un administrateur (vue d'organisation).
    Droits d'affichage des boutons : unités et listes → administrateurs ;
    projets et personnes → membres de l'unité ; membres d'un projet →
@@ -25,10 +26,7 @@ Ecrans.listeRessources = {
   sansEquipePermis: () => etat.estAdmin,        // voir coquille.js : écran ouvert sans équipe
 
   rendre() {
-    const etatUi = ui('listeRessources', { inactifs: true });
-    const nbInactifs = etat.d.ressources.filter(estInactive).length;
-    const actions = `<button class="btn" data-action="basculerInactifs">${etatUi.inactifs ? 'Masquer' : 'Afficher'} les ressources inactives (${nbInactifs})</button>`
-      + (etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleUnite" data-type="equipe">+ Ajouter une équipe</button>' : '');
+    const actions = etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleUnite" data-type="equipe">+ Ajouter une équipe</button>' : '';
     const choix = this.selection();
     return `
     <div class="ecran" style="max-width:1300px">
@@ -41,11 +39,6 @@ Ecrans.listeRessources = {
   },
 
   /* ---------- Ce qui est affiché ---------- */
-  // Personnes affichées : les inactives (date de fin saisie) seulement si « Afficher les ressources inactives »
-  ressources() {
-    const avecInactifs = ui('listeRessources', { inactifs: true }).inactifs;
-    return etat.d.ressources.filter(r => avecInactifs || !estInactive(r));
-  },
   /* Unités de la navigation. Le niveau « direction » n'est plus montré (consigne du porteur,
      2026-10-09) : les équipes d'une direction (ex. Applications, IA, AMOA sous DSI) sont listées
      directement. Une direction reste listée si elle porte elle-même des projets ou des
@@ -83,7 +76,7 @@ Ecrans.listeRessources = {
      des personnes qu'il montre — pour l'équipe, ses personnes sans projet) ; une équipe et
      ses éléments forment un .noeud-groupe ; data-nom = nom de l'équipe seul. */
   navigation(choix) {
-    const esc = C.esc, ressources = this.ressources();
+    const esc = C.esc, ressources = etat.d.ressources;
     const actif = (type, id) => choix.type === type && choix.id === id ? ' actif' : '';
     const noms = liste => liste.map(r => r.nom).join(' ');
     const groupes = this.unites().map(e => {
@@ -120,14 +113,13 @@ Ecrans.listeRessources = {
     return '';
   },
 
-  // Équipe : responsable (souvent hors projet, ex. Anne pour Applications), projets, personnes sans projet
+  // Équipe : responsable (souvent hors projet, ex. Anne pour Applications), projets, membres de l'équipe
   detailEquipe(e) {
-    const esc = C.esc, admin = etat.estAdmin, membre = estMembreDe(e.id), ressources = this.ressources();
+    const esc = C.esc, admin = etat.estAdmin, membre = estMembreDe(e.id), ressources = etat.d.ressources;
     const personnes = ressources.filter(r => r.equipeId === e.id);
     const projets = etat.d.projets.filter(p => p.equipeId === e.id);
     const affectee = r => etat.d.affectations.some(a => a.ressourceId === r.id);
     const responsable = personnes.find(r => r.id === e.responsableId) || ressources.find(r => r.id === e.responsableId);
-    const sansProjet = personnes.filter(r => r !== responsable && !affectee(r));
     const vide = !personnes.length && !projets.length && !etat.d.equipes.some(x => x.parentId === e.id);
     const boutons = [
       admin || estResponsableDe(e.id) ? `<button class="btn" data-action="modifierEquipe" data-id="${e.id}">Modifier l’équipe</button>` : '',
@@ -145,8 +137,9 @@ Ecrans.listeRessources = {
       <div class="carte"><div class="carte-titre"><h2>Projets</h2>${membre ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : ''}</div>
         <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
-      <div class="carte"><div class="carte-titre"><h2>Personnes sans projet</h2>${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</div>
-        ${this.tableauPersonnes(sansProjet.map(r => ({ r })), 'Aucune personne sans projet.')}</div>`;
+      <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</div>
+        ${this.tableauPersonnes('equipe:' + e.id, personnes.map(r => ({ r })), 'Aucune personne.')}
+        ${personnes.length ? this.legendeAcces() : ''}</div>`;
   },
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
      Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
@@ -161,7 +154,7 @@ Ecrans.listeRessources = {
 
   // Projet : Product Owners en cartes, puis membres (et lecteurs) en tableau
   detailProjet(p) {
-    const esc = C.esc, ressources = this.ressources(), editable = peutEditerProjet(p);
+    const esc = C.esc, ressources = etat.d.ressources, editable = peutEditerProjet(p);
     const { productOwners, membres } = this.rolesDuProjet(p, ressources);
     const departs = [...productOwners, ...membres.map(m => m.r)].filter(r => r.dateDepart && r.dateDepart >= Calculs.aujourdhui()).length;
     const cartesPo = productOwners.map(r => `<div class="carte-po">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
@@ -177,24 +170,52 @@ Ecrans.listeRessources = {
         <div class="cartes-po">${cartesPo || '<span class="pale">Aucun Product Owner.</span>'}
           ${editable ? `<a class="carte-po ajout" data-action="assigner" data-projet="${p.id}" data-role="${esc(ROLES_PROJET.CHEF)}">+ Ajouter un Product Owner</a>` : ''}</div></div>
       <div class="carte"><div class="carte-titre"><h2>Membres</h2>${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</div>
-        ${this.tableauPersonnes(membres, 'Aucun membre.', true)}</div>`;
+        ${this.tableauPersonnes('projet:' + p.id, membres, 'Aucun membre.', true)}</div>`;
   },
 
-  /* Tableau de personnes : [{ r, role }] ; avecRole = colonne « Rôle » (membres d'un projet).
+  /* Tableau de personnes : [{ r, role }] ; deProjet = membres d'un projet (colonne « Rôle » sur le
+     projet) ; sinon membres d'une équipe (colonne « Projets »). Colonne « Accès » : rôle d'accès
+     (roleAcces, etat.js ; maquette role-acces/). Deux sections repliables, Actifs puis Inactifs
+     (demande du porteur, 2026-10-12) ; cle = tableau dont on mémorise les sections repliées.
      Statut : « Inactif » dès qu'une date de fin est saisie (règle du porteur, 2026-10-05) ;
      cliquable par l'équipe de la personne (pose ou retire la date de fin). */
-  tableauPersonnes(lignes, texteVide, avecRole = false) {
-    const esc = C.esc, aujourdhui = Calculs.aujourdhui();
-    const corps = lignes.map(({ r, role }) => {
-      const editable = estMembreDe(r.equipeId) || etat.estAdmin, badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
-      return `<tr data-ressource="${r.id}"><td><span class="ligne-flex">${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
-        <td>${esc(r.poste || '—')}</td><td>${esc(r.typeContrat || '—')}</td>${avecRole ? `<td>${C.badgeRef('role', role)}</td>` : ''}
-        <td class="${r.dateDepart ? 'presence-fin' : 'discret'}">${esc(Calculs.libellePresence(r, aujourdhui)) || '<span class="pale">—</span>'}</td>
-        <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}" title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">${badge}</button>` : badge}</td>
-        <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a> &nbsp; <a data-action="assigner" data-ressource="${r.id}">Projets</a>` : ''}</td></tr>`;
-    }).join('');
-    return `<table class="tableau"><thead><tr><th>Personne</th><th>Poste</th><th>Contrat</th>${avecRole ? '<th>Rôle</th>' : ''}<th>Présence ${C.aide('datesPresence')}</th><th>Statut ${C.aide('statutPersonne')}</th><th></th></tr></thead>
-      <tbody>${corps || `<tr><td colspan="${avecRole ? 7 : 6}">${C.vide(texteVide)}</td></tr>`}</tbody></table>`;
+  tableauPersonnes(cle, lignes, texteVide, deProjet = false) {
+    const replies = ui('listeRessources', { replies: {} }).replies, nbColonnes = 7;
+    const section = (id, titre, liste, complement) => {
+      if (!liste.length) return '';
+      const ouverte = !replies[cle + ':' + id];
+      return `<tr class="groupe"><td colspan="${nbColonnes}"><button class="lien-btn section-pliable" data-action="replierSection" data-id="${cle}:${id}">
+          ${ouverte ? '▾' : '▸'} ${titre} <span class="pale">(${liste.length})${complement}</span></button></td></tr>`
+        + (ouverte ? liste.map(x => this.lignePersonne(x, deProjet)).join('') : '');
+    };
+    const corps = section('actifs', 'Actifs', lignes.filter(x => !estInactive(x.r)), '')
+      + section('inactifs', 'Inactifs', lignes.filter(x => estInactive(x.r)), ' · date de fin saisie');
+    return `<div class="defilement-x"><table class="tableau tableau-personnes"><thead><tr><th>Personne</th><th>Poste</th><th>Accès ${C.aide('roleAcces')}</th><th>${deProjet ? 'Rôle sur le projet' : 'Projets'}</th>
+        <th>Présence ${C.aide('datesPresence')}</th><th>Statut ${C.aide('statutPersonne')}</th><th></th></tr></thead>
+      <tbody>${corps || `<tr><td colspan="${nbColonnes}">${C.vide(texteVide)}</td></tr>`}</tbody></table></div>`;
+  },
+  // Une ligne du tableau de personnes (grisée si la personne est inactive)
+  lignePersonne({ r, role }, deProjet) {
+    const esc = C.esc, editable = estMembreDe(r.equipeId) || etat.estAdmin, badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
+    const acces = ROLES_ACCES[roleAcces(r)];
+    return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
+      <td>${esc(r.poste || '—')}</td><td>${C.badge(acces.libelle, acces.texte, acces.fond)}</td>
+      <td class="projets-personne">${deProjet ? C.badgeRef('role', role) : this.projetsDe(r)}</td>
+      <td class="${r.dateDepart ? 'presence-fin' : 'discret'}">${esc(Calculs.libellePresence(r, Calculs.aujourdhui())) || '<span class="pale">—</span>'}</td>
+      <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}" title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">${badge}</button>` : badge}</td>
+      <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</td></tr>`;
+  },
+  // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
+  // (ses projets se modifient depuis sa fiche : « Modifier ses projets »)
+  projetsDe(r) {
+    const projets = etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId))
+      .map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
+    return projets.join('') || '<span class="pale">hors projet</span>';
+  },
+  // Rappel, sous le tableau d'une équipe, de ce qu'ouvre chaque rôle d'accès
+  legendeAcces() {
+    return `<div class="legende-acces">${Object.values(ROLES_ACCES).map(a =>
+      `<div>${C.badge(a.libelle, a.texte, a.fond)} <span class="discret">${C.esc(a.description)}</span></div>`).join('')}</div>`;
   },
 
   /* ---------- Postes / Types de contrat ---------- */
@@ -268,5 +289,9 @@ Object.assign(Actions, {
     if (!inactive && !confirm(`Rendre ${r.nom} inactive ? Sa date de fin sera aujourd’hui.`)) return;
     executer(() => Api.modifier('ressources', { id: 'eq.' + d.id }, { dateDepart: inactive ? null : Calculs.aujourdhui() }), 'ressources');
   },
-  basculerInactifs: () => majUi('listeRessources', { inactifs: !ui('listeRessources', { inactifs: true }).inactifs })
+  // Section Actifs / Inactifs d'un tableau de personnes : repliée ↔ dépliée
+  replierSection(d) {
+    const replies = { ...ui('listeRessources', { replies: {} }).replies }; replies[d.id] = !replies[d.id];
+    majUi('listeRessources', { replies });
+  }
 });

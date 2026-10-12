@@ -223,7 +223,7 @@ async function chargerRoles() {
       const org = await Api.lireOrganisation(e.id);
       const moi = (org.members || []).find(m => m.userId === etat.session.user.id);
       if (moi) roles[e.id] = moi.role;
-      membres[e.id] = (org.members || []).map(m => ({ userId: m.userId, nom: m.user ? m.user.name || m.user.email : '?', role: m.role }));
+      membres[e.id] = (org.members || []).map(m => ({ id: m.id, userId: m.userId, nom: m.user ? m.user.name || m.user.email : '?', role: m.role }));
     } catch (err) { /* équipe illisible : rôle inconnu */ }
   }));
   etat.rolesEquipe = roles;
@@ -238,7 +238,10 @@ function mesEquipes() {
   const ids = new Set(etat.organisations.map(o => o.id));
   return (etat.d.equipes || []).filter(e => ids.has(e.id));
 }
-const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
+// Lecteur d'une équipe (migration 027) : sa fiche de l'équipe porte lecture_seule ; il lit, ne modifie pas
+const suisLecteurDe = equipeId => !etat.estCreateur && (etat.d.ressources || [])
+  .some(r => r.equipeId === equipeId && r.userId === etat.session.user.id && r.lectureSeule);
+const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId) && !suisLecteurDe(equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
@@ -247,7 +250,7 @@ function peutEditerProjet(projet) {
   if (!projet) return false;
   if (estMembreDe(projet.equipeId)) return true;
   const moi = maRessource();
-  return !!moi && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
+  return !!moi && !moi.lectureSeule && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
     [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));
 }
 
@@ -282,6 +285,26 @@ const chefsPossibles = equipeId => {
   return ressourcesActives().filter(r => unites.includes(r.equipeId));
 };
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
+
+/* ---------- Rôle d'accès d'une personne (maquette role-acces/, 2026-10-12) ---------- */
+// Son compte dans l'organisation Neon Auth de son équipe ({ id, role }), connu pour mes équipes
+const membreOrganisation = r => (etat.membresEquipe[r.equipeId] || []).find(m => r.userId && m.userId === r.userId) || null;
+const estAdministrateur = r => !!r.userId && [...(etat.d.administrateurs || []), ...(etat.d.createur || [])].some(a => a.userId === r.userId);
+// Responsable : désigné sur une équipe (responsable_id), ou owner / admin de l'organisation de son équipe
+const estResponsableDesigne = r => etat.d.equipes.some(e => e.responsableId === r.id);
+const estResponsableEquipe = r => estResponsableDesigne(r) || ['owner', 'admin'].includes((membreOrganisation(r) || {}).role);
+/* Rôle d'accès affiché (clé de ROLES_ACCES) : le plus large qu'elle a. Sans compte de connexion,
+   la personne n'a aucun accès, quel que soit le rôle prévu. Un rôle inconnu de l'écran (ex.
+   liste des administrateurs illisible pour un non-administrateur) se lit comme le suivant. */
+function roleAcces(r) {
+  if (!r.userId) return 'sansCompte';
+  if (estAdministrateur(r)) return 'admin';
+  if (estResponsableEquipe(r)) return 'responsable';
+  if (r.lectureSeule) return 'lecteur';
+  const chef = etat.d.projets.some(p => p.chefId === r.id)
+    || etat.d.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
+  return chef ? 'chef' : 'membre';
+}
 
 /* ---------- Daily par projet (migration 018) ---------- */
 // Absence d'une personne un jour donné (Congés & capacité), ou null

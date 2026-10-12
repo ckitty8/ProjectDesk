@@ -387,11 +387,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     };
     await poserFin('2026-09-30');
     const revue = (await page.textContent(ligneFin)).includes('Inactif') && (await page.textContent(ligneFin)).includes('partie le 30 sept. 2026');
-    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
-    const masquee = !(await page.$(ligneFin));
-    await page.click('[data-action="basculerInactifs"]'); await page.waitForTimeout(150);
-    verifier('Liste des ressources : date de fin (fiche) → reste affichée « Inactif », présence en clair (masquable avec le bouton)',
-      masquee && revue && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
+    // Sections Actifs / Inactifs repliables (demande du porteur, 2026-10-12)
+    const dansInactifs = await page.$eval(ligneFin, tr => { let x = tr.previousElementSibling; while (x && !x.classList.contains('groupe')) x = x.previousElementSibling; return !!x && x.textContent.includes('Inactifs'); });
+    const sectionInactifs = '#detail-ressources [data-action="replierSection"][data-id$=":inactifs"]';
+    await page.click(sectionInactifs); await page.waitForTimeout(150);
+    const masquee = !(await page.$(ligneFin)) && !!(await page.$('#detail-ressources tr[data-ressource]'));
+    await page.click(sectionInactifs); await page.waitForTimeout(150);
+    verifier('Liste des ressources : date de fin (fiche) → section « Inactifs » repliable, présence en clair',
+      masquee && revue && dansInactifs && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
     // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
     const reactivee = await page.evaluate(id => !ressource(id).dateDepart, idFin);
@@ -429,6 +432,30 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
+    /* Rôle d'accès (maquette role-acces/, 2026-10-12) : colonne « Accès », choix dans la fiche.
+       Camille (administratrice, owner de Plateforme) passe Thomas Lecteur, puis Responsable, puis Membre. */
+    await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
+    const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
+    const ligneThomas = `#detail-ressources tr[data-ressource="${idThomas}"]`;
+    const accesThomas = async () => (await page.$eval(`${ligneThomas} td:nth-child(3)`, td => td.textContent.trim()));
+    const choisirRole = async role => {
+      await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
+      await page.check(`input[name=roleAcces][value=${role}]`);
+      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(500);
+    };
+    const accesInitial = await accesThomas();
+    await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
+    const adminGrise = await page.$eval('input[name=roleAcces][value=admin]', i => i.disabled);
+    await page.click('.modale .fermer');
+    await choisirRole('lecteur');
+    const lecteur = (await accesThomas()) === 'Lecteur' && await page.evaluate(id => ressource(id).lectureSeule === true, idThomas);
+    await choisirRole('responsable');
+    const responsable = (await accesThomas()) === 'Responsable d’équipe';
+    await choisirRole('membre');
+    verifier('Rôle d’accès : colonne Accès, Lecteur / Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
+      accesInitial === 'Membre' && adminGrise && lecteur && responsable && (await accesThomas()) === 'Membre'
+      && await page.evaluate(id => !ressource(id).lectureSeule && membreOrganisation(ressource(id)).role === 'member', idThomas)
+      && (await page.textContent('#detail-ressources')).includes('Pas encore de compte'));
     // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
     // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
     const creerUnite = async (nom, prefixe, type, parent) => {

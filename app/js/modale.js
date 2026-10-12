@@ -3,7 +3,7 @@
    - affectation : assigner une ressource à des projets, avec un rôle
                    (maquette : « Assigner une ressource ») ; m.role pré-choisit le
                    rôle sur le projet d'origine (« + Ajouter un Product Owner »)
-   - ressource   : fiche d'une personne (nom, poste, capacité, email)
+   - ressource   : fiche d'une personne (nom, poste, capacité, dates, email, rôle d'accès)
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
    - objectifs   : objectifs (OKR) et résultats clés de mon équipe
@@ -66,10 +66,63 @@ const Modale = {
         <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label><input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
           <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
         <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
-        ${r.userId ? '<div class="discret">Compte de connexion lié.</div>' : ''}
+        ${this.roleAccesFiche(r)}
+        <div class="discret">${r.userId ? 'Compte de connexion lié' : 'Pas encore de compte : le rôle s’appliquera à sa première connexion avec cet email'} · équipe ${esc(equipe(r.equipeId).nom)}.</div>
       </div>
       <div class="panneau-pied">${m.id ? '<button type="button" class="btn danger" data-action="supprimerRessource" data-id="' + m.id + '">Supprimer</button><span style="flex:1"></span>' : ''}
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
+  },
+
+  /* Rôle d'accès de la personne (maquette docs/maquettes/role-acces/2-fiche-role.png).
+     Choix : Administrateur (créateur seulement, compte lié), Responsable d'équipe (compte
+     membre de l'équipe), Membre, Lecteur (administrateur ou responsable de l'équipe).
+     Le responsable désigné de l'équipe (fiche équipe) le reste : son rôle se change là.
+     Les rôles sur les projets (Chef de projet, Membre, Lecteur) sont rappelés en dessous. */
+  roleAccesFiche(r) {
+    const esc = C.esc, actuel = this.roleAccesChoisi(r);
+    const gere = etat.estAdmin || estResponsableDe(r.equipeId), designe = !!r.id && estResponsableDesigne(r);
+    const possible = {
+      admin: etat.estCreateur && !!r.userId,
+      responsable: gere && !!membreOrganisation(r),
+      membre: gere && !designe,
+      lecteur: gere && !designe
+    };
+    const cartes = ['admin', 'responsable', 'membre', 'lecteur'].map(cle => {
+      const a = ROLES_ACCES[cle], libelle = cle === 'membre' ? 'Membre de l’équipe' : a.libelle;
+      return `<label class="choix-role${cle === actuel ? ' actif' : ''}${possible[cle] || cle === actuel ? '' : ' grise'}">
+        <input type="radio" name="roleAcces" value="${cle}" ${cle === actuel ? 'checked' : ''} ${possible[cle] ? '' : 'disabled'}>
+        <span><b>${esc(libelle)}</b><span class="discret">${esc(a.description)}</span></span></label>`;
+    }).join('');
+    const projets = r.id ? etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId)) : [];
+    const note = designe ? 'Responsable désigné de l’équipe : à changer dans la fiche de l’équipe.'
+      : !gere ? 'Modifiable par un administrateur ou un responsable de l’équipe.' : '';
+    return `<div><label class="libelle">Rôle d’accès ${C.aide('roleAcces')}</label><div class="choix-roles">${cartes}</div>
+        ${note ? `<div class="discret" style="font-size:12px;margin-top:6px">${esc(note)}</div>` : ''}</div>
+      ${r.id ? `<div class="projets-fiche"><b>Sur ses projets</b> (le rôle de projet s’ajoute au rôle d’accès) :
+        ${projets.map(a => C.badgeRef('role', `${projet(a.projetId).nom} · ${a.role}`)).join(' ') || '<span class="pale">aucun</span>'}
+        &nbsp;<a data-action="assigner" data-ressource="${r.id}">Modifier ses projets</a></div>` : ''}`;
+  },
+  // Rôle coché dans la fiche : son rôle d'accès, « Chef de projet » et « sans compte » ramenés au choix possible
+  roleAccesChoisi(r) {
+    if (!r.id) return 'membre';
+    if (estAdministrateur(r)) return 'admin';
+    if (estResponsableEquipe(r)) return 'responsable';
+    return r.lectureSeule ? 'lecteur' : 'membre';
+  },
+
+  /* Rôle d'accès hors fiche : liste des administrateurs (créateur) et rôle dans l'organisation
+     Neon Auth de l'équipe (admin = responsable, member sinon ; le propriétaire « owner » le reste).
+     La base et Neon Auth refusent ce que l'utilisateur n'a pas le droit de faire. */
+  async appliquerRoleAcces(r, role) {
+    if (r.userId && etat.estCreateur && (role === 'admin') !== estAdministrateur(r)) {
+      if (role === 'admin') await Api.creer('administrateurs', { userId: r.userId });
+      else await Api.supprimer('administrateurs', { user_id: 'eq.' + r.userId });
+    }
+    const m = membreOrganisation(r), roleOrganisation = role === 'responsable' ? 'admin' : 'member';
+    if (m && m.role !== 'owner' && role !== 'admin' && m.role !== roleOrganisation) {
+      await Api.modifierRoleMembre(r.equipeId, m.id, roleOrganisation);
+      await chargerRoles();
+    }
   },
 
   /* ---------- Équipe : création / modification, membres et invitations ---------- */
@@ -260,13 +313,24 @@ Object.assign(Actions, {
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
+    // Rôle d'accès coché (absent si aucun choix n'était modifiable) : Lecteur = lecture_seule sur la fiche
+    const role = f.roleAcces; delete f.roleAcces;
+    if (role) f.lectureSeule = role === 'lecteur';
     executer(async () => {
-      if (d.id) { await Api.modifier('ressources', { id: 'eq.' + d.id }, f); etat.modale = null; return; }
+      if (d.id) {
+        const r = ressource(d.id);
+        if (role === Modale.roleAccesChoisi(r)) delete f.lectureSeule;     // rien ne change : pas d'écriture du rôle
+        await Api.modifier('ressources', { id: 'eq.' + d.id }, f);
+        if (role) await Modale.appliquerRoleAcces(r, role);
+        etat.modale = null; return;
+      }
+      if (!f.lectureSeule) delete f.lectureSeule;
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
       // Venue de « + Membre » : on revient à l'affectation avec la personne sélectionnée
       etat.modale = d.retourProjet ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet } : null;
-    }, 'ressources');
+    }, 'ressources', 'administrateurs');
   },
+
   // Depuis la fenêtre d'affectation : créer la personne puis y revenir
   nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, retourProjet: etat.modale.projetId || '' } }),
   supprimerRessource(d) {
