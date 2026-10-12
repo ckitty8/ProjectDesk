@@ -114,6 +114,7 @@
 | 1.97    | 2026-10-12 | **Trucs et astuces** (maquette `astuces-agile-roadmap/`) : deux boutons de thème en haut — **Agile** (regroupe les onglets KPI Agile et Rôles Scrum, inchangés) et **Roadmap** (nouvelle fiche pratique en lecture seule : de la vision au sprint, trois formats Now / Next / Later, par objectifs OKR, datée Gantt, format conseillé selon la méthode du projet, bonnes pratiques et pièges). Textes `ROADMAP_ASTUCES` (`config.js`). Aucun changement en base (§ 3.3, § 9) |
 | 1.98    | 2026-10-12 | **Propriété CIRITEC** : licence propriétaire `LICENSE` (© 2026 CIRITEC, tous droits réservés, Code de la propriété intellectuelle), mention en tête du DAT, des README et de `app/index.html` (commentaire, balises `author` / `copyright`). Branches de sauvegarde Neon `sauvegarde-avant-020` à `-025` supprimées (accord du porteur). Aucun changement d'écran ni de données |
 | 1.99    | 2026-10-12 | **Mention « © 2026 CIRITEC · Tous droits réservés »** visible (maquette `mention-ciritec/`) : écrans de connexion (connexion, vérification de l'email, mot de passe oublié — avec « logiciel propriétaire »), bas de la barre latérale sur tous les écrans, menu Aide (« À propos »). Composant `C.mentionPropriete`, paramètres `PROPRIETAIRE` et `ANNEE_DROITS` (`config.js`) (§ 2.1, § 3, § 9) |
+| 2.00    | 2026-10-12 | **Revue qualité** (skill `revue-qualite`) : code — 0 erreur, 17 avertissements connus (lignes de texte longues de `config.js`, fonctions de rendu longues) ; base — 0 erreur, 2 avertissements (4 fonctions appelées par l'application et non par la base : normal ; sprint APP-01 n°17 sans dates). Corrections : **une seule liste de rôles** (`Roles.LISTE`, reprise par la Simulation des rôles ; clé « Compte en attente » = `sansEquipe`) ; **règle « gérer une équipe »** (administrateur ou responsable) centralisée dans `peutGererEquipe` (`etat.js`), utilisée par Congés & capacité, Administration et la fiche personne. Aucun changement d'écran ni de données (§ 2.1, § 10) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -196,7 +197,7 @@ Principes :
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition, dont la **méthode**) et « Nouveau projet » (code, nom, description, chef, **méthode obligatoire** : une carte par valeur du référentiel `methode`, description `DESCRIPTIONS_METHODES` de `config.js`) |
 | `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs, mise en place Power Automate, **export du daily en Excel** |
 | `app/js/roles.js` | **Rôles** (créateur) : liste des rôles (`Roles.LISTE`), rôles d'une fiche (`dePersonne`), personnes par rôle (`parRole`, dont créateur et administrateurs sans fiche, comptes en attente), onglet d'Administration « ★ Rôles » |
-| `app/js/simulation.js` | **Simulation des rôles** (créateur) : rôles proposés et personnes qui les ont (`Simulation.personnes`), identité simulée posée / restaurée (`etat.simulation`, `etat.reel`), bandeau, onglet d'Administration ; lecture seule garantie par `Api` (`refuserEnSimulation`) |
+| `app/js/simulation.js` | **Simulation des rôles** (créateur) : rôles proposés (ceux de `Roles.LISTE`, hors Créateur) et personnes qui les ont (`Simulation.personnes`), identité simulée posée / restaurée (`etat.simulation`, `etat.reel`), bandeau, onglet d'Administration ; lecture seule garantie par `Api` (`refuserEnSimulation`) |
 | `app/js/excel.js` | Fabrication d'un fichier **.xlsx** dans le navigateur, sans bibliothèque : XML Office Open (textes en ligne, jamais interprétés comme formules), en-tête figée, filtres, largeurs, styles fixes ; archive ZIP « stockée » avec CRC-32 ; téléchargement (`Excel.telecharger`) |
 | `app/js/ecrans/*.js` | Un fichier par écran (§ 3) |
 | `app/css/theme.css` | Jetons de la maquette (couleurs, typographie) et composants |
@@ -475,7 +476,8 @@ Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors d
    « column … does not exist » (colonne supprimée encore connue du cache).
 4. Nouvel écran → fichier `app/js/ecrans/`, entrée de menu dans `coquille.js`, balise `<script>`
    dans `index.html`, maquette PNG validée, ligne au § 3, capture dans `tests/parcours.js`.
-5. Droits : toujours en base (RLS) ; `etat.js` ne fait que masquer.
+5. Droits : toujours en base (RLS) ; `etat.js` ne fait que masquer. Une règle d'affichage utilisée par plusieurs écrans est une fonction de `etat.js`
+   (`peutPiloterProjet`, `peutGererEquipe`…), jamais un test de rôle recopié ; la liste des rôles est `Roles.LISTE` (`roles.js`).
 6. **Section « Suivi de mes équipes » (`section: 'general'`) = lecture seule** : aucun champ, formulaire
    ni action d'écriture ; toute modification va dans « Mon dashboard ». Seule exception : Valider / Renvoyer
    une feuille de temps (Timesheet, responsable de l'équipe). Une nouvelle action de lecture utilisée dans

@@ -13,7 +13,8 @@
 'use strict';
 
 const Roles = {
-  // Rôles affichés, du plus large au plus restreint : clé, libellé, couleur, ce que le rôle permet
+  /* Rôles affichés, du plus large au plus restreint : clé, libellé, couleur, ce que le rôle permet.
+     Liste unique : reprise par la Simulation des rôles (simulation.js), hors Créateur. */
   LISTE: [
     { cle: 'createur', libelle: 'Créateur', couleur: '#5B2A9E', description: 'Tous les droits sur toutes les équipes ; seul à nommer un administrateur.' },
     { cle: 'admin', libelle: 'Administrateur', couleur: '#003CC8', description: 'Équipes, référentiels, jours fériés, comptes en attente.' },
@@ -21,7 +22,7 @@ const Roles = {
     { cle: 'chef', libelle: 'Chef de projet', couleur: '#0F8A6B', description: 'Ses projets : plan de charge, envoi du daily, sprints.' },
     { cle: 'membre', libelle: 'Membre de projet', couleur: '#4A5363', description: 'Saisit son daily, ses heures et ses congés.' },
     { cle: 'lecteur', libelle: 'Lecteur de projet', couleur: '#8A93A3', description: 'Consulte ses projets sans les modifier.' },
-    { cle: 'attente', libelle: 'Compte en attente', couleur: '#B25E09', description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.' }
+    { cle: 'sansEquipe', libelle: 'Compte en attente', couleur: '#B25E09', description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.' }
   ],
 
   /* Rôles d'une fiche ressource : liste de { cle, precision } (ex. Chef de projet · CDO).
@@ -51,11 +52,12 @@ const Roles = {
   parRole() {
     const groupes = Object.fromEntries(this.LISTE.map(role => [role.cle, []]));
     ressourcesActives().forEach(r => this.dePersonne(r).forEach(x => groupes[x.cle].push({ nom: r.nom, precision: x.precision })));
-    // Créateur et administrateurs dont le compte n'est relié à aucune fiche ressource
+    // Créateur et administrateurs dont le compte n'est relié à aucune fiche ressource (toutes les fiches,
+    // présentes ou parties : une fiche inactive reste reliée au compte — DAT § 10, point 7)
     const sansFiche = userId => !(etat.d.ressources || []).some(r => r.userId === userId);
     (etat.d.createur || []).filter(c => sansFiche(c.userId)).forEach(c => groupes.createur.push({ nom: c.email, precision: 'compte sans fiche' }));
     etat.d.administrateurs.filter(a => sansFiche(a.userId)).forEach(() => groupes.admin.push({ nom: 'Compte sans fiche ressource' }));
-    etat.comptesEnAttente.filter(c => !c.invite).forEach(c => groupes.attente.push({ nom: c.nom || c.email, precision: c.email }));
+    etat.comptesEnAttente.filter(c => !c.invite).forEach(c => groupes.sansEquipe.push({ nom: c.nom || c.email, precision: c.email }));
     return groupes;
   },
 

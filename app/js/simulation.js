@@ -15,23 +15,10 @@
 'use strict';
 
 const Simulation = {
-  /* Rôles proposés (ceux qui existent aujourd'hui) : libellé, description, couleur de la carte,
-     et personnes qui ont ce rôle (fiches ressources présentes). Les rôles de « Rôles et droits »
-     (Direction, Projet, Utilisateur, Lecture seule) s'ajouteront ici. */
-  ROLES: [
-    { cle: 'admin', libelle: 'Administrateur', couleur: '#003CC8',
-      description: 'Tous les écrans, Administration (équipes, référentiels, comptes en attente).' },
-    { cle: 'responsable', libelle: 'Responsable d’équipe', couleur: '#7A3FC2',
-      description: 'Son équipe et les unités rattachées : valide les timesheets, lit tous les daily de l’unité.' },
-    { cle: 'chef', libelle: 'Chef de projet', couleur: '#0F8A6B',
-      description: 'Ses projets : plan de charge, envoi du daily, sprints ; saisit son daily et ses heures.' },
-    { cle: 'membre', libelle: 'Membre de projet', couleur: '#4A5363',
-      description: 'Saisit son daily, ses heures et ses congés ; lit le daily de ses projets.' },
-    { cle: 'lecteur', libelle: 'Lecteur de projet', couleur: '#8A93A3',
-      description: 'Consulte les projets où il est Lecteur, sans les modifier.' },
-    { cle: 'sansEquipe', libelle: 'Compte sans équipe', couleur: '#B25E09',
-      description: 'Ce que voit une personne inscrite tant qu’on ne lui a pas donné l’accès.' }
-  ],
+  /* Rôles proposés : ceux de l'onglet ★ Rôles (Roles.LISTE, roles.js), sauf Créateur (c'est le rôle
+     de départ). Les rôles de « Rôles et droits » (Direction, Projet, Utilisateur, Lecture seule)
+     s'ajouteront dans Roles.LISTE. */
+  get ROLES() { return Roles.LISTE.filter(role => role.cle !== 'createur'); },
 
   // Onglet réservé au créateur (masqué pendant une simulation : le bandeau permet d'en changer ou d'en sortir)
   estDisponible: () => etat.estCreateur,

@@ -240,6 +240,8 @@ function mesEquipes() {
 }
 const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
+// Gérer une équipe (membres, invitations, objectif de jours, rôle d'accès) : administrateur ou responsable de l'équipe
+const peutGererEquipe = equipeId => etat.estAdmin || estResponsableDe(equipeId);
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
   : (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;

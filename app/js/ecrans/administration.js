@@ -16,7 +16,7 @@ const Administration = {
     const esc = C.esc;
     const lignes = etat.d.equipes.map(e => {
       const resp = ressource(e.responsableId);
-      const peutModifier = modifiable && (etat.estAdmin || estResponsableDe(e.id));
+      const peutModifier = modifiable && peutGererEquipe(e.id);
       return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td><td>${resp ? esc(resp.nom) : '<span class="pale">—</span>'}</td>
         <td>${ressourcesActives().filter(r => r.equipeId === e.id).length}</td><td>${etat.d.projets.filter(p => p.equipeId === e.id).length}</td>
         <td class="num">${peutModifier ? `<a data-action="modifierEquipe" data-id="${e.id}">Modifier</a>` : ''}</td></tr>`;

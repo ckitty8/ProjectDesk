@@ -80,7 +80,7 @@ const Modale = {
      Les rôles sur les projets (Chef de projet, Membre, Lecteur) sont rappelés en dessous. */
   roleAccesFiche(r) {
     const esc = C.esc, actuel = this.roleAccesChoisi(r);
-    const gere = etat.estAdmin || estResponsableDe(r.equipeId), designe = !!r.id && estResponsableDesigne(r);
+    const gere = peutGererEquipe(r.equipeId), designe = !!r.id && estResponsableDesigne(r);
     const possible = {
       admin: etat.estCreateur && !!r.userId,
       responsable: gere && !!membreOrganisation(r),
@@ -133,7 +133,7 @@ const Modale = {
     const personnes = m.id ? ressourcesActives().filter(r => r.equipeId === m.id).map(r => ({ valeur: r.id, libelle: r.nom })) : [];
     const membres = (m.organisation && m.organisation.members) || [];
     const invitations = ((m.organisation && m.organisation.invitations) || []).filter(i => i.status === 'pending');
-    const peutInviter = m.id && (etat.estAdmin || estResponsableDe(m.id));
+    const peutInviter = m.id && peutGererEquipe(m.id);
     return `<div style="display:flex;flex-direction:column;min-height:0">
       ${this.entete(m.id ? libelleType + ' ' + e.nom : (e.type === 'direction' ? 'Nouvelle direction' : 'Nouvelle équipe'))}
       <div class="panneau-corps">
