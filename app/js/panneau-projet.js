@@ -61,7 +61,7 @@ const Panneau = {
   // Formulaire de création ; équipe pré-remplie possible (choisie dans Liste des ressources :
   // v.equipeId ; sinon l'équipe ouverte).
   // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef de projet
-  // (enregistré comme affectation « Chef de projet » : plus de champ chef sur la fiche depuis 2.02) ;
+  // (enregistré comme affectation « Chef de projet » : plus de champ chef sur la fiche depuis 2.03) ;
   // + méthode obligatoire (2026-10-08 : Agile Scrum, Agile Kanban, Cascade, Cycle en V).
   // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {

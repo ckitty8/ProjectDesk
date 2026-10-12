@@ -296,7 +296,7 @@ const responsablesDe = equipeId => (etat.d.responsablesEquipe || []).filter(x =>
 // La personne est-elle l'un des responsables de l'équipe ? (table responsables_equipe, migration 027)
 const estDansResponsables = (ressourceId, equipeId) => (etat.d.responsablesEquipe || []).some(x => x.ressourceId === ressourceId && x.equipeId === equipeId);
 /* Chefs d'un projet (1 ou plusieurs) : affectations « Chef de projet », personnes non
-   inactives. Le champ « Chef de projet » de la fiche projet (projets.chef_id) est retiré depuis 2.02 :
+   inactives. Le champ « Chef de projet » de la fiche projet (projets.chef_id) est retiré depuis 2.03 :
    un chef encore inscrit seulement sur la fiche reste compté (rien n'est perdu), en lecture seule. */
 const chefsDuProjet = p => {
   const ids = etat.d.affectations.filter(a => a.projetId === p.id && a.role === ROLES_PROJET.CHEF && nonInactive(a.ressourceId)).map(a => a.ressourceId);

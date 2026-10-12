@@ -3,7 +3,7 @@
 > **Statut : validée par le porteur le 2026-10-12, avec les maquettes `docs/maquettes/ressources-v2/` (fiche, rôles et menus).**
 > Vocabulaire : on dit **Chef de projet** (et non Product Owner), porteur 2026-10-12.
 > **Liste des ressources : le porteur garde le design de production** (navigation à gauche, détail à
-> droite) avec les fonctionnalités ci-dessous (DAT 2.00) ; l'organigramme (variante C de
+> droite) avec les fonctionnalités ci-dessous (DAT 2.01) ; l'organigramme (variante C de
 > `ressources-v2-variantes/`) va dans **Suivi de mes équipes › Dashboard général**, visible de
 > **tous les profils** avec toutes les équipes, en consultation (porteur, 2026-10-12). Le porteur repart de
 > zéro sur la gestion des ressources : elle conditionne tout le reste de l'application.
@@ -103,8 +103,8 @@ Aucune. (Doublon Cerine : le porteur garde les deux fiches, 2026-10-12.)
   de DSI (sans compte ni donnée) supprimée ; ligne `equipes`, membres, invitations et organisation
   de connexion DSI supprimés. Compteurs vérifiés : projets 2, affectations 3, absences 155, temps 1.
 
-- Équipe : plusieurs responsables (`responsables_equipe`, migration 027) ; l'ancien champ unique n'est plus modifiable (DAT 2.02).
-- Projet : chefs unifiés en affectations « Chef de projet » (DAT 2.02) ; le champ de la fiche projet
+- Équipe : plusieurs responsables (`responsables_equipe`, migration 027) ; l'ancien champ unique n'est plus modifiable (DAT 2.03).
+- Projet : chefs unifiés en affectations « Chef de projet » (DAT 2.03) ; le champ de la fiche projet
   n'est plus modifiable. Christelle, inscrite chef de CDO seulement sur la fiche, a été ajoutée en
   affectation « Chef de projet » de CDO le 2026-10-12 (accord du porteur, règle n°8 ; affectations 3 → 4).
 - Personne : rattachée à **une** équipe (`ressources.equipe_id`) → n'est plus une appartenance ;

@@ -1,7 +1,7 @@
 /* ============================================================
    Migration 028 — Responsables et chefs de projet : une seule source
    ------------------------------------------------------------
-   Décision du porteur (2026-10-12, DAT 2.02) : supprimer les doublons laissés par l'ancien
+   Décision du porteur (2026-10-12, DAT 2.03) : supprimer les doublons laissés par l'ancien
    fonctionnement.
    - Responsables d'une équipe : seulement la table responsables_equipe (migration 027 ; plusieurs
      par équipe). Le champ « Responsable » unique (equipes.responsable_id) n'est plus modifiable dans

@@ -544,7 +544,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
     // Projet modifiable depuis la Liste des ressources : nom, dates
     await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
-    // Doublons retirés (DAT 2.02) : plus de chef unique sur la fiche projet ni de responsable unique sur l'équipe
+    // Doublons retirés (DAT 2.03) : plus de chef unique sur la fiche projet ni de responsable unique sur l'équipe
     const sansChefUnique = !(await page.$('.panneau [data-champ="chefId"]')) && (await page.textContent('.panneau')).includes('Chefs de projet');
     const sansResponsableUnique = await page.evaluate(() => {
       majEtat({ modale: { type: 'equipe', id: etat.d.equipes[0].id, organisation: null } });
