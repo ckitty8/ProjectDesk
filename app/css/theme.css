@@ -192,6 +192,26 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .ligne-role { padding: 4px 0; }
 .case-admin { gap: 8px; }
 
+/* Dashboard général : organigramme (maquette ressources-v2-variantes/c-organigramme.png) —
+   boîtes reliées équipes → projets → personnes ; défilement horizontal s'il y a beaucoup d'équipes */
+.orga-corps { padding: 18px 16px; overflow-x: auto; }
+.orga-equipes { display: grid; gap: 20px; position: relative; padding-top: 20px; }
+.orga-barre { position: absolute; top: 0; height: 20px; border: 2px solid #C9D0DC; border-bottom: 0; border-radius: 8px 8px 0 0; }
+.orga-colonne { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.orga-boite { background: #fff; border: 2px solid var(--bordure); border-radius: 10px; padding: 10px 12px; }
+.orga-equipe { border-color: var(--primaire); text-align: center; position: relative; }
+.orga-equipes .orga-equipe::before { content: ''; position: absolute; top: -22px; left: calc(50% - 1px); width: 2px; height: 20px; background: #C9D0DC; } .orga-equipe h2 { font-size: 15px; }
+.orga-responsables { margin-top: 6px; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+.orga-lien { width: 2px; height: 16px; background: #C9D0DC; margin: 0 auto; }
+.orga-projets { display: flex; flex-direction: column; gap: 10px; }
+.orga-projet { border-color: #E3A64B; } .orga-projet:hover { background: var(--fond-doux); }
+.orga-vide { border-style: dashed; text-align: center; font-size: 12px; }
+.orga-membres { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--bordure); display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.orga-membres div { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.orga-personne { display: inline-flex; align-items: center; gap: 6px; }
+.orga-personne .avatar { width: 20px; height: 20px; flex-basis: 20px; font-size: 9px; }
+.orga-sans { margin-top: 18px; padding: 10px 14px; border-radius: 8px; background: #FFF8EC; border: 1px solid #F3D9A8; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; }
+
 /* Bulle d'information (C.aide) */
 .aide { position: relative; display: inline-flex; margin-left: 4px; color: var(--pale); cursor: help; font-size: 12px; font-weight: 400;
   text-transform: none; letter-spacing: 0; vertical-align: middle; outline: none; }

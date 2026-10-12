@@ -123,6 +123,7 @@ const AIDES = {
   recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 »), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
+  organigramme: 'Équipes (et leurs responsables) → projets → personnes avec leur rôle sur le projet ; « Sans affectation » : personnes responsables de rien et affectées à aucun projet. Les personnes inactives n’apparaissent pas. Un clic sur un projet l’ouvre ; les personnes se gèrent dans Mon dashboard › Liste des ressources.',
   responsablesEquipe: 'Une équipe a un ou plusieurs responsables ; une personne peut être responsable de plusieurs équipes. Un responsable gère les personnes et les projets de ses équipes.',
   productOwners: 'Product Owner = personne affectée au projet avec le rôle « Chef de projet ». Un projet peut en avoir un ou plusieurs ; un chef de projet gère les personnes de ses projets.',
   roleProjet: 'Rôles déduits des affectations (spécification Ressources) : Responsable d’une équipe ; sur un projet Chef de projet, Membre ou Lecteur (consulte sans modifier). « Admin » : administrateur de l’application. Une personne peut cumuler plusieurs rôles.',
@@ -144,7 +145,7 @@ const AIDES = {
    GUIDES : pages générales du menu Aide. Chaque guide = liste de paragraphes.
    ============================================================ */
 const GUIDE_ECRANS = {
-  dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés, objectifs (OKR) du trimestre, progression par trimestre et projets à surveiller.',
+  dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés, organigramme (équipes, responsables, projets, personnes), objectifs (OKR) du trimestre, progression par trimestre et projets à surveiller.',
     'Choisissez le trimestre avec les boutons T1 à T4. Survolez les ⓘ pour le détail des calculs.'],
   projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
   ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.', 'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés & capacité.'],

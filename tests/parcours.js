@@ -84,6 +84,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     /* --- Section Suivi de mes équipes (ex-Général, lecture) --- */
     await capture('03-dashboard');
+    // Organigramme : équipe → ses responsables → ses projets → leurs membres avec leur rôle
+    const orgaPf = await page.textContent('.organigramme .orga-colonne:has(h2:has-text("Plateforme"))');
+    verifier('Dashboard général : organigramme équipes → responsables → projets → membres',
+      orgaPf.includes('Camille Laurent') && orgaPf.includes('Julien Dubois') && orgaPf.includes('Migration Kubernetes') && orgaPf.includes('Thomas Bernard'));
+    await page.locator('.organigramme').screenshot({ path: path.join(CAPTURES, '03b-organigramme.png') });
     // Bulle ⓘ de la barre latérale : affichée en entier, hors de la barre qui défile (signalé le 2026-10-06)
     await page.hover('.menu-titre .aide >> nth=0'); await page.waitForTimeout(150);
     verifier('Bulle ⓘ de la barre latérale entière (non coupée)', await page.evaluate(() => {
