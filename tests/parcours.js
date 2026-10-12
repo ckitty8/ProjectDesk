@@ -158,6 +158,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await capture('25-roles-scrum');
     await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
+    // Thème Roadmap (maquette astuces-agile-roadmap) : fiche pratique, puis retour au thème Agile
+    await page.click('[data-action="themeAstuces"][data-theme="roadmap"]'); await page.waitForTimeout(200);
+    verifier('Trucs et astuces › Roadmap : chaîne vision → sprint, 3 formats, méthodes, bonnes pratiques', await page.evaluate(() =>
+      document.querySelectorAll('.chaine-etape').length === ROADMAP_ASTUCES.chaine.length
+      && document.querySelectorAll('.grille-formats > .carte').length === 3
+      && ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'].every(m => document.querySelector('.ecran').textContent.includes(m))
+      && !document.querySelector('.tableau-kpi')));
+    await capture('19b-astuces-roadmap');
+    await page.click('[data-action="themeAstuces"][data-theme="agile"]'); await page.waitForTimeout(150);
     // Menu : Saisir mes heures rangé dans Gestion des ressources (sans intertitre), plus d'entrée à part
     verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
