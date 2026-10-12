@@ -238,10 +238,7 @@ function mesEquipes() {
   const ids = new Set(etat.organisations.map(o => o.id));
   return (etat.d.equipes || []).filter(e => ids.has(e.id));
 }
-// Lecteur d'une équipe (migration 027) : sa fiche de l'équipe porte lecture_seule ; il lit, ne modifie pas
-const suisLecteurDe = equipeId => !etat.estCreateur && (etat.d.ressources || [])
-  .some(r => r.equipeId === equipeId && r.userId === etat.session.user.id && r.lectureSeule);
-const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId) && !suisLecteurDe(equipeId);
+const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
@@ -250,7 +247,7 @@ function peutEditerProjet(projet) {
   if (!projet) return false;
   if (estMembreDe(projet.equipeId)) return true;
   const moi = maRessource();
-  return !!moi && !moi.lectureSeule && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
+  return !!moi && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
     [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));
 }
 
@@ -300,7 +297,6 @@ function roleAcces(r) {
   if (!r.userId) return 'sansCompte';
   if (estAdministrateur(r)) return 'admin';
   if (estResponsableEquipe(r)) return 'responsable';
-  if (r.lectureSeule) return 'lecteur';
   const chef = etat.d.projets.some(p => p.chefId === r.id)
     || etat.d.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
   return chef ? 'chef' : 'membre';

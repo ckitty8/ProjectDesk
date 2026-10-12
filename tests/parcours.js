@@ -435,7 +435,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
     /* Rôle d'accès (maquette role-acces/, 2026-10-12) : colonne « Accès », choix dans la fiche.
-       Camille (administratrice, owner de Plateforme) passe Thomas Lecteur, puis Responsable, puis Membre. */
+       Camille (administratrice, owner de Plateforme) passe Thomas Responsable, puis Membre. */
     await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
     const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
     const ligneThomas = `#detail-ressources tr[data-ressource="${idThomas}"]`;
@@ -448,15 +448,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const accesInitial = await accesThomas();
     await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
     const adminGrise = await page.$eval('input[name=roleAcces][value=admin]', i => i.disabled);
+    const sansLecteur = !(await page.$('input[name=roleAcces][value=lecteur]'));
     await page.click('.modale .fermer');
-    await choisirRole('lecteur');
-    const lecteur = (await accesThomas()) === 'Lecteur' && await page.evaluate(id => ressource(id).lectureSeule === true, idThomas);
     await choisirRole('responsable');
     const responsable = (await accesThomas()) === 'Responsable d’équipe';
     await choisirRole('membre');
-    verifier('Rôle d’accès : colonne Accès, Lecteur / Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
-      accesInitial === 'Membre' && adminGrise && lecteur && responsable && (await accesThomas()) === 'Membre'
-      && await page.evaluate(id => !ressource(id).lectureSeule && membreOrganisation(ressource(id)).role === 'member', idThomas)
+    verifier('Rôle d’accès : colonne Accès, Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
+      accesInitial === 'Membre' && adminGrise && sansLecteur && responsable && (await accesThomas()) === 'Membre'
+      && await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member', idThomas)
       && (await page.textContent('#detail-ressources')).includes('Pas encore de compte'));
     // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
     // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)

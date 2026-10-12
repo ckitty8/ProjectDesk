@@ -105,6 +105,7 @@
 | 1.91    | 2026-10-09 | Neon Auth : domaine de prévisualisation de la branche `gestion-des-ressources` autorisé (connexion refusée sinon) ; cette prévisualisation utilise la base de production (§ 8) |
 | 1.92    | 2026-10-12 | Chef de projet (Nouveau projet, panneau projet) : la liste propose les personnes de l'équipe **et de la direction qui la regroupe** (`chefsPossibles`, etat.js) — cas réel : Thomas, rattaché à la direction DSI, absent de la liste pour un projet d'Applications, la direction n'étant plus affichée dans Liste des ressources. Aucune donnée modifiée (§ 3.4) |
 | 1.93    | 2026-10-12 | **Rôle d'accès et sections Actifs / Inactifs** (maquettes `role-acces/` validées par le porteur) : Liste des ressources — tableau **Membres de l'équipe** (toute l'équipe, remplace « Personnes sans projet ») et membres d'un projet avec colonne **Accès** (`roleAcces`, etat.js : Administrateur, Responsable d'équipe, Chef de projet, Membre, Lecteur, Pas encore de compte ; `ROLES_ACCES`, config.js), colonne Projets (« VISTA · PO »), rappel des rôles sous le tableau ; sections **Actifs** et **Inactifs repliables** (bouton « Masquer les ressources inactives » retiré). Fiche d'une personne : **choix du rôle d'accès** — Administrateur (créateur, table `administrateurs`), Responsable d'équipe / Membre (rôle `admin` / `member` de l'organisation Neon Auth, `Api.modifierRoleMembre`), **Lecteur** (nouveau au niveau de l'équipe : `ressources.lecture_seule`) — et rappel de ses rôles sur les projets. Migration 027 (additive ; sauvegarde « sauvegarde-avant-027-2026-10-12 » faite ; **à appliquer** — d'ici là, choisir « Lecteur » est refusé par la base) : colonne `lecture_seule` (false pour toutes les fiches), `mes_equipes_lecture()`, `mes_equipes()` sans les équipes en lecture seule, `est_membre_equipe()` et `peut_editer_projet()` adaptées, trigger `controler_lecture_seule`. Droits actuels inchangés (§ 3.3, § 4, § 5) |
+| 1.94    | 2026-10-12 | Rôle d'accès **Lecteur d'équipe retiré** (porteur : « il sert à rien ») : la fiche propose Administrateur, Responsable d'équipe, Membre ; le rôle Lecteur reste possible **sur un projet**. Migration 027 abandonnée (jamais appliquée, fichier supprimé) ; base inchangée (§ 3.3) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -243,7 +244,7 @@ validées : `docs/maquettes/pilotage-projet/complements/`) :
 - dans la fenêtre d'affectation, lien **« + Nouveau membre »** : crée la fiche dans l'équipe du
   projet puis revient à l'affectation, personne sélectionnée et projet coché.
 
-## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`, `020_nettoyage_tables.sql`, `021_previsionnel_temps.sql`, `022_methode_projet.sql`, `023_nettoyage_index.sql`, `024_comptes_en_attente.sql`, `025_role_createur.sql`, `026_accepter_invitations.sql`, `027_lecteur_equipe.sql`)
+## 4. Modèle de données (migrations `002_pilotage_projet.sql`, `003_lecture_administrateurs.sql`, `004_daily_equipes.sql`, `005_directions_postes_contrats.sql`, `006_direction_espace_travail.sql`, `007_valeurs_systeme_renommables.sql`, `008_type_jour_ferie.sql`, `009_demi_journees.sql`, `010_tracer_modification_definer.sql`, `011_objectifs_jours_travail.sql`, `012_dates_presence.sql`, `013_saisies_capacite.sql`, `014_sprints_saisis.sql`, `015_numero_annee_sprints.sql`, `016_feuilles_temps_mensuelles.sql`, `017_envoi_daily.sql`, `018_daily_par_projet.sql`, `019_envoi_daily_projet.sql`, `020_nettoyage_tables.sql`, `021_previsionnel_temps.sql`, `022_methode_projet.sql`, `023_nettoyage_index.sql`, `024_comptes_en_attente.sql`, `025_role_createur.sql`, `026_accepter_invitations.sql`)
 
 Colonnes en snake_case ; l'application les manipule en camelCase (conversion dans `api.js`).
 Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modification()`).
@@ -257,7 +258,7 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `referentiels` | Listes administrables : `stp`, `role`, `abs`, `poste`, `contrat`, `methode` (méthodes de gestion de projet, migration 022) | `id` |
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
-| `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012), `lecture_seule` (rôle d'accès **Lecteur** de l'équipe : lit sans modifier ; changé par un administrateur ou un responsable de l'équipe — migration 027) | → `equipes` |
+| `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012) | → `equipes` |
 | `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
 | `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement`, `methode` (libellé du référentiel `methode`, migration 022) | → `equipes`, `resultats_cles`, `ressources` |
@@ -307,14 +308,13 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 
 | Fonction | Rôle |
 |----------|------|
-| `mes_equipes_lecture()` | Équipes (enregistrées dans `equipes`) dont l'utilisateur est membre Neon Auth ; **toutes** pour le créateur (migration 027) |
-| `mes_equipes()` | Équipes **modifiables** : `mes_equipes_lecture()` sauf celles où sa fiche est Lecteur (`lecture_seule`) ; toutes pour le créateur — utilisée par les règles d'écriture |
-| `est_membre_equipe()` | Au moins une équipe (Lecteur compris, `mes_equipes_lecture`) → droit de lecture global |
+| `mes_equipes()` | Équipes (enregistrées dans `equipes`) dont l'utilisateur est membre Neon Auth ; **toutes** pour le créateur |
+| `est_membre_equipe()` | Au moins une équipe → droit de lecture global |
 | `est_admin()` | Présent dans `administrateurs`, ou créateur |
 | `est_createur()` | Présent dans `createur` (migration 025) |
 | `est_responsable_equipe(equipe)` | Rôle `owner` ou `admin` dans l'organisation, ou créateur |
 | `mes_ressources()` | Fiches ressources liées au compte |
-| `peut_editer_projet(projet)` | Équipe du projet modifiable (`mes_equipes`), ou affecté « Chef de projet » / « Membre » avec une fiche non Lecteur |
+| `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
 | `accepter_mes_invitations()` | À la connexion : accepte les invitations en attente adressées à l'email du compte (jeton JWT) — ligne de membre dans l'équipe, invitation « accepted » — pour un compte sans équipe ou le créateur ; échéance non bloquante (migration 026) |
 | `comptes_en_attente()` | Inscrits sans équipe de ProjectDesk, ni administrateurs, ni écartés : nom, email, inscription, dernière connexion, invitation en attente ; administrateurs seulement (liste vide sinon) — lit les tables de Neon Auth (migration 024) |

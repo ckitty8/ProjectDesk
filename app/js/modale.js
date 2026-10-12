@@ -84,10 +84,9 @@ const Modale = {
     const possible = {
       admin: etat.estCreateur && !!r.userId,
       responsable: gere && !!membreOrganisation(r),
-      membre: gere && !designe,
-      lecteur: gere && !designe
+      membre: gere && !designe
     };
-    const cartes = ['admin', 'responsable', 'membre', 'lecteur'].map(cle => {
+    const cartes = ['admin', 'responsable', 'membre'].map(cle => {
       const a = ROLES_ACCES[cle], libelle = cle === 'membre' ? 'Membre de l’équipe' : a.libelle;
       return `<label class="choix-role${cle === actuel ? ' actif' : ''}${possible[cle] || cle === actuel ? '' : ' grise'}">
         <input type="radio" name="roleAcces" value="${cle}" ${cle === actuel ? 'checked' : ''} ${possible[cle] ? '' : 'disabled'}>
@@ -107,7 +106,7 @@ const Modale = {
     if (!r.id) return 'membre';
     if (estAdministrateur(r)) return 'admin';
     if (estResponsableEquipe(r)) return 'responsable';
-    return r.lectureSeule ? 'lecteur' : 'membre';
+    return 'membre';
   },
 
   /* Rôle d'accès hors fiche : liste des administrateurs (créateur) et rôle dans l'organisation
@@ -313,18 +312,15 @@ Object.assign(Actions, {
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
-    // Rôle d'accès coché (absent si aucun choix n'était modifiable) : Lecteur = lecture_seule sur la fiche
+    // Rôle d'accès coché (absent si aucun choix n'était modifiable) : appliqué hors fiche (appliquerRoleAcces)
     const role = f.roleAcces; delete f.roleAcces;
-    if (role) f.lectureSeule = role === 'lecteur';
     executer(async () => {
       if (d.id) {
         const r = ressource(d.id);
-        if (role === Modale.roleAccesChoisi(r)) delete f.lectureSeule;     // rien ne change : pas d'écriture du rôle
         await Api.modifier('ressources', { id: 'eq.' + d.id }, f);
         if (role) await Modale.appliquerRoleAcces(r, role);
         etat.modale = null; return;
       }
-      if (!f.lectureSeule) delete f.lectureSeule;
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
       // Venue de « + Membre » : on revient à l'affectation avec la personne sélectionnée
       etat.modale = d.retourProjet ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet } : null;

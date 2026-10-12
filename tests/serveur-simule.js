@@ -66,7 +66,7 @@ function amorcer() {
   bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; e.actif = true; });
   // Unités (migration 006) : Plateforme est une direction (espace de travail) qui regroupe Data
   bd.equipes.forEach((e, i) => { e.type = i === 0 ? 'direction' : 'equipe'; e.parent_id = i === 1 ? bd.equipes[0].id : null; });
-  bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; r.lecture_seule = false; });   // lecteur d'équipe : migration 027
+  bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; });
 
   const OBJ = [['pf', 'O1', 'Fiabiliser la plateforme', 'haute', [['KR1.1', 'Disponibilité 99,9 %', 80], ['KR1.2', 'Temps de rétablissement < 30 min', 62], ['KR1.3', 'Onboarding dév. < 1 jour', 20]]],
     ['pf', 'O2', 'Sécuriser les accès', 'moyenne', [['KR2.1', '100 % des apps en SSO', 45], ['KR2.2', 'Revue trimestrielle des droits', 50]]],
@@ -402,7 +402,6 @@ async function donnees(req, res, table, url) {
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
       if (table === 'equipes') { l.actif = l.actif ?? true; l.type = l.type || 'equipe'; l.parent_id = l.parent_id ?? null; }
-      if (table === 'ressources') l.lecture_seule = l.lecture_seule ?? false;
       if (table === 'objectifs') l.confiance = l.confiance || 'moyenne';   // défaut SQL de objectifs.confiance
       const cle = conflit || CLES[table];
       const existante = conflit && bd[table].find(x => cle.every(c => String(x[c]) === String(l[c])));
