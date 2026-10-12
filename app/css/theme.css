@@ -348,3 +348,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 
 /* Code de vérification de l'email (connexion) : 6 chiffres bien espacés, faciles à lire et à taper */
 input.code-verification { height: 52px; text-align: center; font-size: 26px; font-weight: 600; letter-spacing: 12px; font-family: var(--mono); }
+
+/* Administration › ★ Rôles (créateur) : une carte par rôle */
+.grille-roles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 960px) { .grille-roles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

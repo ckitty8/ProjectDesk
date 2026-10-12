@@ -643,6 +643,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');
     await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(500);
     verifier('Admin : équipe créée et ouverte automatiquement', (await page.textContent('.bloc-equipe')).includes('Direction Digitale'));
+    verifier('Admin (non créateur) : pas d’onglet ★ Rôles', !(await page.$('[data-action="ongletMonAdmin"][data-id="roles"]')));
 
     /* --- Rôle Créateur (migration 025) : invitée d'office dans l'équipe créée, voit toutes les équipes --- */
     await connecter('createur@test.fr');
@@ -650,6 +651,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       etat.estCreateur && etat.estAdmin && mesEquipes().length === etat.d.equipes.length && etat.ecran !== 'choixEquipe'
       && etat.organisations.some(o => o.name === 'Direction Digitale') && !!document.querySelector('.badge-createur')));
     await capture('27-createur');
+    // Onglet ★ Rôles (maquette liste-roles) : qui a quel rôle, par rôle puis par personne
+    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="roles"]'); await page.waitForTimeout(200);
+    verifier('Créateur : onglet ★ Rôles (une carte par rôle, tableau par personne avec leurs rôles)', await page.evaluate(() =>
+      document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length
+      && document.querySelector('.grille-roles').textContent.includes('Thomas Bernard')
+      && [...document.querySelectorAll('table.tableau tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.textContent.includes('Membre de projet'))));
+    await capture('27b-roles');
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);
     await capture('28-simulation-roles');
