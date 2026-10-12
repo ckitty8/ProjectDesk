@@ -123,6 +123,8 @@ const AIDES = {
   recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 »), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
+  responsablesEquipe: 'Une équipe a un ou plusieurs responsables ; une personne peut être responsable de plusieurs équipes. Un responsable gère les personnes et les projets de ses équipes.',
+  productOwners: 'Product Owner = personne affectée au projet avec le rôle « Chef de projet ». Un projet peut en avoir un ou plusieurs ; un chef de projet gère les personnes de ses projets.',
   roleProjet: 'Rôles déduits des affectations (spécification Ressources) : Responsable d’une équipe ; sur un projet Chef de projet, Membre ou Lecteur (consulte sans modifier). « Admin » : administrateur de l’application. Une personne peut cumuler plusieurs rôles.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
@@ -153,8 +155,9 @@ const GUIDE_ECRANS = {
   mesProjets: ['Planning (Gantt) des projets où vous êtes affecté(e), avec votre rôle.', '« + Nouveau projet » crée un projet dans votre équipe ; un clic sur une barre ouvre le projet (nom, description, chef, membres).'],
   conges: ['Trois onglets : la grille mensuelle (poser les absences), le récap annuel (jours travaillés, congés, reste à prendre) et la capacité (en construction ; bouton « Méthode de calcul Scrum »).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
-  listeRessources: ['Trois niveaux : Équipe (ses responsables) → Projet (ses chefs de projet) → Membres du projet (poste, rôle, statut). Puis « Sans affectation ».',
-    '« + responsable », « + Projet », « + chef », « + Membre » apparaissent là où vous gérez : tout (administrateur), vos équipes (responsable), vos projets (chef de projet). « Fiche » ouvre la personne : dates, rôles, passer inactif.'],
+  listeRessources: ['À gauche : chaque équipe, ses responsables et ses projets ; puis « Sans affectation », « Inactifs » (administrateurs), Postes et Types de contrat. À droite : le détail de ce que vous choisissez.',
+    'Une équipe : ses responsables (un ou plusieurs), ses projets et les personnes de ses projets avec leurs rôles. Un projet : ses Product Owners (chefs de projet), puis ses membres.',
+    'Partout les mêmes liens, là où vous gérez (administrateur : tout ; responsable : ses équipes ; chef de projet : ses projets) : « + Affecter une personne », « + Nouvelle personne », « + Responsable », « + Product Owner ». « Fiche » ouvre la personne : dates, rôles, passer inactif.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.', 'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
   previsionnel: ['Réservé aux chefs de projet : choisissez une personne (vous-même ou un membre de vos projets) pour prévoir la répartition de son temps entre ses projets.',
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet × % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
@@ -169,9 +172,9 @@ const GUIDE_ECRANS = {
 };
 const GUIDES = {
   premiersPas: { titre: 'Premiers pas', paragraphes: [
-    '1. Mon dashboard › Liste des ressources : « + Équipe », puis sur l’équipe « + responsable » et « + Projet ».',
-    '2. « + Personne » crée la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion).',
-    '3. Sur chaque projet : « + chef » et « + Membre » pour affecter les personnes avec leur rôle (Chef de projet, Membre, Lecteur).',
+    '1. Mon dashboard › Liste des ressources : « + Ajouter une équipe », puis sur l’équipe « + Responsable » et « + Projet ».',
+    '2. « + Nouvelle personne » crée la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion), puis l’affecte.',
+    '3. Sur chaque projet : « + Product Owner » et « + Affecter une personne » avec son rôle (Chef de projet = Product Owner, Membre, Lecteur).',
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés & capacité : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [

@@ -61,8 +61,9 @@ const Modale = {
     const statut = m.id ? C.badgeActif(!estInactive(r), ['Actif', 'Inactif']) : '';
     const boutons = m.id ? `<button type="button" class="btn" data-action="basculerActifRessource" data-id="${m.id}">${estInactive(r) ? 'Réactiver' : 'Passer inactif'}</button>
         ${etat.estAdmin ? `<button type="button" class="btn danger" data-action="supprimerRessource" data-id="${m.id}">Supprimer</button>` : ''}<span style="flex:1"></span>` : '';
-    // data-retour-projet : création lancée depuis « + Membre » → retour à l'affectation ensuite
-    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-retour-projet="${m.retourProjet || ''}">
+    // data-affecter : création lancée depuis « + Nouvelle personne » → on enchaîne sur son affectation
+    // (au projet d'origine data-retour-projet s'il y en a un)
+    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-affecter="${m.affecter ? 'oui' : ''}" data-retour-projet="${m.retourProjet || ''}">
       <div class="panneau-entete"><h2>${esc(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne')} ${statut}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>
       <div class="panneau-corps">
         <div class="deux-colonnes"><div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
@@ -317,8 +318,8 @@ Object.assign(Actions, {
         etat.modale = null; return;
       }
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
-      // Venue de « + Membre » : on revient à l'affectation avec la personne sélectionnée
-      etat.modale = d.retourProjet ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet } : null;
+      // Venue de « + Nouvelle personne » : on enchaîne sur son affectation, la personne sélectionnée
+      etat.modale = d.affecter ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet || null } : null;
     }, 'ressources', 'administrateurs');
   },
 
@@ -329,7 +330,7 @@ Object.assign(Actions, {
     executer(async () => { await Api.creer('responsables_equipe', { equipeId, ressourceId }); etat.modale = d.ressource ? { type: 'ressource', id: d.ressource } : null; }, 'responsablesEquipe');
   },
   // Depuis la fenêtre d'affectation : créer la personne puis y revenir
-  nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, retourProjet: etat.modale.projetId || '' } }),
+  nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, affecter: true, retourProjet: etat.modale.projetId || '' } }),
   supprimerRessource(d) {
     if (!confirm('Supprimer cette personne ? Ses affectations, absences et temps seront supprimés.')) return;
     executer(async () => { await Api.supprimer('ressources', { id: 'eq.' + d.id }); etat.modale = null; }, 'ressources', 'affectations', 'absences', 'temps');
