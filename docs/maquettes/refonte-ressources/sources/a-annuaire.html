@@ -1,0 +1,43 @@
+<!-- Piste A : annuaire unique + panneau de la personne (tout se règle au même endroit) -->
+<style>
+.a-grille { display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 16px; align-items: start; }
+.a-pan { background: #fff; border: 1px solid var(--bordure); border-radius: 10px; box-shadow: 0 8px 30px rgba(10,22,51,.08); }
+.a-pan-tete { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--bordure-fine); }
+.a-bloc { padding: 12px 16px; border-bottom: 1px solid var(--bordure-fine); }
+.a-proj { display: grid; grid-template-columns: 22px 1fr 128px; gap: 8px; align-items: center; padding: 4px 0; }
+.a-tr-on td { background: var(--primaire-clair); }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="rf-titre">Piste A · Annuaire + fiche à droite</span><h1>Ressources</h1><div class="sous-titre">Toutes les personnes ; cliquez sur une ligne pour tout régler : équipe, projets, rôle, accès</div></div>
+    <div class="actions-ecran"><button class="btn primaire rf-annot" data-n="1">+ Nouvelle personne</button></div></div>
+  <div class="rf-barre"><span class="rf-rech">⌕ Rechercher une personne</span>
+    <span class="rf-seg rf-annot" data-n="2"><span class="on">Toutes les équipes</span><span>Applications</span><span>IA</span><span>AMOA</span><span>DSI</span></span>
+    <span class="rf-seg"><span class="on">Actifs (6)</span><span>Inactifs (1)</span></span></div>
+  <div class="a-grille">
+    <div class="carte"><table class="tableau"><thead><tr><th>Personne</th><th>Équipe</th><th>Projets</th><th>Accès</th></tr></thead><tbody>
+      <tr><td><span class="ligne-flex"><span class="avatar">AC</span>Anne Caselli</span></td><td>Applications</td><td><span class="pale">— responsable d'équipe</span></td><td><span class="rf-acces" style="background:#EDE6FA;color:#5B2DA0">Responsable</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CH</span>Christelle</span></td><td>Applications</td><td><span class="rf-puce po">VISTA · PO</span></td><td><span class="rf-acces" style="background:#E8EEFF;color:#0033AD">Administrateur</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">NO</span>Nouha</span></td><td>Applications</td><td><span class="rf-puce po">CDO · PO</span></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+      <tr class="a-tr-on"><td><span class="ligne-flex"><span class="avatar">TH</span><b style="font-weight:600">Thomas</b></span></td><td>Applications</td><td class="rf-annot" data-n="3"><span class="rf-puce mb">VISTA · Membre</span> <span class="rf-puce mb">CDO · Membre</span></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CK</span>Cerine Kerarma</span></td><td>Applications</td><td><span class="pale">aucun projet</span></td><td><span class="rf-acces" style="background:#FDECEC;color:#A32020">Pas de compte</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">SL</span>Sarah Lemoine</span></td><td>IA</td><td><span class="rf-puce po">Assistant RH · PO</span></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+    </tbody></table></div>
+    <div class="a-pan rf-annot" data-n="4">
+      <div class="a-pan-tete"><span class="avatar grand">TH</span><div style="flex:1"><b style="font-size:15px">Thomas</b><div class="discret">Chef de projet · Prestataire</div></div><span class="pale">✕</span></div>
+      <div class="a-bloc"><label class="libelle">Équipe</label><select class="champ"><option>Applications</option></select></div>
+      <div class="a-bloc"><label class="libelle">Projets</label>
+        <div class="a-proj"><input type="checkbox" checked><span>VISTA <span class="code">APP-02</span></span><select class="champ" style="height:28px"><option>Membre</option></select></div>
+        <div class="a-proj"><input type="checkbox" checked><span>CDO <span class="code">APP-01</span></span><select class="champ" style="height:28px"><option>Membre</option></select></div>
+        <div class="a-proj"><input type="checkbox"><span>Assistant RH <span class="code">IA-01</span></span><select class="champ" style="height:28px" disabled><option>—</option></select></div></div>
+      <div class="a-bloc"><label class="libelle">Accès</label><select class="champ"><option>Membre de l'équipe</option></select></div>
+      <div class="a-bloc" style="border:0"><div class="deux-colonnes"><div><label class="libelle">Arrivée</label><input class="champ" value="—"></div><div><label class="libelle">Départ</label><input class="champ" value="—"></div></div>
+        <div class="discret" style="font-size:12px;margin-top:8px">Enregistré à chaque changement · email, poste, contrat dans « Identité ▾ »</div></div>
+    </div>
+  </div>
+  <div class="rf-legende">
+    <div><b>1</b>Un seul bouton pour créer : la fiche s'ouvre à droite, vide.</div>
+    <div><b>2</b>Une seule liste de personnes, filtrée par équipe (plus d'arborescence équipe → projet).</div>
+    <div><b>3</b>Les projets d'une personne en étiquettes, avec son rôle (PO, Membre, Lecteur).</div>
+    <div><b>4</b>Clic sur une ligne : équipe, projets (cases à cocher + rôle), accès, dates — tout au même endroit.</div>
+  </div>
+</div>

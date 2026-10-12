@@ -1,0 +1,44 @@
+<!-- Piste B : matrice d'affectation personnes × projets -->
+<style>
+.b-mat { border-collapse: separate; border-spacing: 0; width: 100%; background: #fff; }
+.b-mat th, .b-mat td { border-bottom: 1px solid var(--bordure-fine); padding: 8px 10px; text-align: center; white-space: nowrap; }
+.b-mat th { font-size: 11px; color: var(--discret); font-weight: 600; background: var(--fond-entete); }
+.b-mat th.eq { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 0; }
+.b-mat td:first-child, .b-mat th:first-child { text-align: left; }
+.b-mat tr.grp td { background: var(--fond-entete); font-weight: 600; text-align: left; }
+.b-cel { display: inline-flex; width: 38px; height: 26px; border-radius: 6px; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 1px dashed var(--bordure); color: transparent; }
+.b-cel.po { background: #FFE2A8; color: #7A4700; border: 0; } .b-cel.mb { background: #CDEFE0; color: #0B6B4F; border: 0; } .b-cel.lc { background: #E6E9EF; color: #4A5363; border: 0; }
+.b-cel.vide:hover { color: var(--pale); }
+.b-sep { border-left: 2px solid var(--bordure) !important; }
+.b-menu { position: absolute; background: #fff; border: 1px solid var(--bordure); border-radius: 8px; box-shadow: 0 8px 24px rgba(10,22,51,.15); padding: 4px; font-size: 12.5px; text-align: left; z-index: 3; }
+.b-menu div { padding: 6px 12px; border-radius: 5px; } .b-menu div.on { background: var(--primaire-clair); }
+</style>
+<div class="ecran" style="max-width:1300px">
+  <div class="entete-ecran"><div><span class="rf-titre">Piste B · Matrice d'affectation</span><h1>Ressources</h1><div class="sous-titre">Une ligne par personne, une colonne par projet : cliquez sur une case pour affecter</div></div>
+    <div class="actions-ecran"><button class="btn">+ Projet</button><button class="btn primaire">+ Personne</button></div></div>
+  <div class="rf-barre"><span class="rf-rech">⌕ Rechercher</span><span class="rf-seg"><span class="on">Actifs</span><span>Inactifs</span><span>Tous</span></span>
+    <span class="discret" style="margin-left:8px">Légende :</span><span class="b-cel po">PO</span><span class="discret">Product Owner</span><span class="b-cel mb">M</span><span class="discret">Membre</span><span class="b-cel lc">L</span><span class="discret">Lecteur</span></div>
+  <div class="carte" style="overflow:visible"><table class="b-mat">
+    <thead>
+      <tr><th class="eq"></th><th class="eq"></th><th class="eq b-sep rf-annot" data-n="1" colspan="3" style="text-align:left">Applications</th><th class="eq b-sep" style="text-align:left">IA</th><th class="eq b-sep" style="text-align:left">AMOA</th><th class="eq"></th></tr>
+      <tr><th>Personne</th><th>Équipe</th><th class="b-sep">CDO</th><th>VISTA</th><th>VI3P / V4</th><th class="b-sep">Assistant RH</th><th class="b-sep pale">aucun projet</th><th>Accès</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="8">Applications <span class="pale" style="font-weight:400">· responsable Anne Caselli · 6 personnes</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">AC</span>Anne Caselli</span></td><td class="rf-annot" data-n="2"><select class="champ" style="height:28px;width:auto"><option>Applications</option></select></td><td class="b-sep"><span class="b-cel vide">+</span></td><td><span class="b-cel vide">+</span></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel vide">+</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#EDE6FA;color:#5B2DA0">Responsable</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CH</span>Christelle</span></td><td><select class="champ" style="height:28px;width:auto"><option>Applications</option></select></td><td class="b-sep"><span class="b-cel vide">+</span></td><td><span class="b-cel po">PO</span></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel vide">+</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#E8EEFF;color:#0033AD">Admin</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">NO</span>Nouha</span></td><td><select class="champ" style="height:28px;width:auto"><option>Applications</option></select></td><td class="b-sep"><span class="b-cel po">PO</span></td><td><span class="b-cel vide">+</span></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel vide">+</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">TH</span>Thomas</span></td><td><select class="champ" style="height:28px;width:auto"><option>Applications</option></select></td><td class="b-sep"><span class="b-cel mb">M</span></td><td style="position:relative"><span class="b-cel mb rf-annot" data-n="3">M</span>
+          <div class="b-menu" style="left:10px;top:40px"><div>Product Owner</div><div class="on">✓ Membre</div><div>Lecteur</div><div class="pale">Retirer du projet</div></div></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel vide">+</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">CK</span>Cerine Kerarma</span></td><td><select class="champ" style="height:28px;width:auto"><option>Applications</option></select></td><td class="b-sep"><span class="b-cel vide">+</span></td><td><span class="b-cel vide">+</span></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel vide">+</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#FDECEC;color:#A32020">Pas de compte</span></td></tr>
+      <tr><td colspan="8" style="text-align:left"><a class="rf-annot" data-n="4" style="padding-right:14px">+ Ajouter une personne à Applications</a></td></tr>
+      <tr class="grp"><td colspan="8">IA <span class="pale" style="font-weight:400">· 1 personne</span></td></tr>
+      <tr><td><span class="ligne-flex"><span class="avatar">SL</span>Sarah Lemoine</span></td><td><select class="champ" style="height:28px;width:auto"><option>IA</option></select></td><td class="b-sep"><span class="b-cel vide">+</span></td><td><span class="b-cel lc">L</span></td><td><span class="b-cel vide">+</span></td><td class="b-sep"><span class="b-cel po">PO</span></td><td class="b-sep"></td><td><span class="rf-acces" style="background:#E3F5EC;color:#0B6B4F">Membre</span></td></tr>
+      <tr><td colspan="8" style="text-align:left"><a>+ Ajouter une personne à IA</a></td></tr>
+    </tbody></table></div>
+  <div class="rf-legende">
+    <div><b>1</b>Les projets en colonnes, regroupés par équipe ; les personnes en lignes, regroupées par équipe.</div>
+    <div><b>2</b>L'équipe d'une personne se change directement dans sa ligne.</div>
+    <div><b>3</b>Un clic sur une case : Product Owner, Membre, Lecteur ou retirer. Plusieurs projets = plusieurs cases.</div>
+    <div><b>4</b>Ajouter une personne : une ligne vide apparaît dans l'équipe, on tape son nom et on coche ses projets.</div>
+  </div>
+</div>
