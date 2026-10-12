@@ -1,5 +1,5 @@
 /* ============================================================
-   Général › Dashboard général (maquette 01-gDash.png) — lecture
+   Suivi de mes équipes › Dashboard général (maquette 01-gDash.png) — lecture
    Indicateurs, objectifs du trimestre (OKR), progression par
    trimestre et par équipe, projets à surveiller.
    ============================================================ */

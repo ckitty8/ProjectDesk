@@ -82,7 +82,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="ouvrirEquipe"]');
     await page.waitForSelector('.laterale');
 
-    /* --- Section Général (lecture) --- */
+    /* --- Section Suivi de mes équipes (ex-Général, lecture) --- */
     await capture('03-dashboard');
     // Bulle ⓘ de la barre latérale : affichée en entier, hors de la barre qui défile (signalé le 2026-10-06)
     await page.hover('.menu-titre .aide >> nth=0'); await page.waitForTimeout(150);
@@ -97,21 +97,22 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Projets : aucune notion de ticket (pilotage de projets uniquement)', !/ticket/i.test(await page.textContent('body'))
       && !(await page.$('[data-action="deplierProjet"]')));
     await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
-    verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue générale en lecture seule'));
+    verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue « Suivi de mes équipes » en lecture seule'));
     await page.click('.fermer');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     await aller('administration'); await capture('06-administration');
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
     await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
-    verifier('Timesheet (Général) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
+    verifier('Timesheet (Suivi de mes équipes) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
     await capture('07-timesheet');
 
-    /* --- Règle : la section « Général » est en lecture seule ---
-       Aucun champ, formulaire ou action d'écriture dans les écrans Général (tous onglets). */
+    /* --- Règle : la section « Suivi de mes équipes » (ex-« Général ») est en lecture seule ---
+       Aucun champ, formulaire ou action d'écriture (tous onglets), sauf la validation des feuilles de temps. */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier',
-      'ouvrirExportDaily'];   // export Excel : lecture seule (téléchargement de ce qui est affiché)
+      'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
+      'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
         .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
@@ -125,7 +126,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     interdites.push(...await page.$$eval('.panneau [data-action-change], .panneau [data-action-envoi], .panneau [data-action-saisie]', els => els.map(e => 'panneau:' + (e.dataset.actionChange || e.dataset.actionEnvoi || e.dataset.actionSaisie))));
     await page.click('.fermer');
-    verifier('Général : lecture seule (aucune action d’écriture)', interdites.length === 0, [...new Set(interdites)].join(', '));
+    verifier('Suivi de mes équipes : lecture seule (aucune action d’écriture hors validation des feuilles)', interdites.length === 0, [...new Set(interdites)].join(', '));
 
     /* --- Administration (Mon dashboard) : référentiels modifiables par l'administratrice --- */
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="referentiels"]'); await page.waitForTimeout(200);
@@ -158,10 +159,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('25-roles-scrum');
     await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
     // Menu : Mon timesheet rangé dans Gestion des ressources (intertitre), plus d'entrée à part
-    verifier('Menu : Mon timesheet dans Gestion des ressources', await page.evaluate(() => {
+    verifier('Menu : Mon timesheet dans Gestion des ressources, section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
-      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Mon timesheet') && t.includes('Saisir mes heures') && t.includes('Suivi de mes équipes'))
-        && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet');
+      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Mon timesheet') && t.includes('Saisir mes heures'))
+        && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet')
+        && document.querySelector('.menu-titre').textContent.includes('Suivi de mes équipes');
     }));
     // Jours fériés administrables : ajout, renommage, suppression
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
@@ -400,7 +402,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 9 }); majUi('moisTemps', { annee: 2026, mois: 9 }); });
     // Texte de la zone d'écran seulement (le nom de la personne connectée figure aussi dans la barre latérale)
     const contenu = () => page.textContent('.contenu');
-    for (const ecran of ['conges', 'timesheet', 'suiviEquipes']) { await aller(ecran); if ((await contenu()).includes(nomFin)) visibleDans.push(ecran); }
+    for (const ecran of ['conges', 'timesheet']) { await aller(ecran); if ((await contenu()).includes(nomFin)) visibleDans.push(ecran); }
     // Gestion des ressources : absent du calendrier d'octobre, présent « Inactif » dans l'annuaire
     await aller('ressources');
     const [dansCalendrier, ligneAnnuaire] = await page.evaluate(nom => {
@@ -487,15 +489,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="soumettreMois"]'); await page.waitForTimeout(300);
     verifier('Mon timesheet : mois soumis (feuille au 1er du mois)', (await texte()).includes('Soumise')
       && await page.evaluate(() => etat.d.feuilles.some(f => f.ressourceId === maRessource().id && f.semaine === '2026-09-01' && f.statut === 'soumise')));
-    // Sous-menu Suivi de mes équipes (même mois : feuilles soumises des données simulées)
-    await aller('suiviEquipes'); await page.waitForTimeout(250);
-    verifier('Suivi de mes équipes : personnes de mes équipes seulement', (await texte()).includes('Feuilles à valider')
-      && await page.evaluate(() => { const mes = new Set(mesEquipes().map(e => e.id));
-        return [...document.querySelectorAll('.tableau tr.groupe')].length === mes.size; }));
-    await capture('20-suivi-equipes');
+    // Validation des feuilles : dans Suivi de mes équipes › Timesheet (ex-Général), boutons pour MES équipes seulement
+    verifier('Menu : Mon timesheet ne garde que « Saisir mes heures »', !(await page.$('[data-ecran="suiviEquipes"]')));
+    await aller('timesheet'); await page.waitForTimeout(250);
+    verifier('Timesheet : validation réservée aux équipes dont je suis responsable', (await texte()).includes('Feuilles à valider')
+      && await page.evaluate(() => [...document.querySelectorAll('[data-action="validerFeuille"]')]
+        .every(b => estResponsableDe(ressource(b.dataset.ressource).equipeId))));
+    await capture('20-timesheet-validation');
     const avant = (await page.$$('[data-action="validerFeuille"]')).length;
     await page.click('[data-action="validerFeuille"] >> nth=0'); await page.waitForTimeout(300);
-    verifier('Suivi de mes équipes : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
+    verifier('Timesheet : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
 
     await aller('monAdmin'); await capture('14-mon-admin');
     // Envoi du daily PAR PROJET (migration 019) : réglage par projet, mise en place Power Automate

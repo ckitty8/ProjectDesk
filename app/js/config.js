@@ -112,7 +112,7 @@ if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);
    être une fonction quand le texte dépend d'un libellé administrable.
    ============================================================ */
 const AIDES = {
-  sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule : rien ne s’y modifie, même pour un administrateur.',
+  sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule — seule exception : les responsables d’équipe y valident les feuilles de temps de leurs équipes (Timesheet).',
   sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les sprints des projets.',
   avancementMoyen: 'Moyenne de l’avancement (%) des projets non terminés.',
   projetsRisque: 'Projets au statut « À risque » ou « En retard ».',
@@ -129,7 +129,7 @@ const AIDES = {
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
   aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',
-  dailyVisibilite: 'Un daily par projet. Il est lu (Général › Daily des équipes) par les personnes affectées au projet, par le responsable de l’unité du projet et des unités au-dessus, et par les administrateurs. Un jour de congé d’une journée, aucun daily n’est attendu.',
+  dailyVisibilite: 'Un daily par projet. Il est lu (Suivi de mes équipes › Daily des équipes) par les personnes affectées au projet, par le responsable de l’unité du projet et des unités au-dessus, et par les administrateurs. Un jour de congé d’une journée, aucun daily n’est attendu.',
   referentielSysteme: 'Valeurs « système » : utilisées par les calculs et les droits. Renommables (les données suivent), désactivables, mais non supprimables.',
   joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
   rolesEquipe: 'Chaque équipe est un espace de connexion : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
@@ -159,8 +159,6 @@ const GUIDE_ECRANS = {
     '« + Ajouter une direction », puis sur chaque ligne « + Équipe », « + Projet », « + Membre ». Le crayon modifie ; la corbeille supprime une unité vide.',
     'Onglets Postes et Types de contrat : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.', 'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
-  suiviEquipes: ['Les feuilles de temps du mois des personnes de vos équipes : projets, heures saisies sur attendues, complétude, statut.',
-    'Responsable d’équipe : validez ou renvoyez les feuilles soumises. Changez de mois avec les flèches.'],
   previsionnel: ['Réservé aux chefs de projet : choisissez une personne (vous-même ou un membre de vos projets) pour prévoir la répartition de son temps entre ses projets.',
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet × % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
@@ -180,7 +178,7 @@ const GUIDES = {
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés & capacité : posez les absences ; Mon timesheet : saisissez les heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
-    'Général : tout le monde consulte tout, rien ne s’y modifie.',
+    'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (Timesheet).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',

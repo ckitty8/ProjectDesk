@@ -1,8 +1,8 @@
 /* ============================================================
-   Général › Administration (maquette 04-gAdmin.png) — LECTURE SEULE
+   Suivi de mes équipes › Administration (maquette 04-gAdmin.png) — LECTURE SEULE
    Onglets Équipes, Référentiels (champs du formulaire de demande retirés le 2026-10-05 :
    demandes gérées dans Azure DevOps).
-   Règle : la section « Général » ne modifie jamais rien. Les
+   Règle : la section « Suivi de mes équipes » ne modifie jamais rien. Les
    modifications se font dans Mon dashboard › Administration
    (administrateurs globaux ; contrôlé aussi par la base).
    Les tableaux « Équipes » et « Référentiels » sont partagés avec

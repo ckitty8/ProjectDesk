@@ -57,7 +57,7 @@ Pour chaque fichier, vérifier :
     des règles RLS ; jamais un test de rôle recopié dans un écran ;
   - listes métier : référentiels en base (`valeursDe`), jamais une liste en dur dans un écran.
 - Une même notion porte **le même nom** partout (menu, titre d'écran, DAT, guide d'aide).
-- Les écrans de la section **Général** restent en lecture seule (contrôle du parcours).
+- Les écrans de la section **Suivi de mes équipes** (ex-« Général ») restent en lecture seule, hors validation des feuilles de temps (contrôle du parcours).
 - Relire le § « Points de cohérence » du DAT et vérifier que chaque point est toujours vrai.
 
 ## 4. Base de données : liaisons et données (lecture seule)

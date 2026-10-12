@@ -9,7 +9,7 @@
      des jours ouvrés (capacité, timesheet).
    - Équipes et Référentiels (administrateurs globaux, et responsables
      d'équipe pour « Modifier » leur équipe) : c'est ici, et non dans la
-     section Général (lecture seule), que l'administration se modifie.
+     section Suivi de mes équipes (lecture seule), que l'administration se modifie.
    Accessible sans équipe ouverte pour un administrateur (création de
    la première équipe).
    ============================================================ */
