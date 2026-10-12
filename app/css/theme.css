@@ -164,7 +164,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .recherche-champ input { border: 0; outline: none; flex: 1; background: none; }
 /* Liste des ressources (design de production conservé, maquette liste-ressources-ux/3-navigation-detail.png ;
    fonctionnalités de la spécification Ressources) : navigation à gauche (équipes, responsables, projets),
-   détail à droite (responsables et Product Owners en cartes, personnes en tableau) */
+   détail à droite (responsables et chefs de projet en cartes, personnes en tableau) */
 .liste-ressources { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
 .nav-ressources { padding: 10px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; }
 .nav-ressources .recherche-champ { width: 100%; margin-bottom: 8px; }
@@ -179,10 +179,10 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .detail-titre { font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .detail-kpi { display: flex; gap: 24px; } .detail-kpi div { text-align: right; } .detail-kpi b { display: block; font-size: 18px; }
 .nom-personne { font-weight: 500; }
-.cartes-po { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; padding: 14px 16px; }
-.carte-po { display: flex; align-items: center; gap: 10px; border: 1px solid #F6E7C8; background: #FFFBF2; border-radius: 8px; padding: 10px 12px; }
-.carte-po .avatar { background: #FFE2A8; color: #7A4700; }
-.carte-po.responsable { border-color: #DCCDF5; background: #F7F2FE; } .carte-po.responsable .avatar { background: #E4D6FA; color: #5B2DA0; }
+.cartes-personnes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; padding: 14px 16px; }
+.carte-personne { display: flex; align-items: center; gap: 10px; border: 1px solid #F6E7C8; background: #FFFBF2; border-radius: 8px; padding: 10px 12px; }
+.carte-personne .avatar { background: #FFE2A8; color: #7A4700; }
+.carte-personne.responsable { border-color: #DCCDF5; background: #F7F2FE; } .carte-personne.responsable .avatar { background: #E4D6FA; color: #5B2DA0; }
 .lien-btn { background: none; border: 0; color: var(--primaire); cursor: pointer; padding: 0; }
 .tableau tr.inactive td { color: var(--pale); }
 .tableau-personnes td:first-child, .tableau-personnes td:nth-child(4), .tableau-personnes td:last-child { white-space: nowrap; }

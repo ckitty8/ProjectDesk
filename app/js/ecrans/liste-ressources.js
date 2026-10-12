@@ -7,8 +7,8 @@
      responsables_equipe) et ses projets ; puis « Sans affectation », « Inactifs »
      (administrateurs), Postes et Types de contrat ;
    - à droite, le détail de ce qui est choisi :
-       équipe  → responsables, projets (avec leurs Product Owners), personnes de ses projets ;
-       projet  → Product Owners (chefs de projet, 1 ou plusieurs), puis membres et lecteurs ;
+       équipe  → responsables, projets (avec leurs chefs de projet), personnes de ses projets ;
+       projet  → chefs de projet (1 ou plusieurs), puis membres et lecteurs ;
        Sans affectation / Inactifs → les personnes concernées ;
        Postes / Types de contrat → référentiels « poste » et « contrat ».
    Une personne n'appartient pas à une équipe : elle y figure par ce qu'elle fait (responsable,
@@ -110,7 +110,7 @@ Ecrans.listeRessources = {
     return '';
   },
 
-  // Équipe : responsables, projets (Product Owners, nombre de membres), personnes de ses projets
+  // Équipe : responsables, projets (chefs de projet, nombre de membres), personnes de ses projets
   detailEquipe(e) {
     const esc = C.esc, admin = etat.estAdmin, gere = peutGererEquipe(e);
     const projets = etat.d.projets.filter(p => p.equipeId === e.id).sort(parCode), personnes = this.personnesDe(e);
@@ -119,7 +119,7 @@ Ecrans.listeRessources = {
       admin || estResponsableDe(e.id) ? `<button class="btn" data-action="modifierEquipe" data-id="${e.id}">Modifier l’équipe</button>` : '',
       admin ? C.boutonIcone('supprimer', 'supprimerEquipe', `data-id="${e.id}"`, vide ? 'Supprimer l’équipe' : 'Équipe non vide : retirez d’abord ses projets et ses personnes', !vide) : ''
     ].join('');
-    const responsables = responsablesDe(e.id).map(r => `<div class="carte-po responsable">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
+    const responsables = responsablesDe(e.id).map(r => `<div class="carte-personne responsable">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
         <div class="nom-personne">${esc(r.nom)}</div><div class="discret">${esc(r.poste || 'Responsable de l’équipe')}</div></div>
         <a data-action="modifierRessource" data-id="${r.id}">Fiche</a>
         ${gere ? `<a class="discret" data-action="retirerResponsable" data-equipe="${e.id}" data-ressource="${r.id}">Retirer</a>` : ''}</div>`).join('');
@@ -132,22 +132,22 @@ Ecrans.listeRessources = {
         <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)</div></div><span style="flex:1"></span>${boutons}</div>
       <div class="carte"><div class="carte-titre"><h2>Responsables ${C.aide('responsablesEquipe')}</h2>
           ${gere ? `<a data-action="ajouterResponsable" data-equipe="${e.id}">+ Responsable</a>` : ''}</div>
-        <div class="cartes-po">${responsables || '<span class="pale">Aucun responsable.</span>'}</div></div>
+        <div class="cartes-personnes">${responsables || '<span class="pale">Aucun responsable.</span>'}</div></div>
       <div class="carte"><div class="carte-titre"><h2>Projets</h2>${gere ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : ''}</div>
-        <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
+        <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Chefs de projet</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
       <div class="carte"><div class="carte-titre"><h2>Personnes de l’équipe ${esc(e.nom)}</h2>${gere ? this.liensAjout(e.id, null) : ''}</div>
         ${this.tableauPersonnes(personnes.map(r => ({ r })), 'Aucune personne : affectez-en à un projet de l’équipe.', false, e.id)}</div>`;
   },
 
-  // Projet : Product Owners (chefs de projet) en cartes, puis membres et lecteurs en tableau
+  // Projet : chefs de projet en cartes, puis membres et lecteurs en tableau
   detailProjet(p) {
     const esc = C.esc, gere = peutGererProjet(p), chefs = chefsDuProjet(p);
     const membres = this.affectationsDu(p).filter(a => a.role !== ROLES_PROJET.CHEF)
       .map(a => ({ r: ressource(a.ressourceId), a })).sort((x, y) => x.r.nom.localeCompare(y.r.nom));
     const cartesPo = chefs.map(r => {
       const a = this.affectationsDu(p).find(x => x.ressourceId === r.id && x.role === ROLES_PROJET.CHEF);
-      return `<div class="carte-po">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
+      return `<div class="carte-personne">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
         <div class="nom-personne">${esc(r.nom)}</div><div class="discret">${esc(r.poste || '—')}</div></div>
         <a data-action="modifierRessource" data-id="${r.id}">Fiche</a>
         ${a ? (gere ? `<a class="discret" data-action="retirerAffectation" data-id="${a.id}">Retirer</a>` : '') : '<span class="pale" title="Chef inscrit sur l’ancienne fiche projet">fiche projet</span>'}</div>`;
@@ -156,11 +156,11 @@ Ecrans.listeRessources = {
     return `
       <div class="carte detail-entete"><div><a class="discret" data-action="choisirNoeud" data-type="equipe" data-id="${p.equipeId}">${esc(equipe(p.equipeId).nom)} ›</a>
         <h2 class="detail-titre">${esc(p.nom)} ${C.code(p.code)} ${C.badgeRef('stp', p.statut)}</h2></div><span style="flex:1"></span>
-        <div class="detail-kpi">${indicateur(chefs.length, 'Product Owners')}${indicateur(membres.length, 'membres')}</div>
+        <div class="detail-kpi">${indicateur(chefs.length, 'chef(s) de projet')}${indicateur(membres.length, 'membres')}</div>
         <button class="btn" data-action="ouvrirProjet" data-id="${p.id}">${gere ? 'Modifier le projet' : 'Voir le projet'}</button></div>
-      <div class="carte"><div class="carte-titre"><h2>Product Owners ${C.aide('productOwners')}</h2>
-          ${gere ? `<a data-action="assigner" data-projet="${p.id}" data-role="${esc(ROLES_PROJET.CHEF)}">+ Product Owner</a>` : ''}</div>
-        <div class="cartes-po">${cartesPo || '<span class="pale">Aucun Product Owner.</span>'}</div></div>
+      <div class="carte"><div class="carte-titre"><h2>Chefs de projet ${C.aide('chefsProjet')}</h2>
+          ${gere ? `<a data-action="assigner" data-projet="${p.id}" data-role="${esc(ROLES_PROJET.CHEF)}">+ Chef de projet</a>` : ''}</div>
+        <div class="cartes-personnes">${cartesPo || '<span class="pale">Aucun chef de projet.</span>'}</div></div>
       <div class="carte"><div class="carte-titre"><h2>Membres</h2>${gere ? this.liensAjout(p.equipeId, p.id) : ''}</div>
         ${this.tableauPersonnes(membres, 'Aucun membre.', gere)}</div>`;
   },
@@ -206,14 +206,14 @@ Ecrans.listeRessources = {
       <td>${etat.estAdmin || gereProjet ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}" title="${inactive ? 'Réactiver (retire la date de départ)' : 'Passer inactif (date de départ = aujourd’hui)'}">${badge}</button>` : badge}</td>
       <td class="num actions-ligne">${actions}</td></tr>`;
   },
-  /* Rôles d'une personne, un par ligne : « Responsable · Applications », « VISTA · PO », « CDO · Membre » ;
+  /* Rôles d'une personne, un par ligne : « Responsable · Applications », « VISTA · Chef de projet », « CDO · Membre » ;
      limités à une équipe si equipeId est donné */
   rolesDe(r, equipeId) {
     const dansEquipe = id => !equipeId || id === equipeId;
     const responsable = etat.d.responsablesEquipe.filter(x => x.ressourceId === r.id && dansEquipe(x.equipeId))
       .map(x => `<div>Responsable · ${C.esc(equipe(x.equipeId).nom)}</div>`);
     const projets = etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId) && dansEquipe(projet(a.projetId).equipeId))
-      .map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
+      .map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role)}</div>`);
     return [...responsable, ...projets].join('') || '<span class="pale">aucun</span>';
   },
 
@@ -283,17 +283,17 @@ Object.assign(Actions, {
   },
 
   /* Fenêtre d'affectation : pour une personne (data-ressource) ou pré-remplie sur un projet
-     (data-projet) ; data-role pré-choisit le rôle (« + Product Owner » → Chef de projet) */
+     (data-projet) ; data-role pré-choisit le rôle (« + Chef de projet ») */
   assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null, role: d.role || null } }),
   retirerAffectation(d) {
     const a = parId('affectations', d.id);
     if (!confirm(`Retirer ${ressource(a.ressourceId).nom} du projet ${projet(a.projetId).nom} ?`)) return;
     executer(() => Api.supprimer('affectations', { id: 'eq.' + d.id }), 'affectations');
   },
-  /* Nouvelle personne : la fiche garde une équipe technique (celle de l'équipe ou du projet affiché)
-     tant que les droits ne viennent pas des rôles (étape 2 de la spécification). Depuis un projet,
-     la création enchaîne sur l'affectation à ce projet. */
-  nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe || etat.equipeCourante, affecter: true, retourProjet: d.projet || '' } }),
+  /* Nouvelle personne : affectée dès sa création à un projet (obligatoire sauf administrateur,
+     Modale.projetCreation), pré-choisi depuis un projet. La fiche garde une équipe technique (celle
+     du projet choisi) tant que les droits ne viennent pas des rôles (étape 2 de la spécification). */
+  nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe || etat.equipeCourante, projetId: d.projet || '' } }),
   modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } }),
   /* Statut d'une personne : « Inactif » = date de départ saisie (règle du porteur) ; le bouton pose la
      date de départ à aujourd'hui, ou la retire pour réactiver la personne. Une personne inactive garde

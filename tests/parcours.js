@@ -397,27 +397,27 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await choisir('projet', 'Migration Kubernetes');
     const idThomas = await idDe('Thomas Bernard');
     const ligneThomas = await page.textContent(ligneDetail(idThomas));
-    verifier('Liste des ressources : projet → Product Owners puis membres (poste, rôle, statut)',
-      (await page.textContent('#detail-ressources .cartes-po')).includes('Julien Dubois') && ligneThomas.includes('Membre') && ligneThomas.includes('Actif'));
+    verifier('Liste des ressources : projet → chefs de projet puis membres (poste, rôle, statut)',
+      (await page.textContent('#detail-ressources .cartes-personnes')).includes('Julien Dubois') && ligneThomas.includes('Membre') && ligneThomas.includes('Actif'));
     // Responsable ajouté puis retiré (table responsables_equipe)
     await choisir('equipe', 'Data');
     const idSarah = await idDe('Sarah Petit');
     await page.click('#detail-ressources [data-action="ajouterResponsable"]');
     await page.selectOption('form[data-action-envoi="enregistrerResponsable"] select[name=ressource]', idSarah);
     await page.click('form[data-action-envoi="enregistrerResponsable"] .btn.primaire'); await page.waitForTimeout(400);
-    const sarahResponsable = (await page.textContent('#detail-ressources .cartes-po')).includes('Sarah Petit');
+    const sarahResponsable = (await page.textContent('#detail-ressources .cartes-personnes')).includes('Sarah Petit');
     await page.click(`#detail-ressources [data-action="retirerResponsable"][data-ressource="${idSarah}"]`); await page.waitForTimeout(400);
-    verifier('Liste des ressources : responsable d’équipe ajouté puis retiré', sarahResponsable && !(await page.textContent('#detail-ressources .cartes-po')).includes('Sarah Petit'));
-    // « + Product Owner » : affectation pré-réglée Chef de projet ; « Retirer » enlève du projet
+    verifier('Liste des ressources : responsable d’équipe ajouté puis retiré', sarahResponsable && !(await page.textContent('#detail-ressources .cartes-personnes')).includes('Sarah Petit'));
+    // « + Chef de projet » : affectation pré-réglée Chef de projet ; « Retirer » enlève du projet
     await choisir('projet', 'Migration Kubernetes');
     const idLea = await idDe('Léa Moreau');
     await page.click('#detail-ressources [data-action="assigner"][data-role]'); await page.waitForTimeout(200);
     await page.selectOption('select[name=ressource]', idLea); await page.waitForTimeout(200);
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
-    const leaChef = (await page.textContent('#detail-ressources .cartes-po')).includes('Léa Moreau');
+    const leaChef = (await page.textContent('#detail-ressources .cartes-personnes')).includes('Léa Moreau');
     const affLea = await page.evaluate(id => etat.d.affectations.find(a => a.ressourceId === id && projet(a.projetId).code === 'PF-12').id, idLea);
     await page.click(`[data-action="retirerAffectation"][data-id="${affLea}"]`); await page.waitForTimeout(400);
-    verifier('Liste des ressources : « + Product Owner » ajoute un chef de projet, « Retirer » l’enlève du projet',
+    verifier('Liste des ressources : « + Chef de projet » ajoute un chef de projet, « Retirer » l’enlève du projet',
       leaChef && !(await detail()).includes('Léa Moreau'));
     // Mêmes liens sur une équipe et sur un projet : « + Affecter une personne » et « + Nouvelle personne »
     const liens = async () => (await page.$$('#detail-ressources [data-action="assigner"]:not([data-role]):not([data-ressource])')).length === 1
@@ -495,15 +495,27 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const data = etat.d.equipes.find(e => e.nom === 'Data'), noms = chefsPossibles(data.id).map(r => r.nom);
       return noms.includes('Hugo Martin') && noms.includes('Julien Dubois') && !noms.includes('Inès Roux');
     }));
-    // « + Nouvelle personne » depuis une équipe → affectation proposée ; fermée sans affecter → « Sans affectation »
+    // « + Nouvelle personne » : projet à choisir dans la fiche, obligatoire sauf pour un administrateur ;
+    // l'administrateur peut la laisser « Sans affectation »
+    const projetObligatoire = await page.evaluate(() => {
+      etat.estAdmin = false; majEtat({ modale: { type: 'ressource', id: null, equipeId: etat.d.equipes[0].id } });
+      const requis = document.querySelector('select[name=projetInitial]').required; etat.estAdmin = true; majEtat({ modale: null }); return requis;
+    });
     await page.click('#detail-ressources [data-action="nouvelleRessource"]');
+    const projetFacultatif = !(await page.$eval('select[name=projetInitial]', s => s.required));
     await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Zoé Test');
     await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
-    const affectationProposee = (await page.$eval('select[name=ressource]', s => s.options[s.selectedIndex].text)).startsWith('Zoé Test');
-    await page.click('.modale .fermer');
     const idZoe = await idDe('Zoé Test');
     await choisirListe('sans');
-    verifier('Liste des ressources : nouvelle personne → affectation proposée, sinon « Sans affectation »', affectationProposee && !!(await page.$(ligneDetail(idZoe))));
+    verifier('Nouvelle personne : projet obligatoire sauf administrateur (qui peut la laisser « Sans affectation »)',
+      projetObligatoire && projetFacultatif && !(await page.$('.modale')) && !!(await page.$(ligneDetail(idZoe))));
+    // Depuis un projet : projet pré-choisi, personne créée et affectée d'un coup
+    await choisir('projet', 'Migration Kubernetes');
+    await page.click('#detail-ressources [data-action="nouvelleRessource"]');
+    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Yann Test');
+    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
+    verifier('Nouvelle personne depuis un projet : affectée à ce projet', !!(await page.$(ligneDetail(await idDe('Yann Test'))))
+      && (await page.textContent(ligneDetail(await idDe('Yann Test')))).includes('Membre'));
     await choisir('equipe', 'Plateforme');
     await capture('12-liste-ressources');
     await choisirListe('postes'); await capture('18-postes'); await choisir('equipe', 'Plateforme');
@@ -533,7 +545,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Projet modifiable depuis la Liste des ressources : nom, dates
     await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     // Doublons retirés (DAT 2.02) : plus de chef unique sur la fiche projet ni de responsable unique sur l'équipe
-    const sansChefUnique = !(await page.$('.panneau [data-champ="chefId"]')) && (await page.textContent('.panneau')).includes('Product Owners');
+    const sansChefUnique = !(await page.$('.panneau [data-champ="chefId"]')) && (await page.textContent('.panneau')).includes('Chefs de projet');
     const sansResponsableUnique = await page.evaluate(() => {
       majEtat({ modale: { type: 'equipe', id: etat.d.equipes[0].id, organisation: null } });
       const ok = !document.querySelector('.modale [name=responsableId]'); etat.modale = null; return ok;

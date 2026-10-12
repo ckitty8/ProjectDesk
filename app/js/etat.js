@@ -295,7 +295,7 @@ const responsablesDe = equipeId => (etat.d.responsablesEquipe || []).filter(x =>
   .map(x => ressource(x.ressourceId)).sort((a, b) => a.nom.localeCompare(b.nom));
 // La personne est-elle l'un des responsables de l'équipe ? (table responsables_equipe, migration 027)
 const estDansResponsables = (ressourceId, equipeId) => (etat.d.responsablesEquipe || []).some(x => x.ressourceId === ressourceId && x.equipeId === equipeId);
-/* Chefs d'un projet (Product Owners, 1 ou plusieurs) : affectations « Chef de projet », personnes non
+/* Chefs d'un projet (1 ou plusieurs) : affectations « Chef de projet », personnes non
    inactives. Le champ « Chef de projet » de la fiche projet (projets.chef_id) est retiré depuis 2.02 :
    un chef encore inscrit seulement sur la fiche reste compté (rien n'est perdu), en lecture seule. */
 const chefsDuProjet = p => {
@@ -344,7 +344,7 @@ const monAffectation = p => { const moi = maRessource(); return moi ? etat.d.aff
    administrateur, affecté(e) au projet, ou responsable de son unité ou d'une unité parente. */
 const peutLireDailyProjet = p => etat.estAdmin || !!monAffectation(p) || suisResponsableDuProjet(p);
 
-/* Chef du projet : l'un de ses Product Owners (chefsDuProjet) */
+/* Chef du projet : l'un de ses chefs de projet (chefsDuProjet) */
 function suisChefDuProjet(p) {
   const moi = maRessource();
   return !!moi && chefsDuProjet(p).some(r => r.id === moi.id);

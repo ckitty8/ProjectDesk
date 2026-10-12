@@ -1,6 +1,7 @@
 # Spécifications — Ressources (socle de ProjectDesk)
 
 > **Statut : validée par le porteur le 2026-10-12, avec les maquettes `docs/maquettes/ressources-v2/` (fiche, rôles et menus).**
+> Vocabulaire : on dit **Chef de projet** (et non Product Owner), porteur 2026-10-12.
 > **Liste des ressources : le porteur garde le design de production** (navigation à gauche, détail à
 > droite) avec les fonctionnalités ci-dessous (DAT 2.00) ; l'organigramme (variante C de
 > `ressources-v2-variantes/`) va dans **Suivi de mes équipes › Dashboard général**, visible de
@@ -53,7 +54,9 @@ Une personne sans aucune affectation figure dans une liste « Sans affectation �
 | Chef de projet | les personnes de **ses projets** |
 | Membre, Lecteur | rien |
 
-Gérer = ajouter, affecter, modifier, passer inactive. **Supprimer** définitivement une personne
+Gérer = ajouter, affecter, modifier, passer inactive. Une personne créée par un chef de projet ou un
+responsable est **obligatoirement affectée** à l'un des projets qu'il gère ; seul un administrateur peut
+la laisser « Sans affectation » (porteur, 2026-10-12). **Supprimer** définitivement une personne
 est réservé aux **administrateurs** (cela efface ses congés, heures et daily).
 
 ## 5. Rôles et accès aux écrans (validé le 2026-10-12)

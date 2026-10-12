@@ -2,7 +2,7 @@
    Fenêtres modales
    - affectation : assigner une ressource à des projets, avec un rôle
                    (maquette : « Assigner une ressource ») ; m.role pré-choisit le
-                   rôle sur le projet d'origine (« + Ajouter un Product Owner »)
+                   rôle sur le projet d'origine (« + Chef de projet »)
    - ressource   : fiche d'une personne (nom, poste, capacité, dates, email, rôle d'accès)
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
@@ -61,9 +61,8 @@ const Modale = {
     const statut = m.id ? C.badgeActif(!estInactive(r), ['Actif', 'Inactif']) : '';
     const boutons = m.id ? `<button type="button" class="btn" data-action="basculerActifRessource" data-id="${m.id}">${estInactive(r) ? 'Réactiver' : 'Passer inactif'}</button>
         ${etat.estAdmin ? `<button type="button" class="btn danger" data-action="supprimerRessource" data-id="${m.id}">Supprimer</button>` : ''}<span style="flex:1"></span>` : '';
-    // data-affecter : création lancée depuis « + Nouvelle personne » → on enchaîne sur son affectation
-    // (au projet d'origine data-retour-projet s'il y en a un)
-    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-affecter="${m.affecter ? 'oui' : ''}" data-retour-projet="${m.retourProjet || ''}">
+    // data-retour-affectation : création lancée depuis la fenêtre d'affectation → on y revient ensuite
+    return `<form data-action-envoi="enregistrerRessource" data-id="${m.id || ''}" data-equipe="${r.equipeId}" data-retour-affectation="${m.retourAffectation ? 'oui' : ''}">
       <div class="panneau-entete"><h2>${esc(m.id ? 'Fiche de ' + r.nom : 'Nouvelle personne')} ${statut}</h2><button type="button" class="fermer" data-action="fermer">✕</button></div>
       <div class="panneau-corps">
         <div class="deux-colonnes"><div><label class="libelle">Nom complet</label><input class="champ" name="nom" value="${esc(r.nom || '')}" required></div>
@@ -73,12 +72,23 @@ const Modale = {
         <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label><input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
           <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
         <div><label class="libelle">Capacité (%)</label><input class="champ" type="number" min="0" max="100" name="capacite" value="${r.capacite}" required style="width:120px"></div>
-        ${m.id ? this.rolesFiche(r) : ''}
+        ${m.id ? this.rolesFiche(r) : this.projetCreation(m)}
         <label class="ligne-flex case-admin"><input type="checkbox" name="administrateur" ${estAdministrateur(r) ? 'checked' : ''} ${etat.estCreateur && r.userId ? '' : 'disabled'}>
           <b style="font-weight:500">Administrateur</b><span class="discret">— accès à tout (réservé au créateur${r.userId ? '' : ' ; la personne doit s’être connectée une fois'})</span></label>
       </div>
       <div class="panneau-pied">${boutons}
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
+  },
+  /* Création d'une personne : son premier projet et son rôle. Obligatoire sauf pour un administrateur
+     (décision du porteur, 2026-10-12) : une personne créée par un chef de projet ou un responsable est
+     affectée à l'un des projets qu'il gère, sinon il ne pourrait plus la gérer. Seul un administrateur
+     peut la laisser « Sans affectation ». */
+  projetCreation(m) {
+    const projets = etat.d.projets.filter(peutGererProjet).sort(parCode).map(p => ({ valeur: p.id, libelle: `${p.code} · ${p.nom}` }));
+    const vide = etat.estAdmin ? '— aucun : Sans affectation —' : (projets.length ? '— choisir —' : '— aucun projet géré —');
+    return `<div class="deux-colonnes"><div><label class="libelle">Affecter au projet${etat.estAdmin ? '' : ' (obligatoire)'}</label>
+        ${C.liste([{ valeur: '', libelle: vide }, ...projets], m.projetId || '', `class="champ" name="projetInitial" ${etat.estAdmin ? '' : 'required'}`)}</div>
+      <div><label class="libelle">Rôle sur le projet</label>${C.liste(valeursDe('role').map(v => v.libelle), m.role || ROLES_PROJET.MEMBRE, 'class="champ" name="roleInitial"')}</div></div>`;
   },
   // Rôles d'une personne, déduits de ses affectations (spécification § 5)
   rolesFiche(r) {
@@ -307,6 +317,8 @@ Object.assign(Actions, {
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
     // Case Administrateur (créateur seulement) : ligne de la table administrateurs, hors fiche
     const administrateur = f.administrateur === 'on'; delete f.administrateur;
+    // Création : premier projet et rôle (projetCreation), enregistrés en affectation
+    const { projetInitial, roleInitial } = f; delete f.projetInitial; delete f.roleInitial;
     executer(async () => {
       if (d.id) {
         const r = ressource(d.id);
@@ -317,10 +329,12 @@ Object.assign(Actions, {
         }
         etat.modale = null; return;
       }
-      const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
-      // Venue de « + Nouvelle personne » : on enchaîne sur son affectation, la personne sélectionnée
-      etat.modale = d.affecter ? { type: 'affectation', ressourceId: creee.id, projetId: d.retourProjet || null } : null;
-    }, 'ressources', 'administrateurs');
+      // Équipe technique de la fiche : celle du projet choisi, sinon celle d'où l'on vient
+      const [creee] = await Api.creer('ressources', { ...f, equipeId: projetInitial ? projet(projetInitial).equipeId : d.equipe });
+      if (projetInitial) await Api.creer('affectations', { projetId: projetInitial, ressourceId: creee.id, role: roleInitial });
+      // Venue de la fenêtre d'affectation : on y revient, la personne sélectionnée
+      etat.modale = d.retourAffectation ? { type: 'affectation', ressourceId: creee.id, projetId: projetInitial || null } : null;
+    }, 'ressources', 'administrateurs', 'affectations');
   },
 
   // Nouveau responsable d'une équipe : depuis l'équipe (personne choisie) ou depuis la fiche (équipe choisie)
@@ -330,7 +344,7 @@ Object.assign(Actions, {
     executer(async () => { await Api.creer('responsables_equipe', { equipeId, ressourceId }); etat.modale = d.ressource ? { type: 'ressource', id: d.ressource } : null; }, 'responsablesEquipe');
   },
   // Depuis la fenêtre d'affectation : créer la personne puis y revenir
-  nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, affecter: true, retourProjet: etat.modale.projetId || '' } }),
+  nouvellePersonneAffectation: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe, projetId: etat.modale.projetId || '', retourAffectation: true } }),
   supprimerRessource(d) {
     if (!confirm('Supprimer cette personne ? Ses affectations, absences et temps seront supprimés.')) return;
     executer(async () => { await Api.supprimer('ressources', { id: 'eq.' + d.id }); etat.modale = null; }, 'ressources', 'affectations', 'absences', 'temps');
