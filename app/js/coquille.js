@@ -1,7 +1,7 @@
 /* ============================================================
    Coquille de l'application (maquette Pilotage_Projet.dc.html)
    ------------------------------------------------------------
-   Barre latérale (sections « Général » en lecture et « Mon dashboard »
+   Barre latérale (sections « Suivi de mes équipes » en lecture — ex-« Général », renommée le 2026-10-12 — et « Mon dashboard »
    en édition), en-tête (fil d'Ariane + badge de mode), zone d'écran,
    panneau latéral et fenêtre modale. Les écrans plein écran
    (connexion, choix d'équipe) n'ont pas de coquille.
@@ -24,13 +24,15 @@ const Coquille = (() => {
   const icone = nom => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONES[nom]}"></path></svg>`;
 
   // Menus : id d'écran, libellé, icône ; « enfants » = sous-menu
+  // Suivi de mes équipes (identifiant de section : general) : même ordre que Mon dashboard (demande du porteur 2026-10-12) — Daily, Projets, Ressources
+  // (avec le Timesheet, comme « Mon timesheet » est rangé dans Gestion des ressources), Administration
   const MENU_GENERAL = [
     { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash' },
+    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily' },
     { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj' },
     { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress' },
-    { id: 'administration', libelle: 'Administration', icone: 'admin' },
     { id: 'timesheet', libelle: 'Timesheet', icone: 'time' },
-    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily' }
+    { id: 'administration', libelle: 'Administration', icone: 'admin' }
   ];
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
@@ -38,7 +40,8 @@ const Coquille = (() => {
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
       // Mon timesheet rangé dans Gestion des ressources (demande du porteur 2026-10-08) : « groupe » = intertitre
       enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' },
-        { groupe: 'Mon timesheet' }, { id: 'monTimesheet', libelle: 'Saisir mes heures' }, { id: 'suiviEquipes', libelle: 'Suivi de mes équipes' }] },
+        // Le suivi des équipes (et la validation) se fait dans Suivi de mes équipes › Timesheet (porteur, 2026-10-12)
+        { groupe: 'Mon timesheet' }, { id: 'monTimesheet', libelle: 'Saisir mes heures' }] },
     // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
     { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
@@ -67,7 +70,7 @@ const Coquille = (() => {
         <div class="marque-nom">${esc(CONFIG.NOM_APPLICATION)}</div>
       </div>
       <nav>
-        <div class="menu-titre"><span>Général ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
+        <div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${MENU_GENERAL.map(lienMenu).join('')}
         <div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
         ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}
@@ -89,7 +92,7 @@ const Coquille = (() => {
     return `
     <header class="entete">
       <button class="btn bouton-menu" data-action="basculerMenuLateral" aria-label="Menu" title="Menu">☰</button>
-      <div class="fil"><span class="discret">${general ? 'Général' : 'Mon dashboard'}</span><span class="sep">/</span>
+      <div class="fil"><span class="discret">${general ? 'Suivi de mes équipes' : 'Mon dashboard'}</span><span class="sep">/</span>
         <b>${esc(ecran.titre)}</b>
         ${general ? C.badge('Lecture seule', '#4A5363', '#F1F3F7') : C.badge('Édition', '#0033AD', '#E8EEFF')}</div>
       <div class="ligne-flex">
@@ -114,7 +117,7 @@ const Coquille = (() => {
   function sansEquipe() {
     return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px">
       <h2>Aucune équipe ouverte</h2>
-      <p class="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Général » reste consultable.</p>
+      <p class="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Suivi de mes équipes » reste consultable.</p>
       ${mesEquipes().length ? '<button class="btn primaire" data-action="changerEquipe">Choisir une équipe</button>'
         : etat.estAdmin ? '<button class="btn primaire" data-action="aller" data-ecran="monAdmin">Créer une équipe (Administration)</button>' : ''}
     </div></div>`;

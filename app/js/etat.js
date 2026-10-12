@@ -278,7 +278,7 @@ const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); re
 const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
 /* Chefs de projet possibles d'une équipe : ses personnes actives et celles de la direction qui la
    regroupe (ex. Thomas, rattaché à la direction DSI, pour un projet de l'équipe Applications).
-   Depuis 1.91 la direction n'est plus affichée dans Liste des ressources (consigne du porteur) :
+   Depuis 1.90 la direction n'est plus affichée dans Liste des ressources (consigne du porteur) :
    ses personnes doivent rester choisissables pour les projets de ses équipes. */
 const chefsPossibles = equipeId => {
   const unites = [equipeId, equipe(equipeId).parentId].filter(Boolean);

@@ -1,5 +1,5 @@
 /* ============================================================
-   Général › Gestion des ressources (maquette 03-gRess.png) — lecture
+   Suivi de mes équipes › Gestion des ressources (maquette 03-gRess.png) — lecture
    Calendrier mensuel des absences + annuaire des ressources.
    Le composant Calendrier est partagé avec Mon dashboard › Congés.
    Vues : « Par équipe » (chaque personne une fois, étiquettes de projets,

@@ -1,5 +1,5 @@
 /* ============================================================
-   Général › Projets et Roadmap (maquette 02-gProjets.png) — lecture
+   Suivi de mes équipes › Projets et Roadmap (maquette 02-gProjets.png) — lecture
    Projets groupés par équipe, filtre par équipe (notion de ticket retirée
    de l'application à la demande du porteur, 2026-09-27).
    Un clic sur un projet ouvre le panneau de détail.

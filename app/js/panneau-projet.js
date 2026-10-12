@@ -6,7 +6,7 @@
      sont plus affichés ici (colonnes conservées en base).
      Modifiable si peutEditerProjet (sinon lecture) ; suppression du
      projet par un membre de son équipe (règle RLS).
-     Depuis la section « Général », le panneau reste en lecture.
+     Depuis la section « Suivi de mes équipes », le panneau reste en lecture.
    - Création : formulaire « Nouveau projet » (bouton de Mes projets,
      ou de la Liste des ressources).
    ============================================================ */
@@ -23,7 +23,7 @@ const Panneau = {
     const ecranGeneral = (Ecrans[etat.ecran] || {}).section === 'general';
     const editable = !ecranGeneral && peutEditerProjet(p);
     const membres = etat.d.affectations.filter(a => a.projetId === p.id && estActive(a.ressourceId));
-    const note = ecranGeneral ? 'Vue générale en lecture seule. Modifiez ce projet depuis Mon dashboard.'
+    const note = ecranGeneral ? 'Vue « Suivi de mes équipes » en lecture seule. Modifiez ce projet depuis Mon dashboard.'
       : !editable ? 'Rôle Lecteur ou autre équipe : modification impossible.' : '';
 
     // Champ modifiable du projet (enregistré à la sortie du champ par majProjet)

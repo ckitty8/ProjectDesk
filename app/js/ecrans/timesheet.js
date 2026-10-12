@@ -1,6 +1,7 @@
 /* ============================================================
-   Général › Timesheet (maquette 05-gTime.png) — lecture
-   Heures déclarées par personne sur un mois, toutes équipes.
+   Suivi de mes équipes › Timesheet (maquette 05-gTime.png ; suivi des équipes : docs/maquettes/menus-general/)
+   Heures déclarées par personne sur un mois, toutes équipes ; validation des feuilles par les
+   responsables d'équipe (seule écriture de la section « Suivi de mes équipes », voir Ecrans.timesheet).
    (La saisie se fait dans Mon dashboard › Gestion des ressources › Mon timesheet.)
    La saisie et la validation des heures sont MENSUELLES (porteur du
    projet, 2026-10-05) : une feuille par personne et par mois.
@@ -28,7 +29,7 @@ const MoisTemps = {
   }
 };
 
-/* Tableau des feuilles d'un mois, groupé par équipe (Général › Timesheet et
+/* Tableau des feuilles d'un mois, groupé par équipe (Suivi de mes équipes › Timesheet et
    Mon timesheet › Suivi de mes équipes) : par personne, ses projets, heures
    saisies / attendues, complétude, statut. « avecValidation » ajoute la colonne
    Valider / Renvoyer pour les feuilles soumises des équipes dont je suis responsable.
@@ -47,7 +48,7 @@ function tableauFeuilles(equipes, avecValidation = false) {
     const statut = MoisTemps.statut(r.id, cle);
     totaux.saisi += saisi; totaux.attendu += attendu;
     if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
-    if (statut === 'soumise') totaux.aValider++;
+    if (statut === 'soumise' && estResponsableDe(e.id)) totaux.aValider++;   // feuilles que JE peux valider
 
     const codes = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
     const boutons = statut === 'soumise' && estResponsableDe(e.id)
@@ -74,17 +75,22 @@ function tableauFeuilles(equipes, avecValidation = false) {
   return { html, ...totaux };
 }
 
+/* Suivi de mes équipes › Timesheet est aussi l'écran de suivi des équipes (porteur, 2026-10-12 : « Suivi de mes
+   équipes » retiré de Mon timesheet). Seule exception à la lecture seule de la section : le responsable
+   d'une équipe y valide ou renvoie les feuilles soumises de SES équipes (boutons, contrôle en base). */
 Ecrans.timesheet = {
   titre: 'Timesheet',
   section: 'general',
   rendre() {
-    const t = tableauFeuilles(etat.d.equipes);
+    const valide = mesEquipes().some(e => estResponsableDe(e.id));
+    const t = tableauFeuilles(etat.d.equipes, valide);
     const completude = t.attendu ? t.saisi / t.attendu * 100 : 0;
     return `
     <div class="ecran">
-      ${C.entete('Timesheet', 'Heures déclarées par personne sur le mois · toutes équipes', MoisTemps.navigation())}
-      <div class="grille-kpi q3">${C.kpi('Heures saisies', Calculs.nombre(t.saisi) + ' h', `sur ${Calculs.nombre(t.attendu)} h attendues`)}
-        ${C.kpi('Taux de complétude', Calculs.pourcent(completude), '', 'completude')}${C.kpi('Feuilles à compléter', t.aCompleter)}</div>
+      ${C.entete('Timesheet', `Heures déclarées par personne sur le mois · toutes équipes${valide ? ' · validation des feuilles de vos équipes' : ''}`, MoisTemps.navigation())}
+      <div class="grille-kpi ${valide ? 'q4' : 'q3'}">${C.kpi('Heures saisies', Calculs.nombre(t.saisi) + ' h', `sur ${Calculs.nombre(t.attendu)} h attendues`)}
+        ${C.kpi('Taux de complétude', Calculs.pourcent(completude), '', 'completude')}${C.kpi('Feuilles à compléter', t.aCompleter)}
+        ${valide ? C.kpi('Feuilles à valider', t.aValider, '', 'aValider') : ''}</div>
       ${t.html}
     </div>`;
   }

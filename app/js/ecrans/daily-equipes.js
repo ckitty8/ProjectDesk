@@ -1,5 +1,5 @@
 /* ============================================================
-   Général › Daily des équipes — daily PAR PROJET (maquette docs/maquettes/daily-par-projet/)
+   Suivi de mes équipes › Daily des équipes — daily PAR PROJET (maquette docs/maquettes/daily-par-projet/)
    Pour le jour choisi, les dailies des projets que je peux lire (peutLireDailyProjet, même
    règle qu'en base) : les projets où je suis affecté(e) ; le responsable d'une unité voit
    tous les projets de son unité et des unités rattachées (ex. Anne, Applications) ; un
