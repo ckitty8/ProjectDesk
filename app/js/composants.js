@@ -27,6 +27,9 @@ const C = (() => {
   const pastille = couleur => `<span class="pastille" style="background:${couleur}"></span>`;
   const avatar = (nom, grand = false) => `<span class="avatar${grand ? ' grand' : ''}">${esc(Calculs.initiales(nom))}</span>`;
   const code = texte => `<span class="code">${esc(texte)}</span>`;
+  /* Mention de propriété (maquette docs/maquettes/mention-ciritec/) : courte en bas du menu,
+     complète (« logiciel propriétaire ») sur les écrans de connexion */
+  const mentionPropriete = (complete = false) => `<div class="mention-propriete">© ${CONFIG.ANNEE_DROITS} <b>${esc(CONFIG.PROPRIETAIRE)}</b> · Tous droits réservés${complete ? ` · ${esc(CONFIG.NOM_APPLICATION)} est un logiciel propriétaire` : ''}</div>`;
 
   // Barre de progression (pourcentage 0-100)
   const barre = (pct, couleur = '#003CC8', classe = '') =>
@@ -107,7 +110,7 @@ const C = (() => {
   // Statut actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne
   const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badge(libelles[0], '#0B6B4F', '#E3F5EC') : badge(libelles[1], '#4A5363', '#F1F3F7');
 
-  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeFeuille, pastille, avatar, code, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
+  return { aide, placerBulle, esc, teinte, badge, badgeRef, badgeFeuille, pastille, avatar, code, mentionPropriete, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone, badgeActif };
 })();
 
 // Bulles ⓘ : positionnées à l'ouverture (voir C.placerBulle)

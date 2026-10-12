@@ -82,6 +82,7 @@ const Coquille = (() => {
           ${etat.simulation ? '<span class="badge-createur" title="Simulation des rôles en cours">simulation</span>' : ''}
           ${etat.session.user.emailVerified === false && !etat.simulation ? '<a class="moi-sortie" data-action="verifierMonEmail">Vérifier mon email</a> · ' : ''}
           <a class="moi-sortie" data-action="deconnexion">Se déconnecter</a></div></div>
+        ${C.mentionPropriete()}
       </div>
     </aside>`;
   }
@@ -109,6 +110,7 @@ const Coquille = (() => {
       ${ouvert ? `<div class="menu-aide-liste">
         ${entree('ecran', '▶', 'Aide sur cet écran')}${entree('premiersPas', '⚑', 'Premiers pas')}${entree('roles', '⛨', 'Rôles et droits')}
         ${CONFIG.CONTACT_AIDE ? `<div class="menu-aide-sep"></div><a class="menu-aide-entree" href="mailto:${esc(CONFIG.CONTACT_AIDE)}?subject=ProjectDesk"><span class="menu-aide-icone">✉</span>Contacter l’administrateur</a>` : ''}
+        <div class="menu-aide-sep"></div><div class="menu-aide-propos">À propos : ${esc(CONFIG.NOM_APPLICATION)} © ${CONFIG.ANNEE_DROITS} ${esc(CONFIG.PROPRIETAIRE)}</div>
       </div>` : ''}</div>`;
   }
 

@@ -46,6 +46,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.goto(BASE + '/app/');
     await page.waitForSelector('form[data-action-envoi="seConnecter"]');
     await capture('01-connexion');
+    verifier('Mention de propriété CIRITEC sur la connexion', (await page.textContent('.mention-propriete')).includes('© 2026 CIRITEC'));
     await page.fill('input[name=email]', 'camille@test.fr'); await page.fill('input[name=motDePasse]', 'faux-mdp');
     await page.click('form button'); await page.waitForTimeout(300);
     verifier('Connexion refusée avec un mauvais mot de passe', (await texte()).includes('incorrect'));
@@ -84,6 +85,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     /* --- Section Suivi de mes équipes (ex-Général, lecture) --- */
     await capture('03-dashboard');
+    verifier('Mention de propriété CIRITEC en bas du menu', (await page.textContent('.bloc-utilisateur .mention-propriete')).includes('CIRITEC'));
     // Bulle ⓘ de la barre latérale : affichée en entier, hors de la barre qui défile (signalé le 2026-10-06)
     await page.hover('.menu-titre .aide >> nth=0'); await page.waitForTimeout(150);
     verifier('Bulle ⓘ de la barre latérale entière (non coupée)', await page.evaluate(() => {

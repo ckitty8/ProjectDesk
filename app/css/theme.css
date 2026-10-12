@@ -373,3 +373,9 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .liste-conseils { margin: 6px 0 0; padding: 0 16px 10px; list-style: none; }
 .liste-conseils li { padding: 4px 0; border-bottom: 1px solid #EEF1F5; }
 @media (max-width: 960px) { .grille-formats, .grille-conseils { grid-template-columns: 1fr; } }
+
+/* Mention de propriété « © CIRITEC » (maquette mention-ciritec/) : connexion, bas du menu, menu Aide */
+.mention-propriete { font-size: 11.5px; color: var(--discret); text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bordure-fine); }
+.bloc-utilisateur .mention-propriete { font-size: 10.5px; color: var(--pale); margin: 0; padding: 0; border: 0; }
+.bloc-utilisateur .mention-propriete b { font-weight: 500; }
+.menu-aide-propos { padding: 6px 10px; font-size: 11.5px; color: var(--discret); }

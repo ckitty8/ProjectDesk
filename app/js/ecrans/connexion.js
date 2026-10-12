@@ -35,6 +35,7 @@ Ecrans.connexion = {
       <button class="btn" style="width:100%;height:38px;justify-content:center" data-action="connexionGoogle">Continuer avec Google</button>
       <p class="discret" style="font-size:12px;text-align:center;margin:18px 0 0">Après la création d’un compte, l’accès aux équipes se fait
         sur invitation d’un administrateur.</p>
+      ${C.mentionPropriete(true)}
     </div></div>`;
   },
 
@@ -55,6 +56,7 @@ Ecrans.connexion = {
       </form>
       <div class="ligne-flex" style="justify-content:space-between;font-size:12.5px">
         <a data-action="renvoyerCodeEmail">Renvoyer un code</a><a data-action="ongletConnexion" data-id="connexion">Changer d’adresse ou de compte</a></div>
+      ${C.mentionPropriete(true)}
     </div></div>`;
   },
 
@@ -74,7 +76,8 @@ Ecrans.connexion = {
         </form>`;
     return `<div class="plein-ecran"><div class="carte boite pile">
       <h2>${nouveau ? 'Choisir un nouveau mot de passe' : 'Mot de passe oublié'}</h2>${corps}
-      <a data-action="ongletConnexion" data-id="connexion" style="text-align:center;font-size:12.5px">Retour à la connexion</a></div></div>`;
+      <a data-action="ongletConnexion" data-id="connexion" style="text-align:center;font-size:12.5px">Retour à la connexion</a>
+      ${C.mentionPropriete(true)}</div></div>`;
   }
 };
 

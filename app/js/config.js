@@ -12,6 +12,10 @@
 const CONFIG = {
   // Nom de l'application affiché (barre latérale, connexion, espace demandeur, onglet du navigateur)
   NOM_APPLICATION: 'ProjectDesk',
+  // Propriétaire du logiciel (licence propriétaire LICENSE, demande du porteur 2026-10-12) :
+  // mention « © année propriétaire » sur la connexion, en bas du menu et dans le menu Aide
+  PROPRIETAIRE: 'CIRITEC',
+  ANNEE_DROITS: 2026,
 
   // Neon Auth (Better Auth) et Neon Data API — projet Neon « ProjectDesk », branche production.
   // Surchargeables pour les tests via window.CONFIG_SURCHARGE (voir tests/serveur-simule.js).
