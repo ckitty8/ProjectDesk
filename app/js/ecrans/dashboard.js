@@ -79,7 +79,8 @@ Ecrans.dashboard = {
   /* ---------- Organigramme (consultation) ----------
      Boîtes reliées : équipes (leurs responsables) → projets (leurs chefs) → personnes (leur rôle),
      puis « Sans affectation ». Mêmes règles que la Liste des ressources (spécification Ressources) :
-     personnes inactives masquées. Clic sur un projet → sa fiche ; la gestion des personnes se fait
+     personnes inactives masquées. Visible de tous les profils, toutes équipes (décision du porteur,
+     2026-10-12 ; la base laisse lire équipes, projets et affectations à tout membre). Clic sur un projet → sa fiche ; la gestion des personnes se fait
      dans Mon dashboard › Liste des ressources. */
   organigramme() {
     const esc = C.esc, equipes = [...etat.d.equipes].sort((a, b) => a.nom.localeCompare(b.nom));

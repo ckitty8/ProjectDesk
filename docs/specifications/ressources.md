@@ -3,7 +3,8 @@
 > **Statut : validée par le porteur le 2026-10-12, avec les maquettes `docs/maquettes/ressources-v2/` (fiche, rôles et menus).**
 > **Liste des ressources : le porteur garde le design de production** (navigation à gauche, détail à
 > droite) avec les fonctionnalités ci-dessous (DAT 2.00) ; l'organigramme (variante C de
-> `ressources-v2-variantes/`) va dans **Suivi de mes équipes › Dashboard général**. Le porteur repart de
+> `ressources-v2-variantes/`) va dans **Suivi de mes équipes › Dashboard général**, visible de
+> **tous les profils** avec toutes les équipes, en consultation (porteur, 2026-10-12). Le porteur repart de
 > zéro sur la gestion des ressources : elle conditionne tout le reste de l'application.
 > Aucune maquette ni aucun code tant que ce document n'est pas validé. Les points marqués
 > **[À décider]** attendent la réponse du porteur.
