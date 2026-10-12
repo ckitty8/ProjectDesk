@@ -52,13 +52,28 @@ Une personne sans aucune affectation figure dans une liste « Sans affectation �
 Gérer = ajouter, affecter, modifier, passer inactive. **Supprimer** définitivement une personne
 est réservé aux **administrateurs** (cela efface ses congés, heures et daily).
 
-## 5. Rôles et accès aux écrans
+## 5. Rôles et accès aux écrans (validé le 2026-10-12)
 
-- Un **rôle** donne accès à certains **écrans** (ex. un rôle ouvre Mon dashboard, un autre non).
-- Chaque rôle contient la **liste des profils** (personnes) qui l'ont.
-- Les rôles d'affectation restent : responsable d'équipe, chef de projet, membre, **lecteur**.
-- **Lecteur** sur un projet : consulte sans modifier ; il **n'a pas accès au menu Mon dashboard**.
-- Les rôles se cumulent (un administrateur peut aussi être responsable, chef ou membre).
+- Un **rôle** décide quels **menus** une personne voit.
+- Le rôle est **déduit automatiquement** de ce que fait la personne : responsable d'une équipe →
+  rôle Responsable ; chef d'un projet → rôle Chef de projet ; membre → Membre ; lecteur → Lecteur.
+  Seul **Administrateur** se coche à la main. Les rôles se **cumulent** : une personne voit les
+  menus de tous ses rôles.
+- **Lecteur** : consulte sans modifier ; **pas d'accès à Mon dashboard**.
+
+Menus par rôle (réglage par défaut, validé) :
+
+| Menu | Administrateur | Responsable d'équipe | Chef de projet | Membre | Lecteur |
+|---|---|---|---|---|---|
+| Suivi de mes équipes (dashboard, daily des équipes, projets) | oui | oui | oui | oui | oui, lecture seule |
+| Mon dashboard (daily, congés, saisir mes heures) | oui | oui | oui | oui | non |
+| Liste des ressources (gérer les personnes) | tout | ses équipes | ses projets | non | non |
+| Plan de charge | oui | oui | oui | non | non |
+| Valider les timesheets | oui | oui | non | non | non |
+| Administration | oui | non | non | non | non |
+
+**Réglage** : ce tableau (menus × rôles) est modifiable dans **Administration**, dans un onglet
+visible **uniquement du créateur**.
 
 **Congés & capacité, timesheet** (porteur, 2026-10-12) : déjà gérés, on garde le fonctionnement
 actuel (vues « Par équipe » — chaque personne une seule fois — et « Par projet », sans doublon).
@@ -73,10 +88,6 @@ actuel (vues « Par équipe » — chaque personne une seule fois — et « Par 
 
 1. **[À décider] Doublon Cerine** : il reste deux fiches dans Applications — « Cerine KERARMA »
    (compte de connexion lié) et « Cerine Kerarma » (sans compte, arrivée le 23/03/2026). Laquelle garder ?
-2. **[À décider] Liste des rôles et écrans** : quels rôles (ex. Administrateur, Responsable,
-   Chef de projet, Membre, Lecteur) et quels écrans pour chacun ? Le rôle d'une personne est-il
-   **choisi** par un administrateur (liste des profils dans le rôle) ou **déduit** de ses
-   affectations ?
 
 ## 8. Écart avec l'application actuelle (pour information)
 
