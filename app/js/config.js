@@ -164,7 +164,7 @@ const GUIDE_ECRANS = {
     'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
     'Les KPI Agile sont dans le menu Mon dashboard › Trucs et astuces.'],
-  astuces: ['Les KPI Agile (Scrum et Kanban) : définition, formule, comment les lire.', 'Choisissez un projet en haut : chaque KPI est illustré par un exemple calculé sur ce projet (« réel » si les données existent, sinon « illustratif »).'],
+  astuces: ['Deux thèmes en haut : « Agile » (KPI Scrum et Kanban, rôles Scrum) et « Roadmap » (construire et faire vivre une roadmap).', 'KPI Agile : choisissez un projet en haut ; chaque KPI est illustré par un exemple calculé sur ce projet (« réel » si les données existent, sinon « illustratif »).'],
   choixEquipe: ['Choisissez l’équipe dans laquelle vous travaillez ; vous pourrez en changer à tout moment (bas de la barre latérale).']
 };
 const GUIDES = {
@@ -173,7 +173,7 @@ const GUIDES = {
     '2. « + Personne » crée la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion).',
     '3. Sur chaque projet : « + chef » et « + Membre » pour affecter les personnes avec leur rôle (Chef de projet, Membre, Lecteur).',
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
-    '5. Congés & capacité : posez les absences ; Mon timesheet : saisissez les heures ; Daily : notez l’avancement du jour.'] },
+    '5. Congés & capacité : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
     'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (Timesheet).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
@@ -285,4 +285,51 @@ const QUI_FAIT_QUOI_SCRUM = {
     ['Animation des cérémonies', '○', '○', '●', '', '', ''],
     ['Levée des obstacles', '', '', '●', '○', '', '']
   ]
+};
+
+/* ============================================================
+   Trucs et astuces › Roadmap (demande du porteur 2026-10-12, maquette docs/maquettes/astuces-agile-roadmap/)
+   Fiche pratique en lecture seule : définition, chaîne vision → sprint, trois formats de roadmap,
+   format conseillé selon la méthode du projet (METHODES de la création de projet), bonnes
+   pratiques et pièges. Sources : pratiques usuelles de product management (roadmap
+   « Now / Next / Later », roadmap par objectifs OKR) et de gestion de projet (Gantt, cycle en V).
+   ============================================================ */
+const ROADMAP_ASTUCES = {
+  definition: 'Une roadmap dit où l’on va et pourquoi — pas la liste des tâches datées.',
+  precision: 'Elle traduit les objectifs (OKR) en grandes étapes ; le détail vit dans le backlog et les sprints. Sa précision diminue avec l’horizon : sûr pour le trimestre, indicatif au-delà.',
+  // Chaîne de la vision au sprint : [étape, explication, couleur]
+  chaine: [
+    ['Vision', 'Pourquoi le produit existe (3 à 5 ans)', '#003CC8'],
+    ['Objectifs (OKR)', 'Résultats visés ce trimestre / cette année', '#7A3FC2'],
+    ['Roadmap', 'Grandes étapes par horizon, reliées aux objectifs', '#0F8A6B'],
+    ['Backlog', 'Éléments priorisés, détaillés juste à temps', '#B25E09'],
+    ['Sprint / release', 'Ce qui est livré et montré', '#4A5363']],
+  // Formats : titre, sous-titre, couleur du titre, fond des 3 exemples, 3 exemples [titre, détail], quand l'utiliser
+  formats: [
+    { titre: 'Now / Next / Later', sousTitre: 'Horizons sans dates fermes', couleur: '#0F8A6B', fond: ['#E3F5EC', '#FFF1D6', '#F1F3F7'],
+      exemples: [['Now', 'engagé, en cours'], ['Next', 'prochain, à affiner'], ['Later', 'idées, à valider']], quand: 'produit, incertitude forte, Kanban.' },
+    { titre: 'Par objectifs (OKR)', sousTitre: 'Une ligne par objectif, une colonne par trimestre', couleur: '#7A3FC2', fond: ['#EDE6FA', '#EDE6FA', '#EDE6FA'],
+      exemples: [['T1', 'O1 · KR1.1'], ['T2', 'O1 · KR1.2'], ['T3', 'O2 · KR2.1']], quand: 'direction, arbitrages entre équipes.' },
+    { titre: 'Datée (Gantt)', sousTitre: 'Jalons, dépendances, chemin critique', couleur: '#003CC8', fond: ['#E8EEFF', '#E8EEFF', '#E8EEFF'],
+      exemples: [['Cadrage', '→ 15/11'], ['Réalisation', '→ 31/01'], ['Recette', '→ 28/02']], quand: 'cascade, cycle en V, contrat ou contrainte réglementaire.' }],
+  // Selon la méthode du projet : [méthode, format conseillé, unité de planification, revue de la roadmap]
+  methodes: [
+    ['Agile Scrum', 'Now / Next / Later ou par objectifs', 'Releases et objectifs de sprint', 'À chaque sprint review'],
+    ['Agile Kanban', 'Now / Next / Later', 'Flux continu, éléments priorisés', 'Mensuelle (revue de flux)'],
+    ['Cascade', 'Datée (Gantt)', 'Phases et jalons', 'Comité de pilotage'],
+    ['Cycle en V', 'Datée (Gantt), conception et recettes en miroir', 'Phases, livrables, recettes', 'Comité de pilotage, à chaque jalon']],
+  bonnesPratiques: [
+    'Partir du résultat attendu (problème à résoudre), pas de la fonctionnalité',
+    'Relier chaque étape à un objectif / résultat clé',
+    'Précision décroissante : trimestre sûr, au-delà indicatif',
+    'Vérifier la capacité (Plan de charge, congés) avant de s’engager',
+    'Revoir à date fixe et afficher la date de mise à jour',
+    'Adapter le niveau de détail au public (direction, équipe, métiers)'],
+  pieges: [
+    'Promettre des dates fermes à plus de 6 mois',
+    'Confondre roadmap et backlog (trop de détail)',
+    'Une roadmap jamais mise à jour',
+    'Tout en priorité 1',
+    'Oublier les dépendances entre équipes',
+    'Ajouter sans retirer : la capacité n’est pas extensible']
 };

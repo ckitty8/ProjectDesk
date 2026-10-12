@@ -2,7 +2,7 @@
    Suivi de mes équipes › Timesheet (maquette 05-gTime.png ; suivi des équipes : docs/maquettes/menus-general/)
    Heures déclarées par personne sur un mois, toutes équipes ; validation des feuilles par les
    responsables d'équipe (seule écriture de la section « Suivi de mes équipes », voir Ecrans.timesheet).
-   (La saisie se fait dans Mon dashboard › Gestion des ressources › Mon timesheet.)
+   (La saisie se fait dans Mon dashboard › Gestion des ressources › Saisir mes heures.)
    La saisie et la validation des heures sont MENSUELLES (porteur du
    projet, 2026-10-05) : une feuille par personne et par mois.
    ============================================================ */
@@ -29,8 +29,7 @@ const MoisTemps = {
   }
 };
 
-/* Tableau des feuilles d'un mois, groupé par équipe (Suivi de mes équipes › Timesheet et
-   Mon timesheet › Suivi de mes équipes) : par personne, ses projets, heures
+/* Tableau des feuilles d'un mois, groupé par équipe (Suivi de mes équipes › Timesheet) : par personne, ses projets, heures
    saisies / attendues, complétude, statut. « avecValidation » ajoute la colonne
    Valider / Renvoyer pour les feuilles soumises des équipes dont je suis responsable.
    Renvoie le HTML et les totaux du mois (pour les indicateurs). */

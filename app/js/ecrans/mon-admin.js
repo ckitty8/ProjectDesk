@@ -35,10 +35,12 @@ Ecrans.monAdmin = {
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length },
+      ...(etat.estCreateur ? [{ id: 'roles', libelle: '★ Rôles' }] : []),
       ...(Simulation.estDisponible() ? [{ id: 'simulation', libelle: '★ Simulation des rôles' }] : [])
     ], u.onglet, 'ongletMonAdmin');
     let corps;
     if (u.onglet === 'comptes' && etat.estAdmin) corps = this.comptes();
+    else if (u.onglet === 'roles' && etat.estCreateur) corps = Roles.onglet();
     else if (u.onglet === 'simulation' && Simulation.estDisponible()) corps = Simulation.onglet();
     else if (u.onglet === 'equipes') corps = Administration.equipes(true);
     else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
