@@ -29,7 +29,7 @@ const Coquille = (() => {
   // (avec le Timesheet, comme « Mon timesheet » est rangé dans Gestion des ressources), Administration
   const MENU_GENERAL = [
     { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash' },
-    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily' },
+    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', visible: () => niveauDroit('daily_equipes') !== 'non' },
     { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj' },
     { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress' },
     { id: 'timesheet', libelle: 'Timesheet', icone: 'time' },
@@ -70,8 +70,8 @@ const Coquille = (() => {
       ${C.marque()}
       <nav>
         <div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
-        ${MENU_GENERAL.map(lienMenu).join('')}
-        ${estLectureSeule() ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
+        ${niveauDroit('general') === 'non' ? '' : MENU_GENERAL.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}
+        ${niveauDroit('mon_dashboard') === 'non' ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
         ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}`}
       </nav>
       <div class="bloc-utilisateur">
@@ -122,7 +122,7 @@ const Coquille = (() => {
 
   // Contenu de l'écran : Mon dashboard fermé en Lecture seule, équipe demandée si besoin, sinon l'écran
   function contenuEcran(ecran) {
-    if (ecran.section === 'moi' && estLectureSeule()) {
+    if (ecran.section === 'moi' && niveauDroit('mon_dashboard') === 'non') {
       return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px"><h2>Lecture seule</h2>
         <p class="discret">Votre rôle permet de consulter « Suivi de mes équipes », sans rien modifier.</p>
         <button class="btn primaire" data-action="aller" data-ecran="dashboard">Ouvrir le Dashboard général</button></div></div>`;

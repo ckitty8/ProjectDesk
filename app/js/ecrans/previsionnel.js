@@ -17,7 +17,7 @@ const Previsionnel = {
   NB_MOIS: 12,
 
   // Le menu n'apparaît qu'aux chefs de projet (fiche « chef » ou affectation) et aux administrateurs
-  estVisible: () => etat.estAdmin || etat.d.projets.some(suisChefDuProjet),
+  estVisible: () => (etat.estAdmin || etat.d.projets.some(suisChefDuProjet)) && niveauDroit('piloter') !== 'non',
 
   // Projets que je pilote, puis personnes proposées : affectées (hors Lecteur) à l'un d'eux, présentes
   personnes() {

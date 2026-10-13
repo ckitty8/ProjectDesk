@@ -148,7 +148,7 @@ Ecrans.listeRessources = {
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
      Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
   carteResponsable(r, affecte) {
-    const esc = C.esc, editable = estMembreDe(r.equipeId) || etat.estAdmin;
+    const esc = C.esc, editable = peutModifierFiche(r);
     return `<div class="carte detail-entete responsable">${C.avatar(r.nom, true)}
       <div><div class="nom-personne">${esc(r.nom)}</div><div class="discret">Responsable de l’équipe${r.poste ? ' · ' + esc(r.poste) : ''}</div></div>
       <span class="extensible"></span>${affecte ? '' : C.badgeTon('Hors projet', 'violet')}
@@ -164,7 +164,7 @@ Ecrans.listeRessources = {
     const cartesPo = productOwners.map(r => `<div class="carte-po">${C.avatar(r.nom)}<div style="flex:1;min-width:0">
         <div class="nom-personne">${esc(r.nom)}</div><div class="discret">
           ${esc([r.typeContrat, Calculs.libellePresence(r, Calculs.aujourdhui())].filter(Boolean).join(' · '))}</div></div>
-        ${estMembreDe(r.equipeId) || etat.estAdmin ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</div>`).join('');
+        ${peutModifierFiche(r) ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</div>`).join('');
     const indicateur = (n, libelle) => `<div><b>${n}</b><span class="discret">${libelle}</span></div>`;
     return `
       <div class="carte detail-entete"><div><a class="discret" data-action="choisirNoeud" data-type="equipe" data-id="${p.equipeId}">${esc(equipe(p.equipeId).nom)} ›</a>
@@ -203,7 +203,7 @@ Ecrans.listeRessources = {
   },
   // Une ligne du tableau de personnes (grisée si la personne est inactive)
   lignePersonne({ r, role }, deProjet) {
-    const esc = C.esc, editable = estMembreDe(r.equipeId) || etat.estAdmin, badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
+    const esc = C.esc, editable = peutModifierFiche(r), badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
     const acces = ROLES_ACCES[roleAcces(r)];
     return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}><td><span class="ligne-flex">
       ${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>

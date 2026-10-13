@@ -75,11 +75,12 @@ const C = (() => {
     <div class="carte kpi"><div class="kpi-libelle">${esc(libelle)}${cleAide ? ' ' + aide(cleAide) : ''}</div>
       <div class="kpi-valeur">${valeur}<span class="kpi-complement">${complement}</span></div></div>`;
 
-  // Liste déroulante : options [{ valeur, libelle }] ou chaînes
+  // Liste déroulante : options [{ valeur, libelle, desactive }] ou chaînes
   function liste(options, valeur, attributs = '') {
     return `<select ${attributs}>${options.map(o => {
       const v = typeof o === 'object' ? o.valeur : o, l = typeof o === 'object' ? o.libelle : o;
-      return `<option value="${esc(v)}"${String(v) === String(valeur ?? '') ? ' selected' : ''}>${esc(l)}</option>`;
+      const desactive = typeof o === 'object' && o.desactive ? ' disabled' : '';
+      return `<option value="${esc(v)}"${String(v) === String(valeur ?? '') ? ' selected' : ''}${desactive}>${esc(l)}</option>`;
     }).join('')}</select>`;
   }
 

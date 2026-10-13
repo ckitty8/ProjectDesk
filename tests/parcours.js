@@ -706,16 +706,28 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('27-createur');
     // Onglet Rôles (maquettes liste-roles, affecter-roles) : rôle d'accès de chaque personne, puis qui a quel rôle
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="roles"]'); await page.waitForTimeout(200);
-    verifier('Créateur : onglet Rôles (rôle d’accès par personne, une carte par rôle)', await page.evaluate(() =>
-      document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length
-      && document.querySelector('.grille-roles').textContent.includes('Thomas Bernard')
-      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))
+    verifier('Créateur : onglet Rôles, tableau Utilisateurs et rôles (colonnes demandées)', await page.evaluate(() =>
+      [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))
       // Colonnes demandées (maquette tableau-roles) : utilisateur, équipe, projet(s), compte relié, poste, rôle
       && [...document.querySelectorAll('.tableau-roles-acces thead th')].map(th => th.childNodes[0].textContent.trim()).join('|')
         === 'Utilisateur|Équipe|Projet(s)|Compte relié|Poste|Rôle'
       && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard')
         && tr.textContent.includes(etat.d.ressources.find(r => r.nom === 'Thomas Bernard').poste) && tr.textContent.includes('Migration Kubernetes'))));
     await capture('27b-roles');
+    // Matrice des droits (migration 031) : une ligne par droit, Administrateur × Rôles verrouillé, niveau modifié et enregistré
+    await page.click('[data-action="vueRoles"][data-vue="matrice"]'); await page.waitForTimeout(200);
+    const cellule = (role, droit) => `select[data-action-change="majDroit"][data-role="${role}"][data-droit="${droit}"]`;
+    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1);
+    const verrou = await page.$eval(cellule('admin', 'roles'), el => el.disabled);
+    await page.selectOption(cellule('utilisateur', 'projets'), 'oui'); await page.waitForTimeout(400);
+    const enregistre = await page.evaluate(() => etat.d.droitsRoles.find(d => d.role === 'utilisateur' && d.droit === 'projets').niveau === 'oui');
+    await capture('32-matrice-droits');
+    await page.selectOption(cellule('utilisateur', 'projets'), 'lecture'); await page.waitForTimeout(400);
+    await page.click('[data-action="vueRoles"][data-vue="qui"]'); await page.waitForTimeout(200);
+    verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle »',
+      matrice && verrou && enregistre && await page.evaluate(() => document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length),
+      JSON.stringify({ matrice, verrou, enregistre }));
+    await page.click('[data-action="vueRoles"][data-vue="utilisateurs"]'); await page.waitForTimeout(150);
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);
     await capture('28-simulation-roles');

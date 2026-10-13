@@ -47,10 +47,10 @@ function tableauFeuilles(equipes, avecValidation = false) {
     const statut = MoisTemps.statut(r.id, cle);
     totaux.saisi += saisi; totaux.attendu += attendu;
     if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
-    if (statut === 'soumise' && estResponsableDe(e.id)) totaux.aValider++;   // feuilles que JE peux valider
+    if (statut === 'soumise' && peutValiderEquipe(e.id)) totaux.aValider++;   // feuilles que JE peux valider
 
     const codes = codesProjetsDe(r.id);
-    const boutons = statut === 'soumise' && estResponsableDe(e.id)
+    const boutons = statut === 'soumise' && peutValiderEquipe(e.id)
       ? `<button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Renvoyer</button>
          <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Valider</button>` : '';
     return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td>${codes}</td>
@@ -81,7 +81,7 @@ Ecrans.timesheet = {
   titre: 'Timesheet',
   section: 'general',
   rendre() {
-    const valide = mesEquipes().some(e => estResponsableDe(e.id));
+    const valide = mesEquipes().some(e => peutValiderEquipe(e.id));
     const t = tableauFeuilles(etat.d.equipes, valide);
     const completude = t.attendu ? t.saisi / t.attendu * 100 : 0;
     return `

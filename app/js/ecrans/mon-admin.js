@@ -29,22 +29,22 @@ Ecrans.monAdmin = {
     const gereEquipes = etat.estAdmin || mesEquipes().some(e => estResponsableDe(e.id));
     const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutPiloterProjet(p));   // onglet Envoi du daily
     const onglets = C.onglets([
-      ...(etat.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
+      ...(etat.estAdmin && niveauDroit('comptes') !== 'non' ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
-      ...(etat.estAdmin ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
+      ...(etat.estAdmin && niveauDroit('administration') !== 'non' ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length },
-      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
+      ...(etat.estAdmin && niveauDroit('roles') !== 'non' ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
       ...(Simulation.estDisponible() ? [{ id: 'simulation', libelle: '★ Simulation des rôles' }] : [])
     ], u.onglet, 'ongletMonAdmin');
     let corps;
-    if (u.onglet === 'comptes' && etat.estAdmin) corps = this.comptes();
-    else if (u.onglet === 'roles' && etat.estAdmin) corps = Roles.onglet();
+    if (u.onglet === 'comptes' && etat.estAdmin && niveauDroit('comptes') !== 'non') corps = this.comptes();
+    else if (u.onglet === 'roles' && etat.estAdmin && niveauDroit('roles') !== 'non') corps = Roles.onglet();
     else if (u.onglet === 'simulation' && Simulation.estDisponible()) corps = Simulation.onglet();
     else if (u.onglet === 'equipes') corps = Administration.equipes(true);
-    else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
-    else if (u.onglet === 'feries' && etat.estAdmin) corps = this.feries();
+    else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin && aDroit('administration'));
+    else if (u.onglet === 'feries' && etat.estAdmin && niveauDroit('administration') !== 'non') corps = this.feries();
     else if (u.onglet === 'envoiDaily' && regleEnvois) corps = this.envoiDaily();
     else corps = this.sprints();
     const parties = [etat.estAdmin && 'comptes en attente', 'sprints des projets', gereEquipes && 'équipes',

@@ -87,7 +87,11 @@ const Roles = {
   lignePersonne(r) {
     const esc = C.esc, prevu = rolePrevu(r);
     const compte = r.userId ? C.badgeTon('Compte lié', 'succes') : C.badgeTon('Pas encore connecté', 'attention');
-    const options = ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
+    // Administrateur : choisi ou retiré seulement avec le droit « Nommer un administrateur »
+    const admin = this.roleChoisi(r) === 'admin', nommer = aDroit('nommer_admin');
+    const options = ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle,
+      desactive: !nommer && (cle === 'admin' || admin) && cle !== this.roleChoisi(r) }));
+    const verrou = aDroit('roles') ? '' : ' disabled';
     const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
     return `<tr data-recherche="${esc((r.nom + ' ' + (r.email || '')).toLowerCase())}">
       <td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span>
@@ -96,7 +100,7 @@ const Roles = {
       <td>${this.projetsDe(r)}</td>
       <td>${compte}</td>
       <td>${esc(r.poste || '—')}</td>
-      <td>${C.liste(options, this.roleChoisi(r), `class="champ champ-mini" data-action-change="affecterRole" data-id="${r.id}"`)}
+      <td>${C.liste(options, this.roleChoisi(r), `class="champ champ-mini" data-action-change="affecterRole" data-id="${r.id}"${verrou}`)}
         ${effet ? `<div class="discret texte-12">${effet}</div>` : ''}</td></tr>`;
   },
 
@@ -114,8 +118,8 @@ const Roles = {
     }).join('');
   },
 
-  // Onglet : filtres (recherche, équipe, rôle), tableau des rôles d'accès, puis vue « qui a quel rôle »
-  onglet() {
+  // Tableau « Utilisateurs et rôles » : filtres (recherche, équipe, rôle) puis une ligne par personne
+  utilisateurs() {
     const u = ui('roles', { equipe: '', role: '' });
     const personnes = ressourcesActives()
       .filter(r => !u.equipe || r.equipeId === u.equipe)
@@ -131,9 +135,41 @@ const Roles = {
         <div class="defilement-x"><table class="tableau tableau-roles-acces"><thead><tr><th>Utilisateur</th><th>Équipe</th><th>Projet(s)</th>
           <th>Compte relié</th><th>Poste</th><th>Rôle ${C.aide('roleAcces')}</th></tr></thead>
         <tbody>${personnes.map(r => this.lignePersonne(r)).join('') || `<tr><td colspan="6">${C.vide('Personne ne correspond aux filtres.')}</td></tr>`}</tbody>
-        </table></div></div>
-      <div class="carte-titre" style="border:0;padding:4px 2px"><h2>Qui a quel rôle</h2><span class="discret">vue d’ensemble, rôles de projet compris</span></div>
-      <div class="grille-roles">${this.cartesParRole()}</div>`;
+        </table></div></div>`;
+  },
+
+  /* Matrice des droits (maquette roles-droits/) : une ligne par droit (DROITS), une colonne par rôle ;
+     le créateur a tout (fixe), Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031).
+     Modifiable avec le droit « roles » ; chaque changement est enregistré aussitôt (table droits_roles). */
+  matrice() {
+    const esc = C.esc, modifiable = aDroit('roles');
+    const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
+    const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
+    const cellule = (role, droit) => {
+      const niveau = ((etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit) || {}).niveau || 'non';
+      const fixe = !modifiable || (role === 'admin' && droit === 'roles');
+      const options = Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => ({ valeur, libelle: n.libelle }));
+      return `<td class="centre">${C.liste(options, niveau, `class="champ champ-mini ${NIVEAUX_DROIT[niveau].classe}" data-action-change="majDroit"
+        data-role="${role}" data-droit="${droit}"${fixe ? ' disabled' : ''}`)}</td>`;
+    };
+    const lignes = DROITS.map(d => `<tr><td><b>${esc(d.domaine)}</b></td><td>${esc(d.libelle)}</td>
+      <td class="centre">${C.badgeTon('Oui · fixe', 'violet')}</td>${ROLES_CHOISISSABLES.map(role => cellule(role, d.cle)).join('')}</tr>`).join('');
+    return `<div class="carte"><div class="carte-titre"><h2>Matrice des droits</h2>
+        <span class="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle${modifiable ? '' : ' · consultation'}</span></div>
+      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Domaine</th><th>Droit</th><th class="centre">Créateur</th>${entete}</tr></thead>
+        <tbody><tr class="groupe"><td><b>Périmètre</b></td><td class="discret">ce que couvre le rôle</td>
+          <td class="centre discret texte-12">${esc(PERIMETRES.createur)}</td>${perimetres}</tr>${lignes}</tbody></table></div></div>
+      <div class="discret texte-12">Chaque « Oui » est appliqué par la base. Un rôle se donne dans « Utilisateurs et rôles ».</div>`;
+  },
+
+  // Onglet Rôles : trois vues — utilisateurs et rôles, matrice des droits, qui a quel rôle
+  onglet() {
+    const vue = ui('roles', { vue: 'utilisateurs' }).vue;
+    const puce = (cle, libelle) => `<button class="puce${vue === cle ? ' active' : ''}" data-action="vueRoles" data-vue="${cle}">${libelle}</button>`;
+    const corps = vue === 'matrice' ? this.matrice()
+      : vue === 'qui' ? `<div class="grille-roles">${this.cartesParRole()}</div>` : this.utilisateurs();
+    return `<div class="puces">${puce('utilisateurs', 'Utilisateurs et rôles')}${puce('matrice', 'Matrice des droits')}${puce('qui', 'Qui a quel rôle')}</div>
+      ${corps}`;
   }
 };
 
@@ -147,6 +183,11 @@ Object.assign(Actions, {
     }, 'administrateurs', 'responsablesEquipe', 'rolesPrevus', 'rolesAcces');
   },
   filtreRoles: (d, el) => majUi('roles', { [d.filtre]: el.value }),
+  vueRoles: d => majUi('roles', { vue: d.vue }),
+  // Niveau d'un droit pour un rôle (matrice) : enregistré aussitôt ; la base refuse sans le droit « roles »
+  majDroit(d, el) {
+    executer(() => Api.modifier('droits_roles', { role: 'eq.' + d.role, droit: 'eq.' + d.droit }, { niveau: el.value }), 'droitsRoles');
+  },
   // Recherche par nom ou email : masque les lignes sans redessiner l'écran (la saisie garde le focus)
   filtrerRoles(d, el) {
     const texte = el.value.trim().toLowerCase();

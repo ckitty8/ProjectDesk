@@ -74,6 +74,34 @@ const ROLES_ACCES = {
 };
 // Rôles proposés dans Administration › Rôles (dans cet ordre)
 const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
+
+/* Matrice des droits (Administration › Rôles, maquette docs/maquettes/roles-droits/, porteur « ok étape 2 »
+   2026-10-13). Clés fixes : chacune est reliée à des règles de la base (migration 031, fonction a_droit) ;
+   les NIVEAUX (oui / lecture / non) se règlent dans l'application (table droits_roles). */
+const DROITS = [
+  { cle: 'general', domaine: 'Suivi de mes équipes', libelle: 'Dashboard, projets, ressources, timesheet (lecture)' },
+  { cle: 'mon_dashboard', domaine: 'Mon dashboard', libelle: 'Saisir son daily, ses heures, ses congés' },
+  { cle: 'daily_equipes', domaine: 'Daily', libelle: 'Lire le daily des équipes' },
+  { cle: 'conges_equipe', domaine: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
+  { cle: 'valider_timesheet', domaine: 'Timesheet', libelle: 'Valider / renvoyer les timesheets' },
+  { cle: 'fiches_ressources', domaine: 'Ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
+  { cle: 'affecter', domaine: 'Ressources', libelle: 'Affecter des personnes aux projets' },
+  { cle: 'projets', domaine: 'Projets', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
+  { cle: 'piloter', domaine: 'Projets', libelle: 'Plan de charge et envoi du daily par e-mail' },
+  { cle: 'administration', domaine: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
+  { cle: 'comptes', domaine: 'Accès', libelle: 'Comptes en attente : donner l’accès' },
+  { cle: 'roles', domaine: 'Accès', libelle: 'Rôles des utilisateurs et matrice des droits' },
+  { cle: 'nommer_admin', domaine: 'Accès', libelle: 'Nommer ou retirer un administrateur' }
+];
+// Niveaux d'un droit : libellé et classe CSS de la liste de la matrice (theme.css)
+const NIVEAUX_DROIT = {
+  oui: { libelle: 'Oui', classe: 'niveau-oui' }, lecture: { libelle: 'Lecture', classe: 'niveau-lecture' }, non: { libelle: 'Non', classe: 'niveau-non' }
+};
+// Périmètre de chaque rôle : sur quoi porte un « Oui » de la matrice
+const PERIMETRES = {
+  createur: 'Tout, toutes équipes', admin: 'Tout', direction: 'Sa direction et ses équipes', responsable: 'Son équipe',
+  projet: 'Ses projets', utilisateur: 'Lui-même et ses projets', lecture: 'Ce qu’on lui ouvre'
+};
 const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés
 // Référentiel en base → objet de libellés système ci-dessus
 /* Envoi du daily par e-mail (demande du porteur, 2026-10-06) : mode choisi PAR PROJET depuis le
@@ -219,7 +247,7 @@ const GUIDE_ECRANS = {
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
-  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, choisi dans la liste de sa ligne.',
+  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, et la matrice des droits (ce que chaque rôle peut faire : Oui, Lecture, Non).',
     'Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
     'chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',

@@ -414,3 +414,9 @@ select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: a
 
 /* Administration › Rôles : un projet par ligne dans la colonne Projet(s) (maquette tableau-roles/) */
 .projet-role { gap: 6px; padding: 1px 0; white-space: nowrap; }
+
+/* Matrice des droits (Administration › Rôles) : couleur de la liste selon le niveau */
+.tableau-matrice td { vertical-align: middle; }
+select.niveau-oui { background: #E3F5EC; color: #0B6B4F; font-weight: 600; }
+select.niveau-lecture { background: #FFF3E0; color: #8A4B00; font-weight: 600; }
+select.niveau-non { color: var(--pale); }

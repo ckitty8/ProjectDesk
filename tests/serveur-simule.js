@@ -127,6 +127,16 @@ function amorcer() {
   bd.responsables_equipe = [];   // responsables de chaque équipe (migration 027)
   bd.roles_prevus = [];          // rôles prévus en attente de la connexion de la personne (migration 029)
   bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
+  // Matrice des droits (migration 031) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
+  const MATRICE = {
+    general: 'oui oui oui oui oui oui', mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
+    conges_equipe: 'oui oui oui lecture non non', valider_timesheet: 'oui oui oui non non non', fiches_ressources: 'oui oui oui non non non',
+    affecter: 'oui oui oui oui non non', projets: 'oui oui oui oui lecture lecture', piloter: 'oui oui oui oui non non',
+    administration: 'oui non non non non non', comptes: 'oui non non non non non', roles: 'oui non non non non non', nommer_admin: 'oui non non non non non'
+  };
+  const ROLES_MATRICE = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
+  bd.droits_roles = Object.entries(MATRICE).flatMap(([droit, niveaux]) =>
+    niveaux.split(' ').map((niveau, i) => ({ role: ROLES_MATRICE[i], droit, niveau })));
   bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // saisies de l'onglet Capacité (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];

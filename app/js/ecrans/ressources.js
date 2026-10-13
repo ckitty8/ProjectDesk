@@ -85,7 +85,8 @@ const Calendrier = {
     const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}"
       style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">
       ${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
-    const html = ctx.editable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>`
+    const modifiable = ctx.editable && (r.id === (maRessource() || {}).id ? aDroit('mon_dashboard') : aDroit('conges_equipe'));
+    const html = modifiable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>`
       : `<td>${contenu}</td>`;
     return { html, jours: t ? (demi ? 0.5 : 1) : 0 };
   },

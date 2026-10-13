@@ -44,7 +44,7 @@ const TABLES = {
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
-  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces'
+  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -82,7 +82,7 @@ const CLES_UNIQUES = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
-  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id' };
+  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -250,17 +250,42 @@ function mesEquipes() {
 const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
 // Gérer une équipe (membres, invitations, objectif de jours, rôle d'accès) : administrateur ou responsable de l'équipe
-const peutGererEquipe = equipeId => etat.estAdmin || estResponsableDe(equipeId);
+const peutGererEquipe = equipeId => (etat.estAdmin || estResponsableDe(equipeId)) && aDroit('fiches_ressources');
+// Valider / renvoyer les feuilles de temps d'une équipe : responsable de l'équipe et droit de la matrice
+const peutValiderEquipe = equipeId => estResponsableDe(equipeId) && aDroit('valider_timesheet');
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
   : (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
-function peutEditerProjet(projet) {
+// Personne qui travaille sur le projet : membre de son équipe, ou affectée Chef de projet / Membre (comme peut_editer_projet)
+function travailleSurLeProjet(projet) {
   if (!projet) return false;
   if (estMembreDe(projet.equipeId)) return true;
   const moi = maRessource();
   return !!moi && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
     [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));
 }
+// Modifier le projet (fiche, roadmap, sprints, capacité) / y affecter des personnes : selon la matrice
+const peutEditerProjet = projet => travailleSurLeProjet(projet) && aDroit('projets');
+const peutAffecterSur = projet => travailleSurLeProjet(projet) && aDroit('affecter');
+// Modifier la fiche d'une personne (Liste des ressources) : son équipe ou administrateur, et droit de la matrice
+const peutModifierFiche = r => (estMembreDe(r.equipeId) || etat.estAdmin) && aDroit('fiches_ressources');
+
+/* ---------- Matrice des droits (migration 031 ; même règle que mon_role / niveau_droit en base) ---------- */
+// Mon rôle d'accès : déclaré sur ma fiche, sinon administrateur, responsable, utilisateur (la simulation est prise en compte)
+function monRole() {
+  const moi = maRessource();
+  if (moi && roleDeclare(moi)) return roleDeclare(moi);
+  if (etat.estAdmin) return 'admin';
+  const responsable = (moi && estResponsableEquipe(moi)) || Object.values(etat.rolesEquipe).some(r => ['owner', 'admin'].includes(r));
+  return responsable ? 'responsable' : 'utilisateur';
+}
+// Niveau d'un droit pour moi : « oui » pour le créateur, sinon celui de la matrice (« non » s'il manque)
+function niveauDroit(droit) {
+  if (etat.estCreateur) return 'oui';
+  const ligne = (etat.d.droitsRoles || []).find(d => d.role === monRole() && d.droit === droit);
+  return ligne ? ligne.niveau : 'non';
+}
+const aDroit = droit => niveauDroit(droit) === 'oui';
 
 /* ---------- Accès pratiques aux données ---------- */
 const parId = (cle, id) => (etat.d[cle] || []).find(x => x.id === id) || null;
@@ -380,7 +405,7 @@ function suisChefDuProjet(p) {
 /* Qui pilote un projet — règle l'envoi de son daily et son plan de charge (même règle
    que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,
    ou responsable de son unité ou d'une unité parente. */
-const peutPiloterProjet = p => etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p);
+const peutPiloterProjet = p => (etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p)) && aDroit('piloter');
 const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p)).sort(parCode);
 // Note d'une personne (compte) pour un projet et un jour
 const noteProjet = (userId, projetId, jour) =>

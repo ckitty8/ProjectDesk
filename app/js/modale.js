@@ -31,7 +31,7 @@ const Modale = {
     const actuelles = rId ? etat.d.affectations.filter(a => a.ressourceId === rId) : [];
     // Projets proposés : ceux que je peux modifier, groupés par équipe
     const groupes = etat.d.equipes.map(e => {
-      const projets = etat.d.projets.filter(p => p.equipeId === e.id && peutEditerProjet(p));
+      const projets = etat.d.projets.filter(p => p.equipeId === e.id && peutAffecterSur(p));
       if (!projets.length) return '';
       return `<div class="libelle" style="margin-top:10px">${esc(e.nom)}</div>` + projets.map(p => {
         // Coché : déjà affecté, ou projet d'où l'on vient (« + Membre »)
@@ -288,7 +288,7 @@ Object.assign(Actions, {
     const coches = new Set(f.getAll('projet'));
     const actuelles = etat.d.affectations.filter(a => a.ressourceId === rId);
     await executer(async () => {
-      for (const p of etat.d.projets.filter(x => peutEditerProjet(x))) {
+      for (const p of etat.d.projets.filter(x => peutAffecterSur(x))) {
         const a = actuelles.find(x => x.projetId === p.id), role = f.get('role-' + p.id);
         if (coches.has(p.id) && !a) await Api.creer('affectations', { projetId: p.id, ressourceId: rId, role });
         else if (coches.has(p.id) && a && a.role !== role) await Api.modifier('affectations', { id: 'eq.' + a.id }, { role });
