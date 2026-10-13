@@ -685,7 +685,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Créateur : onglet Rôles (rôle d’accès par personne, une carte par rôle)', await page.evaluate(() =>
       document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length
       && document.querySelector('.grille-roles').textContent.includes('Thomas Bernard')
-      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))));
+      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))
+      // Colonnes demandées (maquette tableau-roles) : utilisateur, équipe, projet(s), compte relié, poste, rôle
+      && [...document.querySelectorAll('.tableau-roles-acces thead th')].map(th => th.childNodes[0].textContent.trim()).join('|')
+        === 'Utilisateur|Équipe|Projet(s)|Compte relié|Poste|Rôle'
+      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard')
+        && tr.textContent.includes(etat.d.ressources.find(r => r.nom === 'Thomas Bernard').poste) && tr.textContent.includes('Migration Kubernetes'))));
     await capture('27b-roles');
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);

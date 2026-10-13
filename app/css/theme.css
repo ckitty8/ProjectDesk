@@ -411,3 +411,6 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 /* Champs et boutons : liste déroulante compacte (en-têtes d'écran), bouton plein des écrans de connexion */
 select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: auto; height: 28px; }
 .btn-connexion { height: 38px; justify-content: center; }
+
+/* Administration › Rôles : un projet par ligne dans la colonne Projet(s) (maquette tableau-roles/) */
+.projet-role { gap: 6px; padding: 1px 0; white-space: nowrap; }

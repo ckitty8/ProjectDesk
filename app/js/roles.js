@@ -81,7 +81,15 @@ const Roles = {
     return estResponsableEquipe(r) ? 'responsable' : 'membre';
   },
 
-  // Ligne d'une personne : équipe, compte, rôle d'accès (liste), rôles sur les projets
+  // Projets d'une personne, un par ligne : code, nom et son rôle sur le projet
+  projetsDe(r) {
+    const esc = C.esc;
+    return affectationsDe(r.id).map(a => `<div class="ligne-flex projet-role">${C.code(projet(a.projetId).code)}${esc(projet(a.projetId).nom)}
+      <span class="discret texte-12">· ${esc(a.role)}</span></div>`).join('') || '<span class="pale">aucun projet</span>';
+  },
+
+  /* Ligne d'un utilisateur (maquette tableau-roles/, porteur 2026-10-13) : équipe, projets, compte relié,
+     poste (affiché ; il se modifie dans Liste des ressources) et rôle d'accès (liste, modifiable ici) */
   lignePersonne(r) {
     const esc = C.esc, prevu = rolePrevu(r);
     const compte = r.userId ? C.badgeTon('Compte lié', 'succes') : C.badgeTon('Pas encore connecté', 'attention');
@@ -91,10 +99,11 @@ const Roles = {
       <td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span>
         <div class="discret texte-12">${esc(r.email || 'email à renseigner sur la fiche')}</div></td>
       <td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(equipe(r.equipeId).nom)}</span></td>
+      <td>${this.projetsDe(r)}</td>
       <td>${compte}</td>
+      <td>${esc(r.poste || '—')}</td>
       <td>${C.liste(options, this.roleChoisi(r), `class="champ champ-mini" data-action-change="affecterRole" data-id="${r.id}"`)}
-        ${effet ? `<div class="discret texte-12">${effet}</div>` : ''}</td>
-      <td>${badgesProjetsDe(r.id, '—')}</td></tr>`;
+        ${effet ? `<div class="discret texte-12">${effet}</div>` : ''}</td></tr>`;
   },
 
   // Cartes « par rôle » : qui a chaque rôle (créateur, administrateurs, responsables, rôles de projet, comptes en attente)
@@ -124,10 +133,10 @@ const Roles = {
       ${C.liste(equipes, u.equipe, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="equipe"')}
       ${C.liste(roles, u.role, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="role"')}`;
     return `${C.barreOutils(filtres, '<span class="discret">Rôles de projet (Chef de projet, Membre, Lecteur) : projet par projet, dans Liste des ressources</span>')}
-      <div class="carte"><div class="carte-titre"><h2>Rôle d’accès de chaque personne</h2><span class="discret">${personnes.length} personne(s)</span></div>
-        <div class="defilement-x"><table class="tableau tableau-roles-acces"><thead><tr><th>Personne</th><th>Équipe</th><th>Compte</th>
-          <th>Rôle d’accès ${C.aide('roleAcces')}</th><th>Rôles sur les projets</th></tr></thead>
-        <tbody>${personnes.map(r => this.lignePersonne(r)).join('') || `<tr><td colspan="5">${C.vide('Personne ne correspond aux filtres.')}</td></tr>`}</tbody>
+      <div class="carte"><div class="carte-titre"><h2>Utilisateurs et rôles</h2><span class="discret">${personnes.length} personne(s)</span></div>
+        <div class="defilement-x"><table class="tableau tableau-roles-acces"><thead><tr><th>Utilisateur</th><th>Équipe</th><th>Projet(s)</th>
+          <th>Compte relié</th><th>Poste</th><th>Rôle ${C.aide('roleAcces')}</th></tr></thead>
+        <tbody>${personnes.map(r => this.lignePersonne(r)).join('') || `<tr><td colspan="6">${C.vide('Personne ne correspond aux filtres.')}</td></tr>`}</tbody>
         </table></div></div>
       <div class="carte-titre" style="border:0;padding:4px 2px"><h2>Qui a quel rôle</h2><span class="discret">vue d’ensemble, rôles de projet compris</span></div>
       <div class="grille-roles">${this.cartesParRole()}</div>`;
