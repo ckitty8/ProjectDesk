@@ -523,6 +523,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
         && liste.some(x => x.libelle.startsWith('Inès Roux — Mobile · Lead mobile'))
         && personnesProposees('equipe-sans-personne').length === ressourcesActives().length;
     }));
+    /* Équipe › « + Personne existante » (2026-10-13) : une personne d'une autre équipe (Julien, Plateforme) est
+       affectée à un projet de Mobile sans changer d'équipe ; la fenêtre ne propose que les projets de Mobile */
+    await page.click(noeud('equipe', 'Mobile')); await page.waitForTimeout(200);
+    await page.click('#detail-ressources [data-action="assigner"][data-equipe]'); await page.waitForTimeout(250);
+    const idJulien = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Julien Dubois').id);
+    const projetsMobile = await page.evaluate(() => [...document.querySelectorAll('.modale input[name=projet]')]
+      .every(c => projet(c.value).equipeId === etat.d.equipes.find(e => e.nom === 'Mobile').id));
+    await page.selectOption('.modale select[name=ressource]', idJulien); await page.waitForTimeout(250);
+    const idMo23 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'MO-23').id);
+    await page.check(`.modale input[name=projet][value="${idMo23}"]`);
+    await page.click('.modale .btn.primaire'); await page.waitForTimeout(500);
+    verifier('Équipe › + Personne existante : affectée à un projet de l’équipe sans changer d’équipe', projetsMobile && await page.evaluate(([idR, idP]) =>
+      etat.d.affectations.some(a => a.ressourceId === idR && a.projetId === idP) && equipe(ressource(idR).equipeId).nom === 'Plateforme', [idJulien, idMo23]));
+    await page.evaluate(([idR, idP]) => executer(() => Api.supprimer('affectations', { ressource_id: 'eq.' + idR, projet_id: 'eq.' + idP }), 'affectations'), [idJulien, idMo23]);
+    await page.waitForTimeout(300);
     verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
     await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
     await capture('12-liste-ressources');
@@ -779,7 +794,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
     await page.click('[data-action="connexionGoogle"]');
-    await page.waitForSelector('.boite'); await page.waitForTimeout(300);
+    // Attendre la fin de l'aller-retour (et non un délai fixe : la redirection prend un temps variable)
+    await page.waitForFunction(() => typeof etat !== 'undefined' && etat.session && /Gaëlle/.test(etat.session.user.name || '') && !etat.chargement, null, { timeout: 10000 });
+    await page.waitForTimeout(200);
     verifier('Google : session ouverte au retour, vérificateur retiré de l’adresse',
       (await texte()).includes('Gaëlle') && !page.url().includes('neon_auth_session_verifier'));
     await page.goto(BASE + '/app/?error=access_denied'); await page.waitForTimeout(500);

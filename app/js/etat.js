@@ -256,10 +256,11 @@ const peutValiderEquipe = equipeId => estResponsableDe(equipeId) && aDroit('vali
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
   : (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
-// Personne qui travaille sur le projet : membre de son équipe, ou affectée Chef de projet / Membre (comme peut_editer_projet)
+// Personne qui agit sur le projet : administrateur (périmètre « Tout », migration 032), membre de son équipe,
+// ou affectée Chef de projet / Membre (comme peut_editer_projet)
 function travailleSurLeProjet(projet) {
   if (!projet) return false;
-  if (estMembreDe(projet.equipeId)) return true;
+  if (etat.estAdmin || estMembreDe(projet.equipeId)) return true;
   const moi = maRessource();
   return !!moi && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
     [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));

@@ -26,11 +26,11 @@ const Modale = {
   /* ---------- Affectations d'une ressource ---------- */
   affectation(m) {
     const esc = C.esc;
-    const personnes = personnesProposees(m.projetId ? projet(m.projetId).equipeId : null);
+    const personnes = personnesProposees(m.projetId ? projet(m.projetId).equipeId : m.equipeId || null);
     const rId = m.ressourceId || '';
     const actuelles = rId ? etat.d.affectations.filter(a => a.ressourceId === rId) : [];
-    // Projets proposés : ceux que je peux modifier, groupés par équipe
-    const groupes = etat.d.equipes.map(e => {
+    // Projets proposés : ceux que je peux modifier, groupés par équipe (ceux de l'équipe d'origine seulement si on en vient)
+    const groupes = etat.d.equipes.filter(e => !m.equipeId || e.id === m.equipeId).map(e => {
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && peutAffecterSur(p));
       if (!projets.length) return '';
       return `<div class="libelle" style="margin-top:10px">${esc(e.nom)}</div>` + projets.map(p => {

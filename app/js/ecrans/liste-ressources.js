@@ -141,9 +141,18 @@ Ecrans.listeRessources = {
         <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
       <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>
-        ${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</div>
+        <span class="ligne-flex">${this.ajoutPersonneExistante(e, projets)}
+          ${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</span></div>
         ${this.tableauPersonnes('equipe:' + e.id, personnes.map(r => ({ r })), 'Aucune personne.')}
         ${personnes.length ? this.legendeAcces() : ''}</div>`;
+  },
+  /* « + Personne existante » (porteur, 2026-10-13) : affecter quelqu'un déjà présent dans l'application (ex. une
+     personne d'Applications) aux projets de cette équipe, sans changer son équipe. Sans projet : il faut en créer un. */
+  ajoutPersonneExistante(e, projets) {
+    if (!projets.some(peutAffecterSur)) {
+      return projets.length ? '' : '<span class="discret texte-12">pour affecter une personne existante, créez d’abord un projet</span>';
+    }
+    return `<a data-action="assigner" data-equipe="${e.id}">+ Personne existante</a>`;
   },
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
      Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
@@ -289,7 +298,8 @@ Object.assign(Actions, {
 
   /* Fenêtre d'affectation : pour une personne (data-ressource) ou pré-remplie sur un projet
      (data-projet) ; data-role pré-choisit le rôle (« + Ajouter un Product Owner » → Chef de projet) */
-  assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null, role: d.role || null } }),
+  assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null, role: d.role || null,
+    equipeId: d.equipe || null } }),
   nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe } }),
   modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } }),
   // Statut d'une personne : « Inactif » = date de fin saisie (règle du porteur) ; le bouton pose la date
