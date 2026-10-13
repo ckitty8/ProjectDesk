@@ -72,14 +72,8 @@ const Roles = {
      Ouvert à tous les administrateurs (porteur, 2026-10-13). Le rôle d'accès de chaque personne se
      choisit dans la liste de sa ligne et s'enregistre aussitôt (fonction affecter_role, migration 029).
      Personne pas encore connectée (ou email non vérifié) : rôle prévu, appliqué à sa connexion. */
-  CHOIX: ['admin', 'responsable', 'membre'],
-
   // Rôle d'accès affiché dans la liste : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non
-  roleChoisi(r) {
-    if (rolePrevu(r)) return rolePrevu(r);
-    if (estAdministrateur(r)) return 'admin';
-    return estResponsableEquipe(r) ? 'responsable' : 'membre';
-  },
+  roleChoisi: r => rolePrevu(r) || roleDeLaFiche(r),
 
   // Projets d'une personne, un par ligne : code, nom et son rôle sur le projet
   projetsDe(r) {
@@ -93,7 +87,7 @@ const Roles = {
   lignePersonne(r) {
     const esc = C.esc, prevu = rolePrevu(r);
     const compte = r.userId ? C.badgeTon('Compte lié', 'succes') : C.badgeTon('Pas encore connecté', 'attention');
-    const options = this.CHOIX.map(cle => ({ valeur: cle, libelle: cle === 'membre' ? 'Membre de l’équipe' : ROLES_ACCES[cle].libelle }));
+    const options = ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
     const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
     return `<tr data-recherche="${esc((r.nom + ' ' + (r.email || '')).toLowerCase())}">
       <td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span>
@@ -128,7 +122,7 @@ const Roles = {
       .filter(r => !u.role || this.roleChoisi(r) === u.role)
       .sort((a, b) => equipe(a.equipeId).nom.localeCompare(equipe(b.equipeId).nom) || a.nom.localeCompare(b.nom));
     const equipes = [{ valeur: '', libelle: 'Toutes les équipes' }, ...etat.d.equipes.map(e => ({ valeur: e.id, libelle: e.nom }))];
-    const roles = [{ valeur: '', libelle: 'Tous les rôles' }, ...this.CHOIX.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }))];
+    const roles = [{ valeur: '', libelle: 'Tous les rôles' }, ...ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }))];
     const filtres = `<input class="champ" style="width:260px" placeholder="Rechercher une personne…" data-action-saisie="filtrerRoles">
       ${C.liste(equipes, u.equipe, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="equipe"')}
       ${C.liste(roles, u.role, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="role"')}`;
@@ -150,7 +144,7 @@ Object.assign(Actions, {
       const resultat = await Api.executer('affecter_role', { p_ressource: d.id, p_role: el.value });
       await chargerRoles();
       notifier(resultat === 'prevu' ? 'Rôle prévu : il s’appliquera à la connexion de la personne' : 'Rôle d’accès enregistré');
-    }, 'administrateurs', 'responsablesEquipe', 'rolesPrevus');
+    }, 'administrateurs', 'responsablesEquipe', 'rolesPrevus', 'rolesAcces');
   },
   filtreRoles: (d, el) => majUi('roles', { [d.filtre]: el.value }),
   // Recherche par nom ou email : masque les lignes sans redessiner l'écran (la saisie garde le focus)

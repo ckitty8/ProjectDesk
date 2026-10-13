@@ -126,6 +126,7 @@ function amorcer() {
   bd.comptes_ignores = [];   // comptes écartés par un administrateur (migration 024)
   bd.responsables_equipe = [];   // responsables de chaque équipe (migration 027)
   bd.roles_prevus = [];          // rôles prévus en attente de la connexion de la personne (migration 029)
+  bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
   bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // saisies de l'onglet Capacité (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
@@ -331,24 +332,29 @@ function paginer(lignes, params) {
   const offset = Number(params.get('offset') || 0), limite = Math.min(Number(params.get('limit') || MAX_LIGNES), MAX_LIGNES);
   return lignes.slice(offset, offset + limite);
 }
-/* Rôle d'accès d'une fiche, comme la fonction appliquer_role (migration 029) : responsables de
-   l'équipe, administrateurs, rôle dans l'organisation ; 'prevu' si la personne n'est pas encore
-   connectée (ou email non vérifié, ou pas membre de l'organisation de son équipe pour un responsable). */
+/* Rôle d'accès d'une fiche, comme la fonction appliquer_role (migration 030) : six rôles ; un rôle qui
+   donne des droits (admin, direction, responsable, projet) attend un compte à l'email vérifié ('prevu'),
+   un rôle qui restreint (utilisateur, lecture) s'applique tout de suite. */
 function appliquerRole(ressourceId, role) {
-  const r = bd.ressources.find(x => x.id === ressourceId);
-  bd.responsables_equipe = bd.responsables_equipe.filter(x => !(x.equipe_id === r.equipe_id && x.ressource_id === r.id));
-  if (role === 'responsable') bd.responsables_equipe.push({ equipe_id: r.equipe_id, ressource_id: r.id, cree_le: maintenant() });
+  const r = bd.ressources.find(x => x.id === ressourceId), eq = bd.equipes.find(e => e.id === r.equipe_id);
+  const compte = utilisateurs.find(u => u.id === r.user_id);
   const prevoir = () => {
     bd.roles_prevus = bd.roles_prevus.filter(x => x.ressource_id !== r.id).concat({ ressource_id: r.id, role, cree_le: maintenant() });
     return 'prevu';
   };
-  const compte = utilisateurs.find(u => u.id === r.user_id);
-  if (!compte || compte.emailVerified === false) return prevoir();
-  bd.administrateurs = bd.administrateurs.filter(a => a.user_id !== compte.id);
-  if (role === 'admin') bd.administrateurs.push({ user_id: compte.id });
-  const membre = membres.find(m => m.organizationId === r.equipe_id && m.userId === compte.id);
-  if (membre && membre.role !== 'owner') membre.role = role === 'responsable' ? 'admin' : 'member';
-  if (role === 'responsable' && !membre) return prevoir();
+  if (['admin', 'direction', 'responsable', 'projet'].includes(role) && (!compte || compte.emailVerified === false)) return prevoir();
+  bd.responsables_equipe = bd.responsables_equipe.filter(x => x.ressource_id !== r.id);
+  if (role === 'responsable') bd.responsables_equipe.push({ equipe_id: r.equipe_id, ressource_id: r.id, cree_le: maintenant() });
+  if (role === 'direction') bd.responsables_equipe.push({ equipe_id: eq.parent_id || eq.id, ressource_id: r.id, cree_le: maintenant() });
+  let membre = null;
+  if (compte) {
+    bd.administrateurs = bd.administrateurs.filter(a => a.user_id !== compte.id);
+    if (role === 'admin') bd.administrateurs.push({ user_id: compte.id });
+    membre = membres.find(m => m.organizationId === r.equipe_id && m.userId === compte.id);
+    if (membre && membre.role !== 'owner') membre.role = ['responsable', 'direction'].includes(role) ? 'admin' : 'member';
+  }
+  bd.roles_acces = bd.roles_acces.filter(x => x.ressource_id !== r.id).concat({ ressource_id: r.id, role, cree_le: maintenant() });
+  if (['responsable', 'direction'].includes(role) && compte && !membre) return prevoir();
   bd.roles_prevus = bd.roles_prevus.filter(x => x.ressource_id !== r.id);
   return 'applique';
 }

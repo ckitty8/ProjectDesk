@@ -57,19 +57,23 @@ const CONFIG = {
 // les renommer (migration 007) sans casser les calculs.
 const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 'À risque', EN_RETARD: 'En retard', TERMINE: 'Terminé' };
 const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
-/* Rôles d'accès d'une personne (maquette docs/maquettes/role-acces/, porteur 2026-10-12) :
-   ce qu'elle peut voir et faire. Constante technique : chaque rôle correspond à un droit
-   appliqué en base (table administrateurs, rôle owner / admin / member de l'organisation
-   Neon Auth), il ne se renomme donc pas. (Un rôle « Lecteur » d'équipe a été écarté par le
-   porteur le 2026-10-12 ; le rôle Lecteur reste possible sur un projet.)
+/* Rôles d'accès d'une personne : ce qu'elle peut voir et faire. Les six premiers se choisissent
+   dans Administration › Rôles (maquette docs/maquettes/roles-droits/, porteur « ok étape 1 »
+   2026-10-13) ; chacun correspond à des droits appliqués en base (migration 030 : administrateurs,
+   responsables_equipe, rôle dans l'organisation Neon Auth, roles_acces), d'où des clés fixes.
    « Chef de projet » se déduit de ses projets ; « Pas encore de compte » de sa fiche. */
 const ROLES_ACCES = {
   admin: { libelle: 'Administrateur', description: 'Tous les écrans et l’Administration', texte: '#0033AD', fond: '#E8EEFF' },
+  direction: { libelle: 'Direction', description: 'Sa direction et ses équipes : timesheets, daily, plan de charge', texte: '#3B2A8C', fond: '#E9E6FA' },
   responsable: { libelle: 'Responsable d’équipe', description: 'Son équipe : timesheets à valider, tous les daily, congés', texte: '#5B2DA0', fond: '#EDE6FA' },
+  projet: { libelle: 'Projet', description: 'Chef de projet sur ses projets : plan de charge, envoi du daily', texte: '#0B6B4F', fond: '#E3F5EC' },
+  utilisateur: { libelle: 'Utilisateur', description: 'Son daily, ses heures, ses congés ; consulte le reste', texte: '#4A5363', fond: '#F1F3F7' },
+  lecture: { libelle: 'Lecture seule', description: 'Consulte, ne modifie rien (pas de Mon dashboard)', texte: '#6B7485', fond: '#F4F5F7' },
   chef: { libelle: 'Chef de projet', description: 'Ses projets : membres, plan de charge, envoi du daily', texte: '#8A5300', fond: '#FFF1D6' },
-  membre: { libelle: 'Membre', description: 'Son daily, ses heures, ses congés ; les projets de son équipe', texte: '#0B6B4F', fond: '#E3F5EC' },
   sansCompte: { libelle: 'Pas encore de compte', description: 'Fiche sans compte de connexion : aucun accès', texte: '#A32020', fond: '#FDECEC' }
 };
+// Rôles proposés dans Administration › Rôles (dans cet ordre)
+const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
 const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };   // CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés
 // Référentiel en base → objet de libellés système ci-dessus
 /* Envoi du daily par e-mail (demande du porteur, 2026-10-06) : mode choisi PAR PROJET depuis le
@@ -163,7 +167,7 @@ const AIDES = {
     `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
   statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
     '» (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
-  roleAcces: 'Ce que la personne peut voir et faire : Administrateur, Responsable d’équipe ou Membre de l’équipe. Il se choisit dans ' +
+  roleAcces: 'Ce que la personne peut voir et faire : Administrateur, Direction, Responsable d’équipe, Projet, Utilisateur ou Lecture seule. Il se choisit dans ' +
     'Administration › Rôles (administrateurs). Personne pas encore connectée, ou email non vérifié : le rôle est prévu et ' +
     's’applique à sa connexion. Les rôles de projet (Chef de projet, Membre, Lecteur) se donnent projet par projet.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',

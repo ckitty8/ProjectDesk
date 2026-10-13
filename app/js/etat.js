@@ -44,7 +44,7 @@ const TABLES = {
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
-  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus'
+  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -82,7 +82,7 @@ const CLES_UNIQUES = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
-  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id' };
+  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -318,14 +318,24 @@ const estResponsableEquipe = r => estResponsableDesigne(r) || ['owner', 'admin']
    liste des administrateurs illisible pour un non-administrateur) se lit comme le suivant. */
 // Rôle prévu d'une fiche (Administration › Rôles), en attente de la connexion de la personne, ou null
 const rolePrevu = r => ((etat.d.rolesPrevus || []).find(x => x.ressourceId === r.id) || {}).role || null;
+// Rôle d'accès déclaré et appliqué d'une fiche (roles_acces, migration 030), ou null s'il est déduit
+const roleDeclare = r => ((etat.d.rolesAcces || []).find(x => x.ressourceId === r.id) || {}).role || null;
+// Rôle d'accès d'une fiche, compte relié ou non : déclaré, sinon déduit (administrateur, responsable, utilisateur)
+function roleDeLaFiche(r) {
+  if (roleDeclare(r)) return roleDeclare(r);
+  if (estAdministrateur(r)) return 'admin';
+  return estResponsableEquipe(r) ? 'responsable' : 'utilisateur';
+}
 function roleAcces(r) {
   if (!r.userId) return 'sansCompte';
-  if (estAdministrateur(r)) return 'admin';
-  if (estResponsableEquipe(r)) return 'responsable';
+  const role = roleDeLaFiche(r);
+  if (role !== 'utilisateur') return role;
   const chef = etat.d.projets.some(p => p.chefId === r.id)
     || etat.d.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
-  return chef ? 'chef' : 'membre';
+  return chef ? 'chef' : 'utilisateur';
 }
+// Suis-je en « Lecture seule » ? (comme est_lecture_seule en base : Mon dashboard masqué, aucune écriture)
+const estLectureSeule = () => !etat.estCreateur && !!maRessource() && roleDeclare(maRessource()) === 'lecture';
 
 /* ---------- Daily par projet (migration 018) ---------- */
 // Absence d'une personne un jour donné (Congés & capacité), ou null
@@ -360,9 +370,12 @@ const monAffectation = p => { const moi = maRessource(); return moi ? etat.d.aff
 const peutLireDailyProjet = p => etat.estAdmin || !!monAffectation(p) || suisResponsableDuProjet(p);
 
 /* Chef du projet : fiche « chef » du projet ou affectation « Chef de projet » */
+// Chef du projet : fiche projet, affectation « Chef de projet », ou rôle « Projet » affecté (hors Lecteur)
 function suisChefDuProjet(p) {
   const moi = maRessource(), aff = monAffectation(p);
-  return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF);
+  if (estLectureSeule()) return false;
+  return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF)
+    || (!!aff && aff.role !== ROLES_PROJET.LECTEUR && roleDeclare(moi) === 'projet');
 }
 /* Qui pilote un projet — règle l'envoi de son daily et son plan de charge (même règle
    que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,

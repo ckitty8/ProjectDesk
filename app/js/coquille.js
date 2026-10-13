@@ -71,8 +71,8 @@ const Coquille = (() => {
       <nav>
         <div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${MENU_GENERAL.map(lienMenu).join('')}
-        <div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
-        ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}
+        ${estLectureSeule() ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
+        ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}`}
       </nav>
       <div class="bloc-utilisateur">
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>
@@ -120,6 +120,16 @@ const Coquille = (() => {
   // Écran de Mon dashboard ouvert sans équipe, alors qu'il en demande une (sauf écran permis sans équipe)
   const attendUneEquipe = ecran => ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis());
 
+  // Contenu de l'écran : Mon dashboard fermé en Lecture seule, équipe demandée si besoin, sinon l'écran
+  function contenuEcran(ecran) {
+    if (ecran.section === 'moi' && estLectureSeule()) {
+      return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px"><h2>Lecture seule</h2>
+        <p class="discret">Votre rôle permet de consulter « Suivi de mes équipes », sans rien modifier.</p>
+        <button class="btn primaire" data-action="aller" data-ecran="dashboard">Ouvrir le Dashboard général</button></div></div>`;
+    }
+    return attendUneEquipe(ecran) ? sansEquipe() : ecran.rendre();
+  }
+
   // « Mon dashboard » demande une équipe ouverte (cas d'un administrateur sans équipe)
   function sansEquipe() {
     return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px">
@@ -144,7 +154,7 @@ const Coquille = (() => {
       ${ui('menuLateral', { ouvert: false }).ouvert ? '<div class="voile voile-menu" data-action="basculerMenuLateral"></div>' : ''}
       <main class="principal">
         ${enTete(ecran)}
-        <div class="contenu">${Simulation.bandeau()}${attendUneEquipe(ecran) ? sansEquipe() : ecran.rendre()}</div>
+        <div class="contenu">${Simulation.bandeau()}${contenuEcran(ecran)}</div>
       </main>
       ${etat.panneau ? `<div class="voile" data-action="fermer"></div>${Panneau.rendre()}` : ''}
       ${etat.modale ? `<div class="voile" data-action="fermer"></div>${Modale.rendre()}` : ''}

@@ -470,7 +470,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await choisirRole(idThomas, 'responsable');
     const thomasResponsable = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'admin'
       && responsablesDe(ressource(id).equipeId).some(r => r.id === id) && roleAcces(ressource(id)) === 'responsable', idThomas);
-    await choisirRole(idThomas, 'membre');
+    await choisirRole(idThomas, 'utilisateur');
     const thomasMembre = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member'
       && !responsablesDe(ressource(id).equipeId).some(r => r.id === id), idThomas);
     await choisirRole(idLea, 'admin');
@@ -478,9 +478,22 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && document.querySelector(`select[data-id="${id}"]`).closest('td').textContent.includes('rôle prévu'), idLea);
     await capture('31-roles-administration');
     verifier('Rôles : fiche en lecture, choix dans Administration › Rôles par un administrateur (responsable, membre, rôle prévu sans compte)',
-      accesInitial === 'Membre' && ficheEnLecture && ongletRoles && thomasResponsable && thomasMembre && leaPrevue,
+      accesInitial === 'Utilisateur' && ficheEnLecture && ongletRoles && thomasResponsable && thomasMembre && leaPrevue,
       JSON.stringify({ accesInitial, ficheEnLecture, ongletRoles, thomasResponsable, thomasMembre, leaPrevue }));
-    await choisirRole(idLea, 'membre');
+    /* Les six rôles de « Rôles et droits » (migration 030) : Direction = responsable de l'unité parente
+       (Data → Plateforme) ; Lecture seule s'applique tout de suite, même sans compte (rôle qui restreint) */
+    const optionsRoles = await page.$$eval(`select[data-action-change="affecterRole"][data-id="${idThomas}"] option`, o => o.map(x => x.value).join(','));
+    const idHugo = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Hugo Martin').id);
+    await choisirRole(idLea, 'lecture');
+    const leaLecture = await page.evaluate(id => roleDeclare(ressource(id)) === 'lecture' && !rolePrevu(ressource(id)), idLea);
+    await choisirRole(idThomas, 'direction');
+    const thomasDirection = await page.evaluate(id => roleDeclare(ressource(id)) === 'direction'
+      && responsablesDe(ressource(id).equipeId).some(r => r.id === id) && membreOrganisation(ressource(id)).role === 'admin', idThomas);
+    verifier('Rôles : les six rôles (Administrateur, Direction, Responsable, Projet, Utilisateur, Lecture seule) ; Lecture seule appliquée sans compte',
+      optionsRoles === 'admin,direction,responsable,projet,utilisateur,lecture' && leaLecture && thomasDirection,
+      JSON.stringify({ optionsRoles, leaLecture, thomasDirection, idHugo: !!idHugo }));
+    await choisirRole(idThomas, 'utilisateur');
+    await choisirRole(idLea, 'utilisateur');
     await aller('listeRessources');
     // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
     // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
@@ -638,6 +651,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.waitForFunction(adresse => etat.session && etat.session.user.email === adresse && !etat.chargement, email);
       await page.waitForTimeout(200);
     };
+    // Lecture seule (migration 030) : Thomas consulte « Suivi de mes équipes », Mon dashboard est fermé
+    const roleThomas = r => page.evaluate(role => Api.executer('affecter_role',
+      { p_ressource: etat.d.ressources.find(x => x.nom === 'Thomas Bernard').id, p_role: role }), r);
+    await roleThomas('lecture');
+    await connecter('thomas@test.fr');
+    const lectureSeule = await page.evaluate(() => estLectureSeule() && ![...document.querySelectorAll('.menu-titre')].some(t => t.textContent.includes('Mon dashboard'))
+      && !document.querySelector('.laterale [data-ecran="daily"]'));
+    await page.evaluate(() => allerA('daily')); await page.waitForTimeout(200);
+    verifier('Lecture seule : Mon dashboard masqué et fermé, Suivi de mes équipes consultable', lectureSeule && (await texte()).includes('Votre rôle permet de consulter'));
+    await connecter('camille@test.fr');
+    await roleThomas('utilisateur');
     await connecter('elodie@test.fr');
     verifier('Compte sans équipe : « compte créé, en attente d’accès » avec Actualiser', (await texte()).includes('Votre compte est créé')
       && !!(await page.$('[data-action="reessayer"]')) && !(await page.$('form[data-action-envoi="deposerDemande"]')));
