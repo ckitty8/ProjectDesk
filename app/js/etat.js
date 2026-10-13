@@ -43,7 +43,8 @@ const TABLES = {
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
-  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur'
+  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
+  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -80,7 +81,8 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : COULEURS.pale;
 const CLES_UNIQUES = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id' };
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
+  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -178,6 +180,8 @@ async function demarrer() {
        - créateur : invité dans chaque équipe créée par un autre administrateur (inviterCreateur), pour
          pouvoir y inviter des personnes (Neon Auth exige d'être membre de l'équipe pour inviter). */
     await Api.executer('accepter_mes_invitations').catch(() => {});
+    // Rôle prévu par un administrateur avant ma première connexion (migration 029 ; email vérifié)
+    await Api.executer('appliquer_mes_roles_prevus').catch(() => {});
     const [organisations, invitations] = await Promise.all([
       Api.listerOrganisations(), Api.listerMesInvitations().catch(() => [])
     ]);
@@ -294,12 +298,24 @@ const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 // Son compte dans l'organisation Neon Auth de son équipe ({ id, role }), connu pour mes équipes
 const membreOrganisation = r => (etat.membresEquipe[r.equipeId] || []).find(m => r.userId && m.userId === r.userId) || null;
 const estAdministrateur = r => !!r.userId && [...(etat.d.administrateurs || []), ...(etat.d.createur || [])].some(a => a.userId === r.userId);
-// Responsable : désigné sur une équipe (responsable_id), ou owner / admin de l'organisation de son équipe
-const estResponsableDesigne = r => etat.d.equipes.some(e => e.responsableId === r.id);
+// Responsables d'une équipe (fiches) : ceux de responsables_equipe, puis l'ancien responsable désigné s'il n'y est pas
+function responsablesDe(equipeId) {
+  const ids = (etat.d.responsablesEquipe || []).filter(x => x.equipeId === equipeId).map(x => x.ressourceId);
+  const designe = equipe(equipeId).responsableId;
+  if (designe && !ids.includes(designe)) ids.push(designe);
+  return ids.map(ressource).filter(Boolean);
+}
+/* Responsable d'une équipe : inscrit dans responsables_equipe (migration 027 ; plusieurs par équipe,
+   affecté dans Administration › Rôles), ou ancien responsable désigné de la fiche équipe (responsable_id),
+   ou owner / admin de l'organisation de son équipe */
+const estResponsableDesigne = r => etat.d.equipes.some(e => e.responsableId === r.id)
+  || (etat.d.responsablesEquipe || []).some(x => x.ressourceId === r.id);
 const estResponsableEquipe = r => estResponsableDesigne(r) || ['owner', 'admin'].includes((membreOrganisation(r) || {}).role);
 /* Rôle d'accès affiché (clé de ROLES_ACCES) : le plus large qu'elle a. Sans compte de connexion,
    la personne n'a aucun accès, quel que soit le rôle prévu. Un rôle inconnu de l'écran (ex.
    liste des administrateurs illisible pour un non-administrateur) se lit comme le suivant. */
+// Rôle prévu d'une fiche (Administration › Rôles), en attente de la connexion de la personne, ou null
+const rolePrevu = r => ((etat.d.rolesPrevus || []).find(x => x.ressourceId === r.id) || {}).role || null;
 function roleAcces(r) {
   if (!r.userId) return 'sansCompte';
   if (estAdministrateur(r)) return 'admin';
@@ -323,13 +339,13 @@ const mesProjetsDaily = () => {
 };
 
 /* Suis-je responsable de l'unité du projet ou d'une unité au-dessus (ex. Anne, responsable
-   d'Applications) ? Responsable = fiche responsable_id de l'unité, ou owner/admin de son
+   d'Applications) ? Responsable = responsablesDe(unité), ou owner/admin de son
    organisation. On remonte les unités parentes (10 niveaux au plus, garde-fou contre une boucle). */
 function suisResponsableDuProjet(p) {
   const moi = maRessource();
   let e = equipe(p.equipeId);
   for (let niveau = 0; e.id && niveau < 10; niveau++) {
-    if ((moi && e.responsableId === moi.id) || estResponsableDe(e.id)) return true;
+    if ((moi && responsablesDe(e.id).includes(moi)) || estResponsableDe(e.id)) return true;
     e = equipe(e.parentId);
   }
   return false;
@@ -357,6 +373,11 @@ const noteProjet = (userId, projetId, jour) =>
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));
+// Affectations d'une personne à des projets existants
+const affectationsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId && projet(a.projetId));
+// Badges « Projet · rôle » d'une personne (fiche, Administration › Rôles), ou le texte « vide »
+const badgesProjetsDe = (ressourceId, vide) => affectationsDe(ressourceId)
+  .map(a => C.badgeRef('role', `${projet(a.projetId).nom} · ${a.role}`)).join(' ') || `<span class="pale">${vide}</span>`;
 // Codes des projets où la personne est affectée (badges « DA-08 MO-21 »), vide si aucun
 const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
   .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');

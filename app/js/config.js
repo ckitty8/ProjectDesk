@@ -163,9 +163,9 @@ const AIDES = {
     `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
   statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
     '» (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
-  roleAcces: 'Ce que la personne peut voir et faire. Il se choisit dans sa fiche : Administrateur (par le créateur), Responsable d’équipe ou Membre (par ' +
-    'un administrateur ou un responsable de l’équipe). Le rôle Lecteur se donne projet par projet. « Chef de projet » ' +
-      'vient de ses projets ; « Pas encore de compte » : la personne ne s’est jamais connectée avec l’email de sa fiche.',
+  roleAcces: 'Ce que la personne peut voir et faire : Administrateur, Responsable d’équipe ou Membre de l’équipe. Il se choisit dans ' +
+    'Administration › Rôles (administrateurs). Personne pas encore connectée, ou email non vérifié : le rôle est prévu et ' +
+    's’applique à sa connexion. Les rôles de projet (Chef de projet, Membre, Lecteur) se donnent projet par projet.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, ` +
     `absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
@@ -215,7 +215,8 @@ const GUIDE_ECRANS = {
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
-  monAdmin: ['Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
+  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, choisi dans la liste de sa ligne.',
+    'Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
     'chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',
     'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
@@ -238,7 +239,8 @@ const GUIDES = {
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
     'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés, donne l’accès aux comptes en attente.',
-    'Créateur (un seul compte, ★ dans le bloc utilisateur) : tous les droits sur toutes les équipes ; seul à nommer ou retirer un administrateur.',
+    'Administrateurs : nomment les rôles d’accès de chacun (Administration › Rôles), y compris d’autres administrateurs.',
+    'Créateur (un seul compte, ★ dans le bloc utilisateur) : tous les droits sur toutes les équipes, même sans en être membre.',
     'Compte sans équipe : attend qu’un administrateur lui donne l’accès (Administration › Comptes en attente), puis entre directement.'] }
 };
 

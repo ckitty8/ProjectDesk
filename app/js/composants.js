@@ -29,6 +29,9 @@ const C = (() => {
   const pastille = couleur => `<span class="pastille" style="background:${couleur}"></span>`;
   const avatar = (nom, grand = false) => `<span class="avatar${grand ? ' grand' : ''}">${esc(Calculs.initiales(nom))}</span>`;
   const code = texte => `<span class="code">${esc(texte)}</span>`;
+  // Barre d'outils en haut d'un onglet : carte avec les choix à gauche, boutons ou note à droite
+  const barreOutils = (gauche, droite) => `<div class="carte encart-compact"><div class="ligne-flex entre">
+      <div class="ligne-flex">${gauche}</div>${droite}</div></div>`;
   // Compte non relié à une fiche ressource (Daily, Saisir mes heures) : la marche à suivre
   const compteSansFiche = () => `<div class="carte encart">Votre compte n’est lié à aucune fiche ressource :
     renseignez l’email de votre compte sur votre fiche (Liste des ressources), puis reconnectez-vous.</div>`;
@@ -120,7 +123,7 @@ const C = (() => {
   const badgeActif = (actif, libelles = ['Active', 'Inactive']) => actif ? badgeTon(libelles[0], 'succes') : badgeTon(libelles[1], 'neutre');
 
   return {
-    aide, placerBulle, esc, teinte, badge, badgeTon, badgeRef, badgeFeuille, badgeActif, pastille, avatar, code, compteSansFiche,
+    aide, placerBulle, esc, teinte, badge, badgeTon, badgeRef, badgeFeuille, badgeActif, pastille, avatar, code, barreOutils, compteSansFiche,
     marque, mentionPropriete, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone
   };
 })();

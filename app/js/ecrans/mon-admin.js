@@ -35,12 +35,12 @@ Ecrans.monAdmin = {
         { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length },
-      ...(etat.estCreateur ? [{ id: 'roles', libelle: '★ Rôles' }] : []),
+      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
       ...(Simulation.estDisponible() ? [{ id: 'simulation', libelle: '★ Simulation des rôles' }] : [])
     ], u.onglet, 'ongletMonAdmin');
     let corps;
     if (u.onglet === 'comptes' && etat.estAdmin) corps = this.comptes();
-    else if (u.onglet === 'roles' && etat.estCreateur) corps = Roles.onglet();
+    else if (u.onglet === 'roles' && etat.estAdmin) corps = Roles.onglet();
     else if (u.onglet === 'simulation' && Simulation.estDisponible()) corps = Simulation.onglet();
     else if (u.onglet === 'equipes') corps = Administration.equipes(true);
     else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin);
@@ -300,6 +300,8 @@ Object.assign(Actions, {
   },
   projetSprints: (_, el) => majUi('monAdmin', { projetSprints: el.value }),
   // Depuis l'onglet Capacité : ouvre Administration › Sprints sur le projet affiché
+  // Fiche personne › « Modifier dans Administration › Rôles » : fiche fermée, onglet Rôles ouvert
+  ouvrirRoles: () => { etat.modale = null; majUi('monAdmin', { onglet: 'roles' }, { rendre: false }); allerA('monAdmin'); },
   allerSprints: d => { majUi('monAdmin', { onglet: 'sprints', projetSprints: d.id }, { rendre: false }); allerA('monAdmin'); },
   /* Sprints du projet (table sprints_projet ; clé projet + numéro, attribué à l'ajout) */
   anneeSprints: d => majUi('monAdmin', { anneeSprints: Number(d.annee) }),

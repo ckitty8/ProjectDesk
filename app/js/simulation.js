@@ -29,7 +29,7 @@ const Simulation = {
       .map(a => ({ r: ressource(a.ressourceId), precision: (projet(a.projetId) || {}).code }));
     const listes = {
       admin: () => ressourcesActives().filter(r => r.userId && etat.d.administrateurs.some(a => a.userId === r.userId)).map(r => ({ r, precision: 'administrateur' })),
-      responsable: () => etat.d.equipes.filter(e => e.responsableId && estActive(e.responsableId)).map(e => ({ r: ressource(e.responsableId), precision: e.nom })),
+      responsable: () => etat.d.equipes.flatMap(e => responsablesDe(e.id).filter(r => estActive(r.id)).map(r => ({ r, precision: e.nom }))),
       chef: () => affectees(ROLES_PROJET.CHEF),
       membre: () => affectees(ROLES_PROJET.MEMBRE),
       lecteur: () => affectees(ROLES_PROJET.LECTEUR),
@@ -58,7 +58,7 @@ const Simulation = {
     etat.estCreateur = false;
     etat.estAdmin = cle === 'admin';
     etat.organisations = equipeSimulee ? [{ id: equipeSimulee.id, name: equipeSimulee.nom }] : [];
-    etat.rolesEquipe = equipeSimulee ? { [equipeSimulee.id]: equipeSimulee.responsableId === r.id ? 'owner' : 'member' } : {};
+    etat.rolesEquipe = equipeSimulee ? { [equipeSimulee.id]: responsablesDe(equipeSimulee.id).includes(r) ? 'owner' : 'member' } : {};
     etat.comptesEnAttente = etat.estAdmin ? etat.reel.comptesEnAttente : [];
     majEtat({ equipeCourante: equipeSimulee ? equipeSimulee.id : null, panneau: null, modale: null,
       ecran: cle === 'sansEquipe' ? 'choixEquipe' : 'dashboard' });

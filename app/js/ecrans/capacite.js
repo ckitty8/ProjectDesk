@@ -67,9 +67,8 @@ const Capacite = {
 
   // Bandeau du haut : choix du projet (+ navigation entre sprints s'il y en a), boutons à droite
   bandeau(p, navigation = '') {
-    return `<div class="carte encart-compact"><div class="ligne-flex entre">
-      <div class="ligne-flex"><span class="discret">Projet</span>${this.selecteurProjet(p)}${navigation}</div>
-      <div class="ligne-flex">${this.boutons(p)}</div></div></div>`;
+    return C.barreOutils(`<span class="discret">Projet</span>${this.selecteurProjet(p)}${navigation}`,
+      `<div class="ligne-flex">${this.boutons(p)}</div>`);
   },
 
   // Navigation entre les sprints du projet : « Aujourd'hui », ‹ sprint affiché (dates) ›

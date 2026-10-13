@@ -133,10 +133,11 @@ const Calendrier = {
      synthèse des absences par projet de l'unité (maquette conges-sans-doublon, pistes 2 et 3). */
   unite(ctx, e, niveau) {
     const sousEquipes = etat.d.equipes.filter(x => x.parentId === e.id);
+    const idsResponsables = responsablesDe(e.id).map(r => r.id), estResponsable = r => idsResponsables.includes(r.id);
     const projets = etat.d.projets.filter(p => p.equipeId === e.id && this.membresDe(ctx, p).length);
     const personnes = ressourcesPresentes(ctx.debut, ctx.fin).filter(r => r.equipeId === e.id)
-      .sort((a, b) => (b.id === e.responsableId) - (a.id === e.responsableId));
-    const responsable = r => r.id === e.responsableId ? '<span class="discret texte-11">responsable</span>' : '';
+      .sort((a, b) => estResponsable(b) - estResponsable(a));
+    const responsable = r => estResponsable(r) ? '<span class="discret texte-11">responsable</span>' : '';
     const contenu = personnes.map(r => this.lignePersonne(ctx, r, niveau + 1, responsable(r) + this.etiquettes(r))).join('')
       + sousEquipes.map(x => this.unite(ctx, x, niveau + 1)).join('')
       + (projets.length ? this.ligneGroupe(ctx, `Projets — absents / membres par jour ${C.aide('syntheseProjets')}`, niveau + 1, true)

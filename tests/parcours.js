@@ -452,29 +452,36 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
     await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
     verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
-    /* Rôle d'accès (maquette role-acces/, 2026-10-12) : colonne « Accès », choix dans la fiche.
-       Camille (administratrice, owner de Plateforme) passe Thomas Responsable, puis Membre. */
+    /* Rôle d'accès (maquette affecter-roles/, 2026-10-13) : colonne « Accès » de la Liste des ressources,
+       fiche en lecture (lien vers Administration › Rôles), choix dans Administration › Rôles par un
+       administrateur (Camille, administratrice non créatrice). */
     await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
     const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
-    const ligneThomas = `#detail-ressources tr[data-ressource="${idThomas}"]`;
-    const accesThomas = async () => (await page.$eval(`${ligneThomas} td:nth-child(3)`, td => td.textContent.trim()));
-    const choisirRole = async role => {
-      await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
-      await page.check(`input[name=roleAcces][value=${role}]`);
-      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(500);
-    };
+    const idLea = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Léa Moreau').id);
+    const accesThomas = async () => (await page.$eval(`#detail-ressources tr[data-ressource="${idThomas}"] td:nth-child(3)`, td => td.textContent.trim()));
     const accesInitial = await accesThomas();
-    await page.click(`${ligneThomas} [data-action="modifierRessource"]`);
-    const adminGrise = await page.$eval('input[name=roleAcces][value=admin]', i => i.disabled);
-    const sansLecteur = !(await page.$('input[name=roleAcces][value=lecteur]'));
-    await page.click('.modale .fermer');
-    await choisirRole('responsable');
-    const responsable = (await accesThomas()) === 'Responsable d’équipe';
-    await choisirRole('membre');
-    verifier('Rôle d’accès : colonne Accès, Responsable / Membre choisis dans la fiche (Administrateur réservé au créateur)',
-      accesInitial === 'Membre' && adminGrise && sansLecteur && responsable && (await accesThomas()) === 'Membre'
-      && await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member', idThomas)
-      && (await page.textContent('#detail-ressources')).includes('Pas encore de compte'));
+    await page.click(`#detail-ressources tr[data-ressource="${idThomas}"] [data-action="modifierRessource"]`);
+    const ficheEnLecture = !(await page.$('.modale input[name=roleAcces]')) && !!(await page.$('.modale [data-action="ouvrirRoles"]'));
+    await page.click('.modale [data-action="ouvrirRoles"]'); await page.waitForTimeout(300);
+    const ongletRoles = await page.evaluate(() => etat.ecran === 'monAdmin' && !etat.modale && !!document.querySelector('.tableau-roles-acces'));
+    const choisirRole = async (id, role) => {
+      await page.selectOption(`select[data-action-change="affecterRole"][data-id="${id}"]`, role); await page.waitForTimeout(500);
+    };
+    await choisirRole(idThomas, 'responsable');
+    const thomasResponsable = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'admin'
+      && responsablesDe(ressource(id).equipeId).some(r => r.id === id) && roleAcces(ressource(id)) === 'responsable', idThomas);
+    await choisirRole(idThomas, 'membre');
+    const thomasMembre = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member'
+      && !responsablesDe(ressource(id).equipeId).some(r => r.id === id), idThomas);
+    await choisirRole(idLea, 'admin');
+    const leaPrevue = await page.evaluate(id => rolePrevu(ressource(id)) === 'admin' && !estAdministrateur(ressource(id))
+      && document.querySelector(`select[data-id="${id}"]`).closest('td').textContent.includes('rôle prévu'), idLea);
+    await capture('31-roles-administration');
+    verifier('Rôles : fiche en lecture, choix dans Administration › Rôles par un administrateur (responsable, membre, rôle prévu sans compte)',
+      accesInitial === 'Membre' && ficheEnLecture && ongletRoles && thomasResponsable && thomasMembre && leaPrevue,
+      JSON.stringify({ accesInitial, ficheEnLecture, ongletRoles, thomasResponsable, thomasMembre, leaPrevue }));
+    await choisirRole(idLea, 'membre');
+    await aller('listeRessources');
     // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
     // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
     const creerUnite = async (nom, prefixe, type, parent) => {
@@ -661,7 +668,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');
     await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(500);
     verifier('Admin : équipe créée et ouverte automatiquement', (await page.textContent('.bloc-equipe')).includes('Direction Digitale'));
-    verifier('Admin (non créateur) : pas d’onglet ★ Rôles', !(await page.$('[data-action="ongletMonAdmin"][data-id="roles"]')));
+    verifier('Admin (non créateur) : onglet Rôles disponible', !!(await page.$('[data-action="ongletMonAdmin"][data-id="roles"]')));
 
     /* --- Rôle Créateur (migration 025) : invitée d'office dans l'équipe créée, voit toutes les équipes --- */
     await connecter('createur@test.fr');
@@ -669,12 +676,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       etat.estCreateur && etat.estAdmin && mesEquipes().length === etat.d.equipes.length && etat.ecran !== 'choixEquipe'
       && etat.organisations.some(o => o.name === 'Direction Digitale') && !!document.querySelector('.badge-createur')));
     await capture('27-createur');
-    // Onglet ★ Rôles (maquette liste-roles) : qui a quel rôle, par rôle puis par personne
+    // Onglet Rôles (maquettes liste-roles, affecter-roles) : rôle d'accès de chaque personne, puis qui a quel rôle
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="roles"]'); await page.waitForTimeout(200);
-    verifier('Créateur : onglet ★ Rôles (une carte par rôle, tableau par personne avec leurs rôles)', await page.evaluate(() =>
+    verifier('Créateur : onglet Rôles (rôle d’accès par personne, une carte par rôle)', await page.evaluate(() =>
       document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length
       && document.querySelector('.grille-roles').textContent.includes('Thomas Bernard')
-      && [...document.querySelectorAll('table.tableau tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.textContent.includes('Membre de projet'))));
+      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))));
     await capture('27b-roles');
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);

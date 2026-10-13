@@ -82,55 +82,18 @@ const Modale = {
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer</button></div></form>`;
   },
 
-  /* Rôle d'accès de la personne (maquette docs/maquettes/role-acces/2-fiche-role.png).
-     Choix : Administrateur (créateur seulement, compte lié), Responsable d'équipe (compte
-     membre de l'équipe), Membre, Lecteur (administrateur ou responsable de l'équipe).
-     Le responsable désigné de l'équipe (fiche équipe) le reste : son rôle se change là.
-     Les rôles sur les projets (Chef de projet, Membre, Lecteur) sont rappelés en dessous. */
+  /* Rôle d'accès de la personne, en lecture : il se choisit dans Administration › Rôles
+     (porteur, 2026-10-13 : « les rôles se font dans Administration, les postes dans Liste des
+     ressources »). Les rôles sur les projets (Chef de projet, Membre, Lecteur) sont rappelés en dessous. */
   roleAccesFiche(r) {
-    const esc = C.esc, actuel = this.roleAccesChoisi(r);
-    const gere = peutGererEquipe(r.equipeId), designe = !!r.id && estResponsableDesigne(r);
-    const possible = {
-      admin: etat.estCreateur && !!r.userId,
-      responsable: gere && !!membreOrganisation(r),
-      membre: gere && !designe
-    };
-    const cartes = ['admin', 'responsable', 'membre'].map(cle => {
-      const a = ROLES_ACCES[cle], libelle = cle === 'membre' ? 'Membre de l’équipe' : a.libelle;
-      return `<label class="choix-role${cle === actuel ? ' actif' : ''}${possible[cle] || cle === actuel ? '' : ' grise'}">
-        <input type="radio" name="roleAcces" value="${cle}" ${cle === actuel ? 'checked' : ''} ${possible[cle] ? '' : 'disabled'}>
-        <span><b>${esc(libelle)}</b><span class="discret">${esc(a.description)}</span></span></label>`;
-    }).join('');
-    const projets = r.id ? etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId)) : [];
-    const note = designe ? 'Responsable désigné de l’équipe : à changer dans la fiche de l’équipe.'
-      : !gere ? 'Modifiable par un administrateur ou un responsable de l’équipe.' : '';
-    return `<div><label class="libelle">Rôle d’accès ${C.aide('roleAcces')}</label><div class="choix-roles">${cartes}</div>
-        ${note ? `<div class="discret" style="font-size:12px;margin-top:6px">${esc(note)}</div>` : ''}</div>
-      ${r.id ? `<div class="projets-fiche"><b>Sur ses projets</b> (le rôle de projet s’ajoute au rôle d’accès) :
-        ${projets.map(a => C.badgeRef('role', `${projet(a.projetId).nom} · ${a.role}`)).join(' ') || '<span class="pale">aucun</span>'}
-        &nbsp;<a data-action="assigner" data-ressource="${r.id}">Modifier ses projets</a></div>` : ''}`;
-  },
-  // Rôle coché dans la fiche : son rôle d'accès, « Chef de projet » et « sans compte » ramenés au choix possible
-  roleAccesChoisi(r) {
-    if (!r.id) return 'membre';
-    if (estAdministrateur(r)) return 'admin';
-    if (estResponsableEquipe(r)) return 'responsable';
-    return 'membre';
-  },
-
-  /* Rôle d'accès hors fiche : liste des administrateurs (créateur) et rôle dans l'organisation
-     Neon Auth de l'équipe (admin = responsable, member sinon ; le propriétaire « owner » le reste).
-     La base et Neon Auth refusent ce que l'utilisateur n'a pas le droit de faire. */
-  async appliquerRoleAcces(r, role) {
-    if (r.userId && etat.estCreateur && (role === 'admin') !== estAdministrateur(r)) {
-      if (role === 'admin') await Api.creer('administrateurs', { userId: r.userId });
-      else await Api.supprimer('administrateurs', { user_id: 'eq.' + r.userId });
-    }
-    const m = membreOrganisation(r), roleOrganisation = role === 'responsable' ? 'admin' : 'member';
-    if (m && m.role !== 'owner' && role !== 'admin' && m.role !== roleOrganisation) {
-      await Api.modifierRoleMembre(r.equipeId, m.id, roleOrganisation);
-      await chargerRoles();
-    }
+    if (!r.id) return '';
+    const esc = C.esc, acces = ROLES_ACCES[roleAcces(r)], prevu = rolePrevu(r);
+    const lien = etat.estAdmin ? ' · <a data-action="ouvrirRoles">Modifier dans Administration › Rôles</a>' : '';
+    return `<div><label class="libelle">Rôle d’accès ${C.aide('roleAcces')}</label>
+        <div>${C.badge(acces.libelle, acces.texte, acces.fond)}${prevu ? ` <span class="discret">rôle prévu : ${esc(ROLES_ACCES[prevu].libelle)}</span>` : ''}${lien}</div></div>
+      <div class="projets-fiche"><b>Sur ses projets</b> (le rôle de projet s’ajoute au rôle d’accès) :
+        ${badgesProjetsDe(r.id, 'aucun')}
+        &nbsp;<a data-action="assigner" data-ressource="${r.id}">Modifier ses projets</a></div>`;
   },
 
   /* ---------- Équipe : création / modification, membres et invitations ---------- */
@@ -139,7 +102,6 @@ const Modale = {
     const libelleType = e.type === 'direction' ? 'Direction' : 'Équipe';
     // Directions proposées pour le rattachement (sauf l'unité elle-même)
     const directions = etat.d.equipes.filter(x => x.type === 'direction' && x.id !== m.id).map(x => ({ valeur: x.id, libelle: x.nom }));
-    const personnes = m.id ? ressourcesActives().filter(r => r.equipeId === m.id).map(r => ({ valeur: r.id, libelle: r.nom })) : [];
     const membres = (m.organisation && m.organisation.members) || [];
     const invitations = ((m.organisation && m.organisation.invitations) || []).filter(i => i.status === 'pending');
     const peutInviter = m.id && peutGererEquipe(m.id);
@@ -159,12 +121,12 @@ const Modale = {
               ${C.liste([{ valeur: '', libelle: '— aucune direction —' }, ...directions], e.parentId || '', 'class="champ" name="parentId"')}</div></div>
           <div class="deux-colonnes"><div><label class="libelle">Statut</label>
             ${C.liste([{ valeur: 'true', libelle: 'Active' }, { valeur: 'false', libelle: 'Inactive' }], String(e.actif !== false), 'class="champ" name="actif"')}</div>
-            <div>${m.id ? `<label class="libelle">Responsable</label>
-              ${C.liste([{ valeur: '', libelle: '—' }, ...personnes], e.responsableId || '', 'class="champ" name="responsableId"')}` : ''}</div></div>
+            <div>${m.id ? `<label class="libelle">Responsable(s)</label>
+              <div class="discret">${responsablesDe(e.id).map(r => esc(r.nom)).join(', ') || 'aucun'} — à choisir dans Administration › Rôles</div>` : ''}</div></div>
           <div class="discret texte-12">Direction et équipe sont des espaces de travail (membres, projets) ; une direction peut en plus
             regrouper des équipes. Changer le type ne change ni les membres ni les projets.</div>
           ${etat.estAdmin ? `<div style="text-align:right"><button class="btn primaire">${m.id ? 'Enregistrer' : 'Créer'}</button></div>`
-            : '<div class="discret texte-12">Nom, préfixe, couleur et responsable : modifiables par un administrateur.</div>'}
+            : '<div class="discret texte-12">Nom, préfixe et couleur : modifiables par un administrateur.</div>'}
           </fieldset>
         </form>
         ${m.id ? `<div><div class="libelle">Membres (comptes de connexion)</div>
@@ -340,13 +302,9 @@ Object.assign(Actions, {
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
-    // Rôle d'accès coché (absent si aucun choix n'était modifiable) : appliqué hors fiche (appliquerRoleAcces)
-    const role = f.roleAcces; delete f.roleAcces;
     executer(async () => {
       if (d.id) {
-        const r = ressource(d.id);
         await Api.modifier('ressources', { id: 'eq.' + d.id }, f);
-        if (role) await Modale.appliquerRoleAcces(r, role);
         etat.modale = null; return;
       }
       const [creee] = await Api.creer('ressources', { ...f, equipeId: d.equipe });
@@ -374,7 +332,6 @@ Object.assign(Actions, {
     const f = Object.fromEntries(new FormData(form)); f.prefixe = f.prefixe.toUpperCase(); f.actif = f.actif !== 'false';
     // Une direction n'est rattachée à rien ; champ vide = pas de rattachement (la base contrôle aussi)
     f.parentId = f.type === 'direction' ? null : (f.parentId || null);
-    if (f.responsableId === '') f.responsableId = null;
     await executer(async () => {
       if (d.id) { await Api.modifier('equipes', { id: 'eq.' + d.id }, f); }
       else {

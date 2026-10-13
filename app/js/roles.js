@@ -1,12 +1,13 @@
 /* ============================================================
-   Rôles : qui a quel rôle — Administration › onglet « ★ Rôles » (créateur)
-   (maquette docs/maquettes/liste-roles/ ; demande du porteur 2026-10-12)
+   Rôles : Administration › onglet « Rôles » (administrateurs)
+   (maquettes docs/maquettes/liste-roles/ et affecter-roles/ ; porteur 2026-10-12 et 2026-10-13)
    ------------------------------------------------------------
-   Lecture seule : les rôles sont calculés à partir des données existantes, à un seul
-   endroit (ce fichier), pour être réutilisés par « Rôles et droits » :
+   - Rôle d'accès de chaque personne, choisi ici (Administrateur, Responsable d'équipe, Membre) :
+     fonction affecter_role (migration 029) ; rôle prévu si la personne n'est pas encore connectée.
+   - Vue « qui a quel rôle » : rôles calculés à partir des données, à un seul endroit (ce fichier) :
    - Créateur : table createur (migration 025) ;
    - Administrateur : table administrateurs ;
-   - Responsable d'équipe : responsable de l'unité (fiche) ou owner / admin de l'organisation ;
+   - Responsable d'équipe : responsables_equipe (migration 027) ou owner / admin de l'organisation ;
    - Chef de projet, Membre, Lecteur : affectations aux projets (et chef de la fiche projet) ;
    - Compte en attente : inscrit sans équipe (comptes_en_attente, migration 024).
    ============================================================ */
@@ -35,7 +36,7 @@ const Roles = {
     if (compte && etat.d.administrateurs.some(a => a.userId === compte)) roles.push({ cle: 'admin' });
     // Responsable : mêmes règles que le rôle d'accès (etat.js) — désigné sur une unité, ou owner / admin
     // de l'organisation de son équipe
-    const unites = etat.d.equipes.filter(e => e.responsableId === r.id);
+    const unites = etat.d.equipes.filter(e => responsablesDe(e.id).includes(r));
     if (!estResponsableDesigne(r) && estResponsableEquipe(r)) unites.push(equipe(r.equipeId));
     unites.forEach(e => roles.push({ cle: 'responsable', precision: e.nom }));
     const roleProjet = { [ROLES_PROJET.CHEF]: 'chef', [ROLES_PROJET.MEMBRE]: 'membre', [ROLES_PROJET.LECTEUR]: 'lecteur' };
@@ -67,10 +68,39 @@ const Roles = {
     return C.badge(role.libelle + (precision ? ' · ' + precision : ''), role.couleur);
   },
 
-  // Onglet d'Administration : vue par rôle (cartes) puis vue par personne (tableau)
-  onglet() {
+  /* ---------- Onglet Administration › Rôles (maquette docs/maquettes/affecter-roles/) ----------
+     Ouvert à tous les administrateurs (porteur, 2026-10-13). Le rôle d'accès de chaque personne se
+     choisit dans la liste de sa ligne et s'enregistre aussitôt (fonction affecter_role, migration 029).
+     Personne pas encore connectée (ou email non vérifié) : rôle prévu, appliqué à sa connexion. */
+  CHOIX: ['admin', 'responsable', 'membre'],
+
+  // Rôle d'accès affiché dans la liste : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non
+  roleChoisi(r) {
+    if (rolePrevu(r)) return rolePrevu(r);
+    if (estAdministrateur(r)) return 'admin';
+    return estResponsableEquipe(r) ? 'responsable' : 'membre';
+  },
+
+  // Ligne d'une personne : équipe, compte, rôle d'accès (liste), rôles sur les projets
+  lignePersonne(r) {
+    const esc = C.esc, prevu = rolePrevu(r);
+    const compte = r.userId ? C.badgeTon('Compte lié', 'succes') : C.badgeTon('Pas encore connecté', 'attention');
+    const options = this.CHOIX.map(cle => ({ valeur: cle, libelle: cle === 'membre' ? 'Membre de l’équipe' : ROLES_ACCES[cle].libelle }));
+    const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
+    return `<tr data-recherche="${esc((r.nom + ' ' + (r.email || '')).toLowerCase())}">
+      <td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span>
+        <div class="discret texte-12">${esc(r.email || 'email à renseigner sur la fiche')}</div></td>
+      <td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(equipe(r.equipeId).nom)}</span></td>
+      <td>${compte}</td>
+      <td>${C.liste(options, this.roleChoisi(r), `class="champ champ-mini" data-action-change="affecterRole" data-id="${r.id}"`)}
+        ${effet ? `<div class="discret texte-12">${effet}</div>` : ''}</td>
+      <td>${badgesProjetsDe(r.id, '—')}</td></tr>`;
+  },
+
+  // Cartes « par rôle » : qui a chaque rôle (créateur, administrateurs, responsables, rôles de projet, comptes en attente)
+  cartesParRole() {
     const esc = C.esc, groupes = this.parRole();
-    const cartes = this.LISTE.map(role => {
+    return this.LISTE.map(role => {
       const personnes = groupes[role.cle];
       return `<div class="carte" style="padding:12px 14px;border-top:4px solid ${role.couleur}">
         <div class="ligne-flex entre"><b style="color:${role.couleur}">${esc(role.libelle)}</b>
@@ -79,20 +109,46 @@ const Roles = {
         ${personnes.map(x => `<div style="padding:2px 0">${esc(x.nom)}${x.precision ? ` <span class="discret">· ${esc(x.precision)}</span>` : ''}</div>`).join('')
           || '<div class="pale">personne</div>'}</div>`;
     }).join('');
-    const lignes = ressourcesActives().sort((a, b) => a.nom.localeCompare(b.nom)).map(r => {
-      const roles = this.dePersonne(r);
-      return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span></td>
-        <td><span class="ligne-flex">${C.pastille(equipe(r.equipeId).couleur)}${esc(equipe(r.equipeId).nom)}</span></td>
-        <td>${r.userId ? C.badgeTon('Oui', 'succes') : '<span class="pale">pas de compte</span>'}</td>
-        <td><span class="ligne-flex" style="flex-wrap:wrap;gap:4px">
-          ${roles.map(x => this.badge(x.cle, x.precision)).join('') || '<span class="pale">aucun rôle</span>'}</span></td></tr>`;
-    }).join('');
-    return `<div class="carte encart-createur">
-        <b>Qui a quel rôle.</b> Consultation : les rôles viennent des données (créateur, administrateurs, responsables des unités,
-        affectations aux projets, comptes en attente). Ils se modifieront ici avec « Rôles et droits ».</div>
-      <div class="grille-roles">${cartes}</div>
-      <div class="carte"><div class="carte-titre"><h2>Par personne</h2><span class="discret">${ressourcesActives().length} personnes présentes</span></div>
-        <table class="tableau"><thead><tr><th>Personne</th><th>Équipe</th><th>Compte relié</th><th>Rôles</th></tr></thead>
-        <tbody>${lignes}</tbody></table></div>`;
+  },
+
+  // Onglet : filtres (recherche, équipe, rôle), tableau des rôles d'accès, puis vue « qui a quel rôle »
+  onglet() {
+    const u = ui('roles', { equipe: '', role: '' });
+    const personnes = ressourcesActives()
+      .filter(r => !u.equipe || r.equipeId === u.equipe)
+      .filter(r => !u.role || this.roleChoisi(r) === u.role)
+      .sort((a, b) => equipe(a.equipeId).nom.localeCompare(equipe(b.equipeId).nom) || a.nom.localeCompare(b.nom));
+    const equipes = [{ valeur: '', libelle: 'Toutes les équipes' }, ...etat.d.equipes.map(e => ({ valeur: e.id, libelle: e.nom }))];
+    const roles = [{ valeur: '', libelle: 'Tous les rôles' }, ...this.CHOIX.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }))];
+    const filtres = `<input class="champ" style="width:260px" placeholder="Rechercher une personne…" data-action-saisie="filtrerRoles">
+      ${C.liste(equipes, u.equipe, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="equipe"')}
+      ${C.liste(roles, u.role, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="role"')}`;
+    return `${C.barreOutils(filtres, '<span class="discret">Rôles de projet (Chef de projet, Membre, Lecteur) : projet par projet, dans Liste des ressources</span>')}
+      <div class="carte"><div class="carte-titre"><h2>Rôle d’accès de chaque personne</h2><span class="discret">${personnes.length} personne(s)</span></div>
+        <div class="defilement-x"><table class="tableau tableau-roles-acces"><thead><tr><th>Personne</th><th>Équipe</th><th>Compte</th>
+          <th>Rôle d’accès ${C.aide('roleAcces')}</th><th>Rôles sur les projets</th></tr></thead>
+        <tbody>${personnes.map(r => this.lignePersonne(r)).join('') || `<tr><td colspan="5">${C.vide('Personne ne correspond aux filtres.')}</td></tr>`}</tbody>
+        </table></div></div>
+      <div class="carte-titre" style="border:0;padding:4px 2px"><h2>Qui a quel rôle</h2><span class="discret">vue d’ensemble, rôles de projet compris</span></div>
+      <div class="grille-roles">${this.cartesParRole()}</div>`;
   }
 };
+
+Object.assign(Actions, {
+  // Rôle d'accès choisi dans la liste d'une ligne (administrateurs ; la base contrôle le droit)
+  affecterRole(d, el) {
+    executer(async () => {
+      const resultat = await Api.executer('affecter_role', { p_ressource: d.id, p_role: el.value });
+      await chargerRoles();
+      notifier(resultat === 'prevu' ? 'Rôle prévu : il s’appliquera à la connexion de la personne' : 'Rôle d’accès enregistré');
+    }, 'administrateurs', 'responsablesEquipe', 'rolesPrevus');
+  },
+  filtreRoles: (d, el) => majUi('roles', { [d.filtre]: el.value }),
+  // Recherche par nom ou email : masque les lignes sans redessiner l'écran (la saisie garde le focus)
+  filtrerRoles(d, el) {
+    const texte = el.value.trim().toLowerCase();
+    document.querySelectorAll('.tableau-roles-acces tbody tr[data-recherche]').forEach(tr => {
+      tr.style.display = tr.dataset.recherche.includes(texte) ? '' : 'none';
+    });
+  }
+});

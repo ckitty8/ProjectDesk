@@ -80,7 +80,7 @@ Ecrans.listeRessources = {
     const actif = (type, id) => choix.type === type && choix.id === id ? ' actif' : '';
     const noms = liste => liste.map(r => r.nom).join(' ');
     const groupes = this.unites().map(e => {
-      const responsable = ressources.find(r => r.id === e.responsableId);
+      const responsable = responsablesDe(e.id)[0];
       const personnes = ressources.filter(r => r.equipeId === e.id);
       const projets = etat.d.projets.filter(p => p.equipeId === e.id).map(p => {
         const { productOwners, membres } = this.rolesDuProjet(p, ressources);
@@ -120,7 +120,7 @@ Ecrans.listeRessources = {
     const personnes = ressources.filter(r => r.equipeId === e.id);
     const projets = etat.d.projets.filter(p => p.equipeId === e.id);
     const affectee = r => etat.d.affectations.some(a => a.ressourceId === r.id);
-    const responsable = personnes.find(r => r.id === e.responsableId) || ressources.find(r => r.id === e.responsableId);
+    const responsable = responsablesDe(e.id)[0];
     const vide = !personnes.length && !projets.length && !etat.d.equipes.some(x => x.parentId === e.id);
     const boutons = [
       admin || estResponsableDe(e.id) ? `<button class="btn" data-action="modifierEquipe" data-id="${e.id}">Modifier l’équipe</button>` : '',
@@ -218,8 +218,7 @@ Ecrans.listeRessources = {
   // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
   // (ses projets se modifient depuis sa fiche : « Modifier ses projets »)
   projetsDe(r) {
-    const projets = etat.d.affectations.filter(a => a.ressourceId === r.id && projet(a.projetId))
-      .map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
+    const projets = affectationsDe(r.id).map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
     return projets.join('') || '<span class="pale">hors projet</span>';
   },
   // Rappel, sous le tableau d'une équipe, de ce qu'ouvre chaque rôle d'accès
