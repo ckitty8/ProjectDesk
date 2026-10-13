@@ -3,6 +3,7 @@
    - affectation : assigner une ressource à des projets, avec un rôle
                    (maquette : « Assigner une ressource ») ; m.role pré-choisit le
                    rôle sur le projet d'origine (« + Ajouter un Product Owner »)
+   - rattachement : rattacher à une équipe une personne d'une autre équipe (« + Personne existante »)
    - ressource   : fiche d'une personne (nom, poste, capacité, dates, email, rôle d'accès)
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
@@ -16,7 +17,7 @@ const Modale = {
   rendre() {
     const m = etat.modale;
     const corps = {
-      affectation: this.affectation, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide,
+      affectation: this.affectation, rattachement: this.rattachement, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide,
       methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily
     }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
@@ -26,11 +27,11 @@ const Modale = {
   /* ---------- Affectations d'une ressource ---------- */
   affectation(m) {
     const esc = C.esc;
-    const personnes = personnesProposees(m.projetId ? projet(m.projetId).equipeId : m.equipeId || null);
+    const personnes = personnesProposees(m.projetId ? projet(m.projetId).equipeId : null);
     const rId = m.ressourceId || '';
     const actuelles = rId ? etat.d.affectations.filter(a => a.ressourceId === rId) : [];
-    // Projets proposés : ceux que je peux modifier, groupés par équipe (ceux de l'équipe d'origine seulement si on en vient)
-    const groupes = etat.d.equipes.filter(e => !m.equipeId || e.id === m.equipeId).map(e => {
+    // Projets proposés : ceux que je peux modifier, groupés par équipe
+    const groupes = etat.d.equipes.map(e => {
       const projets = etat.d.projets.filter(p => p.equipeId === e.id && peutAffecterSur(p));
       if (!projets.length) return '';
       return `<div class="libelle" style="margin-top:10px">${esc(e.nom)}</div>` + projets.map(p => {
@@ -55,6 +56,23 @@ const Modale = {
         <div>${groupes || C.vide('Aucun projet modifiable.')}</div></div>
       <div class="panneau-pied"><span class="discret extensible">${nbCoches} affectation(s)</span>
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Enregistrer les affectations</button></div></form>`;
+  },
+
+  /* ---------- Rattacher une personne existante à une équipe (maquette membres-equipe/) ----------
+     Toutes les personnes actives des autres équipes, sauf celles déjà rattachées. Elles gardent leur
+     équipe d'origine : le rattachement (membres_equipe) ne change ni leur fiche, ni leurs droits. */
+  rattachement(m) {
+    const e = equipe(m.equipeId), dejaLa = new Set(rattachesA(e.id).map(x => x.r.id));
+    const personnes = personnesProposees(null).filter(p => ressource(p.valeur).equipeId !== e.id && !dejaLa.has(p.valeur));
+    return `<form class="pile" style="gap:0;min-height:0;flex:1;display:flex;flex-direction:column" data-action-envoi="enregistrerRattachement">
+      ${this.entete(`Ajouter une personne existante à ${e.nom}`)}
+      <div class="panneau-corps"><div><label class="libelle">Personne (toutes les personnes de l’application)</label>
+        ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— personne à rattacher —' }, ...personnes], '',
+          'class="champ" name="ressource" required')}
+        <p class="discret texte-12">Elle reste dans son équipe d’origine. Pour la faire travailler sur un projet de ${C.esc(e.nom)},
+          affectez-la ensuite depuis le projet (« + Membre »).</p></div></div>
+      <div class="panneau-pied"><span class="extensible"></span>
+        <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Ajouter à l’équipe</button></div></form>`;
   },
 
   /* ---------- Fiche ressource ---------- */
@@ -281,6 +299,11 @@ async function inviterCreateur(equipeId) {
 }
 
 Object.assign(Actions, {
+  // Rattachement : la personne choisie s'affiche dans l'équipe, sans quitter son équipe d'origine (migration 033)
+  enregistrerRattachement(_, form) {
+    const equipeId = etat.modale.equipeId, ressourceId = new FormData(form).get('ressource');
+    executer(async () => { await Api.creer('membres_equipe', { equipeId, ressourceId }); etat.modale = null; }, 'rattachements');
+  },
   /* Affectations */
   choisirRessourceAffectation: (_, el) => majEtat({ modale: { ...etat.modale, ressourceId: el.value || null } }),
   async enregistrerAffectations(_, form) {

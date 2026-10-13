@@ -523,21 +523,25 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
         && liste.some(x => x.libelle.startsWith('Inès Roux — Mobile · Lead mobile'))
         && personnesProposees('equipe-sans-personne').length === ressourcesActives().length;
     }));
-    /* Équipe › « + Personne existante » (2026-10-13) : une personne d'une autre équipe (Julien, Plateforme) est
-       affectée à un projet de Mobile sans changer d'équipe ; la fenêtre ne propose que les projets de Mobile */
-    await page.click(noeud('equipe', 'Mobile')); await page.waitForTimeout(200);
-    await page.click('#detail-ressources [data-action="assigner"][data-equipe]'); await page.waitForTimeout(250);
-    const idJulien = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Julien Dubois').id);
-    const projetsMobile = await page.evaluate(() => [...document.querySelectorAll('.modale input[name=projet]')]
-      .every(c => projet(c.value).equipeId === etat.d.equipes.find(e => e.nom === 'Mobile').id));
-    await page.selectOption('.modale select[name=ressource]', idJulien); await page.waitForTimeout(250);
-    const idMo23 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'MO-23').id);
-    await page.check(`.modale input[name=projet][value="${idMo23}"]`);
-    await page.click('.modale .btn.primaire'); await page.waitForTimeout(500);
-    verifier('Équipe › + Personne existante : affectée à un projet de l’équipe sans changer d’équipe', projetsMobile && await page.evaluate(([idR, idP]) =>
-      etat.d.affectations.some(a => a.ressourceId === idR && a.projetId === idP) && equipe(ressource(idR).equipeId).nom === 'Plateforme', [idJulien, idMo23]));
-    await page.evaluate(([idR, idP]) => executer(() => Api.supprimer('affectations', { ressource_id: 'eq.' + idR, projet_id: 'eq.' + idP }), 'affectations'), [idJulien, idMo23]);
+    /* Équipe › « + Personne existante » (maquette membres-equipe/, 2026-10-13) : dans une équipe SANS projet (IA),
+       Julien (Plateforme) est rattaché : il s'affiche avec son équipe d'origine, qui ne change pas ; « Retirer » l'enlève */
+    await page.evaluate(() => executer(() => Api.creer('equipes', { id: '00000000-0000-4000-8000-000000000033', nom: 'IA', prefixe: 'IA',
+      couleur: etat.d.equipes[0].couleur, type: 'equipe', parentId: null, actif: true }), 'equipes'));
     await page.waitForTimeout(300);
+    await page.click(noeud('equipe', 'IA')); await page.waitForTimeout(200);
+    await page.click('#detail-ressources [data-action="rattacherPersonne"]'); await page.waitForTimeout(250);
+    const idJulien = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Julien Dubois').id);
+    await page.selectOption('.modale select[name=ressource]', idJulien);
+    await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
+    const ligneJulien = await page.$eval(`#detail-ressources tr[data-rattachee][data-ressource="${idJulien}"]`, tr => tr.textContent).catch(() => '');
+    verifier('Équipe sans projet › + Personne existante : rattachée, équipe d’origine inchangée', ligneJulien.includes('Équipe d’origine : Plateforme')
+      && await page.evaluate(id => equipe(ressource(id).equipeId).nom === 'Plateforme', idJulien));
+    await page.click(`#detail-ressources [data-action="retirerRattachement"][data-id="${idJulien}"]`); await page.waitForTimeout(400);
+    verifier('Équipe › Retirer : le rattachement seul est supprimé', !(await page.$('#detail-ressources tr[data-rattachee]'))
+      && await page.evaluate(id => !!ressource(id) && !etat.d.rattachements.length, idJulien));
+    await page.evaluate(() => executer(() => Api.supprimer('equipes', { id: 'eq.00000000-0000-4000-8000-000000000033' }), 'equipes'));
+    await page.waitForTimeout(300);
+    await page.click(noeud('equipe', 'Mobile')); await page.waitForTimeout(200);
     verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
     await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
     await capture('12-liste-ressources');

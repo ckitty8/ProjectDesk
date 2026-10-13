@@ -44,7 +44,8 @@ const TABLES = {
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
-  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles'
+  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
+  rattachements: 'membres_equipe'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -82,7 +83,8 @@ const CLES_UNIQUES = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
-  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit' };
+  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
+  rattachements: 'equipe_id,ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Lit une table sans toucher à etat.d (l'application des lignes est faite par appliquerTable)
@@ -320,6 +322,12 @@ function personnesProposees(equipeId) {
   return ressourcesActives().sort((a, b) => deLEquipe(a) - deLEquipe(b) || a.nom.localeCompare(b.nom))
     .map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}${r.poste ? ' · ' + r.poste : ''}` }));
 }
+/* Personnes rattachées à une équipe depuis une autre (membres_equipe, migration 033) : affichées dans
+   ses membres, sans changer leur équipe d'origine ni leurs droits ; triées par nom */
+const rattachesA = equipeId => (etat.d.rattachements || []).filter(x => x.equipeId === equipeId)
+  .map(x => ({ r: ressource(x.ressourceId), depuis: x.creeLe })).filter(x => x.r).sort((a, b) => a.r.nom.localeCompare(b.r.nom));
+// Rattacher ou retirer quelqu'un : administrateur ou responsable de l'équipe, avec le droit « affecter » (même règle que la base)
+const peutRattacherA = equipeId => (etat.estAdmin || estResponsableDe(equipeId)) && aDroit('affecter');
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 
 /* ---------- Rôle d'accès d'une personne (maquette role-acces/, 2026-10-12) ---------- */

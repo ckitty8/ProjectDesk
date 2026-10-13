@@ -127,6 +127,7 @@ function amorcer() {
   bd.responsables_equipe = [];   // responsables de chaque équipe (migration 027)
   bd.roles_prevus = [];          // rôles prévus en attente de la connexion de la personne (migration 029)
   bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
+  bd.membres_equipe = [];        // personnes rattachées à une autre équipe (migration 033)
   // Matrice des droits (migration 031) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
   const MATRICE = {
     general: 'oui oui oui oui oui oui', mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
@@ -312,7 +313,8 @@ async function auth(req, res, chemin, url) {
 }
 
 /* ---------- Data API simulée (sous-ensemble PostgREST) ---------- */
-const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'], createur: ['user_id'] };
+const CLES = { envois_daily_projet: ['projet_id'], notes_daily_projet: ['user_id', 'jour', 'projet_id'], absences: ['ressource_id', 'jour'], feuilles_temps: ['ressource_id', 'semaine'], administrateurs: ['user_id'], jours_feries: ['jour'], objectifs_jours_travail: ['equipe_id', 'annee'], sprints_projet: ['projet_id', 'numero'], repartitions_sprint: ['projet_id', 'numero', 'categorie'], previsions_temps: ['projet_id', 'ressource_id'], comptes_ignores: ['user_id'], createur: ['user_id'],
+  membres_equipe: ['equipe_id', 'ressource_id'] };
 function filtrer(lignes, params) {
   let r = lignes;
   // Conditions « col=op.valeur », et « and=(col.op.valeur,...) » pour plusieurs conditions sur une colonne
@@ -451,6 +453,7 @@ async function donnees(req, res, table, url) {
       if (!CLES[table] && !l.id) l.id = uuid();
       if (table === 'valeurs_referentiel') { l.actif = l.actif ?? true; l.systeme = l.systeme ?? false; }   // valeurs par défaut SQL
       if (table === 'equipes') { l.actif = l.actif ?? true; l.type = l.type || 'equipe'; l.parent_id = l.parent_id ?? null; }
+      if (table === 'membres_equipe') l.cree_le = l.cree_le || maintenant();   // défaut SQL now()
       if (table === 'objectifs') l.confiance = l.confiance || 'moyenne';   // défaut SQL de objectifs.confiance
       const cle = conflit || CLES[table];
       const existante = conflit && bd[table].find(x => cle.every(c => String(x[c]) === String(l[c])));

@@ -81,7 +81,7 @@ Ecrans.listeRessources = {
     const noms = liste => liste.map(r => r.nom).join(' ');
     const groupes = this.unites().map(e => {
       const responsable = responsablesDe(e.id)[0];
-      const personnes = ressources.filter(r => r.equipeId === e.id);
+      const personnes = ressources.filter(r => r.equipeId === e.id), nbRattaches = rattachesA(e.id).length;
       const projets = etat.d.projets.filter(p => p.equipeId === e.id).map(p => {
         const { productOwners, membres } = this.rolesDuProjet(p, ressources);
         const equipeProjet = [...productOwners, ...membres.map(m => m.r)];
@@ -91,7 +91,7 @@ Ecrans.listeRessources = {
       return `<div class="noeud-groupe">
         <a class="noeud equipe${actif('equipe', e.id)}" data-action="choisirNoeud" data-type="equipe" data-id="${e.id}" data-nom="${esc(e.nom.toLowerCase())}"
           data-recherche="${esc(`${e.nom} ${noms(personnes.filter(r => !etat.d.affectations.some(a => a.ressourceId === r.id)))}`.toLowerCase())}">
-            ${esc(e.nom)} <span class="compte">${personnes.length}</span></a>
+            ${esc(e.nom)} <span class="compte">${personnes.length + nbRattaches}</span></a>
         ${responsable ? `<a class="noeud personne" data-action="choisirNoeud" data-type="equipe" data-id="${e.id}" data-recherche="${esc(responsable.nom.toLowerCase())}">
           ${C.avatar(responsable.nom)}<span>${esc(responsable.nom)}</span> <span class="compte">responsable</span></a>` : ''}
         ${projets}</div>`;
@@ -117,8 +117,9 @@ Ecrans.listeRessources = {
   // Équipe : responsable (souvent hors projet, ex. Anne pour Applications), projets, membres de l'équipe
   detailEquipe(e) {
     const esc = C.esc, admin = etat.estAdmin, membre = estMembreDe(e.id), ressources = etat.d.ressources;
-    const personnes = ressources.filter(r => r.equipeId === e.id);
+    const personnes = ressources.filter(r => r.equipeId === e.id), rattaches = rattachesA(e.id);
     const projets = etat.d.projets.filter(p => p.equipeId === e.id);
+    const compteRattaches = rattaches.length ? ` · ${rattaches.length} rattachée(s)` : '';
     const affectee = r => etat.d.affectations.some(a => a.ressourceId === r.id);
     const responsable = responsablesDe(e.id)[0];
     const vide = !personnes.length && !projets.length && !etat.d.equipes.some(x => x.parentId === e.id);
@@ -135,24 +136,16 @@ Ecrans.listeRessources = {
     }).join('');
     return `
       <div class="carte detail-entete"><div><h2 class="detail-titre">${esc(e.nom)} ${C.code(e.prefixe)}</h2>
-        <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)</div></div><span class="extensible"></span>${boutons}</div>
+        <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)${compteRattaches}</div></div><span class="extensible"></span>${boutons}</div>
       ${responsable ? this.carteResponsable(responsable, affectee(responsable)) : ''}
       <div class="carte"><div class="carte-titre"><h2>Projets</h2>${membre ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : ''}</div>
         <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
       <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>
-        <span class="ligne-flex">${this.ajoutPersonneExistante(e, projets)}
+        <span class="ligne-flex">${peutRattacherA(e.id) ? `<a data-action="rattacherPersonne" data-equipe="${e.id}">+ Personne existante</a>` : ''}
           ${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</span></div>
-        ${this.tableauPersonnes('equipe:' + e.id, personnes.map(r => ({ r })), 'Aucune personne.')}
-        ${personnes.length ? this.legendeAcces() : ''}</div>`;
-  },
-  /* « + Personne existante » (porteur, 2026-10-13) : affecter quelqu'un déjà présent dans l'application (ex. une
-     personne d'Applications) aux projets de cette équipe, sans changer son équipe. Sans projet : il faut en créer un. */
-  ajoutPersonneExistante(e, projets) {
-    if (!projets.some(peutAffecterSur)) {
-      return projets.length ? '' : '<span class="discret texte-12">pour affecter une personne existante, créez d’abord un projet</span>';
-    }
-    return `<a data-action="assigner" data-equipe="${e.id}">+ Personne existante</a>`;
+        ${this.tableauPersonnes('equipe:' + e.id, [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ ...x, rattacheA: e.id }))], 'Aucune personne.')}
+        ${personnes.length || rattaches.length ? this.legendeAcces() : ''}</div>`;
   },
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
      Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
@@ -203,26 +196,42 @@ Ecrans.listeRessources = {
           ${ouverte ? '▾' : '▸'} ${titre} <span class="pale">(${liste.length})${complement}</span></button></td></tr>`
         + (ouverte ? liste.map(x => this.lignePersonne(x, deProjet)).join('') : '');
     };
-    const corps = section('actifs', 'Actifs', lignes.filter(x => !estInactive(x.r)), '')
-      + section('inactifs', 'Inactifs', lignes.filter(x => estInactive(x.r)), ' · date de fin saisie');
+    // Personnes de l'équipe (actives, inactives), puis celles rattachées depuis une autre équipe (migration 033)
+    const propres = lignes.filter(x => !x.rattacheA);
+    const corps = section('actifs', 'Actifs', propres.filter(x => !estInactive(x.r)), '')
+      + section('inactifs', 'Inactifs', propres.filter(x => estInactive(x.r)), ' · date de fin saisie')
+      + section('rattaches', 'Rattachées depuis une autre équipe', lignes.filter(x => x.rattacheA), ' · comptées dans leur équipe d’origine');
     return `<div class="defilement-x"><table class="tableau tableau-personnes"><thead><tr><th>Personne</th><th>Poste</th>
-      <th>Accès ${C.aide('roleAcces')}</th><th>${deProjet ? 'Rôle sur le projet' : 'Projets'}</th>
+      <th>Accès ${C.aide('roleAcces')}</th><th>${deProjet ? 'Rôle sur le projet' : 'Projets / origine'}</th>
         <th>Présence ${C.aide('datesPresence')}</th><th>Statut ${C.aide('statutPersonne')}</th><th></th></tr></thead>
       <tbody>${corps || `<tr><td colspan="${nbColonnes}">${C.vide(texteVide)}</td></tr>`}</tbody></table></div>`;
   },
-  // Une ligne du tableau de personnes (grisée si la personne est inactive)
-  lignePersonne({ r, role }, deProjet) {
+  /* Une ligne du tableau de personnes (grisée si la personne est inactive). Personne rattachée (rattacheA) :
+     son équipe d'origine à la place des projets, et « Retirer » (supprime le rattachement seulement) à la place de « Fiche ». */
+  lignePersonne({ r, role, rattacheA, depuis }, deProjet) {
+    if (rattacheA) return this.lignePersonneRattachee(r, rattacheA, depuis);
     const esc = C.esc, editable = peutModifierFiche(r), badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
-    const acces = ROLES_ACCES[roleAcces(r)];
-    return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}><td><span class="ligne-flex">
-      ${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
-      <td>${esc(r.poste || '—')}</td><td>${C.badge(acces.libelle, acces.texte, acces.fond)}</td>
+    return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}>${this.cellulesIdentite(r)}
       <td class="projets-personne">${deProjet ? C.badgeRef('role', role) : this.projetsDe(r)}</td>
       <td class="${r.dateDepart ? 'presence-fin' : 'discret'}">${esc(Calculs.libellePresence(r, Calculs.aujourdhui())) || '<span class="pale">—</span>'}</td>
       <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}"
         title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">
         ${badge}</button>` : badge}</td>
       <td class="num">${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</td></tr>`;
+  },
+  // Trois premières cellules d'une ligne de personne : nom (avec avatar), poste, rôle d'accès
+  cellulesIdentite(r) {
+    const esc = C.esc, acces = ROLES_ACCES[roleAcces(r)];
+    return `<td><span class="ligne-flex">${C.avatar(r.nom)}<span class="nom-personne">${esc(r.nom)}</span></span></td>
+      <td>${esc(r.poste || '—')}</td><td>${C.badge(acces.libelle, acces.texte, acces.fond)}</td>`;
+  },
+  lignePersonneRattachee(r, equipeId, depuis) {
+    const esc = C.esc;
+    return `<tr data-ressource="${r.id}" data-rattachee="${equipeId}">${this.cellulesIdentite(r)}
+      <td>${C.badgeTon('Équipe d’origine : ' + equipe(r.equipeId).nom, 'violet')}</td>
+      <td class="discret">${depuis ? 'rattachée le ' + Calculs.formatAvecAnnee(depuis.slice(0, 10)) : ''}</td><td>${C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</td>
+      <td class="num">${peutRattacherA(equipeId) ? `<a data-action="retirerRattachement" data-equipe="${equipeId}" data-id="${r.id}"
+        title="Retirer de ${esc(equipe(equipeId).nom)} (elle reste dans ${esc(equipe(r.equipeId).nom)})">Retirer</a>` : ''}</td></tr>`;
   },
   // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
   // (ses projets se modifient depuis sa fiche : « Modifier ses projets »)
@@ -298,8 +307,13 @@ Object.assign(Actions, {
 
   /* Fenêtre d'affectation : pour une personne (data-ressource) ou pré-remplie sur un projet
      (data-projet) ; data-role pré-choisit le rôle (« + Ajouter un Product Owner » → Chef de projet) */
-  assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null, role: d.role || null,
-    equipeId: d.equipe || null } }),
+  assigner: d => majEtat({ modale: { type: 'affectation', ressourceId: d.ressource || null, projetId: d.projet || null, role: d.role || null } }),
+  // « + Personne existante » (maquette membres-equipe/, 2026-10-13) : rattacher quelqu'un d'une autre équipe
+  rattacherPersonne: d => majEtat({ modale: { type: 'rattachement', equipeId: d.equipe } }),
+  retirerRattachement(d) {
+    if (!confirm(`Retirer ${ressource(d.id).nom} de ${equipe(d.equipe).nom} ? Elle reste dans son équipe d’origine.`)) return;
+    executer(() => Api.supprimer('membres_equipe', { equipe_id: 'eq.' + d.equipe, ressource_id: 'eq.' + d.id }), 'rattachements');
+  },
   nouvelleRessource: d => majEtat({ modale: { type: 'ressource', id: null, equipeId: d.equipe } }),
   modifierRessource: d => majEtat({ modale: { type: 'ressource', id: d.id } }),
   // Statut d'une personne : « Inactif » = date de fin saisie (règle du porteur) ; le bouton pose la date
