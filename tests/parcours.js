@@ -501,10 +501,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await supprimerUnite('Équipe Test'); await supprimerUnite('Direction Test');
     verifier('Liste des ressources : unités vides supprimées', !(await page.$(noeud('equipe', 'Équipe Test'))) && !(await page.$(noeud('equipe', 'Direction Test'))));
     await page.click(noeud('equipe', 'Data')); await page.waitForTimeout(150);
-    // Chef de projet : personnes de l'équipe et de la direction qui la regroupe (Plateforme regroupe Data)
-    verifier('Chef de projet possible : personnes de l’équipe et de sa direction', await page.evaluate(() => {
-      const data = etat.d.equipes.find(e => e.nom === 'Data'), noms = chefsPossibles(data.id).map(r => r.nom);
-      return noms.includes('Hugo Martin') && noms.includes('Julien Dubois') && !noms.includes('Inès Roux');
+    /* Personnes proposées pour un projet (chef, membre) : toutes les personnes présentes, celles de l'équipe
+       d'abord, avec équipe et poste — même liste pour Nouveau projet, panneau projet et affectation (2026-10-13) */
+    verifier('Projet : toutes les personnes proposées (équipe d’abord, avec équipe et poste), même pour une équipe sans personne', await page.evaluate(() => {
+      const data = etat.d.equipes.find(e => e.nom === 'Data'), liste = personnesProposees(data.id);
+      const premiers = liste.slice(0, 3).map(x => ressource(x.valeur).equipeId);
+      return liste.length === ressourcesActives().length && premiers.every(id => id === data.id)
+        && liste.some(x => x.libelle.startsWith('Inès Roux — Mobile · Lead mobile'))
+        && personnesProposees('equipe-sans-personne').length === ressourcesActives().length;
     }));
     verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
     await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);

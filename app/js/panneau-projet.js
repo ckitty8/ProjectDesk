@@ -29,7 +29,7 @@ const Panneau = {
 
     // Champ modifiable du projet (enregistré à la sortie du champ par majProjet)
     const champ = (nom, html) => editable ? html.replace('<CHAMP', `data-action-change="majProjet" data-champ="${nom}" data-id="${p.id}"`) : '';
-    const personnesEquipe = chefsPossibles(p.equipeId).map(r => ({ valeur: r.id, libelle: r.nom }));
+    const personnesEquipe = personnesProposees(p.equipeId);
     return `<aside class="panneau">
       <div class="panneau-entete"><div class="extensible"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
           ${editable ? champ('nom', `<input class="champ" style="font-size:16px;font-weight:600;margin-top:4px" value="${esc(p.nom)}" required <CHAMP>`)
@@ -71,7 +71,7 @@ const Panneau = {
   // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
     const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
-    const personnes = chefsPossibles(eqId).map(r => ({ valeur: r.id, libelle: r.nom }));
+    const personnes = personnesProposees(eqId);
     const moi = maRessource();
     return `<aside class="panneau"><form class="pile" style="height:100%;gap:0" data-action-envoi="creerProjet">
       <div class="panneau-entete"><div><div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</div>

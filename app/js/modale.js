@@ -26,7 +26,7 @@ const Modale = {
   /* ---------- Affectations d'une ressource ---------- */
   affectation(m) {
     const esc = C.esc;
-    const personnes = ressourcesActives().map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}` }));
+    const personnes = personnesProposees(m.projetId ? projet(m.projetId).equipeId : null);
     const rId = m.ressourceId || '';
     const actuelles = rId ? etat.d.affectations.filter(a => a.ressourceId === rId) : [];
     // Projets proposés : ceux que je peux modifier, groupés par équipe

@@ -284,14 +284,16 @@ const estInactive = r => !!r.dateDepart;
 const ressourcesPresentes = (debut, fin = debut) => (etat.d.ressources || []).filter(r => Calculs.estPresentSur(r, debut, fin));
 const estPresenteSur = (id, debut, fin = debut) => { const r = ressource(id); return !!r && Calculs.estPresentSur(r, debut, fin); };
 const ressourcesActives = () => ressourcesPresentes(Calculs.aujourdhui());
-/* Chefs de projet possibles d'une équipe : ses personnes actives et celles de la direction qui la
-   regroupe (ex. Thomas, rattaché à la direction DSI, pour un projet de l'équipe Applications).
-   Depuis 1.90 la direction n'est plus affichée dans Liste des ressources (consigne du porteur) :
-   ses personnes doivent rester choisissables pour les projets de ses équipes. */
-const chefsPossibles = equipeId => {
-  const unites = [equipeId, equipe(equipeId).parentId].filter(Boolean);
-  return ressourcesActives().filter(r => unites.includes(r.equipeId));
-};
+/* Personnes proposées pour un projet de l'équipe equipeId (chef de projet, membre, lecteur) : TOUTES
+   les personnes présentes — une personne travaille sur des projets de plusieurs équipes (porteur,
+   2026-10-13 : « les chefs de projet ne sont pas dans la liste » d'un nouveau projet). Les personnes de
+   l'équipe d'abord ; libellé « Nom — Équipe · Poste » pour retrouver un chef de projet par son poste.
+   Liste unique des écrans Nouveau projet, panneau projet et affectation. */
+function personnesProposees(equipeId) {
+  const deLEquipe = r => (r.equipeId === equipeId ? 0 : 1);
+  return ressourcesActives().sort((a, b) => deLEquipe(a) - deLEquipe(b) || a.nom.localeCompare(b.nom))
+    .map(r => ({ valeur: r.id, libelle: `${r.nom} — ${equipe(r.equipeId).nom}${r.poste ? ' · ' + r.poste : ''}` }));
+}
 const estActive = id => estPresenteSur(id, Calculs.aujourdhui());
 
 /* ---------- Rôle d'accès d'une personne (maquette role-acces/, 2026-10-12) ---------- */
