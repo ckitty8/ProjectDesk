@@ -144,8 +144,7 @@ Ecrans.listeRessources = {
       <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>
         <span class="ligne-flex">${peutRattacherA(e.id) ? `<a data-action="rattacherPersonne" data-equipe="${e.id}">+ Personne existante</a>` : ''}
           ${membre || admin ? `<a data-action="nouvelleRessource" data-equipe="${e.id}">+ Personne</a>` : ''}</span></div>
-        ${this.tableauPersonnes('equipe:' + e.id, [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ ...x, rattacheA: e.id }))], 'Aucune personne.')}
-        ${personnes.length || rattaches.length ? this.legendeAcces() : ''}</div>`;
+        ${this.tableauPersonnes('equipe:' + e.id, [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ ...x, rattacheA: e.id }))], 'Aucune personne.')}</div>`;
   },
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
      Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
@@ -239,11 +238,7 @@ Ecrans.listeRessources = {
     const projets = affectationsDe(r.id).map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
     return projets.join('') || '<span class="pale">hors projet</span>';
   },
-  // Rappel, sous le tableau d'une équipe, de ce qu'ouvre chaque rôle d'accès
-  legendeAcces() {
-    return `<div class="legende-acces">${Object.values(ROLES_ACCES).map(a =>
-      `<div>${C.badge(a.libelle, a.texte, a.fond)} <span class="discret">${C.esc(a.description)}</span></div>`).join('')}</div>`;
-  },
+
 
   /* ---------- Postes / Types de contrat ---------- */
   // refId : référentiel ; champ : propriété de la ressource qui porte la valeur
