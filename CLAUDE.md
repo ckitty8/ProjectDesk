@@ -84,11 +84,9 @@ Objectif du porteur : aucune ligne inutile ni code mort ; une application repren
 
 ## Après chaque commit
 
-- [ ] Livraison : pousser la branche de travail puis **`main`** (mise en ligne Vercel) **et la branche `roadmap`**, qui doivent rester identiques (consigne du porteur, 2026-10-05)
-  - **Exception — branche `gestion-des-ressources`** (consigne du porteur, 2026-10-08) : les
-    évolutions de cette branche ne sont **pas** déployées sur `main` (ni sur `roadmap`). On pousse
-    uniquement `gestion-des-ressources` (déploiement de prévisualisation Vercel) ; la fusion dans
-    `main` se fait seulement sur accord explicite du porteur.
+- [ ] Livraison : pousser la branche de travail puis **`main`** (mise en ligne Vercel sur
+  `project-desk-sepia.vercel.app`). La branche `roadmap` n'est **plus** mise à jour (consigne du
+  porteur, 2026-10-13) ; la branche `gestion-des-ressources` est abandonnée (même date).
 
 - [ ] `node scripts/verifier-docs.js` → « ✔ Documents vérifiés »
 - [ ] Relecture humaine des documents : README, DAT, CLAUDE.md cohérents entre eux

@@ -117,7 +117,7 @@ Neon avant, comptage des données avant / après, puis `update_data_api` (DAT §
 
 Un tableau court : contrôle, résultat, ce qui a été corrigé, ce qui attend son accord (base), ce
 qui reste à juger (avertissements gardés et pourquoi). Puis livraison selon `CLAUDE.md`
-(branche de travail, `main`, `roadmap`, statut Vercel).
+(branche de travail puis `main`, statut Vercel).
 
 ## Ajouter une vérification
 
