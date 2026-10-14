@@ -202,7 +202,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Daily des équipes PAR PROJET (migration 018) : notes du projet, blocages, règle de lecture
     await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
     verifier('Daily des équipes : note d’un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
-    verifier('Daily des équipes : blocages du jour regroupés (avec le projet)', (await texte()).includes('Blocages du jour') && (await texte()).includes('Identifiants de recette expirés'));
+    verifier('Daily des équipes : blocages de la semaine regroupés (avec le projet)', (await texte()).includes('Blocages de la semaine') && (await texte()).includes('Identifiants de recette expirés'));
+    // À la semaine (porteur, 2026-10-14) : une colonne par jour ouvré, ‹ › change de semaine
+    verifier('Daily des équipes : une colonne par jour ouvré de la semaine', await page.evaluate(() =>
+      document.querySelector('.tableau-daily-semaine thead tr').children.length === Ecrans.dailyEquipes.joursSemaine().length + 1));
+    await page.click('[data-action="dailyEquipesDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
+    const semainePrecedente = await page.evaluate(() => Calculs.lundi(Ecrans.dailyEquipes.jour()) === Calculs.ajouterJours(Calculs.lundi(Calculs.aujourdhui()), -7)
+      && !document.body.textContent.includes('Mapping des rôles applicatifs'));
+    await page.click('[data-action="dailyEquipesAujourdhui"]'); await page.waitForTimeout(200);
+    verifier('Daily des équipes : semaine précédente puis « Cette semaine »', semainePrecedente && (await texte()).includes('Mapping des rôles applicatifs'));
     verifier('Daily des équipes : seulement mes projets et ceux des unités (et sous-unités) dont je suis responsable', await page.evaluate(() => {
       // Camille est administratrice dans les données simulées : on vérifie la règle comme non-administratrice.
       // Elle est responsable de Plateforme (Data y est rattachée) et affectée à PR-03 ; Mobile et PR-06 ne la concernent pas.

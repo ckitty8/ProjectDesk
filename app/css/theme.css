@@ -418,3 +418,7 @@ select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: a
 select.niveau-oui { background: #E3F5EC; color: #0B6B4F; font-weight: 600; }
 select.niveau-lecture { background: #FFF3E0; color: #8A4B00; font-weight: 600; }
 select.niveau-non { color: var(--pale); }
+/* Daily des équipes à la semaine : une colonne par jour, notes compactes alignées en haut */
+.tableau-daily-semaine { table-layout: fixed; min-width: 900px; }
+.tableau-daily-semaine th:first-child { width: 190px; }
+.tableau-daily-semaine td { vertical-align: top; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }

@@ -1,11 +1,11 @@
 /* ============================================================
    Suivi de mes équipes › Daily des équipes — daily PAR PROJET (maquette docs/maquettes/daily-par-projet/)
-   Pour le jour choisi, les dailies des projets que je peux lire (peutLireDailyProjet, même
+   Pour la semaine choisie (lundi → vendredi ouvrés, 2026-10-14), les dailies des projets que je peux lire (peutLireDailyProjet, même
    règle qu'en base) : les projets où je suis affecté(e) ; le responsable d'une unité voit
    tous les projets de son unité et des unités rattachées (ex. Anne, Applications) ; un
-   administrateur voit tout. Filtre par projet, « Blocages du jour » en tête, puis une carte
-   par membre (affecté hors Lecteur, présent ce jour-là) : sa note du projet, ou « pas de
-   daily » avec son absence éventuelle (Congés & capacité). Lecture seule.
+   administrateur voit tout. Filtre par projet, « Blocages de la semaine » en tête, puis par
+   projet un tableau membre × jour (affecté hors Lecteur, présent) : sa note, ou le motif
+   (absence de Congés & capacité, pas de daily, sans compte). Lecture seule.
    Export Excel (maquette docs/maquettes/export-daily-excel/) : fenêtre Modale.exportDaily,
    fichier fabriqué par Excel (excel.js) ; mêmes projets et mêmes règles qu'à l'écran.
    ============================================================ */
@@ -17,10 +17,22 @@ Ecrans.dailyEquipes = {
   jour: () => ui('dailyEquipes', { jour: Calculs.aujourdhui() }).jour,
   auChargement: () => recharger('notesProjet'),
 
+  /* Semaine affichée (porteur, 2026-10-14 : « affiche uniquement les daily de la semaine ») : les jours
+     ouvrés (hors week-end et fériés) de la semaine du jour choisi, du lundi au vendredi */
+  joursSemaine() {
+    const lundi = Calculs.lundi(this.jour());
+    return Calculs.joursOuvresEntre(lundi, Calculs.ajouterJours(lundi, 4), feries());
+  },
   // Membres d'un projet attendus au daily ce jour-là : affectés hors Lecteur et présents (arrivée / fin)
   membres(p, jour) {
     return etat.d.affectations.filter(a => a.projetId === p.id && a.role !== ROLES_PROJET.LECTEUR && estPresenteSur(a.ressourceId, jour))
       .map(a => ressource(a.ressourceId)).sort((x, y) => x.nom.localeCompare(y.nom));
+  },
+  // Membres présents au moins un jour de la semaine
+  membresSemaine(p, jours) {
+    const vus = new Map();
+    jours.forEach(j => this.membres(p, j).forEach(r => vus.set(r.id, r)));
+    return [...vus.values()].sort((x, y) => x.nom.localeCompare(y.nom));
   },
 
   // Note affichée : rubriques en gras, rubrique « Blocages » en rouge (sauf « Aucun »)
@@ -32,61 +44,70 @@ Ecrans.dailyEquipes = {
       return (r.titre ? `<b${style}>${esc(r.titre)}</b><br>` : '') + r.lignes.map(l => `<span${style}>- ${esc(l)}</span><br>`).join('');
     }).join('');
   },
+  // Note d'un membre sur un projet un jour donné (vide = pas de daily)
+  noteDe(r, p, jour) {
+    const n = noteProjet(auteurDaily(r), p.id, jour);
+    return n && n.texte.trim() ? n : null;
+  },
 
   rendre() {
-    const esc = C.esc, jour = this.jour();
-    const entete = C.entete('Daily des équipes', 'Daily par projet des membres de vos projets · lecture seule', `
+    const esc = C.esc, jours = this.joursSemaine(), lundi = Calculs.lundi(this.jour());
+    const libelle = `Semaine du ${Calculs.formatCourt(lundi)} au ${Calculs.formatAvecAnnee(Calculs.ajouterJours(lundi, 4))}`;
+    const entete = C.entete('Daily des équipes', 'Daily de la semaine, par projet, des membres de vos projets · lecture seule', `
       ${projetsDailyVisibles().length ? '<button class="btn primaire" data-action="ouvrirExportDaily">⬇ Exporter en Excel</button>' : ''}
-      <button class="btn" data-action="dailyEquipesAujourdhui">Aujourd’hui</button>
-      <button class="btn" data-action="dailyEquipesDecaler" data-sens="-1" title="Jour précédent">‹</button>
-      <b style="min-width:210px;text-align:center">${Calculs.formatLong(jour)}</b>
-      <button class="btn" data-action="dailyEquipesDecaler" data-sens="1" title="Jour suivant">›</button>`);
+      <button class="btn" data-action="dailyEquipesAujourdhui">Cette semaine</button>
+      <button class="btn" data-action="dailyEquipesDecaler" data-sens="-1" title="Semaine précédente">‹</button>
+      <b style="min-width:240px;text-align:center">${libelle}</b>
+      <button class="btn" data-action="dailyEquipesDecaler" data-sens="1" title="Semaine suivante">›</button>`);
     const visibles = projetsDailyVisibles();
     if (!visibles.length) return `<div class="ecran">${entete}<div class="carte">${C.vide('Aucun projet en cours dont vous pouvez lire le daily.')}</div></div>`;
 
     const filtre = ui('dailyEquipes', { projet: 'tous' }).projet;
     const projets = visibles.filter(p => filtre === 'tous' || p.id === filtre);
-    const noteDe = (r, p) => noteProjet(auteurDaily(r), p.id, jour);
-    const remplie = n => !!n && !!n.texte.trim();
-
-    // Blocages du jour, tous projets affichés
-    const blocages = projets.flatMap(p => this.membres(p, jour).filter(r => remplie(noteDe(r, p)))
-      .flatMap(r => Calculs.blocagesDaily(noteDe(r, p).texte).map(texte => ({ code: p.code, nom: r.nom, texte }))));
-
-    const puce = (id, libelle) => `<button class="puce${filtre === id ? ' active' : ''}" data-action="filtrerDailyEquipes" data-id="${id}">${esc(libelle)}</button>`;
+    const blocages = this.blocagesSemaine(projets, jours);
+    const puce = (id, nom) => `<button class="puce${filtre === id ? ' active' : ''}" data-action="filtrerDailyEquipes" data-id="${id}">${esc(nom)}</button>`;
     const puces = (visibles.length > 1 ? puce('tous', 'Tous mes projets') : '') + visibles.map(p => puce(p.id, `${p.code} · ${p.nom}`)).join('');
-
-    // Carte d'un membre : sa note du projet, ou « pas de daily » (avec son absence du jour si elle est posée)
-    const carte = (r, p) => {
-      const n = noteDe(r, p);
-      if (remplie(n)) return `<div class="carte encart-moyen">
-        <div class="ligne-flex" style="margin-bottom:8px">${C.avatar(r.nom)}<b class="extensible">${esc(r.nom)}</b>${C.code(p.code)}</div>
-        <div style="line-height:1.55">${this.note(n.texte)}</div></div>`;
-      const absence = absenceDe(r.id, jour);
-      const motif = absence ? `Pas de daily · absent(e) (${esc(absence.type)})` : r.userId ? 'Pas encore de daily sur ce projet' : 'Pas de compte relié à sa fiche';
-      return `<div class="carte" style="padding:14px 16px;background:var(--fond-entete)"><div class="ligne-flex">${C.avatar(r.nom)}
-        <b style="flex:1;color:var(--discret)">${esc(r.nom)}</b><span class="discret">${motif}</span></div></div>`;
-    };
-    const section = p => {
-      const membres = this.membres(p, jour), avec = membres.filter(r => remplie(noteDe(r, p)));
-      return `<div class="carte-titre" style="padding:6px 2px;border:0"><span class="ligne-flex">${C.code(p.code)}<h2 style="font-size:15px">${esc(p.nom)}</h2></span>
-          <span class="discret">${avec.length} / ${membres.length} daily</span></div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;margin-bottom:14px">
-          ${[...avec, ...membres.filter(r => !avec.includes(r))].map(r => carte(r, p)).join('') || C.vide('Aucun membre présent ce jour.')}</div>`;
-    };
-
     return `
     <div class="ecran">
       ${entete}
       <div class="ligne-flex" style="flex-wrap:wrap"><div class="puces">${puces}</div><span class="extensible"></span>
-        <span class="discret">${blocages.length} blocage${blocages.length > 1 ? 's' : ''} signalé${blocages.length > 1 ? 's' : ''}</span></div>
-      ${blocages.length ? `<div class="carte encart-compact encart-blocages"><b class="texte-danger">Blocages du jour</b>
-        <div style="margin-top:6px;display:grid;grid-template-columns:240px 1fr;gap:4px 12px">${blocages.map(b => `<span>
-          ${C.code(b.code)} ${esc(b.nom)}</span><span>${esc(b.texte)}</span>`).join('')}</div></div>` : ''}
-      ${projets.map(section).join('')}
-      <div class="discret texte-12">Notes conservées à l’affichage sur ${JOURS_DAILY} jours. Vous voyez le daily de vos projets ;
+        <span class="discret">${blocages.length} blocage${blocages.length > 1 ? 's' : ''} cette semaine</span></div>
+      ${blocages.length ? `<div class="carte encart-compact encart-blocages"><b class="texte-danger">Blocages de la semaine</b>
+        <div style="margin-top:6px;display:grid;grid-template-columns:70px 240px 1fr;gap:4px 12px">${blocages.map(b => `
+          <span class="discret">${Calculs.formatCourt(b.jour)}</span><span>${C.code(b.code)} ${esc(b.nom)}</span><span>${esc(b.texte)}</span>`).join('')}</div></div>` : ''}
+      ${projets.map(p => this.sectionProjet(p, jours)).join('')}
+      <div class="discret texte-12">Notes conservées à l’affichage sur ${JOURS_DAILY} jours (au-delà : export Excel). Vous voyez le daily de vos projets ;
         le responsable d’une unité voit tous les projets de son unité.</div>
     </div>`;
+  },
+  // Blocages des notes de la semaine, tous projets affichés, du plus récent au plus ancien
+  blocagesSemaine(projets, jours) {
+    return [...jours].reverse().flatMap(jour => projets.flatMap(p => this.membres(p, jour).flatMap(r => {
+      const n = this.noteDe(r, p, jour);
+      return n ? Calculs.blocagesDaily(n.texte).map(texte => ({ jour, code: p.code, nom: r.nom, texte })) : [];
+    })));
+  },
+  /* Un projet : une ligne par membre, une colonne par jour ouvré de la semaine. Case : sa note, ou
+     le motif de l'absence de daily (absent(e), pas de daily, fiche sans compte) ; rien les jours à venir ou hors présence */
+  sectionProjet(p, jours) {
+    const esc = C.esc, membres = this.membresSemaine(p, jours), JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+    const nbNotes = membres.reduce((n, r) => n + jours.filter(j => this.noteDe(r, p, j)).length, 0);
+    const caseDe = (r, jour) => {
+      const n = this.noteDe(r, p, jour);
+      if (n) return `<td>${this.note(n.texte)}</td>`;
+      const absence = absenceDe(r.id, jour);
+      const aVenir = jour > Calculs.aujourdhui() && !absence;
+      const motif = aVenir || !estPresenteSur(r.id, jour) ? '' : absence ? `absent(e) · ${esc(absence.type)}` : r.userId ? '—' : 'sans compte';
+      return `<td class="pale texte-12">${motif}</td>`;
+    };
+    const entetes = jours.map(j => `<th>${JOURS[(Calculs.depuisIso(j).getDay() + 6) % 7]} ${Calculs.formatCourt(j)}</th>`).join('');
+    const lignes = membres.map(r => `<tr><td class="nowrap"><span class="ligne-flex">${C.avatar(r.nom)}<b>${esc(r.nom)}</b></span></td>
+      ${jours.map(j => caseDe(r, j)).join('')}</tr>`).join('');
+    return `<div class="carte-titre" style="padding:6px 2px;border:0"><span class="ligne-flex">${C.code(p.code)}<h2 style="font-size:15px">${esc(p.nom)}</h2></span>
+        <span class="discret">${nbNotes} daily cette semaine</span></div>
+      <div class="carte defilement-x" style="margin-bottom:14px;padding:0"><table class="tableau tableau-daily-semaine">
+        <thead><tr><th>Membre</th>${entetes}</tr></thead>
+        <tbody>${lignes || `<tr><td colspan="${jours.length + 1}">${C.vide('Aucun membre présent cette semaine.')}</td></tr>`}</tbody></table></div>`;
   }
 };
 
@@ -181,5 +202,6 @@ Object.assign(Actions, {
 
   filtrerDailyEquipes: d => majUi('dailyEquipes', { projet: d.id }),
   dailyEquipesAujourdhui: () => majUi('dailyEquipes', { jour: Calculs.aujourdhui() }),
-  dailyEquipesDecaler: d => majUi('dailyEquipes', { jour: Ecrans.daily.decaler(Ecrans.dailyEquipes.jour(), Number(d.sens)) })
+  // Semaine précédente / suivante
+  dailyEquipesDecaler: d => majUi('dailyEquipes', { jour: Calculs.ajouterJours(Ecrans.dailyEquipes.jour(), 7 * Number(d.sens)) })
 });
