@@ -416,6 +416,9 @@ function suisChefDuProjet(p) {
    ou responsable de son unité ou d'une unité parente. */
 const peutPiloterProjet = p => (etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p)) && aDroit('piloter');
 const projetsDailyVisibles = () => etat.d.projets.filter(p => projetEnCours(p) && peutLireDailyProjet(p)).sort(parCode);
+/* Auteur des dailys d'une personne : son compte, ou « fiche:<id> » pour un daily importé d'une personne
+   sans compte (CR Daily Excel, migration 034 ; ils passent sur son compte quand elle le relie à sa fiche) */
+const auteurDaily = r => r.userId || 'fiche:' + r.id;
 // Note d'une personne (compte) pour un projet et un jour
 const noteProjet = (userId, projetId, jour) =>
   (etat.d.notesProjet || []).find(n => n.userId === userId && n.projetId === projetId && n.jour === jour) || null;

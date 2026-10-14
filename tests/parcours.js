@@ -212,6 +212,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await page.click('[data-action="filtrerDailyEquipes"]:has-text("PF-14")'); await page.waitForTimeout(200);
     verifier('Daily des équipes : filtre par projet', (await page.$$('.contenu h2')).length >= 1 && (await page.textContent('.contenu')).includes('SSO'));
+    /* Daily importé d'une personne sans compte (CR Daily Excel, migration 034) : auteur « fiche:<id> », affiché sur sa carte */
+    const sansCompte = await page.evaluate(() => {
+      const p = etat.d.projets.find(x => x.code === 'PF-14'), jour = ui('dailyEquipes', {}).jour || Calculs.aujourdhui();
+      const r = Ecrans.dailyEquipes.membres(p, jour).find(x => !x.userId);
+      if (!r) return null;
+      etat.d.notesProjet.push({ userId: 'fiche:' + r.id, projetId: p.id, jour, texte: 'Aujourd’hui\n- Daily importé du fichier Excel' });
+      rendre(); return r.nom;
+    });
+    verifier('Daily des équipes : daily importé d’une personne sans compte affiché', !!sansCompte && (await texte()).includes('Daily importé du fichier Excel'));
+    await page.evaluate(() => { etat.d.notesProjet = etat.d.notesProjet.filter(n => !n.userId.startsWith('fiche:')); rendre(); });
 
     // Export du daily en Excel (maquette export-daily-excel) : projet filtré coché, fichier .xlsx téléchargé
     await page.click('[data-action="ouvrirExportDaily"]'); await page.waitForTimeout(200);

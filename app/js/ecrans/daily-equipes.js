@@ -46,7 +46,7 @@ Ecrans.dailyEquipes = {
 
     const filtre = ui('dailyEquipes', { projet: 'tous' }).projet;
     const projets = visibles.filter(p => filtre === 'tous' || p.id === filtre);
-    const noteDe = (r, p) => r.userId ? noteProjet(r.userId, p.id, jour) : null;
+    const noteDe = (r, p) => noteProjet(auteurDaily(r), p.id, jour);
     const remplie = n => !!n && !!n.texte.trim();
 
     // Blocages du jour, tous projets affichés
@@ -112,9 +112,9 @@ const ExportDaily = {
      Manquant. « notes » = notes_daily_projet de la période (lues par telechargerDailyExcel). */
   lignes(debut, fin, projets, notes, avecManquants) {
     const lignes = [], jours = Calculs.joursOuvresEntre(debut, fin, feries()).reverse();
-    const noteDe = (r, p, jour) => notes.find(n => n.userId === r.userId && n.projetId === p.id && n.jour === jour);
+    const noteDe = (r, p, jour) => notes.find(n => n.userId === auteurDaily(r) && n.projetId === p.id && n.jour === jour);
     jours.forEach(jour => projets.forEach(p => Ecrans.dailyEquipes.membres(p, jour).forEach(r => {
-      const note = r.userId ? noteDe(r, p, jour) : null, absence = absenceDe(r.id, jour);
+      const note = noteDe(r, p, jour), absence = absenceDe(r.id, jour);
       const remplie = !!note && !!note.texte.trim();
       if (!remplie && !avecManquants) return;
       const statut = remplie ? 'Renseigné' : absence ? 'Absent(e)' : r.userId ? 'Manquant' : 'Sans compte';
