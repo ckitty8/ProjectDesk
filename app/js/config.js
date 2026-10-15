@@ -133,13 +133,14 @@ const REPARTITION_SPRINT = [
 /* Méthodes de gestion de projet (référentiel « methode », migration 022 ; demande du porteur 2026-10-08) :
    choisies à la création du projet ; des menus dépendront de la méthode (gestion multi-projet).
    Libellés système (renommables en Administration › Référentiels, retrouvés par leur clé). */
-const METHODES_PROJET = { SCRUM: 'Agile Scrum', KANBAN: 'Agile Kanban', CASCADE: 'Cascade', CYCLE_V: 'Cycle en V' };
+const METHODES_PROJET = { SCRUM: 'Agile Scrum', KANBAN: 'Agile Kanban', CASCADE: 'Cascade', CYCLE_V: 'Cycle en V', TEST_LEARN: 'Test & Learn' };
 // Description affichée sous chaque méthode dans le formulaire de création (clé technique → texte)
 const DESCRIPTIONS_METHODES = {
   scrum: 'Sprints de 2 semaines, backlog priorisé, vélocité.',
   kanban: 'Flux continu, limites de travail en cours, lead time.',
   cascade: 'Phases successives : besoin, conception, réalisation, recette.',
-  cycle_v: 'Cascade avec une phase de test en miroir de chaque phase de conception.'
+  cycle_v: 'Cascade avec une phase de test en miroir de chaque phase de conception.',
+  test_learn: 'Projets IA : expériences courtes, hypothèse et critère de succès fixés avant, puis décision.'
 };
 const LIBELLES_SYSTEME = { stp: STATUTS_PROJET, role: ROLES_PROJET, abs: ABSENCES, methode: METHODES_PROJET };
 
@@ -415,7 +416,8 @@ const ROADMAP_ASTUCES = {
     ['Agile Scrum', 'Now / Next / Later ou par objectifs', 'Releases et objectifs de sprint', 'À chaque sprint review'],
     ['Agile Kanban', 'Now / Next / Later', 'Flux continu, éléments priorisés', 'Mensuelle (revue de flux)'],
     ['Cascade', 'Datée (Gantt)', 'Phases et jalons', 'Comité de pilotage'],
-    ['Cycle en V', 'Datée (Gantt), conception et recettes en miroir', 'Phases, livrables, recettes', 'Comité de pilotage, à chaque jalon']],
+    ['Cycle en V', 'Datée (Gantt), conception et recettes en miroir', 'Phases, livrables, recettes', 'Comité de pilotage, à chaque jalon'],
+    ['Test & Learn', 'Now / Next / Later par phase (exploration → pilote)', 'Expériences de 2 semaines', 'À chaque décision go / no-go']],
   bonnesPratiques: [
     'Partir du résultat attendu (problème à résoudre), pas de la fonctionnalité',
     'Relier chaque étape à un objectif / résultat clé',
@@ -430,4 +432,69 @@ const ROADMAP_ASTUCES = {
     'Tout en priorité 1',
     'Oublier les dépendances entre équipes',
     'Ajouter sans retirer : la capacité n’est pas extensible']
+};
+
+/* ============================================================
+   Trucs et astuces › Test & Learn (demande du porteur 2026-10-15 : méthode utilisée pour les projets IA)
+   Fiche pratique en lecture seule : boucle hypothèse → décision, carte d'expérience, phases d'un
+   projet IA avec critères de passage, indicateurs propres à l'IA, rituels, bonnes pratiques et pièges.
+   Sources : démarche « Build-Measure-Learn » (Lean Startup, E. Ries), pratiques usuelles
+   d'évaluation des systèmes d'IA générative (jeu d'évaluation de référence, évaluation humaine).
+   Exemples tirés des projets IA de l'équipe (Chatbot CDO, Vie de Ville).
+   ============================================================ */
+const TEST_AND_LEARN = {
+  definition: 'Test & Learn : avancer par petites expériences mesurées plutôt que par un grand plan figé.',
+  precision: 'Adapté aux projets IA, où l’on ne sait pas à l’avance si le modèle sera assez fiable : chaque ' +
+    'expérience teste une hypothèse en peu de temps, avec un critère de succès fixé AVANT, puis on décide.',
+  // Boucle : [étape, explication, couleur]
+  boucle: [
+    ['Hypothèse', '« Nous croyons que… pour… mesuré par… »', '#003CC8'],
+    ['Expérience', 'Le plus petit test qui répond (POC, prototype, pilote)', '#7A3FC2'],
+    ['Mesure', 'Jeu d’évaluation, retours utilisateurs, coûts', '#0F8A6B'],
+    ['Apprentissage', 'Ce qui marche, ce qui ne marche pas, pourquoi', '#B25E09'],
+    ['Décision', 'Persévérer, pivoter ou arrêter', '#D14343']],
+  // Carte d'expérience : [rubrique, à remplir, exemple]
+  carte: [
+    ['Hypothèse', 'Ce que l’on croit et pour qui', 'Le chatbot CDO répond seul à 70 % des questions des commerciaux sur les lots'],
+    ['Expérience', 'Le test minimal, son périmètre', '50 vraies questions posées au chatbot par 3 commerciaux'],
+    ['Mesure', 'L’indicateur et comment on le relève', 'Taux de bonnes réponses, noté par le PO fonctionnel'],
+    ['Critère de succès', 'Fixé avant le test', '≥ 70 % de bonnes réponses, 0 réponse dangereuse'],
+    ['Durée', 'Boîte de temps courte', '2 semaines'],
+    ['Résultat', 'Chiffres obtenus', '62 % de bonnes réponses ; erreurs sur les prix grille'],
+    ['Décision', 'Persévérer / pivoter / arrêter, et la suite', 'Pivoter : ajouter la grille des prix à la base de connaissance, retester']],
+  // Phases d'un projet IA : [phase, objectif, durée indicative, critère de passage (go / no-go)]
+  phases: [
+    ['1. Exploration', 'Vérifier que le cas d’usage a de la valeur et que les données existent', '1 à 2 semaines', 'Données accessibles, sponsor et utilisateurs identifiés'],
+    ['2. Preuve de concept (POC)', 'Montrer que l’IA sait faire sur un petit jeu de test', '2 à 4 semaines', 'Critère de qualité atteint sur le jeu d’évaluation'],
+    ['3. Pilote', 'Tester avec de vrais utilisateurs, en conditions réelles', '4 à 8 semaines', 'Adoption, satisfaction, coût par requête acceptable'],
+    ['4. Industrialisation', 'Mettre en production : sécurité, supervision, support', 'selon le périmètre', 'Validation sécurité / RGPD, exploitation prête'],
+    ['5. Amélioration continue', 'Suivre la qualité et itérer (prompts, données, modèle)', 'en continu', 'Indicateurs stables ou en hausse']],
+  // Ce que l'on mesure sur un projet IA : [indicateur, définition, exemple]
+  indicateurs: [
+    ['Taux de bonnes réponses', 'Réponses justes ÷ réponses évaluées, sur un jeu de référence', '31 / 50 = 62 %'],
+    ['Hallucinations', 'Réponses inventées ou fausses présentées comme vraies', '3 sur 50 questions'],
+    ['Couverture', 'Questions auxquelles l’IA sait répondre ÷ questions posées', '80 %'],
+    ['Satisfaction', 'Note ou pouce levé des utilisateurs', '4,1 / 5'],
+    ['Coût par requête', 'Coût du modèle et de l’infrastructure ÷ nombre de requêtes', '0,02 € / question'],
+    ['Temps de réponse', 'Délai moyen entre la question et la réponse', '3,5 s'],
+    ['Adoption', 'Utilisateurs actifs ÷ utilisateurs visés', '18 / 40 commerciaux']],
+  rituels: [
+    'Revue d’expérience chaque semaine : résultats, décision, prochaine hypothèse',
+    'Journal des apprentissages partagé (ce qui a été testé, chiffres, décision)',
+    'Démo courte aux utilisateurs à la fin de chaque expérience',
+    'Point go / no-go avec le sponsor à la fin de chaque phase'],
+  bonnesPratiques: [
+    'Écrire l’hypothèse et le critère de succès avant de tester',
+    'Constituer tôt un jeu d’évaluation (questions et réponses attendues)',
+    'Tester avec de vraies données et de vrais utilisateurs dès que possible',
+    'Versionner prompts, données et modèle pour comparer les essais',
+    'Vérifier sécurité, RGPD et règles de données (DLP) dès l’exploration',
+    'Garder des expériences courtes : 2 semaines maximum'],
+  pieges: [
+    'Tester sans critère de succès, puis « trouver » que c’est réussi',
+    'Juger la qualité sur quelques exemples choisis',
+    'Industrialiser un POC sans pilote utilisateur',
+    'Ignorer le coût par requête jusqu’à la mise en production',
+    'Ne jamais arrêter une piste qui ne donne pas de résultat',
+    'Oublier de noter ce qui a échoué (et pourquoi)']
 };

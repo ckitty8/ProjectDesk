@@ -176,6 +176,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'].every(m => document.querySelector('.ecran').textContent.includes(m))
       && !document.querySelector('.tableau-kpi')));
     await capture('19b-astuces-roadmap');
+    // Test & Learn (2026-10-15) : méthode des projets IA — boucle, carte d'expérience, phases, indicateurs
+    await page.click('[data-action="themeAstuces"][data-theme="testLearn"]'); await page.waitForTimeout(200);
+    verifier('Trucs et astuces › Test & Learn : boucle, carte d’expérience, phases IA et indicateurs', await page.evaluate(() =>
+      ['La boucle Test & Learn', 'Carte d’expérience', 'Les phases d’un projet IA', 'Hallucinations', 'Pièges à éviter'].every(t => document.body.textContent.includes(t))));
+    await capture('19c-astuces-test-learn');
     await page.click('[data-action="themeAstuces"][data-theme="agile"]'); await page.waitForTimeout(150);
     // Menu : Saisir mes heures rangé dans Gestion des ressources (sans intertitre), plus d'entrée à part
     verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
@@ -299,7 +304,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));
     // Méthode obligatoire (migration 022) : sans choix, le formulaire ne part pas
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(200);
-    verifier('Nouveau projet : méthode obligatoire (4 choix)', await page.$$eval('input[name=methode]', l => l.length) === 4 && !!(await page.$('form[data-action-envoi="creerProjet"]')));
+    verifier('Nouveau projet : méthode obligatoire (5 choix, dont Test & Learn)', await page.$$eval('input[name=methode]', l => l.length) === 5
+      && !!(await page.$('input[name=methode][value="Test & Learn"]')) && !!(await page.$('form[data-action-envoi="creerProjet"]')));
     await page.check('input[name=methode][value="Agile Kanban"]');
     await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
     verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');

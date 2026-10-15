@@ -10,6 +10,8 @@
      QUI_FAIT_QUOI_SCRUM, config.js ; maquette docs/maquettes/organigramme-scrum/).
    Roadmap — fiche pratique : vision → sprint, formats, méthode du projet, bonnes pratiques
    (textes : ROADMAP_ASTUCES, config.js).
+   Test & Learn — méthode des projets IA (2026-10-15) : boucle hypothèse → décision, carte
+   d'expérience, phases et critères de passage, indicateurs IA (textes : TEST_AND_LEARN, config.js).
    Lecture seule : aucune donnée n'est modifiée sur cet écran.
    ============================================================ */
 'use strict';
@@ -21,7 +23,8 @@ Ecrans.astuces = {
   // Thèmes (gros boutons du haut) : clé, libellé, ce qu'il contient, couleur et symbole de l'icône
   THEMES: [
     { cle: 'agile', libelle: 'Agile', detail: 'KPI Scrum et Kanban · Rôles Scrum', couleur: COULEURS.succes, symbole: '↻' },
-    { cle: 'roadmap', libelle: 'Roadmap', detail: 'Construire et faire vivre une roadmap', couleur: COULEURS.violet, symbole: '➜' }
+    { cle: 'roadmap', libelle: 'Roadmap', detail: 'Construire et faire vivre une roadmap', couleur: COULEURS.violet, symbole: '➜' },
+    { cle: 'testLearn', libelle: 'Test & Learn', detail: 'La méthode des projets IA', couleur: COULEURS.orange, symbole: '⚗' }
   ],
 
   rendre() {
@@ -33,23 +36,20 @@ Ecrans.astuces = {
       ${onglet === 'roles' ? this.organigramme() : this.contenu()}`;
     return `
     <div class="ecran ecran-large">
-      ${C.entete('Trucs et astuces', 'Fiches pratiques : agilité (KPI, rôles Scrum) et roadmap')}
+      ${C.entete('Trucs et astuces', 'Fiches pratiques : agilité (KPI, rôles Scrum), roadmap et Test & Learn (projets IA)')}
       <div class="themes">${themes}</div>
-      ${theme === 'roadmap' ? this.roadmap() : agile}
+      ${{ roadmap: () => this.roadmap(), testLearn: () => this.testLearn() }[theme]?.() || agile}
     </div>`;
   },
 
   /* ---------- Roadmap : fiche pratique (textes ROADMAP_ASTUCES, config.js) ---------- */
   roadmap() {
     const esc = C.esc, R = ROADMAP_ASTUCES;
-    const chaine = R.chaine.map(([etape, detail, couleur]) => `<div class="chaine-etape" style="border-top-color:${couleur}">
-      <b>${esc(etape)}</b><div class="discret">${esc(detail)}</div></div>`).join('<div class="chaine-fleche">→</div>');
+    const chaine = this.chaine(R.chaine);
     const formats = R.formats.map(f => `<div class="carte"><b style="color:${f.couleur}">${esc(f.titre)}</b><div class="discret">${esc(f.sousTitre)}</div>
       <div class="format-exemples">${f.exemples.map(([titre, detail], i) => `<div style="background:${f.fond[i]}"><b>${esc(titre)}</b><br>${esc(detail)}</div>`).join('')}</div>
       <div><b>Quand :</b> ${esc(f.quand)}</div></div>`).join('');
     const methodes = R.methodes.map(([methode, ...colonnes]) => `<tr><td><b>${esc(methode)}</b></td>${colonnes.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
-    const liste = (titre, couleur, lignes) => `<div class="carte"><div class="carte-titre"><h2 style="color:${couleur}">${titre}</h2></div>
-      <ul class="liste-conseils">${lignes.map(l => `<li>${esc(l)}</li>`).join('')}</ul></div>`;
     return `<div class="carte encart-moyen"><b>${esc(R.definition)}</b><div class="discret texte-12-5">${esc(R.precision)}</div></div>
       <div class="carte"><div class="carte-titre"><h2>De la vision au sprint</h2></div><div class="chaine">${chaine}</div></div>
       <div class="grille-formats">${formats}</div>
@@ -57,10 +57,46 @@ Ecrans.astuces = {
         <div class="defilement-x"><table class="tableau"><thead><tr><th>Méthode</th><th>Format conseillé</th><th>Unité de planification</th>
           <th>Revue de la roadmap</th></tr></thead>
         <tbody>${methodes}</tbody></table></div></div>
-      <div class="grille-conseils">${liste('✔ Bonnes pratiques', TONS.succes.texte, R.bonnesPratiques)}${liste('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
+      <div class="grille-conseils">${this.listeConseils('✔ Bonnes pratiques', TONS.succes.texte, R.bonnesPratiques)}
+        ${this.listeConseils('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
       <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : la roadmap se construit dans <b>Projets et Roadmap</b> (Gantt),
         la méthode du projet se choisit à sa création, la capacité se vérifie dans <b>Plan de charge</b> et les objectifs se suivent
         dans le <b>Dashboard général</b> (OKR).</div>`;
+  },
+
+  // Étapes reliées par des flèches : [[étape, explication, couleur], …] (fiches Roadmap et Test & Learn)
+  chaine(etapes) {
+    return etapes.map(([etape, detail, couleur]) => `<div class="chaine-etape" style="border-top-color:${couleur}">
+      <b>${C.esc(etape)}</b><div class="discret">${C.esc(detail)}</div></div>`).join('<div class="chaine-fleche">→</div>');
+  },
+  // Carte de conseils : titre coloré et liste à puces (bonnes pratiques, pièges, rituels)
+  listeConseils(titre, couleur, lignes) {
+    return `<div class="carte"><div class="carte-titre"><h2 style="color:${couleur}">${titre}</h2></div>
+      <ul class="liste-conseils">${lignes.map(l => `<li>${C.esc(l)}</li>`).join('')}</ul></div>`;
+  },
+
+  /* ---------- Test & Learn : méthode des projets IA (textes TEST_AND_LEARN, config.js) ----------
+     Même mise en page que la fiche Roadmap : encart de définition, chaîne (boucle), tableaux, conseils. */
+  testLearn() {
+    const esc = C.esc, T = TEST_AND_LEARN;
+    const boucle = this.chaine(T.boucle);
+    const tableau = (entetes, lignes) => `<div class="defilement-x"><table class="tableau"><thead><tr>${entetes.map(e => `<th>${e}</th>`).join('')}</tr></thead>
+      <tbody>${lignes.map(([premiere, ...autres]) => `<tr><td><b>${esc(premiere)}</b></td>${autres.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<div class="carte encart-moyen"><b>${esc(T.definition)}</b><div class="discret texte-12-5">${esc(T.precision)}</div></div>
+      <div class="carte"><div class="carte-titre"><h2>La boucle Test & Learn</h2><span class="discret">on recommence avec l’hypothèse suivante ↺</span></div>
+        <div class="chaine">${boucle}</div></div>
+      <div class="carte"><div class="carte-titre"><h2>Carte d’expérience</h2><span class="discret">à remplir pour chaque test · exemple : Chatbot CDO</span></div>
+        ${tableau(['Rubrique', 'À remplir', 'Exemple'], T.carte)}</div>
+      <div class="carte"><div class="carte-titre"><h2>Les phases d’un projet IA</h2><span class="discret">on ne passe à la suivante que si le critère est atteint</span></div>
+        ${tableau(['Phase', 'Objectif', 'Durée indicative', 'Critère de passage (go / no-go)'], T.phases)}</div>
+      <div class="carte"><div class="carte-titre"><h2>Ce que l’on mesure sur un projet IA</h2></div>
+        ${tableau(['Indicateur', 'Définition', 'Exemple'], T.indicateurs)}</div>
+      <div class="grille-conseils">${this.listeConseils('↻ Rituels', 'var(--primaire)', T.rituels)}
+        ${this.listeConseils('✔ Bonnes pratiques', TONS.succes.texte, T.bonnesPratiques)}</div>
+      <div class="grille-conseils">${this.listeConseils('✕ Pièges à éviter', 'var(--danger)', T.pieges)}
+        <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : notez chaque expérience et sa décision dans le <b>Daily</b>
+          du projet IA (les blocages remontent dans Daily des équipes), planifiez les phases dans <b>Projets et Roadmap</b>
+          (format Now / Next / Later) et réservez la boîte de temps dans <b>Plan de charge</b>.</div></div>`;
   },
 
   /* ---------- Rôles Scrum : organigramme détaillé ----------
