@@ -418,7 +418,21 @@ select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: a
 select.niveau-oui { background: #E3F5EC; color: #0B6B4F; font-weight: 600; }
 select.niveau-lecture { background: #FFF3E0; color: #8A4B00; font-weight: 600; }
 select.niveau-non { color: var(--pale); }
-/* Daily des équipes à la semaine : une colonne par jour, notes compactes alignées en haut */
-.tableau-daily-semaine { table-layout: fixed; min-width: 900px; }
-.tableau-daily-semaine th:first-child { width: 190px; }
-.tableau-daily-semaine td { vertical-align: top; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+/* Daily des équipes (maquettes daily-equipes-design/retenu/) : fil, filtres, blocages, synthèse */
+.libelle-semaine { min-width: 240px; text-align: center; }
+.grille-fil { display: grid; grid-template-columns: 210px minmax(0, 1fr) 280px; gap: 14px; align-items: start; margin-top: 14px; }
+.filtres-fil { padding: 12px; } .libelle-filtres { font-size: 11px; text-transform: uppercase; color: var(--discret); margin: 10px 0 4px; }
+.filtre-fil { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 6px; color: var(--texte); cursor: pointer; }
+.filtre-fil span { color: var(--pale); } .filtre-fil.actif { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
+.fil-jour, .bloc-droite, .panneau-lecture { padding: 14px 16px; } .fil-jour { margin-bottom: 14px; } .fil-jour-titre { font-size: 12px; font-weight: 600; color: var(--discret); text-transform: uppercase; letter-spacing: .04em; }
+.fil-entree { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--bordure-fine); margin-top: 8px; }
+.fil-texte { font-size: 13px; line-height: 1.55; margin-top: 4px; }
+.pastille-blocage { display: inline-block; margin: 6px 6px 0 0; padding: 3px 8px; border-radius: 6px; font-size: 12.5px; color: var(--danger); background: #FDECEC; }
+.bloc-droite { margin-bottom: 14px; } .ligne-droite { margin-top: 8px; font-size: 12.5px; }
+.grille-synthese { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; align-items: start; margin: 14px 0; }
+.tableau-synthese td { padding: 4px 6px; } .tableau-synthese th.centre { text-align: center; }
+.case-synthese { height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.case-synthese[data-action] { cursor: pointer; } .case-synthese.active { outline: 2px solid var(--primaire); }
+.case-ok { background: #DDF3E6; } .case-bloc { background: #FBDADA; } .case-manque { background: #FCEBD2; } .case-abs { background: var(--fond-entete); }
+.panneau-lecture.actif { border-color: var(--primaire); } .legende-synthese { padding: 8px 12px; } .lecture-note { margin: 12px 0; }
+@media (max-width: 960px) { .grille-fil, .grille-synthese { grid-template-columns: minmax(0, 1fr); } }

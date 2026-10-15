@@ -119,7 +119,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
        Aucun champ, formulaire ou action d'écriture (tous onglets), sauf la validation des feuilles de temps. */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
-      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'vueCalendrier', 'projetCalendrier',
+      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
+      'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
@@ -202,10 +203,24 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Daily des équipes PAR PROJET (migration 018) : notes du projet, blocages, règle de lecture
     await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
     verifier('Daily des équipes : note d’un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
-    verifier('Daily des équipes : blocages de la semaine regroupés (avec le projet)', (await texte()).includes('Blocages de la semaine') && (await texte()).includes('Identifiants de recette expirés'));
-    // À la semaine (porteur, 2026-10-14) : une colonne par jour ouvré, ‹ › change de semaine
-    verifier('Daily des équipes : une colonne par jour ouvré de la semaine', await page.evaluate(() =>
-      document.querySelector('.tableau-daily-semaine thead tr').children.length === Ecrans.dailyEquipes.joursSemaine().length + 1));
+    // Fil des dailys (maquettes daily-equipes-design/retenu/) : blocages ouverts à droite, filtre par personne
+    verifier('Daily des équipes : fil groupé par jour et blocages ouverts', (await texte()).includes('Blocages ouverts')
+      && (await texte()).includes('Identifiants de recette expirés') && !!(await page.$('.fil-jour .fil-entree')));
+    await page.click('[data-action="filtrerPersonneDaily"]:has-text("Thomas")'); await page.waitForTimeout(200);
+    verifier('Daily des équipes : filtre par personne', (await texte()).includes('Mapping des rôles applicatifs') && !(await texte()).includes('Finaliser le plan de migration SSO'));
+    await page.click('[data-action="filtrerPersonneDaily"][data-id="tous"]'); await page.waitForTimeout(200);
+    // Synthèse (responsables et administrateurs) : carte membre × jour, clic → panneau de lecture
+    await page.click('[data-action="ongletDailyEquipes"][data-id="synthese"]'); await page.waitForTimeout(200);
+    await page.click('.case-synthese.case-bloc'); await page.waitForTimeout(200);
+    verifier('Daily des équipes › Synthèse : chiffres, carte membre × jour et lecture au clic', (await texte()).includes('Dailys renseignés')
+      && await page.evaluate(() => document.querySelector('.tableau-synthese thead tr').children.length === Ecrans.dailyEquipes.joursSemaine().length + 2)
+      && !!(await page.$('.panneau-lecture.actif')) && (await texte()).includes('Blocages'));
+    await capture('33-daily-synthese');
+    await page.click('[data-action="ongletDailyEquipes"][data-id="fil"]'); await page.waitForTimeout(200);
+    verifier('Daily des équipes : onglet Synthèse caché pour un simple membre', await page.evaluate(() => {
+      const a = etat.estAdmin, r = etat.rolesEquipe, c = etat.estCreateur; etat.estAdmin = false; etat.estCreateur = false; etat.rolesEquipe = {};
+      const voit = Ecrans.dailyEquipes.voitSynthese(); etat.estAdmin = a; etat.rolesEquipe = r; etat.estCreateur = c; return !voit;
+    }));
     await page.click('[data-action="dailyEquipesDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
     const semainePrecedente = await page.evaluate(() => Calculs.lundi(Ecrans.dailyEquipes.jour()) === Calculs.ajouterJours(Calculs.lundi(Calculs.aujourdhui()), -7)
       && !document.body.textContent.includes('Mapping des rôles applicatifs'));
@@ -218,8 +233,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const codes = projetsDailyVisibles().map(p => p.code); etat.estAdmin = admin;
       return ['PF-14', 'DA-08', 'PR-03'].every(c => codes.includes(c)) && !codes.includes('MO-21') && !codes.includes('PR-06');
     }));
-    await page.click('[data-action="filtrerDailyEquipes"]:has-text("PF-14")'); await page.waitForTimeout(200);
-    verifier('Daily des équipes : filtre par projet', (await page.$$('.contenu h2')).length >= 1 && (await page.textContent('.contenu')).includes('SSO'));
+    await page.click(`[data-action="filtrerDailyEquipes"][data-id="${await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id)}"]`); await page.waitForTimeout(200);
+    verifier('Daily des équipes : filtre par projet', await page.evaluate(() =>
+      [...document.querySelectorAll('.fil-entree .code')].every(c => c.textContent === 'PF-14') && !!document.querySelector('.filtre-fil.actif')));
     /* Daily importé d'une personne sans compte (CR Daily Excel, migration 034) : auteur « fiche:<id> », affiché sur sa carte */
     const sansCompte = await page.evaluate(() => {
       const p = etat.d.projets.find(x => x.code === 'PF-14'), jour = ui('dailyEquipes', {}).jour || Calculs.aujourdhui();
