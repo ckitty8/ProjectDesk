@@ -129,6 +129,10 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .calendrier .aujourdhui { color: var(--primaire); font-weight: 700; }
 .calendrier td.cliquable { cursor: pointer; } .calendrier td.cliquable:hover { background: #F3F6FF; }
 .case-absence { display: inline-block; min-width: 24px; padding: 3px 2px; border-radius: 4px; font-weight: 600; font-size: 10px; }
+.anniversaire { font-size: 12px; line-height: 1; }
+/* Légende du calendrier : chaque entrée sur une ligne, retour à la ligne entre les entrées si la place manque */
+.legende-calendrier { flex: 1 1 0; gap: 6px 14px; flex-wrap: wrap; justify-content: flex-end; }
+.legende-calendrier > span { white-space: nowrap; }
 .calendrier tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; padding: 0 12px; }
 
 /* ---------- Gantt (Mes projets) ---------- */

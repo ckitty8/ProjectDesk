@@ -49,6 +49,16 @@ const Calculs = (() => {
     return `${jour[0].toUpperCase()}${jour.slice(1)} ${d.getDate()} ${MOIS_LONGS[d.getMonth()]} ${d.getFullYear()}`;
   }
   const libelleMois = (annee, mois) => `${MOIS_LONGS[mois]} ${annee}`;
+  const nomMois = mois => MOIS_LONGS[mois];
+
+  /* Anniversaires (date de naissance, migration 036) : les écrans n'affichent que le jour et le mois,
+     jamais l'année (maquette ressources-onglets-naissance, porteur 2026-10-16). Un jour ISO « AAAA-MM-JJ »
+     est l'anniversaire si son « MM-JJ » est celui de la naissance (un 29 février n'est fêté que les années bissextiles). */
+  const estAnniversaire = (naissance, jour) => !!naissance && naissance.slice(5) === jour.slice(5);
+  // Personnes nées le mois donné (0-11), triées par jour du mois
+  const anniversairesDuMois = (ressources, mois) => ressources
+    .filter(r => r.dateNaissance && depuisIso(r.dateNaissance).getMonth() === mois)
+    .sort((a, b) => a.dateNaissance.slice(8).localeCompare(b.dateNaissance.slice(8)));
   const trimestreDe = iso => Math.floor(depuisIso(iso).getMonth() / 3) + 1;
   // Nombre affiché à la française (virgule, 1 décimale max)
   const nombre = n => String(Math.round(n * 10) / 10).replace('.', ',');
@@ -292,7 +302,7 @@ const Calculs = (() => {
 
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
-    lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois,
+    lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois, nomMois, estAnniversaire, anniversairesDuMois,
     trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, libellePresence,

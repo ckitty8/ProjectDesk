@@ -302,6 +302,11 @@ const valeursDe = (refId, avecInactives = false) =>
 function couleurDe(refId, libelle) { const v = valeursDe(refId, true).find(x => x.libelle === libelle); return v ? v.couleur : COULEURS.neutre; }
 // Ressource inactive : une date de fin (date_depart) est saisie (règle du porteur, 2026-10-05)
 const estInactive = r => !!r.dateDepart;
+/* Date de naissance disponible : la colonne ressources.date_naissance (migration 036) existe en base.
+   Tant qu'elle n'est pas appliquée, le champ de la fiche est masqué et rien n'est envoyé (pas d'erreur). */
+// Options d'un filtre par équipe (Rôles, Gestion des ressources) : « Toutes les équipes » puis chaque unité
+const optionsEquipes = () => [{ valeur: '', libelle: 'Toutes les équipes' }, ...etat.d.equipes.map(e => ({ valeur: e.id, libelle: e.nom }))];
+const naissanceDisponible = () => etat.d.ressources.some(r => 'dateNaissance' in r);
 /* Listes de personnes de tous les écrans (menus liés, règle du porteur 2026-10-06) : une personne
    apparaît sur une période si elle y est PRÉSENTE (entre sa date d'arrivée et sa date de fin) :
    - écran sur une période (mois de la grille, année du récap, mois du timesheet, sprint, jour du

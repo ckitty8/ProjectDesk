@@ -78,13 +78,15 @@ const Calendrier = {
       + (liste.length > MAX ? `<span class="etiquette" title="${esc(liste.slice(MAX).map(p => p.nom).join(', '))}">+${liste.length - MAX}</span>` : '');
   },
 
-  // Case d'une personne un jour ouvré : absence (demi-journée « ½ ») ; cliquable si editable. Renvoie { html, jours }
+  /* Case d'une personne un jour ouvré : absence (demi-journée « ½ ») ; cliquable si editable. Renvoie { html, jours }.
+     En lecture (Gestion des ressources), un jour sans absence qui est l'anniversaire de la personne porte 🎂. */
   caseAbsence(ctx, r, j) {
     const esc = C.esc, a = ctx.absences[r.id + '|' + j];
     const t = a && ctx.types.find(x => x.libelle === a.type), demi = a && Number(a.duree) === 0.5;
+    const gateau = !ctx.editable && Calculs.estAnniversaire(r.dateNaissance, j) ? '<span class="anniversaire" title="Anniversaire">🎂</span>' : '';
     const contenu = t ? `<span class="case-absence" title="${esc(t.libelle)}${demi ? ' (demi-journée)' : ''}"
       style="color:${t.couleur};background:${C.teinte(t.couleur, .16)}">
-      ${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : '';
+      ${esc(t.abrege || t.libelle.slice(0, 2))}${demi ? '½' : ''}</span>` : gateau;
     const modifiable = ctx.editable && (r.id === (maRessource() || {}).id ? aDroit('mon_dashboard') : aDroit('conges_equipe'));
     const html = modifiable ? `<td class="cliquable" data-action="basculerAbsence" data-ressource="${r.id}" data-jour="${j}">${contenu}</td>`
       : `<td>${contenu}</td>`;
@@ -166,43 +168,106 @@ const Calendrier = {
   },
 
   legende() {
-    return `<div class="ligne-flex discret" style="gap:14px">${valeursDe('abs').map(t =>
+    return `<div class="ligne-flex discret legende-calendrier">${valeursDe('abs').map(t =>
       `<span class="ligne-flex"><span class="pastille" style="background:${C.teinte(t.couleur, .2)};border:1px solid ${t.couleur}"></span>${C.esc(t.libelle)}</span>`).join('')}
-      <span class="ligne-flex"><span class="pastille pastille-ferie"></span>Férié / week-end</span></div>`;
+      <span class="ligne-flex"><span class="pastille pastille-ferie"></span>Férié / week-end</span>
+      ${naissanceDisponible() ? '<span class="ligne-flex">🎂 Anniversaire</span>' : ''}</div>`;
   }
 };
 
 Ecrans.ressources = {
   titre: 'Gestion des ressources',
   section: 'general',
+  /* Deux onglets (maquette ressources-onglets-naissance, porteur 2026-10-16) : « Calendrier » des absences
+     et « Liste des ressources » (annuaire filtrable). Réglages de l'écran : onglet, équipe, statut, recherche. */
+  reglages: () => ui('ressources', { onglet: 'calendrier', equipeId: '', statut: '', q: '' }),
+
+  // Onglet Calendrier : le composant Calendrier partagé, en lecture
+  calendrier() {
+    return `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
+      ${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>`;
+  },
+
+  // Fiches retenues par les filtres Équipe et Statut (la recherche par nom filtre les lignes affichées)
+  fichesFiltrees(reg) {
+    const statutOk = r => !reg.statut || (reg.statut === 'inactif') === estInactive(r);
+    return etat.d.ressources.filter(r => (!reg.equipeId || r.equipeId === reg.equipeId) && statutOk(r));
+  },
+
+  // Rappel « Anniversaires d'<mois> » : personnes nées le mois en cours (jour et mois seulement)
+  rappelAnniversaires() {
+    if (!naissanceDisponible()) return '';
+    const mois = Calculs.depuisIso(Calculs.aujourdhui()).getMonth();
+    const liste = Calculs.anniversairesDuMois(etat.d.ressources.filter(r => !estInactive(r)), mois);
+    const noms = liste.map(r => `<b>${C.esc(r.nom)}</b> (${Calculs.formatCourt(r.dateNaissance)})`).join(', ') || 'aucun';
+    const libelle = Calculs.nomMois(mois), elision = ['a', 'o'].includes(libelle[0]);   // « d’avril, d’août, d’octobre »
+    return `<span class="discret">🎂 Anniversaires ${elision ? 'd’' : 'de '}${libelle} : ${noms}</span>`;
+  },
+
+  // Barre de filtres : recherche (sans redessiner), équipe, statut, puis le rappel des anniversaires
+  filtres(reg) {
+    const equipes = optionsEquipes();
+    const statuts = [{ valeur: '', libelle: 'Actifs et inactifs' }, { valeur: 'actif', libelle: 'Actifs' }, { valeur: 'inactif', libelle: 'Inactifs' }];
+    return `<div class="carte"><div class="ligne-flex" style="gap:10px;flex-wrap:wrap">
+      <label class="recherche-champ" style="width:260px">${C.icone('recherche')}<input placeholder="Rechercher une personne" value="${C.esc(reg.q)}"
+        data-action-saisie="rechercherRessource"></label>
+      ${C.liste(equipes, reg.equipeId, 'class="champ champ-compact" data-action-change="filtrerEquipeRessources"')}
+      ${C.liste(statuts, reg.statut, 'class="champ champ-compact" data-action-change="filtrerStatutRessources"')}
+      <span class="extensible"></span>${this.rappelAnniversaires()}</div></div>`;
+  },
+
+  /* Ligne de l'annuaire. Une personne avec une date de fin apparaît « Inactif » (grisée, en fin de liste)
+     — demande du porteur 2026-10-06. data-recherche = nom en minuscules (recherche sans redessiner). */
+  ligneAnnuaire(r, q, moisCourant) {
+    const esc = C.esc, eq = equipe(r.equipeId), inactif = estInactive(r), nom = r.nom.toLowerCase();
+    const fin = inactif ? ` <span class="discret texte-11">fin le ${Calculs.formatAvecAnnee(r.dateDepart)}</span>` : '';
+    const gateau = r.dateNaissance && Calculs.depuisIso(r.dateNaissance).getMonth() === moisCourant ? ' 🎂' : '';
+    const anniversaire = naissanceDisponible() ? `<td>${r.dateNaissance ? Calculs.formatCourt(r.dateNaissance) + gateau : '<span class="pale">—</span>'}</td>` : '';
+    return `<tr data-recherche="${esc(nom)}"${inactif ? ' style="color:var(--discret)"' : ''}${q && !nom.includes(q) ? ' hidden' : ''}>
+      <td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
+      <td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
+      <td>${esc(r.poste || '—')}</td><td>${codesProjetsDe(r.id) || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td>
+      <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td>${anniversaire}</tr>`;
+  },
+
+  // Onglet Liste des ressources : filtres + annuaire de toutes les fiches (les autres écrans suivent la présence)
+  liste() {
+    const reg = this.reglages(), q = reg.q.trim().toLowerCase();
+    const fiches = this.fichesFiltrees(reg).sort((a, b) => estInactive(a) - estInactive(b) || a.nom.localeCompare(b.nom));
+    const moisCourant = Calculs.depuisIso(Calculs.aujourdhui()).getMonth(), colonnes = naissanceDisponible() ? 7 : 6;
+    const lignes = fiches.map(r => this.ligneAnnuaire(r, q, moisCourant)).join('');
+    return `${this.filtres(reg)}
+      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2>
+        <span class="discret">${fiches.length} personnes · ${fiches.filter(estInactive).length} inactive(s)</span></div>
+        <table class="tableau" id="annuaire-ressources"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th>
+          <th>Statut</th>${colonnes === 7 ? '<th>Anniversaire</th>' : ''}</tr></thead>
+        <tbody>${lignes || `<tr><td colspan="${colonnes}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
+  },
+
   rendre() {
-    const esc = C.esc;
-    // Annuaire : TOUTES les fiches, une personne avec une date de fin apparaît « Inactif » (grisée, en fin
-    // de liste) — demande du porteur 2026-10-06 ; les autres écrans suivent la présence (etat.js)
-    const fiches = [...etat.d.ressources].sort((a, b) => estInactive(a) - estInactive(b) || a.nom.localeCompare(b.nom));
-    const annuaire = fiches.map(r => {
-      const eq = equipe(r.equipeId), inactif = estInactive(r);
-      const codes = codesProjetsDe(r.id);
-      const fin = inactif ? ` <span class="discret texte-11">fin le ${Calculs.formatAvecAnnee(r.dateDepart)}</span>` : '';
-      return `<tr${inactif ? ' style="color:var(--discret)"' : ''}><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
-        <td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
-        <td>${esc(r.poste || '—')}</td><td>${codes || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td>
-        <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td></tr>`;
-    }).join('');
+    const onglet = this.reglages().onglet;
+    const onglets = C.onglets([{ id: 'calendrier', libelle: 'Calendrier' }, { id: 'liste', libelle: 'Liste des ressources' }],
+      onglet, 'ongletRessources');
     return `
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
-      <div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
-        ${Calendrier.legende()}</div>${Calendrier.rendre(false)}</div>
-      <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2>
-        <span class="discret">${etat.d.ressources.length} personnes · ${etat.d.ressources.filter(estInactive).length} inactive(s)</span></div>
-        <table class="tableau"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th><th>Statut</th></tr></thead>
-        <tbody>${annuaire || `<tr><td colspan="6">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>
+      ${onglets}
+      ${onglet === 'liste' ? this.liste() : this.calendrier()}
     </div>`;
   }
 };
 
 Object.assign(Actions, {
+  // Gestion des ressources : onglet, filtres Équipe / Statut (redessinent)
+  ongletRessources: d => majUi('ressources', { onglet: d.id }),
+  filtrerEquipeRessources: (_, el) => majUi('ressources', { equipeId: el.value }),
+  filtrerStatutRessources: (_, el) => majUi('ressources', { statut: el.value }),
+  // Recherche par nom sans redessiner (garde la saisie) : masque les lignes ; mémorisée pour le prochain rendu
+  rechercherRessource(_, el) {
+    const q = el.value.trim().toLowerCase();
+    majUi('ressources', { q: el.value }, { rendre: false });
+    document.querySelectorAll('#annuaire-ressources tr[data-recherche]').forEach(tr => { tr.hidden = !tr.dataset.recherche.includes(q); });
+  },
   vueCalendrier: d => majUi('calendrier', { mode: d.mode }),
   projetCalendrier: (_, el) => majUi('calendrier', { projetId: el.value }),
   // Retour au mois en cours (grille) et à l'année en cours (récap annuel, même réglage ui('calendrier'))

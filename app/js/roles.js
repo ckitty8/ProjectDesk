@@ -125,7 +125,7 @@ const Roles = {
       .filter(r => !u.equipe || r.equipeId === u.equipe)
       .filter(r => !u.role || this.roleChoisi(r) === u.role)
       .sort((a, b) => equipe(a.equipeId).nom.localeCompare(equipe(b.equipeId).nom) || a.nom.localeCompare(b.nom));
-    const equipes = [{ valeur: '', libelle: 'Toutes les équipes' }, ...etat.d.equipes.map(e => ({ valeur: e.id, libelle: e.nom }))];
+    const equipes = optionsEquipes();
     const roles = [{ valeur: '', libelle: 'Tous les rôles' }, ...ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }))];
     const filtres = `<input class="champ" style="width:260px" placeholder="Rechercher une personne…" data-action-saisie="filtrerRoles">
       ${C.liste(equipes, u.equipe, 'class="champ champ-compact" data-action-change="filtreRoles" data-filtre="equipe"')}

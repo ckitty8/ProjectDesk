@@ -75,6 +75,16 @@ const Modale = {
         <button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Ajouter à l’équipe</button></div></form>`;
   },
 
+  /* Date de naissance (facultative, migration 036 ; maquette ressources-onglets-naissance) : donnée
+     personnelle, la date complète n'apparaît que dans la fiche ; les écrans montrent le jour et le mois.
+     Champ masqué tant que la colonne n'existe pas en base (naissanceDisponible). */
+  champNaissance(r) {
+    if (!naissanceDisponible()) return '';
+    return `<div><label class="libelle">Date de naissance</label>
+      <input class="champ" type="date" name="dateNaissance" value="${C.esc(r.dateNaissance || '')}" style="width:180px">
+      <div class="discret texte-11">Donnée personnelle : la date complète n’est visible que dans la fiche ; les écrans n’affichent que le jour et le mois.</div></div>`;
+  },
+
   /* ---------- Fiche ressource ---------- */
   ressource(m) {
     const esc = C.esc, r = m.id ? ressource(m.id) : { equipeId: m.equipeId, capacite: 100 };
@@ -90,6 +100,7 @@ const Modale = {
         <div class="deux-colonnes"><div><label class="libelle">Date d’arrivée ${C.aide('datesPresence')}</label>
           <input class="champ" type="date" name="dateArrivee" value="${esc(r.dateArrivee || '')}"></div>
           <div><label class="libelle">Date de départ</label><input class="champ" type="date" name="dateDepart" value="${esc(r.dateDepart || '')}"></div></div>
+        ${this.champNaissance(r)}
         <div><label class="libelle">Email (lien automatique avec son compte)</label><input class="champ" type="email" name="email" value="${esc(r.email || '')}"></div>
         ${this.roleAccesFiche(r)}
         <div class="discret">${r.userId ? 'Compte de connexion lié' : 'Pas encore de compte : le rôle s’appliquera à sa première connexion avec cet email'}
@@ -324,6 +335,7 @@ Object.assign(Actions, {
   /* Ressources */
   enregistrerRessource(d, form) {
     const f = Object.fromEntries(new FormData(form)); f.capacite = Number(f.capacite); f.dateArrivee = f.dateArrivee || null; f.dateDepart = f.dateDepart || null;
+    if ('dateNaissance' in f) f.dateNaissance = f.dateNaissance || null;   // champ présent après la migration 036
     if (f.dateArrivee && f.dateDepart && f.dateDepart < f.dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
     executer(async () => {
       if (d.id) {

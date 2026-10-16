@@ -109,6 +109,35 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue « Suivi de mes équipes » en lecture seule'));
     await page.click('.fermer');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
+    /* Gestion des ressources (2026-10-16) : onglets Calendrier / Liste des ressources, dates de naissance
+       (jour et mois seulement à l'écran ; 🎂 dans le calendrier, rappel des anniversaires du mois) */
+    const ongletsRess = await page.$$eval('[data-action="ongletRessources"]', b => b.map(x => x.textContent.trim()));
+    await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10, mode: 'equipe' })); await page.waitForTimeout(150);
+    const gateauNov = await page.$eval(`tr[data-personne="${await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Maxime Fournier').id)}"]`,
+      tr => tr.querySelectorAll('.anniversaire').length);
+    verifier('Gestion des ressources : onglets Calendrier et Liste des ressources, 🎂 le jour de l’anniversaire',
+      ongletsRess.join('|') === 'Calendrier|Liste des ressources' && gateauNov === 1 && (await texte()).includes('🎂 Anniversaire'));
+    await page.click('[data-action="calendrierAujourdhui"]');
+    await page.click('[data-action="ongletRessources"][data-id="liste"]'); await page.waitForTimeout(150);
+    const annuaireRess = await page.textContent('#annuaire-ressources'), pageRess = await texte();
+    const attendusAnniv = await page.evaluate(() => Calculs.anniversairesDuMois(etat.d.ressources.filter(r => !estInactive(r)),
+      Calculs.depuisIso(Calculs.aujourdhui()).getMonth()).map(r => r.nom));
+    verifier('Gestion des ressources › Liste : colonne Anniversaire (jour et mois, sans l’année) et anniversaires du mois',
+      annuaireRess.includes('Anniversaire') && annuaireRess.includes('28 oct.') && !annuaireRess.includes('1991')
+      && pageRess.includes('Anniversaires') && attendusAnniv.every(n => pageRess.includes(n)), attendusAnniv.join(', '));
+    const lignesVisibles = () => page.$$eval('#annuaire-ressources tbody tr[data-recherche]', t => t.filter(x => !x.hidden).length);
+    const idData = await page.evaluate(() => etat.d.equipes.find(e => e.nom === 'Data').id);
+    await page.selectOption('[data-action-change="filtrerEquipeRessources"]', idData); await page.waitForTimeout(150);
+    const nbData = await lignesVisibles();
+    await page.fill('[data-action-saisie="rechercherRessource"]', 'sar'); await page.waitForTimeout(150);
+    const nbRecherche = await lignesVisibles();
+    await page.selectOption('[data-action-change="filtrerStatutRessources"]', 'inactif'); await page.waitForTimeout(150);
+    const nbInactifs = await lignesVisibles();
+    verifier('Gestion des ressources › Liste : filtres équipe, recherche et statut', nbData === 3 && nbRecherche === 1 && nbInactifs === 0,
+      `${nbData} / ${nbRecherche} / ${nbInactifs}`);
+    await page.evaluate(() => majUi('ressources', { equipeId: '', statut: '', q: '' })); await page.waitForTimeout(150);
+    await capture('05b-ressources-liste');
+    await page.click('[data-action="ongletRessources"][data-id="calendrier"]');
     await aller('administration'); await capture('06-administration');
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
     await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
@@ -121,6 +150,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
+      'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
@@ -129,7 +159,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const interdites = [];
     for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes', 'administration']) {
       await aller(ecran);
-      if (ecran === 'administration') {
+      if (ecran === 'ressources') {
+        for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+      } else if (ecran === 'administration') {
         for (const onglet of ['equipes', 'referentiels']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else interdites.push(...await ecritures());
     }
@@ -445,6 +477,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateDepart]', jour);
       await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
     };
+    // Date de naissance (migration 036) : champ facultatif de la fiche, date complète conservée
+    await page.click(`${ligneFin} [data-action="modifierRessource"]`);
+    const naissanceLue = await page.inputValue('form[data-action-envoi="enregistrerRessource"] input[name=dateNaissance]');
+    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateNaissance]', '1991-10-29');
+    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
+    verifier('Fiche : date de naissance lue et enregistrée', naissanceLue === '1991-10-28'
+      && await page.evaluate(id => ressource(id).dateNaissance === '1991-10-29', idFin));
     await poserFin('2026-09-30');
     const revue = (await page.textContent(ligneFin)).includes('Inactif') && (await page.textContent(ligneFin)).includes('partie le 30 sept. 2026');
     // Sections Actifs / Inactifs repliables (demande du porteur, 2026-10-12)
