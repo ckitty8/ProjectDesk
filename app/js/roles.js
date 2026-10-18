@@ -138,9 +138,10 @@ const Roles = {
         </table></div></div>`;
   },
 
-  /* Matrice des droits (maquette roles-droits/, sections maquette matrice-sections/) : une colonne par rôle,
-     la ligne « Périmètre », puis les droits (DROITS) rangés en deux sections — Suivi de mes équipes, Mon dashboard
-     (SECTIONS_DROITS). Le créateur a tout (colonne fixe, absente de Suivi › Administration › Rôles et accès) ;
+  /* Matrice des droits (maquettes roles-droits/, matrice-sections/, matrice-par-menu/) : une colonne par rôle,
+     la ligne « Périmètre », puis les menus de la barre latérale en deux sections — Suivi de mes équipes, Mon dashboard
+     (SECTIONS_DROITS) — avec, pour chacun, ses droits (DROITS, propriété menu) et les menus ouverts à tous
+     (MENUS_SANS_DROIT). Le créateur a tout (colonne fixe, absente de Suivi › Administration › Rôles et accès) ;
      Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031). Modifiable avec le droit « roles » :
      chaque changement est enregistré aussitôt (table droits_roles) ; la base refuse sans ce droit. */
   matrice(avecCreateur = true) {
@@ -148,23 +149,28 @@ const Roles = {
     const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
     const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
     const createur = contenu => avecCreateur ? `<td class="centre">${contenu}</td>` : '';
-    const ligne = d => `<tr><td><b>${esc(d.domaine)}</b></td><td>${esc(d.libelle)}</td>${createur(C.badgeTon('Oui · fixe', 'violet'))}
-      ${ROLES_CHOISISSABLES.map(role => this.celluleNiveau(role, d.cle, modifiable)).join('')}</tr>`;
+    // Le nom du menu n'est écrit que sur la première ligne de ses droits (lignes consécutives d'un même menu)
+    const ligne = (d, i, liste) => `<tr><td>${i && liste[i - 1].menu === d.menu ? '' : `<b>${esc(d.menu)}</b>`}</td><td>${esc(d.libelle)}</td>
+      ${createur(C.badgeTon('Oui · fixe', 'violet'))}${ROLES_CHOISISSABLES.map(role => this.celluleNiveau(role, d.cle, modifiable)).join('')}</tr>`;
+    const sansDroit = m => `<tr><td><b>${esc(m.menu)}</b></td><td>${esc(m.libelle)}</td>
+      ${createur(C.badgeTon('Tous', 'neutre'))}${ROLES_CHOISISSABLES.map(() => `<td class="centre">${C.badgeTon('Tous', 'neutre')}</td>`).join('')}</tr>`;
     const sections = SECTIONS_DROITS.map(sec => `<tr class="groupe"><td colspan="${nbColonnes}"><b>${esc(sec.libelle)}</b></td></tr>`
-      + DROITS.filter(d => d.section === sec.cle).map(ligne).join('')).join('');
+      + DROITS.filter(d => d.section === sec.cle).map(ligne).join('')
+      + MENUS_SANS_DROIT.filter(m => m.section === sec.cle).map(sansDroit).join('')).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Matrice des droits</h2>
         <span class="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle${modifiable ? '' : ' · consultation'}</span></div>
-      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Domaine</th><th>Droit</th>
+      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Menu</th><th>Ce qu’on peut y faire</th>
         ${avecCreateur ? '<th class="centre">Créateur</th>' : ''}${entete}</tr></thead>
         <tbody><tr class="groupe"><td><b>Périmètre</b></td><td class="discret">ce que couvre le rôle</td>
           ${createur(`<span class="discret texte-12">${esc(PERIMETRES.createur)}</span>`)}${perimetres}</tr>${sections}</tbody></table></div></div>
       <div class="discret texte-12">Chaque « Oui » est appliqué par la base. Un rôle se donne dans Mon dashboard › Administration › Rôles.</div>`;
   },
 
-  // Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit) ; figée sans le droit « roles »
+  /* Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit). Figée sans le droit « roles »,
+     pour Administrateur × Rôles, et pour un droit pas encore créé en base (migration 037 à appliquer : niveau de repli affiché) */
   celluleNiveau(role, droit, modifiable) {
-    const niveau = ((etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit) || {}).niveau || 'non';
-    const fixe = !modifiable || (role === 'admin' && droit === 'roles');
+    const niveau = niveauDuRole(role, droit);
+    const fixe = !modifiable || (role === 'admin' && droit === 'roles') || !droitEnBase(droit);
     const options = Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => ({ valeur, libelle: n.libelle }));
     return `<td class="centre">${C.liste(options, niveau, `class="champ champ-mini ${NIVEAUX_DROIT[niveau].classe}" data-action-change="majDroit"
       data-role="${role}" data-droit="${droit}"${fixe ? ' disabled' : ''}`)}</td>`;

@@ -79,20 +79,29 @@ const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'uti
    2026-10-13). Clés fixes : chacune est reliée à des règles de la base (migration 031, fonction a_droit) ;
    les NIVEAUX (oui / lecture / non) se règlent dans l'application (table droits_roles). */
 const DROITS = [
-  { cle: 'general', section: 'suivi', domaine: 'Suivi de mes équipes', libelle: 'Dashboard, projets, ressources, timesheet (lecture)' },
-  { cle: 'mon_dashboard', section: 'dashboard', domaine: 'Mon dashboard', libelle: 'Saisir son daily, ses heures, ses congés' },
-  { cle: 'daily_equipes', section: 'suivi', domaine: 'Daily', libelle: 'Lire le daily des équipes' },
-  { cle: 'conges_equipe', section: 'dashboard', domaine: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
-  { cle: 'valider_timesheet', section: 'suivi', domaine: 'Timesheet', libelle: 'Valider / renvoyer les timesheets' },
-  { cle: 'fiches_ressources', section: 'dashboard', domaine: 'Ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
-  { cle: 'affecter', section: 'dashboard', domaine: 'Ressources', libelle: 'Affecter des personnes aux projets' },
-  { cle: 'projets', section: 'dashboard', domaine: 'Projets', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
-  { cle: 'piloter', section: 'dashboard', domaine: 'Projets', libelle: 'Plan de charge et envoi du daily par e-mail' },
-  { cle: 'administration', section: 'dashboard', domaine: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
-  { cle: 'comptes', section: 'dashboard', domaine: 'Accès', libelle: 'Comptes en attente : donner l’accès' },
-  { cle: 'roles', section: 'dashboard', domaine: 'Accès', libelle: 'Rôles des utilisateurs et matrice des droits' },
-  { cle: 'nommer_admin', section: 'dashboard', domaine: 'Accès', libelle: 'Nommer ou retirer un administrateur' }
+  /* menu : menu de la barre latérale où le droit s'exerce (colonne « Menu » de la matrice, porteur 2026-10-18).
+     Suivi de mes équipes : un droit par menu (option B du porteur, migration 037). Tant que la migration 037
+     n'est pas appliquée, ces droits reprennent le niveau de l'ancien droit commun « general » (repli). */
+  { cle: 'suivi_dashboard', section: 'suivi', menu: 'Dashboard général', libelle: 'Consulter les objectifs (OKR) et les projets à surveiller', repli: 'general' },
+  { cle: 'daily_equipes', section: 'suivi', menu: 'Daily des équipes', libelle: 'Lire le daily des équipes (fil et synthèse)' },
+  { cle: 'suivi_projets', section: 'suivi', menu: 'Projets et Roadmap', libelle: 'Consulter les projets et la roadmap des équipes', repli: 'general' },
+  { cle: 'suivi_ressources', section: 'suivi', menu: 'Gestion des ressources', libelle: 'Consulter le calendrier des congés et la liste des ressources', repli: 'general' },
+  { cle: 'suivi_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
+  { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
+  { cle: 'suivi_administration', section: 'suivi', menu: 'Administration', libelle: 'Consulter les équipes, les référentiels, les rôles et accès', repli: 'general' },
+  { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
+  { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
+  { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
+  { cle: 'fiches_ressources', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
+  { cle: 'affecter', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Affecter des personnes aux projets' },
+  { cle: 'piloter', section: 'dashboard', menu: 'Plan de charge', libelle: 'Plan de charge et envoi du daily par e-mail' },
+  { cle: 'administration', section: 'dashboard', menu: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
+  { cle: 'comptes', section: 'dashboard', menu: 'Administration', libelle: 'Comptes en attente : donner l’accès' },
+  { cle: 'roles', section: 'dashboard', menu: 'Administration', libelle: 'Rôles des utilisateurs et matrice des droits' },
+  { cle: 'nommer_admin', section: 'dashboard', menu: 'Administration', libelle: 'Nommer ou retirer un administrateur' }
 ];
+// Menus ouverts à tous, sans droit réglable : affichés dans la matrice pour qu'elle couvre tous les menus
+const MENUS_SANS_DROIT = [{ section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques : Agile, Roadmap, Test & Learn' }];
 /* Sections de la matrice des droits (porteur 2026-10-18) : les droits sont rangés sous la section de
    l'application où ils s'exercent — « Suivi de mes équipes » (lecture, daily des équipes, validation des
    timesheets) puis « Mon dashboard » (saisies, ressources, projets, administration, accès). */

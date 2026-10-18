@@ -197,7 +197,7 @@ async function demarrer() {
     const equipesReconnues = mesEquipes();
     const memorisee = lireMemoire('equipe');
     // Écran d'arrivée : on reste sur l'écran courant s'il y en avait un (ex. rechargement)
-    const ecranArrivee = defaut => (['connexion', 'choixEquipe'].includes(etat.ecran) ? defaut : etat.ecran);
+    const ecranArrivee = defaut => (['connexion', 'choixEquipe'].includes(etat.ecran) ? (defaut === 'dashboard' ? ecranAccueil() : defaut) : etat.ecran);
     if (!equipesReconnues.length) {
       // Sans équipe : l'administrateur entre dans l'outil (Administration s'il faut créer la
       // première équipe, sinon le dashboard) ; les autres comptes attendent une invitation (écran Choix d'équipe).
@@ -282,12 +282,21 @@ function monRole() {
   const responsable = (moi && estResponsableEquipe(moi)) || Object.values(etat.rolesEquipe).some(r => ['owner', 'admin'].includes(r));
   return responsable ? 'responsable' : 'utilisateur';
 }
-// Niveau d'un droit pour moi : « oui » pour le créateur, sinon celui de la matrice (« non » s'il manque)
-function niveauDroit(droit) {
-  if (etat.estCreateur) return 'oui';
-  const ligne = (etat.d.droitsRoles || []).find(d => d.role === monRole() && d.droit === droit);
-  return ligne ? ligne.niveau : 'non';
+// Écran d'arrivée : le dashboard général, ou le daily si le rôle n'a pas accès au dashboard (matrice)
+const ecranAccueil = () => niveauDroit('suivi_dashboard') === 'non' ? 'daily' : 'dashboard';
+// Le droit existe-t-il dans la table droits_roles ? (droits par menu : après la migration 037)
+const droitEnBase = droit => (etat.d.droitsRoles || []).some(d => d.droit === droit);
+/* Niveau d'un droit pour un rôle, d'après la matrice (« non » s'il manque). Un droit pas encore créé en
+   base (migration à appliquer) reprend le niveau de son droit de repli (DROITS, config.js), pour que
+   les menus restent visibles comme avant. */
+function niveauDuRole(role, droit) {
+  const ligne = (etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit);
+  if (ligne) return ligne.niveau;
+  const def = DROITS.find(d => d.cle === droit);
+  return def && def.repli && !droitEnBase(droit) ? niveauDuRole(role, def.repli) : 'non';
 }
+// Niveau d'un droit pour moi : « oui » pour le créateur, sinon celui de mon rôle dans la matrice
+const niveauDroit = droit => etat.estCreateur ? 'oui' : niveauDuRole(monRole(), droit);
 const aDroit = droit => niveauDroit(droit) === 'oui';
 
 /* ---------- Accès pratiques aux données ---------- */

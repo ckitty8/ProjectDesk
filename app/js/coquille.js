@@ -27,13 +27,14 @@ const Coquille = (() => {
   // Menus : id d'écran, libellé, icône ; « enfants » = sous-menu
   // Suivi de mes équipes (identifiant de section : general) : même ordre que Mon dashboard (demande du porteur 2026-10-12) — Daily, Projets, Ressources
   // (avec le Timesheet, comme « Mon timesheet » est rangé dans Gestion des ressources), Administration
+  // Menus de Suivi de mes équipes : chacun affiché si le droit de son menu n'est pas « Non » (matrice, migration 037)
   const MENU_GENERAL = [
-    { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash' },
-    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', visible: () => niveauDroit('daily_equipes') !== 'non' },
-    { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj' },
-    { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress' },
-    { id: 'timesheet', libelle: 'Timesheet', icone: 'time' },
-    { id: 'administration', libelle: 'Administration', icone: 'admin' }
+    { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash', droit: 'suivi_dashboard' },
+    { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
+    { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj', droit: 'suivi_projets' },
+    { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
+    { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' },
+    { id: 'administration', libelle: 'Administration', icone: 'admin', droit: 'suivi_administration' }
   ];
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
@@ -65,12 +66,13 @@ const Coquille = (() => {
   function barreLaterale() {
     const eq = equipe(etat.equipeCourante);
     const nom = etat.session.user.name || etat.session.user.email;
+    const menusSuivi = MENU_GENERAL.filter(item => niveauDroit(item.droit) !== 'non');
     return `
     <aside class="laterale${ui('menuLateral', { ouvert: false }).ouvert ? ' ouverte' : ''}">
       ${C.marque()}
       <nav>
-        <div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
-        ${niveauDroit('general') === 'non' ? '' : MENU_GENERAL.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}
+        ${menusSuivi.length ? `<div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
+        ${menusSuivi.map(lienMenu).join('')}` : ''}
         ${niveauDroit('mon_dashboard') === 'non' ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
         ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}`}
       </nav>

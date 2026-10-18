@@ -150,7 +150,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption(celluleAcces, niveauAvant); await page.waitForTimeout(400);
     verifier('Administration › Rôles et accès : matrice sans le créateur, sections Suivi de mes équipes / Mon dashboard, modifiable',
       acces.roles.length === 6 && !acces.roles.includes('Créateur') && acces.roles[0] === 'Administrateur'
-      && acces.sections[1] === 'Suivi de mes équipes' && acces.sections[2] === 'Mon dashboard' && accesEnregistre, JSON.stringify(acces));
+      && acces.sections[1] === 'Suivi de mes équipes' && acces.sections[2] === 'Mon dashboard' && accesEnregistre
+      && await page.evaluate(() => DROITS.filter(d => d.section === 'suivi').length === 7), JSON.stringify(acces));
     await capture('06b-administration-roles');
     await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
@@ -833,7 +834,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Matrice des droits (migration 031) : une ligne par droit, Administrateur × Rôles verrouillé, niveau modifié et enregistré
     await page.click('[data-action="vueRoles"][data-vue="matrice"]'); await page.waitForTimeout(200);
     const cellule = (role, droit) => `select[data-action-change="majDroit"][data-role="${role}"][data-droit="${droit}"]`;
-    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1 + SECTIONS_DROITS.length);
+    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1 + SECTIONS_DROITS.length + MENUS_SANS_DROIT.length);
     const verrou = await page.$eval(cellule('admin', 'roles'), el => el.disabled);
     await page.selectOption(cellule('utilisateur', 'projets'), 'oui'); await page.waitForTimeout(400);
     const enregistre = await page.evaluate(() => etat.d.droitsRoles.find(d => d.role === 'utilisateur' && d.droit === 'projets').niveau === 'oui');
@@ -853,6 +854,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
       !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
       && !document.querySelector('[data-ecran="previsionnel"]') && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
+    // Droits par menu de Suivi de mes équipes (migration 037) : menu masqué si « Non » ; avant la migration, repli sur « general »
+    const parMenu = await page.evaluate(() => {
+      const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'suivi_projets'), avant = ligne.niveau;
+      ligne.niveau = 'non'; rendre();
+      const masque = !document.querySelector('.laterale [data-ecran="projets"]') && !!document.querySelector('.laterale [data-ecran="dashboard"]');
+      ligne.niveau = avant;
+      const sauvegarde = etat.d.droitsRoles;
+      etat.d.droitsRoles = sauvegarde.filter(d => d.droit !== 'suivi_projets');
+      const repli = niveauDroit('suivi_projets') === niveauDroit('general');
+      etat.d.droitsRoles = sauvegarde; rendre();
+      return { masque, repli };
+    });
+    verifier('Matrice par menu : menu de Suivi masqué si « Non », repli sur l’ancien droit avant la migration 037',
+      parMenu.masque && parMenu.repli, JSON.stringify(parMenu));
     await aller('administration');
     verifier('Administration › Rôles et accès : onglet absent pour un membre', !(await page.$('[data-action="ongletAdministration"][data-id="roles"]')));
     await aller('daily'); await page.waitForTimeout(300);

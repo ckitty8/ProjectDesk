@@ -132,9 +132,11 @@ function amorcer() {
   bd.roles_prevus = [];          // rôles prévus en attente de la connexion de la personne (migration 029)
   bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
   bd.membres_equipe = [];        // personnes rattachées à une autre équipe (migration 033)
-  // Matrice des droits (migration 031) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
+  // Matrice des droits (migrations 031 et 037 : droits par menu de Suivi de mes équipes) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
   const MATRICE = {
-    general: 'oui oui oui oui oui oui', mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
+    general: 'oui oui oui oui oui oui', suivi_dashboard: 'oui oui oui oui oui oui', suivi_projets: 'oui oui oui oui oui oui',
+    suivi_ressources: 'oui oui oui oui oui oui', suivi_timesheet: 'oui oui oui oui oui oui', suivi_administration: 'oui oui oui oui oui oui',
+    mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
     conges_equipe: 'oui oui oui lecture non non', valider_timesheet: 'oui oui oui non non non', fiches_ressources: 'oui oui oui non non non',
     affecter: 'oui oui oui oui non non', projets: 'oui oui oui oui lecture lecture', piloter: 'oui oui oui oui non non',
     administration: 'oui non non non non non', comptes: 'oui non non non non non', roles: 'oui non non non non non', nommer_admin: 'oui non non non non non'
