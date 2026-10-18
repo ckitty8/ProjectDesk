@@ -80,8 +80,8 @@ const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'uti
    les NIVEAUX (oui / lecture / non) se règlent dans l'application (table droits_roles). */
 const DROITS = [
   /* menu : menu de la barre latérale où le droit s'exerce (colonne « Menu » de la matrice, porteur 2026-10-18).
-     Suivi de mes équipes : un droit par menu (option B du porteur, migration 037). Tant que la migration 037
-     n'est pas appliquée, ces droits reprennent le niveau de l'ancien droit commun « general » (repli). */
+     Suivi de mes équipes : un droit par menu (option B du porteur, migration 037). Si l'un de ces droits
+     manque en base, il reprend le niveau de l'ancien droit commun « general » (repli, niveauDuRole). */
   { cle: 'suivi_dashboard', section: 'suivi', menu: 'Dashboard général', libelle: 'Consulter les objectifs (OKR) et les projets à surveiller', repli: 'general' },
   { cle: 'daily_equipes', section: 'suivi', menu: 'Daily des équipes', libelle: 'Lire le daily des équipes (fil et synthèse)' },
   { cle: 'suivi_projets', section: 'suivi', menu: 'Projets et Roadmap', libelle: 'Consulter les projets et la roadmap des équipes', repli: 'general' },

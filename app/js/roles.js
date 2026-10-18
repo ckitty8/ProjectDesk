@@ -167,7 +167,7 @@ const Roles = {
   },
 
   /* Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit). Figée sans le droit « roles »,
-     pour Administrateur × Rôles, et pour un droit pas encore créé en base (migration 037 à appliquer : niveau de repli affiché) */
+     pour Administrateur × Rôles, et pour un droit absent de la table droits_roles (niveau de repli affiché, voir niveauDuRole) */
   celluleNiveau(role, droit, modifiable) {
     const niveau = niveauDuRole(role, droit);
     const fixe = !modifiable || (role === 'admin' && droit === 'roles') || !droitEnBase(droit);

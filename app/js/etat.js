@@ -284,11 +284,11 @@ function monRole() {
 }
 // Écran d'arrivée : le dashboard général, ou le daily si le rôle n'a pas accès au dashboard (matrice)
 const ecranAccueil = () => niveauDroit('suivi_dashboard') === 'non' ? 'daily' : 'dashboard';
-// Le droit existe-t-il dans la table droits_roles ? (droits par menu : après la migration 037)
+// Le droit existe-t-il dans la table droits_roles ? (droits par menu : migration 037)
 const droitEnBase = droit => (etat.d.droitsRoles || []).some(d => d.droit === droit);
-/* Niveau d'un droit pour un rôle, d'après la matrice (« non » s'il manque). Un droit pas encore créé en
-   base (migration à appliquer) reprend le niveau de son droit de repli (DROITS, config.js), pour que
-   les menus restent visibles comme avant. */
+/* Niveau d'un droit pour un rôle, d'après la matrice (« non » s'il manque). Filet de sécurité : un droit
+   absent de la table (base sans la migration 037) reprend le niveau de son droit de repli (DROITS,
+   config.js), pour que les menus ne disparaissent pas. */
 function niveauDuRole(role, droit) {
   const ligne = (etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit);
   if (ligne) return ligne.niveau;
