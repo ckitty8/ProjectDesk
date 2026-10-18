@@ -245,14 +245,15 @@ Ecrans.ressources = {
   },
 
   rendre() {
-    const onglet = this.reglages().onglet;
-    const onglets = C.onglets([{ id: 'calendrier', libelle: 'Calendrier' }, { id: 'liste', libelle: 'Liste des ressources' }],
-      onglet, 'ongletRessources');
+    // Onglets selon leur droit (matrice, migration 038)
+    const liste = ongletsPermis('ressources', [{ id: 'calendrier', libelle: 'Calendrier' }, { id: 'liste', libelle: 'Liste des ressources' }]);
+    const onglet = ongletAffiche(liste, this.reglages().onglet);
+    const corps = !onglet ? C.aucunOnglet()
+      : `${C.onglets(liste, onglet, 'ongletRessources')}${onglet === 'liste' ? this.liste() : this.calendrier()}`;
     return `
     <div class="ecran">
       ${C.entete('Gestion des ressources', 'Calendrier des absences et annuaire des ressources · lecture seule')}
-      ${onglets}
-      ${onglet === 'liste' ? this.liste() : this.calendrier()}
+      ${corps}
     </div>`;
   }
 };

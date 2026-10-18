@@ -29,6 +29,9 @@ const Administration = {
       </tbody></table></div>`;
   },
 
+  // Onglet « Référentiels » (même onglet dans les deux Administration)
+  ongletReferentiels: () => ({ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length }),
+
   // Référentiels et leurs valeurs ; modifiable = renommer, recolorer, activer, ajouter
   referentiels(modifiable) {
     const esc = C.esc, refId = ui('referentiels', { id: 'stp' }).id;
@@ -55,17 +58,19 @@ Ecrans.administration = {
   titre: 'Administration',
   section: 'general',
   rendre() {
-    const onglet = ui('administration', { onglet: 'equipes' }).onglet;
-    /* Onglet « Rôles et accès » : administrateurs et créateur seulement (etat.estAdmin couvre le créateur) ;
-       matrice des droits sans la colonne Créateur, modifiable avec le droit « roles » (porteur 2026-10-18) —
-       seconde exception à la lecture seule de la section, après la validation des feuilles de temps */
-    const onglets = C.onglets([
+    /* Onglets selon leur droit (matrice, migration 038). « Rôles et accès » (au départ : administrateurs) : matrice
+       des droits sans la colonne Créateur, modifiable avec le droit « roles » (porteur 2026-10-18) — seconde
+       exception à la lecture seule de la section, après la validation des feuilles de temps */
+    const liste = ongletsPermis('administration', [
       { id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length },
-      { id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
-      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles et accès', compte: ROLES_CHOISISSABLES.length }] : [])
-    ], onglet, 'ongletAdministration');
-    const corps = onglet === 'referentiels' ? Administration.referentiels(false)
-      : onglet === 'roles' && etat.estAdmin ? Roles.matrice(false) : Administration.equipes(false);
+      Administration.ongletReferentiels(),
+      { id: 'roles', libelle: 'Rôles et accès', compte: ROLES_CHOISISSABLES.length }
+    ]);
+    const onglet = ongletAffiche(liste, ui('administration', { onglet: 'equipes' }).onglet);
+    const onglets = onglet ? C.onglets(liste, onglet, 'ongletAdministration') : '';
+    const corps = !onglet ? C.aucunOnglet()
+      : onglet === 'referentiels' ? Administration.referentiels(false)
+      : onglet === 'roles' ? Roles.matrice(false) : Administration.equipes(false);
     const lienEdition = etat.estAdmin ? `<button class="btn" data-action="aller" data-ecran="monAdmin">Modifier (Mon dashboard › Administration)</button>` : '';
     return `
     <div class="ecran">

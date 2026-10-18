@@ -5,7 +5,7 @@
    administrateur : tout).
    - Onglet « Fil des dailys » (tout le monde) : les dailys du plus récent au plus ancien, groupés par
      jour ; filtres projets / personnes à gauche ; blocages ouverts et résumé du jour à droite.
-   - Onglet « Synthèse de l'équipe » (responsables d'équipe et administrateurs) : chiffres clés,
+   - Onglet « Synthèse de l'équipe » (droit « onglet_daily_synthese » de la matrice) : chiffres clés,
      carte membre × jour (✓ daily, ⚠ blocage, — manquant, 🌴 absent) ; un clic ouvre le daily à droite.
    Lecture seule. Export Excel : fenêtre Modale.exportDaily, fichier fabriqué par excel.js.
    ============================================================ */
@@ -17,8 +17,9 @@ Ecrans.dailyEquipes = {
   jour: () => ui('dailyEquipes', { jour: Calculs.aujourdhui() }).jour,
   filtres: () => ui('dailyEquipes', { projet: 'tous', personne: 'tous', onglet: 'fil', caseChoisie: null }),
   auChargement: () => recharger('notesProjet'),
-  // Onglet « Synthèse » : responsables d'équipe (au moins une) et administrateurs (choix du porteur)
-  voitSynthese: () => etat.estAdmin || etat.d.equipes.some(e => estResponsableDe(e.id)),
+  /* Onglets « Fil des dailys » et « Synthèse de l'équipe », chacun selon son droit (matrice, migration 038 ;
+     la synthèse était réservée aux administrateurs et responsables, valeur de départ de son droit) */
+  onglets: () => ongletsPermis('dailyEquipes', [{ id: 'fil', libelle: 'Fil des dailys' }, { id: 'synthese', libelle: 'Synthèse de l’équipe' }]),
 
   // Jours ouvrés (hors week-end et fériés) de la semaine du jour choisi, du lundi au vendredi
   joursSemaine() {
@@ -67,11 +68,12 @@ Ecrans.dailyEquipes = {
       <b class="libelle-semaine">${libelle}</b>
       <button class="btn" data-action="dailyEquipesDecaler" data-sens="1" title="Semaine suivante">›</button>`);
     if (!projetsDailyVisibles().length) return `<div class="ecran">${entete}<div class="carte">${C.vide('Aucun projet en cours dont vous pouvez lire le daily.')}</div></div>`;
-    const synthese = this.voitSynthese() && f.onglet === 'synthese';
-    const onglets = this.voitSynthese() ? C.onglets([{ id: 'fil', libelle: 'Fil des dailys' }, { id: 'synthese', libelle: 'Synthèse de l’équipe' }],
-      synthese ? 'synthese' : 'fil', 'ongletDailyEquipes') : '';
+    const liste = this.onglets(), onglet = ongletAffiche(liste, f.onglet);
+    if (!onglet) return `<div class="ecran">${entete}${C.aucunOnglet()}</div>`;
+    // Barre d'onglets seulement s'il y a le choix
+    const onglets = liste.length > 1 ? C.onglets(liste, onglet, 'ongletDailyEquipes') : '';
     return `<div class="ecran">${entete}${onglets}
-      ${synthese ? Synthese.rendre(this.projets(), jours) : this.fil(jours)}
+      ${onglet === 'synthese' ? Synthese.rendre(this.projets(), jours) : this.fil(jours)}
       <div class="discret texte-12">Notes conservées à l’affichage sur ${JOURS_DAILY} jours (au-delà : export Excel). Vous voyez le daily de vos projets ;
         le responsable d’une unité voit tous les projets de son unité.</div></div>`;
   },
@@ -139,7 +141,7 @@ Ecrans.dailyEquipes = {
   }
 };
 
-/* ---------- Onglet « Synthèse de l'équipe » (responsables et administrateurs) ---------- */
+/* ---------- Onglet « Synthèse de l'équipe » (selon son droit, matrice des droits) ---------- */
 const Synthese = {
   SYMBOLES: { ok: '✓', bloc: '⚠', manque: '—', abs: '🌴', avenir: '', hors: '' },
   CLASSES: { ok: 'case-ok', bloc: 'case-bloc', manque: 'case-manque', abs: 'case-abs', avenir: '', hors: '' },

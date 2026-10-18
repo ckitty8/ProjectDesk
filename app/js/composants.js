@@ -69,6 +69,8 @@ const C = (() => {
         ${esc(o.libelle)}${o.compte !== undefined ? ` <span class="compte">${o.compte}</span>` : ''}
       </button>`).join('')}
     </div>`;
+  // Carte affichée quand aucun onglet d'un écran n'est ouvert au rôle (droits par onglet, migration 038)
+  const aucunOnglet = () => `<div class="carte">${vide('Aucun onglet de cet écran n’est ouvert à votre rôle.')}</div>`;
 
   // Carte indicateur (KPI)
   const kpi = (libelle, valeur, complement = '', cleAide = '') => `
@@ -125,7 +127,7 @@ const C = (() => {
 
   return {
     aide, placerBulle, esc, teinte, badge, badgeTon, badgeRef, badgeFeuille, badgeActif, pastille, avatar, code, barreOutils, compteSansFiche,
-    marque, mentionPropriete, barre, couleurStatutProjet, entete, onglets, kpi, liste, vide, icone, boutonIcone
+    marque, mentionPropriete, barre, couleurStatutProjet, entete, onglets, aucunOnglet, kpi, liste, vide, icone, boutonIcone
   };
 })();
 

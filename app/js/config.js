@@ -82,26 +82,74 @@ const DROITS = [
   /* menu : menu de la barre latérale où le droit s'exerce (colonne « Menu » de la matrice, porteur 2026-10-18).
      Suivi de mes équipes : un droit par menu (option B du porteur, migration 037). Si l'un de ces droits
      manque en base, il reprend le niveau de l'ancien droit commun « general » (repli, niveauDuRole). */
+  /* onglet : droit d'un onglet (porteur 2026-10-18, maquette docs/maquettes/matrice-par-onglet/, migration 038) —
+     ligne « ↳ Onglet » de la matrice ; ecran + id : écran et identifiant de l'onglet masqué si le droit est « Non »
+     (ongletPermis, etat.js). Repli : droit dont l'onglet reprend le niveau (valeur de départ de la migration 038). */
   { cle: 'suivi_dashboard', section: 'suivi', menu: 'Dashboard général', libelle: 'Consulter les objectifs (OKR) et les projets à surveiller', repli: 'general' },
-  { cle: 'daily_equipes', section: 'suivi', menu: 'Daily des équipes', libelle: 'Lire le daily des équipes (fil et synthèse)' },
+  { cle: 'daily_equipes', section: 'suivi', menu: 'Daily des équipes', libelle: 'Lire le daily des équipes' },
+  { cle: 'onglet_daily_fil', section: 'suivi', menu: 'Daily des équipes', onglet: 'Fil des dailys', ecran: 'dailyEquipes', id: 'fil',
+    libelle: 'Notes de la semaine, blocages ouverts', repli: 'daily_equipes' },
+  // Synthèse : au départ administrateurs, direction et responsables (mêmes valeurs que « fiches_ressources »)
+  { cle: 'onglet_daily_synthese', section: 'suivi', menu: 'Daily des équipes', onglet: 'Synthèse de l’équipe', ecran: 'dailyEquipes', id: 'synthese',
+    libelle: 'Synthèse par projet et par personne', repli: 'fiches_ressources' },
   { cle: 'suivi_projets', section: 'suivi', menu: 'Projets et Roadmap', libelle: 'Consulter les projets et la roadmap des équipes', repli: 'general' },
   { cle: 'suivi_ressources', section: 'suivi', menu: 'Gestion des ressources', libelle: 'Consulter le calendrier des congés et la liste des ressources', repli: 'general' },
+  { cle: 'onglet_ressources_calendrier', section: 'suivi', menu: 'Gestion des ressources', onglet: 'Calendrier', ecran: 'ressources', id: 'calendrier',
+    libelle: 'Congés des équipes, anniversaires', repli: 'suivi_ressources' },
+  { cle: 'onglet_ressources_liste', section: 'suivi', menu: 'Gestion des ressources', onglet: 'Liste des ressources', ecran: 'ressources', id: 'liste',
+    libelle: 'Personnes, projets, anniversaires', repli: 'suivi_ressources' },
   { cle: 'suivi_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
   { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'suivi_administration', section: 'suivi', menu: 'Administration', libelle: 'Consulter les équipes, les référentiels, les rôles et accès', repli: 'general' },
+  { cle: 'onglet_suivi_equipes', section: 'suivi', menu: 'Administration', onglet: 'Équipes', ecran: 'administration', id: 'equipes',
+    libelle: 'Équipes et membres (consultation)', repli: 'suivi_administration' },
+  { cle: 'onglet_suivi_referentiels', section: 'suivi', menu: 'Administration', onglet: 'Référentiels', ecran: 'administration', id: 'referentiels',
+    libelle: 'Listes de valeurs (consultation)', repli: 'suivi_administration' },
+  { cle: 'onglet_suivi_roles', section: 'suivi', menu: 'Administration', onglet: 'Rôles et accès', ecran: 'administration', id: 'roles',
+    libelle: 'Matrice des droits', repli: 'roles' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
   { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
   { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
+  { cle: 'onglet_conges_grille', section: 'dashboard', menu: 'Congés & capacité', onglet: 'Grille mensuelle', ecran: 'conges', id: 'grille',
+    libelle: 'Saisie des congés du mois', repli: 'mon_dashboard' },
+  { cle: 'onglet_conges_recap', section: 'dashboard', menu: 'Congés & capacité', onglet: 'Récap annuel', ecran: 'conges', id: 'recap',
+    libelle: 'Jours travaillés et congés de l’année', repli: 'mon_dashboard' },
+  { cle: 'onglet_conges_capacite', section: 'dashboard', menu: 'Congés & capacité', onglet: 'Capacité', ecran: 'conges', id: 'capacite',
+    libelle: 'Capacité des projets par sprint', repli: 'mon_dashboard' },
   { cle: 'fiches_ressources', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
   { cle: 'affecter', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Affecter des personnes aux projets' },
   { cle: 'piloter', section: 'dashboard', menu: 'Plan de charge', libelle: 'Plan de charge et envoi du daily par e-mail' },
+  { cle: 'onglet_charge_prevision', section: 'dashboard', menu: 'Plan de charge', onglet: 'Prévisionnel', ecran: 'previsionnel', id: 'prevision',
+    libelle: 'Charge prévue par personne et par mois', repli: 'piloter' },
+  { cle: 'onglet_charge_reel', section: 'dashboard', menu: 'Plan de charge', onglet: 'Temps réel par sprint', ecran: 'previsionnel', id: 'reel',
+    libelle: 'Heures saisies comparées au prévu', repli: 'piloter' },
   { cle: 'administration', section: 'dashboard', menu: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
-  { cle: 'comptes', section: 'dashboard', menu: 'Administration', libelle: 'Comptes en attente : donner l’accès' },
-  { cle: 'roles', section: 'dashboard', menu: 'Administration', libelle: 'Rôles des utilisateurs et matrice des droits' },
-  { cle: 'nommer_admin', section: 'dashboard', menu: 'Administration', libelle: 'Nommer ou retirer un administrateur' }
+  { cle: 'comptes', section: 'dashboard', menu: 'Administration', onglet: 'Comptes en attente', ecran: 'monAdmin', id: 'comptes',
+    libelle: 'Donner l’accès aux comptes en attente' },
+  // Équipes : au départ administrateurs, direction et responsables (mêmes valeurs que « fiches_ressources »)
+  { cle: 'onglet_admin_equipes', section: 'dashboard', menu: 'Administration', onglet: 'Équipes', ecran: 'monAdmin', id: 'equipes',
+    libelle: 'Créer et modifier les équipes', repli: 'fiches_ressources' },
+  { cle: 'onglet_admin_referentiels', section: 'dashboard', menu: 'Administration', onglet: 'Référentiels', ecran: 'monAdmin', id: 'referentiels',
+    libelle: 'Listes de valeurs', repli: 'administration' },
+  { cle: 'onglet_admin_feries', section: 'dashboard', menu: 'Administration', onglet: 'Jours fériés', ecran: 'monAdmin', id: 'feries',
+    libelle: 'Calendrier des jours fériés', repli: 'administration' },
+  { cle: 'onglet_admin_envoi_daily', section: 'dashboard', menu: 'Administration', onglet: 'Envoi du daily', ecran: 'monAdmin', id: 'envoiDaily',
+    libelle: 'Envoi du daily par e-mail, projet par projet', repli: 'piloter' },
+  { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Administration', onglet: 'Sprints', ecran: 'monAdmin', id: 'sprints',
+    libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
+  { cle: 'roles', section: 'dashboard', menu: 'Administration', onglet: 'Rôles', ecran: 'monAdmin', id: 'roles',
+    libelle: 'Rôles des utilisateurs et matrice des droits' },
+  { cle: 'nommer_admin', section: 'dashboard', menu: 'Administration', onglet: 'Nommer un administrateur', libelle: 'Nommer ou retirer un administrateur' },
+  // Trucs et astuces : un droit par thème (au départ comme l'ancien droit commun « general »)
+  { cle: 'onglet_astuces_agile', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Agile', ecran: 'astuces', id: 'agile',
+    libelle: 'KPI Agile, rôles Scrum', repli: 'general' },
+  { cle: 'onglet_astuces_roadmap', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Roadmap', ecran: 'astuces', id: 'roadmap',
+    libelle: 'Fiche pratique Roadmap', repli: 'general' },
+  { cle: 'onglet_astuces_test_learn', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Test & Learn', ecran: 'astuces', id: 'testLearn',
+    libelle: 'Fiche pratique Test & Learn', repli: 'general' }
 ];
-// Menus ouverts à tous, sans droit réglable : affichés dans la matrice pour qu'elle couvre tous les menus
-const MENUS_SANS_DROIT = [{ section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques : Agile, Roadmap, Test & Learn' }];
+// Menus ouverts à tous, sans droit de menu : affichés dans la matrice pour qu'elle couvre tous les menus (leurs onglets ont un droit)
+const MENUS_SANS_DROIT = [{ section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques' }];
 /* Sections de la matrice des droits (porteur 2026-10-18) : les droits sont rangés sous la section de
    l'application où ils s'exercent — « Suivi de mes équipes » (lecture, daily des équipes, validation des
    timesheets) puis « Mon dashboard » (saisies, ressources, projets, administration, accès). */
@@ -261,7 +309,8 @@ const GUIDE_ECRANS = {
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
-  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, et la matrice des droits (ce que chaque rôle peut faire : Oui, Lecture, Non).',
+  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, et la matrice des droits ' +
+    '(ce que chaque rôle peut faire : Oui, Lecture, Non), menu par menu et onglet par onglet.',
     'Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
     'chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',

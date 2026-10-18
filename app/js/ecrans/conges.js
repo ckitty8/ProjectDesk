@@ -79,7 +79,12 @@ Ecrans.conges = {
             <td class="discret">${ouvres.reduce((a, b) => a + b, 0)}</td><td></td><td></td></tr></thead>
         <tbody>${lignes || `<tr><td colspan="${MOIS.length * 2 + 4}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div></div>`;
   },
-  onglet: () => ui('conges', { onglet: 'grille' }).onglet,
+  // Onglets selon leur droit (matrice, migration 038)
+  onglets: annee => ongletsPermis('conges', [
+    { id: 'grille', libelle: 'Grille mensuelle' },
+    { id: 'recap', libelle: `Récap annuel ${annee}` },
+    { id: 'capacite', libelle: 'Capacité' }
+  ]),
 
   rendre() {
     const esc = C.esc, pinceau = this.pinceau(), annee = Calendrier.moisCourant().annee;
@@ -88,16 +93,13 @@ Ecrans.conges = {
         <span class="pastille" style="background:${C.teinte(p.couleur, .2)};border:1px solid ${p.couleur}"></span>${esc(p.libelle)}</button>`).join('');
 
     // Contenu de chaque onglet
-    const onglet = this.onglet();
+    const liste = this.onglets(annee), onglet = ongletAffiche(liste, ui('conges', { onglet: 'grille' }).onglet);
+    if (!onglet) return `<div class="ecran">${C.entete('Congés & capacité', '')}${C.aucunOnglet()}</div>`;
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
     const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
       <div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     const recapAnnuel = this.recap(annee);
-    const onglets = C.onglets([
-      { id: 'grille', libelle: 'Grille mensuelle' },
-      { id: 'recap', libelle: `Récap annuel ${annee}` },
-      { id: 'capacite', libelle: 'Capacité' }
-    ], onglet, 'ongletConges');
+    const onglets = C.onglets(liste, onglet, 'ongletConges');
     // Onglet Capacité : écran dédié (ecrans/capacite.js)
     const capacite = onglet === 'capacite' ? Capacite.rendre() : '';
 

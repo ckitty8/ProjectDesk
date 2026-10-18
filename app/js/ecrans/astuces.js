@@ -28,8 +28,10 @@ Ecrans.astuces = {
   ],
 
   rendre() {
-    const { theme, onglet } = ui('astuces', { theme: 'agile', onglet: 'kpi' });
-    const themes = this.THEMES.map(t => `<button class="theme${theme === t.cle ? ' actif' : ''}" data-action="themeAstuces" data-theme="${t.cle}">
+    // Thèmes selon leur droit (matrice, migration 038) : le thème choisi s'il est permis, sinon le premier permis
+    const permis = this.THEMES.filter(t => ongletPermis('astuces', t.cle)), u = ui('astuces', { theme: 'agile', onglet: 'kpi' });
+    const theme = (permis.find(t => t.cle === u.theme) || permis[0] || {}).cle, onglet = u.onglet;
+    const themes = permis.map(t => `<button class="theme${theme === t.cle ? ' actif' : ''}" data-action="themeAstuces" data-theme="${t.cle}">
       <span class="theme-icone" style="background:${t.couleur}">${t.symbole}</span><span><b>${t.libelle}</b><div class="discret">${t.detail}</div></span></button>`).join('');
     const puce = (cle, libelle) => `<button class="puce${onglet === cle ? ' active' : ''}" data-action="ongletAstuces" data-onglet="${cle}">${libelle}</button>`;
     const agile = `<div class="puces">${puce('kpi', 'KPI Agile')}${puce('roles', 'Rôles Scrum (organigramme)')}</div>
@@ -38,7 +40,7 @@ Ecrans.astuces = {
     <div class="ecran ecran-large">
       ${C.entete('Trucs et astuces', 'Fiches pratiques : agilité (KPI, rôles Scrum), roadmap et Test & Learn (projets IA)')}
       <div class="themes">${themes}</div>
-      ${{ roadmap: () => this.roadmap(), testLearn: () => this.testLearn() }[theme]?.() || agile}
+      ${!theme ? C.aucunOnglet() : { roadmap: () => this.roadmap(), testLearn: () => this.testLearn() }[theme]?.() || agile}
     </div>`;
   },
 

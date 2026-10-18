@@ -149,21 +149,36 @@ const Roles = {
     const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
     const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
     const createur = contenu => avecCreateur ? `<td class="centre">${contenu}</td>` : '';
-    // Le nom du menu n'est écrit que sur la première ligne de ses droits (lignes consécutives d'un même menu)
-    const ligne = (d, i, liste) => `<tr><td>${i && liste[i - 1].menu === d.menu ? '' : `<b>${esc(d.menu)}</b>`}</td><td>${esc(d.libelle)}</td>
-      ${createur(C.badgeTon('Oui · fixe', 'violet'))}${ROLES_CHOISISSABLES.map(role => this.celluleNiveau(role, d.cle, modifiable)).join('')}</tr>`;
-    const sansDroit = m => `<tr><td><b>${esc(m.menu)}</b></td><td>${esc(m.libelle)}</td>
+    /* Première colonne : « ↳ Onglet « … » » pour un droit d'onglet (migration 038), sinon le nom du menu, écrit
+       seulement sur la première ligne du menu (lignes consécutives d'un même menu) */
+    const nom = (d, i, liste) => d.onglet ? `<span class="ligne-onglet">↳ Onglet « ${esc(d.onglet)} »</span>`
+      : i && liste[i - 1].menu === d.menu ? '' : `<b>${esc(d.menu)}</b>`;
+    const ligne = (d, i, liste) => d.cle ? `<tr><td>${nom(d, i, liste)}</td><td>${esc(d.libelle)}</td>
+      ${createur(C.badgeTon('Oui · fixe', 'violet'))}${ROLES_CHOISISSABLES.map(role => this.celluleNiveau(role, d.cle, modifiable)).join('')}</tr>`
+      : `<tr><td>${nom(d, i, liste)}</td><td>${esc(d.libelle)}</td>
       ${createur(C.badgeTon('Tous', 'neutre'))}${ROLES_CHOISISSABLES.map(() => `<td class="centre">${C.badgeTon('Tous', 'neutre')}</td>`).join('')}</tr>`;
     const sections = SECTIONS_DROITS.map(sec => `<tr class="groupe"><td colspan="${nbColonnes}"><b>${esc(sec.libelle)}</b></td></tr>`
-      + DROITS.filter(d => d.section === sec.cle).map(ligne).join('')
-      + MENUS_SANS_DROIT.filter(m => m.section === sec.cle).map(sansDroit).join('')).join('');
+      + this.lignesSection(sec.cle).map(ligne).join('')).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Matrice des droits</h2>
         <span class="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle${modifiable ? '' : ' · consultation'}</span></div>
-      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Menu</th><th>Ce qu’on peut y faire</th>
+      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Menu / onglet</th><th>Ce qu’on peut y faire</th>
         ${avecCreateur ? '<th class="centre">Créateur</th>' : ''}${entete}</tr></thead>
         <tbody><tr class="groupe"><td><b>Périmètre</b></td><td class="discret">ce que couvre le rôle</td>
           ${createur(`<span class="discret texte-12">${esc(PERIMETRES.createur)}</span>`)}${perimetres}</tr>${sections}</tbody></table></div></div>
-      <div class="discret texte-12">Chaque « Oui » est appliqué par la base. Un rôle se donne dans Mon dashboard › Administration › Rôles.</div>`;
+      <div class="discret texte-12">Les droits de menu et d’onglet règlent l’affichage ; ce qu’on peut modifier est appliqué par la base.
+        Un onglet « Non » disparaît de la page ; si tous ses onglets sont « Non », le menu disparaît aussi.
+        Un rôle se donne dans Mon dashboard › Administration › Rôles.</div>`;
+  },
+
+  /* Lignes d'une section de la matrice, dans l'ordre de DROITS ; un menu ouvert à tous (MENUS_SANS_DROIT, sans clé)
+     est placé juste avant les droits de ses onglets (Trucs et astuces), ou à la fin de la section s'il n'en a pas */
+  lignesSection(section) {
+    const lignes = DROITS.filter(d => d.section === section);
+    MENUS_SANS_DROIT.filter(m => m.section === section).forEach(m => {
+      const position = lignes.findIndex(d => d.menu === m.menu);
+      lignes.splice(position < 0 ? lignes.length : position, 0, m);
+    });
+    return lignes;
   },
 
   /* Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit). Figée sans le droit « roles »,

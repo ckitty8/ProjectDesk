@@ -299,6 +299,23 @@ function niveauDuRole(role, droit) {
 const niveauDroit = droit => etat.estCreateur ? 'oui' : niveauDuRole(monRole(), droit);
 const aDroit = droit => niveauDroit(droit) === 'oui';
 
+/* Droits par onglet (migration 038, maquette matrice-par-onglet/) : un onglet d'écran est affiché si son droit
+   (DROITS, propriétés ecran et id) n'est pas « Non ». Un onglet sans droit est toujours affiché. Ces droits
+   règlent l'affichage seulement : ce qu'on peut modifier reste contrôlé par la base (règles RLS). */
+function ongletPermis(ecran, id) {
+  const def = DROITS.find(d => d.ecran === ecran && d.id === id);
+  return !def || niveauDroit(def.cle) !== 'non';
+}
+// Onglets d'une liste (format de C.onglets : { id, libelle }) que mon rôle peut voir
+const ongletsPermis = (ecran, liste) => liste.filter(o => ongletPermis(ecran, o.id));
+// Onglet affiché : celui choisi s'il est permis, sinon le premier permis (undefined si aucun)
+const ongletAffiche = (liste, choisi) => (liste.find(o => o.id === choisi) || liste[0] || {}).id;
+// Écran ouvert à mon rôle : il n'a pas de droit d'onglet, ou au moins un de ses onglets est permis (menu masqué sinon)
+function ecranOuvert(ecran) {
+  const onglets = DROITS.filter(d => d.ecran === ecran);
+  return !onglets.length || onglets.some(d => niveauDroit(d.cle) !== 'non');
+}
+
 /* ---------- Accès pratiques aux données ---------- */
 const parId = (cle, id) => (etat.d[cle] || []).find(x => x.id === id) || null;
 const equipe = id => parId('equipes', id) || { nom: '—', couleur: COULEURS.pale, prefixe: '??' };

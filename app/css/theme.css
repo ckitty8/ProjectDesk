@@ -419,6 +419,7 @@ select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: a
 
 /* Matrice des droits (Administration › Rôles) : couleur de la liste selon le niveau */
 .tableau-matrice td { vertical-align: middle; }
+.tableau-matrice .ligne-onglet { padding-left: 16px; color: var(--discret); }   /* ligne « ↳ Onglet » (migration 038) */
 select.niveau-oui { background: #E3F5EC; color: #0B6B4F; font-weight: 600; }
 select.niveau-lecture { background: #FFF3E0; color: #8A4B00; font-weight: 600; }
 select.niveau-non { color: var(--pale); }

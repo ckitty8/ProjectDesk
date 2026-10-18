@@ -27,7 +27,8 @@ const Coquille = (() => {
   // Menus : id d'écran, libellé, icône ; « enfants » = sous-menu
   // Suivi de mes équipes (identifiant de section : general) : même ordre que Mon dashboard (demande du porteur 2026-10-12) — Daily, Projets, Ressources
   // (avec le Timesheet, comme « Mon timesheet » est rangé dans Gestion des ressources), Administration
-  // Menus de Suivi de mes équipes : chacun affiché si le droit de son menu n'est pas « Non » (matrice, migration 037)
+  /* Menus de Suivi de mes équipes : chacun affiché si le droit de son menu n'est pas « Non » (matrice, migration 037)
+     et si au moins un de ses onglets est permis (ecranOuvert, migration 038 ; idem pour Mon dashboard) */
   const MENU_GENERAL = [
     { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash', droit: 'suivi_dashboard' },
     { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
@@ -52,13 +53,16 @@ const Coquille = (() => {
   ];
   const PLEIN_ECRAN = ['connexion', 'choixEquipe'];
 
+  // Menu ouvert à mon rôle : son écran (ou, pour un menu à sous-menus, l'un de ses sous-menus) a un onglet permis
+  const menuOuvert = item => item.enfants ? item.enfants.some(e => ecranOuvert(e.id)) : ecranOuvert(item.id);
+
   function lienMenu(item) {
     const actif = etat.ecran === item.id && !item.enfants;
     const alerte = item.alerte ? item.alerte() : 0;
     const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}
       <span>${esc(item.libelle)}</span>${alerte ? `<span class="pastille-alerte">${alerte}</span>` : ''}</a>`;
     if (!item.enfants) return html;
-    return html + `<div class="sous-menu">${item.enfants.map(e =>
+    return html + `<div class="sous-menu">${item.enfants.filter(e => ecranOuvert(e.id)).map(e =>
       `<a class="sous-lien${etat.ecran === e.id ? ' actif' : ''}" data-action="aller" data-ecran="${e.id}">${esc(e.libelle)}</a>`).join('')}</div>`;
   }
 
@@ -66,7 +70,7 @@ const Coquille = (() => {
   function barreLaterale() {
     const eq = equipe(etat.equipeCourante);
     const nom = etat.session.user.name || etat.session.user.email;
-    const menusSuivi = MENU_GENERAL.filter(item => niveauDroit(item.droit) !== 'non');
+    const menusSuivi = MENU_GENERAL.filter(item => niveauDroit(item.droit) !== 'non' && ecranOuvert(item.id));
     return `
     <aside class="laterale${ui('menuLateral', { ouvert: false }).ouvert ? ' ouverte' : ''}">
       ${C.marque()}
@@ -74,7 +78,7 @@ const Coquille = (() => {
         ${menusSuivi.length ? `<div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${menusSuivi.map(lienMenu).join('')}` : ''}
         ${niveauDroit('mon_dashboard') === 'non' ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
-        ${MENU_MOI.filter(item => !item.visible || item.visible()).map(lienMenu).join('')}`}
+        ${MENU_MOI.filter(item => (!item.visible || item.visible()) && menuOuvert(item)).map(lienMenu).join('')}`}
       </nav>
       <div class="bloc-utilisateur">
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>

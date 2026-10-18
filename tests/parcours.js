@@ -151,7 +151,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration › Rôles et accès : matrice sans le créateur, sections Suivi de mes équipes / Mon dashboard, modifiable',
       acces.roles.length === 6 && !acces.roles.includes('Créateur') && acces.roles[0] === 'Administrateur'
       && acces.sections[1] === 'Suivi de mes équipes' && acces.sections[2] === 'Mon dashboard' && accesEnregistre
-      && await page.evaluate(() => DROITS.filter(d => d.section === 'suivi').length === 7), JSON.stringify(acces));
+      && await page.evaluate(() => DROITS.filter(d => d.section === 'suivi' && !d.onglet).length === 7), JSON.stringify(acces));
+    // Droits par onglet (maquette matrice-par-onglet/, migration 038) : une ligne « ↳ Onglet » par onglet, modifiable
+    verifier('Matrice des droits : une ligne par onglet (Fil des dailys, Synthèse…), cases modifiables', await page.evaluate(() =>
+      document.querySelectorAll('.contenu .tableau-matrice .ligne-onglet').length === DROITS.filter(d => d.onglet).length
+      && document.querySelector('.contenu .tableau-matrice').textContent.includes('↳ Onglet « Synthèse de l’équipe »')
+      && !document.querySelector('.contenu select[data-role="responsable"][data-droit="onglet_daily_synthese"]').disabled));
     await capture('06b-administration-roles');
     await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
@@ -262,7 +267,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="filtrerPersonneDaily"]:has-text("Thomas")'); await page.waitForTimeout(200);
     verifier('Daily des équipes : filtre par personne', (await texte()).includes('Mapping des rôles applicatifs') && !(await texte()).includes('Finaliser le plan de migration SSO'));
     await page.click('[data-action="filtrerPersonneDaily"][data-id="tous"]'); await page.waitForTimeout(200);
-    // Synthèse (responsables et administrateurs) : carte membre × jour, clic → panneau de lecture
+    // Synthèse (droit onglet_daily_synthese) : carte membre × jour, clic → panneau de lecture
     await page.click('[data-action="ongletDailyEquipes"][data-id="synthese"]'); await page.waitForTimeout(200);
     await page.click('.case-synthese.case-bloc'); await page.waitForTimeout(200);
     verifier('Daily des équipes › Synthèse : chiffres, carte membre × jour et lecture au clic', (await texte()).includes('Dailys renseignés')
@@ -270,9 +275,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && !!(await page.$('.panneau-lecture.actif')) && (await texte()).includes('Blocages'));
     await capture('33-daily-synthese');
     await page.click('[data-action="ongletDailyEquipes"][data-id="fil"]'); await page.waitForTimeout(200);
-    verifier('Daily des équipes : onglet Synthèse caché pour un simple membre', await page.evaluate(() => {
-      const a = etat.estAdmin, r = etat.rolesEquipe, c = etat.estCreateur; etat.estAdmin = false; etat.estCreateur = false; etat.rolesEquipe = {};
-      const voit = Ecrans.dailyEquipes.voitSynthese(); etat.estAdmin = a; etat.rolesEquipe = r; etat.estCreateur = c; return !voit;
+    // Droits par onglet (migration 038) : onglet masqué si son droit est « Non » pour mon rôle (créateur écarté le temps du contrôle)
+    verifier('Daily des équipes : onglet Synthèse masqué si son droit est « Non » (matrice par onglet)', await page.evaluate(() => {
+      const c = etat.estCreateur; etat.estCreateur = false;
+      const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'onglet_daily_synthese'), avant = ligne.niveau;
+      ligne.niveau = 'non'; rendre();
+      const masque = !document.querySelector('[data-action="ongletDailyEquipes"]') && document.body.textContent.includes('Mapping des rôles applicatifs');
+      ligne.niveau = avant; etat.estCreateur = c; rendre();
+      return masque && !!document.querySelector('[data-action="ongletDailyEquipes"][data-id="synthese"]');
     }));
     await page.click('[data-action="dailyEquipesDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
     const semainePrecedente = await page.evaluate(() => Calculs.lundi(Ecrans.dailyEquipes.jour()) === Calculs.ajouterJours(Calculs.lundi(Calculs.aujourdhui()), -7)

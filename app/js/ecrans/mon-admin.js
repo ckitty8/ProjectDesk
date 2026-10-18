@@ -28,32 +28,29 @@ Ecrans.monAdmin = {
     const u = ui('monAdmin', { onglet: etat.estAdmin && enAttente ? 'comptes' : 'sprints' });
     const gereEquipes = etat.estAdmin || mesEquipes().some(e => estResponsableDe(e.id));
     const regleEnvois = etat.d.projets.some(p => projetEnCours(p) && peutPiloterProjet(p));   // onglet Envoi du daily
-    const onglets = C.onglets([
-      ...(etat.estAdmin && niveauDroit('comptes') !== 'non' ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
+    const modifieReferentiels = etat.estAdmin && aDroit('administration');   // référentiels et jours fériés : sinon consultation
+    /* Onglets : d'abord le périmètre (comptes et rôles : administrateurs ; équipes : administrateurs et responsables ;
+       envoi du daily : projets que je pilote), puis le droit de chaque onglet (matrice, migration 038) */
+    const liste = ongletsPermis('monAdmin', [
+      ...(etat.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
       ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length }] : []),
-      ...(etat.estAdmin && niveauDroit('administration') !== 'non' ? [{ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length },
-        { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length }] : []),
+      Administration.ongletReferentiels(),
+      { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length },
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length },
-      ...(etat.estAdmin && niveauDroit('roles') !== 'non' ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
+      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
       ...(Simulation.estDisponible() ? [{ id: 'simulation', libelle: '★ Simulation des rôles' }] : [])
-    ], u.onglet, 'ongletMonAdmin');
-    let corps;
-    if (u.onglet === 'comptes' && etat.estAdmin && niveauDroit('comptes') !== 'non') corps = this.comptes();
-    else if (u.onglet === 'roles' && etat.estAdmin && niveauDroit('roles') !== 'non') corps = Roles.onglet();
-    else if (u.onglet === 'simulation' && Simulation.estDisponible()) corps = Simulation.onglet();
-    else if (u.onglet === 'equipes') corps = Administration.equipes(true);
-    else if (u.onglet === 'referentiels') corps = Administration.referentiels(etat.estAdmin && aDroit('administration'));
-    else if (u.onglet === 'feries' && etat.estAdmin && niveauDroit('administration') !== 'non') corps = this.feries();
-    else if (u.onglet === 'envoiDaily' && regleEnvois) corps = this.envoiDaily();
-    else corps = this.sprints();
-    const parties = [etat.estAdmin && 'comptes en attente', 'sprints des projets', gereEquipes && 'équipes',
-      etat.estAdmin && 'référentiels et jours fériés'].filter(Boolean).join(', ');
-    const sousTitre = parties.charAt(0).toUpperCase() + parties.slice(1);
+    ]);
+    const onglet = ongletAffiche(liste, u.onglet);
+    const corps = {
+      comptes: () => this.comptes(), roles: () => Roles.onglet(), simulation: () => Simulation.onglet(),
+      equipes: () => Administration.equipes(true), referentiels: () => Administration.referentiels(modifieReferentiels),
+      feries: () => this.feries(modifieReferentiels), envoiDaily: () => this.envoiDaily(), sprints: () => this.sprints()
+    }[onglet];
     return `
     <div class="ecran ecran-large">
-      ${C.entete('Administration', sousTitre)}
-      ${onglets}${corps}
+      ${C.entete('Administration', 'Réglages de vos équipes, de vos projets et des accès')}
+      ${corps ? C.onglets(liste, onglet, 'ongletMonAdmin') + corps() : C.aucunOnglet()}
     </div>`;
   },
 
@@ -200,10 +197,12 @@ Ecrans.monAdmin = {
   },
 
   // Onglet Jours fériés : liste par année, ajout (date, libellé) et suppression
-  feries() {
+  // Onglet Jours fériés ; modifiable : administrateur avec le droit « administration » (sinon consultation)
+  feries(modifiable) {
     const esc = C.esc, annees = [...new Set(etat.d.joursFeries.map(f => f.jour.slice(0, 4)))].sort();
     const annee = ui('feries', { annee: Calculs.aujourdhui().slice(0, 4) }).annee;
-    const lignes = etat.d.joursFeries.filter(f => f.jour.startsWith(annee)).map(f => `<tr>
+    const lignes = etat.d.joursFeries.filter(f => f.jour.startsWith(annee)).map(f => !modifiable
+      ? `<tr><td>${Calculs.formatAvecAnnee(f.jour)}</td><td>${esc(f.libelle)}</td><td></td></tr>` : `<tr>
         <td><input type="date" class="champ largeur-auto" value="${f.jour}" data-action-change="dateFerie" data-jour="${f.jour}"></td>
         <td><input class="champ" value="${esc(f.libelle)}" data-action-change="libelleFerie" data-jour="${f.jour}"></td>
         <td class="num">${C.boutonIcone('supprimer', 'supprimerFerie', `data-jour="${f.jour}"`, 'Supprimer ce jour férié')}</td></tr>`).join('');
@@ -212,9 +211,9 @@ Ecrans.monAdmin = {
     return `<div class="carte"><div class="carte-titre"><h2>Jours fériés ${C.aide('joursFeries')}</h2><div class="puces">${puces}</div></div>
       <table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th class="num"></th></tr></thead>
         <tbody>${lignes || `<tr><td colspan="3">${C.vide('Aucun jour férié pour ' + annee + '.')}</td></tr>`}</tbody></table>
-      <form class="ligne-flex encart-compact" data-action-envoi="ajouterFerie">
+      ${modifiable ? `<form class="ligne-flex encart-compact" data-action-envoi="ajouterFerie">
         <input type="date" class="champ largeur-auto" name="jour" required><input class="champ" name="libelle" placeholder="Libellé (ex. Lundi de Pentecôte)" required>
-        <button class="btn">Ajouter</button></form>
+        <button class="btn">Ajouter</button></form>` : ''}
       <div class="discret" style="font-size:12px;padding:0 16px 14px">Affichés dans les calendriers avec le type « ${esc(ABSENCES.FERIE)} » ;
         non comptés comme jours ouvrés (capacité, timesheet).</div></div>`;
   },

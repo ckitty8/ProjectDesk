@@ -16,8 +16,8 @@
 const Previsionnel = {
   NB_MOIS: 12,
 
-  // Le menu n'apparaît qu'aux chefs de projet (fiche « chef » ou affectation) et aux administrateurs
-  estVisible: () => (etat.estAdmin || etat.d.projets.some(suisChefDuProjet)) && niveauDroit('piloter') !== 'non',
+  // Le menu n'apparaît qu'aux chefs de projet (fiche « chef » ou affectation) et aux administrateurs, si l'un de ses onglets est permis
+  estVisible: () => (etat.estAdmin || etat.d.projets.some(suisChefDuProjet)) && niveauDroit('piloter') !== 'non' && ecranOuvert('previsionnel'),
 
   // Projets que je pilote, puis personnes proposées : affectées (hors Lecteur) à l'un d'eux, présentes
   personnes() {
@@ -196,13 +196,15 @@ Ecrans.previsionnel = {
   titre: 'Plan de charge',
   section: 'moi',
   rendre() {
-    const onglet = ui('previsionnel', { onglet: 'prevision' }).onglet;
     const entete = C.entete('Plan de charge', 'Réservé aux chefs de projet · répartition du temps d’une personne entre ses projets', '');
     if (!Previsionnel.estVisible()) return `<div class="ecran">${entete}<div class="carte">${C.vide('Écran réservé aux chefs de projet.')}</div></div>`;
     const personnes = Previsionnel.personnes(), r = Previsionnel.personneChoisie(personnes);
     if (!r) return `<div class="ecran">${entete}<div class="carte">${C.vide('Aucune personne affectée à vos projets.')}</div></div>`;
 
-    const puce = (cle, libelle) => `<button class="puce${onglet === cle ? ' active' : ''}" data-action="ongletPrevision" data-onglet="${cle}">${libelle}</button>`;
+    // Onglets selon leur droit (matrice, migration 038 ; estVisible garantit qu'il en reste au moins un)
+    const liste = ongletsPermis('previsionnel', [{ id: 'prevision', libelle: 'Prévisionnel' }, { id: 'reel', libelle: 'Temps réel par sprint' }]);
+    const onglet = ongletAffiche(liste, ui('previsionnel', { onglet: 'prevision' }).onglet);
+    const puces = liste.map(o => `<button class="puce${onglet === o.id ? ' active' : ''}" data-action="ongletPrevision" data-onglet="${o.id}">${o.libelle}</button>`).join('');
     const choixPersonne = C.liste(personnes.map(p => ({ valeur: p.id, libelle: `${p.nom} — ${Previsionnel.projetsDe(p).map(x => x.nom).join(', ')}` })), r.id,
       'class="champ" style="width:280px" data-action-change="personnePrevision"');
     const mois = Previsionnel.mois(), unite = ui('previsionnel', { unite: 'jours' }).unite;
@@ -217,7 +219,7 @@ Ecrans.previsionnel = {
 
     return `<div class="ecran" style="max-width:1320px">
       ${entete}
-      <div class="puces">${puce('prevision', 'Prévisionnel')}${puce('reel', 'Temps réel par sprint')}</div>
+      <div class="puces">${puces}</div>
       <div class="carte encart-compact"><div class="ligne-flex" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div class="ligne-flex"><span class="libelle sans-marge">Personne</span>${choixPersonne}
           <span class="discret texte-12">(vous-même ou un membre de vos projets)</span></div>${reglages}</div></div>
