@@ -50,6 +50,10 @@ sauf consigne contraire explicite du porteur du projet.
    - Une évolution demandée ne modifie, ne supprime ni ne déplace aucune donnée existante
      (absences, ressources, projets, affectations…). Toute écriture en base autre qu'une
      migration de structure additive demande l'accord explicite du porteur.
+   - **Pas de branche de sauvegarde Neon avant une migration** (porteur, 2026-10-18 : « pas la
+     peine de faire des sauvegardes, garde 1 BDD ») : on travaille sur la seule branche
+     `production`. Seule la sauvegarde « sauvegarde-avant-035-037-2026-10-18 » est conservée ;
+     les autres branches ont été supprimées avec son accord. Compter les données avant / après reste de mise.
    - Après une migration : recharger le cache de la Data API (DAT § 10) puis vérifier que
      l'application affiche toujours les données (ex. nombre d'absences inchangé).
    - Le chargement de l'application ne doit jamais vider l'écran si une lecture échoue
