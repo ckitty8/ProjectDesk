@@ -79,20 +79,24 @@ const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'uti
    2026-10-13). Clés fixes : chacune est reliée à des règles de la base (migration 031, fonction a_droit) ;
    les NIVEAUX (oui / lecture / non) se règlent dans l'application (table droits_roles). */
 const DROITS = [
-  { cle: 'general', domaine: 'Suivi de mes équipes', libelle: 'Dashboard, projets, ressources, timesheet (lecture)' },
-  { cle: 'mon_dashboard', domaine: 'Mon dashboard', libelle: 'Saisir son daily, ses heures, ses congés' },
-  { cle: 'daily_equipes', domaine: 'Daily', libelle: 'Lire le daily des équipes' },
-  { cle: 'conges_equipe', domaine: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
-  { cle: 'valider_timesheet', domaine: 'Timesheet', libelle: 'Valider / renvoyer les timesheets' },
-  { cle: 'fiches_ressources', domaine: 'Ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
-  { cle: 'affecter', domaine: 'Ressources', libelle: 'Affecter des personnes aux projets' },
-  { cle: 'projets', domaine: 'Projets', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
-  { cle: 'piloter', domaine: 'Projets', libelle: 'Plan de charge et envoi du daily par e-mail' },
-  { cle: 'administration', domaine: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
-  { cle: 'comptes', domaine: 'Accès', libelle: 'Comptes en attente : donner l’accès' },
-  { cle: 'roles', domaine: 'Accès', libelle: 'Rôles des utilisateurs et matrice des droits' },
-  { cle: 'nommer_admin', domaine: 'Accès', libelle: 'Nommer ou retirer un administrateur' }
+  { cle: 'general', section: 'suivi', domaine: 'Suivi de mes équipes', libelle: 'Dashboard, projets, ressources, timesheet (lecture)' },
+  { cle: 'mon_dashboard', section: 'dashboard', domaine: 'Mon dashboard', libelle: 'Saisir son daily, ses heures, ses congés' },
+  { cle: 'daily_equipes', section: 'suivi', domaine: 'Daily', libelle: 'Lire le daily des équipes' },
+  { cle: 'conges_equipe', section: 'dashboard', domaine: 'Congés & capacité', libelle: 'Congés et objectif de jours des autres' },
+  { cle: 'valider_timesheet', section: 'suivi', domaine: 'Timesheet', libelle: 'Valider / renvoyer les timesheets' },
+  { cle: 'fiches_ressources', section: 'dashboard', domaine: 'Ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
+  { cle: 'affecter', section: 'dashboard', domaine: 'Ressources', libelle: 'Affecter des personnes aux projets' },
+  { cle: 'projets', section: 'dashboard', domaine: 'Projets', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
+  { cle: 'piloter', section: 'dashboard', domaine: 'Projets', libelle: 'Plan de charge et envoi du daily par e-mail' },
+  { cle: 'administration', section: 'dashboard', domaine: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
+  { cle: 'comptes', section: 'dashboard', domaine: 'Accès', libelle: 'Comptes en attente : donner l’accès' },
+  { cle: 'roles', section: 'dashboard', domaine: 'Accès', libelle: 'Rôles des utilisateurs et matrice des droits' },
+  { cle: 'nommer_admin', section: 'dashboard', domaine: 'Accès', libelle: 'Nommer ou retirer un administrateur' }
 ];
+/* Sections de la matrice des droits (porteur 2026-10-18) : les droits sont rangés sous la section de
+   l'application où ils s'exercent — « Suivi de mes équipes » (lecture, daily des équipes, validation des
+   timesheets) puis « Mon dashboard » (saisies, ressources, projets, administration, accès). */
+const SECTIONS_DROITS = [{ cle: 'suivi', libelle: 'Suivi de mes équipes' }, { cle: 'dashboard', libelle: 'Mon dashboard' }];
 // Niveaux d'un droit : libellé et classe CSS de la liste de la matrice (theme.css)
 const NIVEAUX_DROIT = {
   oui: { libelle: 'Oui', classe: 'niveau-oui' }, lecture: { libelle: 'Lecture', classe: 'niveau-lecture' }, non: { libelle: 'Non', classe: 'niveau-non' }

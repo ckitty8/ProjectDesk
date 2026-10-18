@@ -139,6 +139,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('05b-ressources-liste');
     await page.click('[data-action="ongletRessources"][data-id="calendrier"]');
     await aller('administration'); await capture('06-administration');
+    // Rôles et accès (2026-10-16) : un rôle par ligne (sans le créateur), portée, fonctionnalités modifiées / consultées
+    await page.click('[data-action="ongletAdministration"][data-id="roles"]'); await page.waitForTimeout(150);
+    const acces = await page.evaluate(() => ({ roles: [...document.querySelectorAll('.contenu table thead th')].slice(2).map(t => t.textContent.trim()),
+      sections: [...document.querySelectorAll('.contenu table tbody tr.groupe')].map(t => t.textContent.trim()) }));
+    const celluleAcces = '.contenu select[data-action-change="majDroit"][data-role="lecture"][data-droit="daily_equipes"]';
+    const niveauAvant = await page.inputValue(celluleAcces), niveauEssai = niveauAvant === 'lecture' ? 'non' : 'lecture';
+    await page.selectOption(celluleAcces, niveauEssai); await page.waitForTimeout(400);
+    const accesEnregistre = await page.evaluate(n => etat.d.droitsRoles.find(d => d.role === 'lecture' && d.droit === 'daily_equipes').niveau === n, niveauEssai);
+    await page.selectOption(celluleAcces, niveauAvant); await page.waitForTimeout(400);
+    verifier('Administration › Rôles et accès : matrice sans le créateur, sections Suivi de mes équipes / Mon dashboard, modifiable',
+      acces.roles.length === 6 && !acces.roles.includes('Créateur') && acces.roles[0] === 'Administrateur'
+      && acces.sections[1] === 'Suivi de mes équipes' && acces.sections[2] === 'Mon dashboard' && accesEnregistre, JSON.stringify(acces));
+    await capture('06b-administration-roles');
+    await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
     await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
     verifier('Timesheet (Suivi de mes équipes) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
@@ -150,6 +164,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
+      'majDroit',   // Administration › Rôles et accès : matrice des droits modifiable (porteur 2026-10-18)
       'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
@@ -162,7 +177,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       if (ecran === 'ressources') {
         for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else if (ecran === 'administration') {
-        for (const onglet of ['equipes', 'referentiels']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+        for (const onglet of ['equipes', 'referentiels', 'roles']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else interdites.push(...await ecritures());
     }
     await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
@@ -275,7 +290,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       [...document.querySelectorAll('.fil-entree .code')].every(c => c.textContent === 'PF-14') && !!document.querySelector('.filtre-fil.actif')));
     /* Daily importé d'une personne sans compte (CR Daily Excel, migration 034) : auteur « fiche:<id> », affiché sur sa carte */
     const sansCompte = await page.evaluate(() => {
-      const p = etat.d.projets.find(x => x.code === 'PF-14'), jour = ui('dailyEquipes', {}).jour || Calculs.aujourdhui();
+      // Dernier jour de semaine (le samedi et le dimanche ne sont pas affichés par Daily des équipes)
+      let jour = ui('dailyEquipes', {}).jour || Calculs.aujourdhui();
+      while (Calculs.estWeekend(jour)) jour = Calculs.ajouterJours(jour, -1);
+      const p = etat.d.projets.find(x => x.code === 'PF-14');
       const r = Ecrans.dailyEquipes.membres(p, jour).find(x => !x.userId);
       if (!r) return null;
       etat.d.notesProjet.push({ userId: 'fiche:' + r.id, projetId: p.id, jour, texte: 'Aujourd’hui\n- Daily importé du fichier Excel' });
@@ -815,7 +833,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Matrice des droits (migration 031) : une ligne par droit, Administrateur × Rôles verrouillé, niveau modifié et enregistré
     await page.click('[data-action="vueRoles"][data-vue="matrice"]'); await page.waitForTimeout(200);
     const cellule = (role, droit) => `select[data-action-change="majDroit"][data-role="${role}"][data-droit="${droit}"]`;
-    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1);
+    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1 + SECTIONS_DROITS.length);
     const verrou = await page.$eval(cellule('admin', 'roles'), el => el.disabled);
     await page.selectOption(cellule('utilisateur', 'projets'), 'oui'); await page.waitForTimeout(400);
     const enregistre = await page.evaluate(() => etat.d.droitsRoles.find(d => d.role === 'utilisateur' && d.droit === 'projets').niveau === 'oui');
@@ -835,9 +853,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
       !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
       && !document.querySelector('[data-ecran="previsionnel"]') && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
+    await aller('administration');
+    verifier('Administration › Rôles et accès : onglet absent pour un membre', !(await page.$('[data-action="ongletAdministration"][data-id="roles"]')));
     await aller('daily'); await page.waitForTimeout(300);
+    // Sa note du dernier jour de semaine : dans le texte, ou en « Rappel d'hier » (attribut placeholder) un samedi ou un dimanche
     verifier('Simulation : écrans de la personne (son daily par projet)', (await texte()).includes('SSO & gestion des droits')
-      && (await texte()).includes('Mapping des rôles applicatifs'));
+      && (await page.innerHTML('#app')).includes('Mapping des rôles applicatifs'));
     await capture('29-simulation-en-cours');
     verifier('Simulation : lecture seule (écriture refusée)', await page.evaluate(() =>
       Api.creer('absences', { ressourceId: maRessource().id, jour: '2026-12-01', type: 'Congés validé' }).then(() => false, e => e.message.includes('lecture seule'))));

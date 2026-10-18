@@ -138,28 +138,36 @@ const Roles = {
         </table></div></div>`;
   },
 
-  /* Matrice des droits (maquette roles-droits/) : une ligne par droit (DROITS), une colonne par rôle ;
-     le créateur a tout (fixe), Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031).
-     Modifiable avec le droit « roles » ; chaque changement est enregistré aussitôt (table droits_roles). */
-  matrice() {
-    const esc = C.esc, modifiable = aDroit('roles');
+  /* Matrice des droits (maquette roles-droits/, sections maquette matrice-sections/) : une colonne par rôle,
+     la ligne « Périmètre », puis les droits (DROITS) rangés en deux sections — Suivi de mes équipes, Mon dashboard
+     (SECTIONS_DROITS). Le créateur a tout (colonne fixe, absente de Suivi › Administration › Rôles et accès) ;
+     Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031). Modifiable avec le droit « roles » :
+     chaque changement est enregistré aussitôt (table droits_roles) ; la base refuse sans ce droit. */
+  matrice(avecCreateur = true) {
+    const esc = C.esc, modifiable = aDroit('roles'), nbColonnes = 2 + (avecCreateur ? 1 : 0) + ROLES_CHOISISSABLES.length;
     const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
     const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
-    const cellule = (role, droit) => {
-      const niveau = ((etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit) || {}).niveau || 'non';
-      const fixe = !modifiable || (role === 'admin' && droit === 'roles');
-      const options = Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => ({ valeur, libelle: n.libelle }));
-      return `<td class="centre">${C.liste(options, niveau, `class="champ champ-mini ${NIVEAUX_DROIT[niveau].classe}" data-action-change="majDroit"
-        data-role="${role}" data-droit="${droit}"${fixe ? ' disabled' : ''}`)}</td>`;
-    };
-    const lignes = DROITS.map(d => `<tr><td><b>${esc(d.domaine)}</b></td><td>${esc(d.libelle)}</td>
-      <td class="centre">${C.badgeTon('Oui · fixe', 'violet')}</td>${ROLES_CHOISISSABLES.map(role => cellule(role, d.cle)).join('')}</tr>`).join('');
+    const createur = contenu => avecCreateur ? `<td class="centre">${contenu}</td>` : '';
+    const ligne = d => `<tr><td><b>${esc(d.domaine)}</b></td><td>${esc(d.libelle)}</td>${createur(C.badgeTon('Oui · fixe', 'violet'))}
+      ${ROLES_CHOISISSABLES.map(role => this.celluleNiveau(role, d.cle, modifiable)).join('')}</tr>`;
+    const sections = SECTIONS_DROITS.map(sec => `<tr class="groupe"><td colspan="${nbColonnes}"><b>${esc(sec.libelle)}</b></td></tr>`
+      + DROITS.filter(d => d.section === sec.cle).map(ligne).join('')).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Matrice des droits</h2>
         <span class="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle${modifiable ? '' : ' · consultation'}</span></div>
-      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Domaine</th><th>Droit</th><th class="centre">Créateur</th>${entete}</tr></thead>
+      <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Domaine</th><th>Droit</th>
+        ${avecCreateur ? '<th class="centre">Créateur</th>' : ''}${entete}</tr></thead>
         <tbody><tr class="groupe"><td><b>Périmètre</b></td><td class="discret">ce que couvre le rôle</td>
-          <td class="centre discret texte-12">${esc(PERIMETRES.createur)}</td>${perimetres}</tr>${lignes}</tbody></table></div></div>
-      <div class="discret texte-12">Chaque « Oui » est appliqué par la base. Un rôle se donne dans « Utilisateurs et rôles ».</div>`;
+          ${createur(`<span class="discret texte-12">${esc(PERIMETRES.createur)}</span>`)}${perimetres}</tr>${sections}</tbody></table></div></div>
+      <div class="discret texte-12">Chaque « Oui » est appliqué par la base. Un rôle se donne dans Mon dashboard › Administration › Rôles.</div>`;
+  },
+
+  // Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit) ; figée sans le droit « roles »
+  celluleNiveau(role, droit, modifiable) {
+    const niveau = ((etat.d.droitsRoles || []).find(d => d.role === role && d.droit === droit) || {}).niveau || 'non';
+    const fixe = !modifiable || (role === 'admin' && droit === 'roles');
+    const options = Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => ({ valeur, libelle: n.libelle }));
+    return `<td class="centre">${C.liste(options, niveau, `class="champ champ-mini ${NIVEAUX_DROIT[niveau].classe}" data-action-change="majDroit"
+      data-role="${role}" data-droit="${droit}"${fixe ? ' disabled' : ''}`)}</td>`;
   },
 
   // Onglet Rôles : trois vues — utilisateurs et rôles, matrice des droits, qui a quel rôle

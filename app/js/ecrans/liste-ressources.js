@@ -211,7 +211,7 @@ Ecrans.listeRessources = {
     if (rattacheA) return this.lignePersonneRattachee(r, rattacheA, depuis);
     const esc = C.esc, editable = peutModifierFiche(r), badge = C.badgeActif(!estInactive(r), ['Actif', 'Inactif']);
     return `<tr data-ressource="${r.id}"${estInactive(r) ? ' class="inactive"' : ''}>${this.cellulesIdentite(r)}
-      <td class="projets-personne">${deProjet ? C.badgeRef('role', role) : this.projetsDe(r)}</td>
+      <td class="projets-personne">${deProjet ? C.badgeRef('role', role) : lignesProjetsDe(r.id)}</td>
       <td class="${r.dateDepart ? 'presence-fin' : 'discret'}">${esc(Calculs.libellePresence(r, Calculs.aujourdhui())) || '<span class="pale">—</span>'}</td>
       <td>${editable ? `<button class="lien-btn" data-action="basculerActifRessource" data-id="${r.id}"
         title="${estInactive(r) ? 'Réactiver (retire la date de fin)' : 'Rendre inactive (date de fin = aujourd’hui)'}">
@@ -231,12 +231,6 @@ Ecrans.listeRessources = {
       <td class="discret">${depuis ? 'rattachée le ' + Calculs.formatAvecAnnee(depuis.slice(0, 10)) : ''}</td><td>${C.badgeActif(!estInactive(r), ['Actif', 'Inactif'])}</td>
       <td class="num">${peutRattacherA(equipeId) ? `<a data-action="retirerRattachement" data-equipe="${equipeId}" data-id="${r.id}"
         title="Retirer de ${esc(equipe(equipeId).nom)} (elle reste dans ${esc(equipe(r.equipeId).nom)})">Retirer</a>` : ''}</td></tr>`;
-  },
-  // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
-  // (ses projets se modifient depuis sa fiche : « Modifier ses projets »)
-  projetsDe(r) {
-    const projets = affectationsDe(r.id).map(a => `<div>${C.esc(projet(a.projetId).nom)} · ${C.esc(a.role === ROLES_PROJET.CHEF ? 'PO' : a.role)}</div>`);
-    return projets.join('') || '<span class="pale">hors projet</span>';
   },
 
 

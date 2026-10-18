@@ -435,6 +435,19 @@ const affectationsDe = ressourceId => etat.d.affectations.filter(a => a.ressourc
 // Badges « Projet · rôle » d'une personne (fiche, Administration › Rôles), ou le texte « vide »
 const badgesProjetsDe = (ressourceId, vide) => affectationsDe(ressourceId)
   .map(a => C.badgeRef('role', `${projet(a.projetId).nom} · ${a.role}`)).join(' ') || `<span class="pale">${vide}</span>`;
+/* Projets d'une personne avec son rôle : ses affectations, plus les projets dont elle est le chef inscrit sur
+   la fiche projet (projets.chef_id, lu tant qu'un chef n'y figure que là — migration 028) → rôle « Chef de projet ».
+   Liste des ressources (Mon dashboard) et Gestion des ressources › Liste des ressources. */
+function projetsAvecRoleDe(ressourceId) {
+  const liste = affectationsDe(ressourceId).map(a => ({ projet: projet(a.projetId), role: a.role }));
+  etat.d.projets.filter(p => p.chefId === ressourceId && !liste.some(x => x.projet.id === p.id))
+    .forEach(p => liste.push({ projet: p, role: ROLES_PROJET.CHEF }));
+  return liste;
+}
+// Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
+const lignesProjetsDe = ressourceId => projetsAvecRoleDe(ressourceId)
+  .map(x => `<div>${C.esc(x.projet.nom)} · ${C.esc(x.role === ROLES_PROJET.CHEF ? 'PO' : x.role)}</div>`).join('')
+  || '<span class="pale">hors projet</span>';
 // Codes des projets où la personne est affectée (badges « DA-08 MO-21 »), vide si aucun
 const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
   .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');

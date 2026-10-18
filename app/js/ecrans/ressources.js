@@ -226,7 +226,7 @@ Ecrans.ressources = {
     return `<tr data-recherche="${esc(nom)}"${inactif ? ' style="color:var(--discret)"' : ''}${q && !nom.includes(q) ? ' hidden' : ''}>
       <td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
       <td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
-      <td>${esc(r.poste || '—')}</td><td>${codesProjetsDe(r.id) || '<span class="pale">—</span>'}</td><td class="num">${r.capacite} %</td>
+      <td>${esc(r.poste || '—')}</td><td class="projets-personne">${lignesProjetsDe(r.id)}</td><td class="num">${r.capacite} %</td>
       <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td>${anniversaire}</tr>`;
   },
 

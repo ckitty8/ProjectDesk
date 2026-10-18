@@ -178,7 +178,11 @@ function amorcer() {
   bd.jours_feries = [['2026-11-01', 'Toussaint'], ['2026-11-11', 'Armistice'], ['2026-12-25', 'Noël'], ['2026-08-15', 'Assomption'], ['2026-07-14', 'Fête nationale']].map(([jour, libelle]) => ({ jour, libelle }));
 
 
-  const jourJ = new Date().toISOString().slice(0, 10);   // notes « du jour » pour les tests
+  // Notes « du jour » pour les tests : dernier jour de semaine (un samedi ou un dimanche, le vendredi précédent),
+  // car Daily des équipes n'affiche que les jours du lundi au vendredi
+  const dateJ = new Date(), recul = { 0: 2, 6: 1 }[dateJ.getDay()] || 0;
+  dateJ.setDate(dateJ.getDate() - recul);
+  const jourJ = dateJ.toISOString().slice(0, 10);
   // Daily par projet (migration 018) : une note par personne, jour et projet
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
