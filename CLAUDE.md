@@ -86,6 +86,11 @@ pages, audit de la base (`db/audit/verifier-bdd.sql`, lecture seule), mise à jo
 Objectif du porteur : aucune ligne inutile ni code mort ; une application reprenable par une
 équipe de développeurs humains.
 
+## Fin de session
+
+- Quand le porteur dit « fin de session » (ou « on a fini », « avant de merger ») : appliquer le skill
+  `next-skill-advisor` (`.claude/skills/`), qui propose les prochaines étapes sans rien lancer sans accord.
+
 ## Après chaque commit
 
 - [ ] Livraison : pousser la branche de travail puis **`main`** (mise en ligne Vercel sur

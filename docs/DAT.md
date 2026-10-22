@@ -144,6 +144,7 @@
 | 2.27    | 2026-10-22 | **Migration 038 appliquée** en production (accord du porteur : « appliquer la migration 038, va y » ; sans branche de sauvegarde, règle 8 du 2026-10-18) : contrainte des droits élargie, 120 lignes `droits_roles` (20 droits d'onglet × 6 rôles, chacun au niveau de son droit de départ). Comptages identiques avant / après hormis `droits_roles` 108 → 228 ; cache de la Data API rechargé. Les lignes « ↳ Onglet » de la matrice sont désormais modifiables. Aucun code modifié hormis `?v=` |
 | 2.28    | 2026-10-22 | Trois évolutions validées par le porteur. (1) **« Saisir mes heures » en menu à part** de Mon dashboard, juste sous Gestion des ressources (« je veux sortir le menu saisir mes heures de gestion des ressources » ; maquette `menu-saisir-heures/`) ; Gestion des ressources = Congés, Liste des ressources. (2) **Vue « Qui a quel rôle » alignée sur les 6 rôles** (maquette `qui-a-quel-role/`) : mêmes cartes que la Simulation (`Simulation.ROLES`), chaque fiche active sous le rôle choisi (`Roles.roleChoisi`) avec son équipe et « prévu » / « sans compte » ; `Roles.LISTE`, `dePersonne`, `badge` supprimés. (3) **Matrice des droits sans lignes Plan de charge** (option 1, maquette `matrice-envoi-daily/`) : onglets Prévisionnel et Temps réel retirés de `DROITS` ; le droit `piloter` devient la ligne « Envoi du daily par e-mail » sous Administration (Plan de charge réservé au créateur depuis 2.23). Décisions sans code : pas de rôle Projet automatique pour les chefs de projet, pas de badge « prévu ». Aucun changement en base. 140 contrôles (§ 3.3, § 5.2) |
 | 2.29    | 2026-10-22 | **Revue qualité** (skill `revue-qualite`) : code — 0 erreur, 0 avertissement ; restes supprimés après les dernières évolutions (paramètre `avecCreateur` de `Roles.matrice`, paramètre `modifiable` de `Administration.equipes`, filtre d'onglets du Plan de charge, commentaires et aide « réservé aux chefs de projet ») ; non-régression visuelle : aucune capture modifiée. Base (lecture seule, `db/audit/verifier-bdd.sql`) : structure et sécurité saines, toutes les tables et fonctions créées par une migration ; contrôle « daily hors affectation » corrigé pour les dailys importés `fiche:<id>` (165 faux positifs) — reste 1 daily de Cerine KERARMA sur IA-01 où elle n'est pas affectée (à juger par le porteur). Documents : § 3, § 9 et points de cohérence mis à jour ; skill : liste des rôles et règle de sauvegarde à jour. 140 contrôles |
+| 2.30    | 2026-10-22 | **Skills fusionnés dans `main`** (accord du porteur) : `next-skill-advisor` (déclenché par « fin de session »), `deploy-checklist`, `incident-response`, créés par une autre session sur la branche `claude/add-engineering-skills` et jamais fusionnés jusque-là (§ 11.3). Aucun code ni donnée modifiés hormis `?v=` |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -575,6 +576,14 @@ peut suivre les mêmes étapes à la main. Il s'appuie sur deux scripts :
 | `db/audit/verifier-bdd.sql` | **lecture seule** sur la branche `production` : tables sans RLS, sans règle, sans clé primaire ; droits du rôle `anonymous` ; fonctions `SECURITY DEFINER` sans `search_path` ; clés étrangères sans index ; fonctions non référencées en base (à rapprocher des appels de `app/`) ; valeurs hors référentiel ; doublons d'email ou de compte ; dates incohérentes ; heures ou absences hors présence ; sprints sans dates ; plan de charge > 100 % ; daily et envois incohérents | une ligne par écart |
 
 Une correction de la base issue de l'audit passe par une migration montrée au porteur (règle n°8).
+
+### 11.3 Autres skills du projet (`.claude/skills/`)
+
+| Skill | Quand | Rôle |
+|-------|-------|------|
+| `next-skill-advisor` | « fin de session », « on a fini », « avant de merger » | Lit la session (git, CLAUDE.md, skills) et **propose** les prochaines étapes ; ne lance rien sans accord |
+| `deploy-checklist` | Livraison avec migration ou changement sensible | Liste de vérification avant la mise en production (CI, accords, retour arrière) |
+| `incident-response` | Incident en production | Tri, communication, post-mortem sans reproche |
 
 ## 12. Points ouverts
 
