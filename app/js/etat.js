@@ -404,7 +404,7 @@ function roleAcces(r) {
 const estLectureSeule = () => !etat.estCreateur && !!maRessource() && roleDeclare(maRessource()) === 'lecture';
 
 /* ---------- Daily par projet (migration 018) ---------- */
-// Absence d'une personne un jour donné (Congés & capacité), ou null
+// Absence d'une personne un jour donné (Congés), ou null
 const absenceDe = (ressourceId, jour) => (etat.d.absences || []).find(a => a.ressourceId === ressourceId && a.jour === jour) || null;
 // Projet en cours (non terminé) : seul un projet en cours attend un daily
 const projetEnCours = p => !!p && !Calculs.estTermine(p);
@@ -485,7 +485,7 @@ function lignesProjetsDe(ressourceId) {
 const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
   .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
 /* Unités du haut de l'arborescence (sans parent, ou parent introuvable) : directions d'abord,
-   puis équipes isolées — ordre des arbres de Congés & capacité et de la Gestion des ressources */
+   puis équipes isolées — ordre des arbres de Congés et de la Gestion des ressources */
 function unitesRacines() {
   const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
   return [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')];

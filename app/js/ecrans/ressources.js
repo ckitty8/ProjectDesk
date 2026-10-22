@@ -159,7 +159,7 @@ const Calendrier = {
     return this.ligneGroupe(ctx, titre, 0, false) + membres.map(id => this.lignePersonne(ctx, ressource(id), 1)).join('') + this.ligneSynthese(ctx, p, 1);
   },
 
-  // Tableau personnes × jours ; editable = clic sur une case pour poser/retirer une absence (Congés & capacité)
+  // Tableau personnes × jours ; editable = clic sur une case pour poser/retirer une absence (Congés)
   rendre(editable) {
     const ctx = this.contexte(editable);
     const lignes = this.vue().mode === 'projet' ? this.lignesProjet(ctx) : unitesRacines().map(e => this.unite(ctx, e, 0)).join('');
@@ -226,7 +226,7 @@ Ecrans.ressources = {
     return `<tr data-recherche="${esc(nom)}"${inactif ? ' style="color:var(--discret)"' : ''}${q && !nom.includes(q) ? ' hidden' : ''}>
       <td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td>
       <td><span class="ligne-flex">${C.pastille(eq.couleur)}${esc(eq.nom)}</span></td>
-      <td>${esc(r.poste || '—')}</td><td class="projets-personne">${lignesProjetsDe(r.id)}</td><td class="num">${r.capacite} %</td>
+      <td>${esc(r.poste || '—')}</td><td class="projets-personne">${lignesProjetsDe(r.id)}</td>
       <td>${C.badgeActif(!inactif, ['Actif', 'Inactif'])}${fin}</td>${anniversaire}</tr>`;
   },
 
@@ -234,13 +234,13 @@ Ecrans.ressources = {
   liste() {
     const reg = this.reglages(), q = reg.q.trim().toLowerCase();
     const fiches = this.fichesFiltrees(reg).sort((a, b) => estInactive(a) - estInactive(b) || a.nom.localeCompare(b.nom));
-    const moisCourant = Calculs.depuisIso(Calculs.aujourdhui()).getMonth(), colonnes = naissanceDisponible() ? 7 : 6;
+    const moisCourant = Calculs.depuisIso(Calculs.aujourdhui()).getMonth(), colonnes = naissanceDisponible() ? 6 : 5;
     const lignes = fiches.map(r => this.ligneAnnuaire(r, q, moisCourant)).join('');
     return `${this.filtres(reg)}
       <div class="carte"><div class="carte-titre"><h2>Liste des ressources</h2>
         <span class="discret">${fiches.length} personnes · ${fiches.filter(estInactive).length} inactive(s)</span></div>
-        <table class="tableau" id="annuaire-ressources"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th class="num">Capacité</th>
-          <th>Statut</th>${colonnes === 7 ? '<th>Anniversaire</th>' : ''}</tr></thead>
+        <table class="tableau" id="annuaire-ressources"><thead><tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th>
+          <th>Statut</th>${colonnes === 6 ? '<th>Anniversaire</th>' : ''}</tr></thead>
         <tbody>${lignes || `<tr><td colspan="${colonnes}">${C.vide('Aucune ressource.')}</td></tr>`}</tbody></table></div>`;
   },
 

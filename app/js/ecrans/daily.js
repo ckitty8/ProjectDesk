@@ -4,7 +4,7 @@
      trois champs : Hier (la veille), Aujourd'hui, Blocages ; enregistrement automatique.
      Stockage : notes_daily_projet (migration 018), un texte par projet et par jour au
      format des rubriques (Calculs.decouperDaily / composerDaily).
-   - Lien avec les congés : un jour d'absence d'une journée (Congés & capacité), aucun
+   - Lien avec les congés : un jour d'absence d'une journée (Congés), aucun
      daily n'est attendu (cartes repliées) ; une demi-journée laisse la saisie ouverte.
    - Aide à la saisie : « Hier » rappelle l'« Aujourd'hui » noté le jour ouvré précédent.
    ============================================================ */

@@ -61,7 +61,7 @@ Ecrans.monTimesheet = {
           <span class="ligne-flex">Statut : ${C.badgeFeuille(statut)}
             <b>${Calculs.nombre(h.total)} h</b><span class="discret">sur ${Calculs.nombre(attendu)} h attendues</span>
             ${statut === 'a_completer' && feuille && feuille.commentaire ? `<span class="texte-attention">« ${esc(feuille.commentaire)} »</span>` : ''}
-            <span class="discret">JF = jour férié · Abs = absence posée (Congés & capacité) ; une demi-journée reste saisissable.</span></span>
+            <span class="discret">JF = jour férié · Abs = absence posée (Congés) ; une demi-journée reste saisissable.</span></span>
           ${verrouille ? '' : '<button class="btn primaire" data-action="soumettreMois">Soumettre le mois</button>'}
         </div>
       </div>

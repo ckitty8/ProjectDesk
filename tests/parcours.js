@@ -218,7 +218,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Menu : Saisir mes heures rangé dans Gestion des ressources (sans intertitre), plus d'entrée à part
     verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
-      return sousMenus.some(t => t.includes('Congés & capacité') && t.includes('Saisir mes heures') && !t.includes('Mon timesheet'))
+      return sousMenus.some(t => t.includes('Congés') && t.includes('Saisir mes heures') && !t.includes('Mon timesheet'))
         && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet')
         && document.querySelector('.menu-titre').textContent.includes('Suivi de mes équipes');
     }));
@@ -406,7 +406,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
     // Onglet Capacité : sans sprint saisi, message ; les sprints se saisissent dans Administration › Sprints
-    await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
+    await aller('capacite'); await page.waitForTimeout(200);
     const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
     await page.selectOption('select[data-action-change="projetCapaciteSaisie"]', projetEditable); await page.waitForTimeout(200);
     const sansSprint = (await texte()).includes('Aucun sprint saisi');
@@ -431,9 +431,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (!(await page.$(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`)) || autreAnneeVide)
       && await page.evaluate(() => etat.ecran === 'monAdmin' && ui('monAdmin').onglet === 'sprints'));
     await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
-    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="capacite"]'); await page.waitForTimeout(200);
+    await aller('capacite'); await page.waitForTimeout(200);
+    verifier('Capacité : menu à part au-dessus du Plan de charge, plus d’onglet Capacité dans Congés', await page.evaluate(() => {
+      const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
+      return ids.indexOf('capacite') > ids.indexOf('conges') && (ids.indexOf('previsionnel') < 0 || ids.indexOf('capacite') < ids.indexOf('previsionnel'))
+        && !Ecrans.conges.onglets(2026).some(o => o.id === 'capacite');
+    }));
     verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
       && (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
+    await capture('11b-capacite');
     await page.click('[data-action="sprintCapacite"] >> nth=0'); await page.waitForTimeout(150);
     const ailleurs = !(await texte()).includes('· en cours');
     await page.click('[data-action="capaciteAujourdhui"]'); await page.waitForTimeout(150);
@@ -449,8 +455,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
     const methode = (await page.textContent('.modale')) || '';
     await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
-    verifier('Congés : pop-in « Méthode de calcul Scrum »', ['Capacité engageable', 'Vélocité', 'Répartition idéale', 'Incidents (prod)', 'Cérémonies / réunions'].every(t => methode.includes(t)));
-    await page.click('[data-action="ongletConges"][data-id="grille"]');
+    verifier('Capacité : pop-in « Méthode de calcul Scrum »', ['Capacité engageable', 'Vélocité', 'Répartition idéale', 'Incidents (prod)', 'Cérémonies / réunions'].every(t => methode.includes(t)));
+    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="grille"]');
     // Novembre 2026 (Armistice, demi-journée de Léa le 13) : indépendant de la date du jour
     await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10 })); await page.waitForTimeout(150);
     verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));

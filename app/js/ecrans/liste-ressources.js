@@ -147,13 +147,13 @@ Ecrans.listeRessources = {
         ${this.tableauPersonnes('equipe:' + e.id, [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ ...x, rattacheA: e.id }))], 'Aucune personne.')}</div>`;
   },
   /* Responsable de l'équipe : en tête, signalé « hors projet » s'il n'est affecté à aucun projet.
-     Il compte comme toute personne de l'équipe dans Congés & capacité (règle de présence, etat.js). */
+     Il compte comme toute personne de l'équipe dans Congés (règle de présence, etat.js). */
   carteResponsable(r, affecte) {
     const esc = C.esc, editable = peutModifierFiche(r);
     return `<div class="carte detail-entete responsable">${C.avatar(r.nom, true)}
       <div><div class="nom-personne">${esc(r.nom)}</div><div class="discret">Responsable de l’équipe${r.poste ? ' · ' + esc(r.poste) : ''}</div></div>
       <span class="extensible"></span>${affecte ? '' : C.badgeTon('Hors projet', 'violet')}
-      ${estInactive(r) ? C.badgeActif(false, ['Actif', 'Inactif']) : C.badgeTon('Comptée dans Congés & capacité', 'info')}
+      ${estInactive(r) ? C.badgeActif(false, ['Actif', 'Inactif']) : C.badgeTon('Comptée dans Congés', 'info')}
       ${editable ? `<a data-action="modifierRessource" data-id="${r.id}">Fiche</a>` : ''}</div>`;
   },
 

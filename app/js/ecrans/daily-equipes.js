@@ -147,7 +147,7 @@ const Synthese = {
   CLASSES: { ok: 'case-ok', bloc: 'case-bloc', manque: 'case-manque', abs: 'case-abs', avenir: '', hors: '' },
 
   /* État d'une personne un jour donné, tous projets affichés : à venir, hors présence, daily (avec ou sans
-     blocage), absent(e) (Congés & capacité) ou manquant. « Sans compte » compte comme manquant. */
+     blocage), absent(e) (Congés) ou manquant. « Sans compte » compte comme manquant. */
   etatCase(r, projets, jour) {
     if (jour > Calculs.aujourdhui()) return 'avenir';
     if (!estPresenteSur(r.id, jour)) return 'hors';
@@ -230,7 +230,7 @@ const ExportDaily = {
   /* Lignes du fichier, du jour le plus récent au plus ancien, puis par projet et par nom.
      Pour chaque jour ouvré (hors week-ends et fériés) et chaque projet : les membres attendus
      au daily ce jour-là (mêmes règles qu'à l'écran : affectés hors Lecteur, présents) avec
-     un statut : Renseigné, Absent(e) (Congés & capacité), Sans compte (fiche non reliée) ou
+     un statut : Renseigné, Absent(e) (Congés), Sans compte (fiche non reliée) ou
      Manquant. « notes » = notes_daily_projet de la période (lues par telechargerDailyExcel). */
   lignes(debut, fin, projets, notes, avecManquants) {
     const lignes = [], jours = Calculs.joursOuvresEntre(debut, fin, feries()).reverse();

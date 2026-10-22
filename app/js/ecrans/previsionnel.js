@@ -3,7 +3,7 @@
    Réservé aux chefs de projet (et administrateurs). Remplace le tableur du porteur
    « Suivi temps tech lead », pour toute personne affectée (pas seulement les tech leads).
    - Onglet « Prévisionnel » : par mois sur 12 mois, jours ouvrés (fériés), congés
-     (Congés & capacité), jours travaillés, puis par projet de la personne :
+     (Congés), jours travaillés, puis par projet de la personne :
      jours travaillés × % du temps sur le projet × % de chaque type de tâche.
    - Onglet « Temps réel par sprint » : sur les dates d'un sprint, heures prévues
      (capacité × % du projet) et heures réellement saisies (Saisir mes heures).
@@ -121,14 +121,14 @@ const Previsionnel = {
             <th class="num">Total</th></tr></thead>
         <tbody>
           ${this.ligne('Jours ouvrés <span class="discret">(hors week-ends et fériés)</span>', '', parMois.map(m => m.ouvres))}
-          ${this.ligne('Congés / absences <span class="discret">(Congés & capacité)</span>', '', parMois.map(m => m.conges))}
+          ${this.ligne('Congés / absences <span class="discret">(Congés)</span>', '', parMois.map(m => m.conges))}
           ${this.ligne('<b>Jours travaillés</b>', '', parMois.map(m => m.travailles), 'groupe')}
           ${capacite !== 100 ? this.ligne(`<b>Disponibles</b> <span class="discret">(capacité ${capacite} %)</span>`, '', disponibles, 'groupe') : ''}
           ${blocs || `<tr><td colspan="${mois.length + 3}">${C.vide('Aucun projet en cours pour cette personne.')}</td></tr>`}
           ${this.ligne('<b>TOTAL</b>', `<b>${sommeParts} %</b>`, disponibles.map(v => Calculs.partDe(v, sommeParts)), 'groupe')}
         </tbody></table></div>
       <div class="discret" style="font-size:12px;margin-top:8px">Calcul : jours travaillés × % du projet × % du type de tâche
-        (× ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h par jour en « Heures »). Congés repris de Congés & capacité, fériés de l’Administration.
+        (× ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h par jour en « Heures »). Congés repris de Congés, fériés de l’Administration.
         Les % se modifient par le chef du projet concerné.</div>`;
   },
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   Mon dashboard › Congés & capacité › onglet Capacité
+   Mon dashboard › Capacité (menu à part depuis le 2026-10-22 ; auparavant onglet de Congés & capacité)
    (maquette docs/maquettes/capacite-saisie/)
    Pour un projet (CDO par défaut) et un sprint (le sprint en cours par défaut) :
    - indicateurs : disponible, engageable (Scrum), vélocité, prévision ;
@@ -197,3 +197,13 @@ Object.assign(Actions, {
     executer(() => Api.creer('repartitions_sprint', { ...cle, jours }, 'projet_id,numero,categorie'), 'repartitionsSprint');
   }
 });
+
+// Écran Mon dashboard › Capacité : le contenu de Capacite, sous un en-tête de page
+Ecrans.capacite = {
+  titre: 'Capacité',
+  section: 'moi',
+  rendre() {
+    return `<div class="ecran">${C.entete('Capacité', 'Capacité des projets par sprint : disponibilité des membres, vélocité, répartition')}
+      ${Capacite.rendre()}</div>`;
+  }
+};
