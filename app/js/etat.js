@@ -472,9 +472,15 @@ function projetsAvecRoleDe(ressourceId) {
   return liste;
 }
 // Projets d'une personne, un par ligne : « VISTA · PO », « CDO · Membre »… ou « hors projet »
-const lignesProjetsDe = ressourceId => projetsAvecRoleDe(ressourceId)
-  .map(x => `<div>${C.esc(x.projet.nom)} · ${C.esc(x.role === ROLES_PROJET.CHEF ? 'PO' : x.role)}</div>`).join('')
-  || '<span class="pale">hors projet</span>';
+// Sans projet : « Responsable d'équipe » pour un responsable (pas de projet attitré, c'est normal —
+// porteur 2026-10-22, maquette ressources-responsable-sans-projet/), sinon « hors projet »
+function lignesProjetsDe(ressourceId) {
+  const lignes = projetsAvecRoleDe(ressourceId)
+    .map(x => `<div>${C.esc(x.projet.nom)} · ${C.esc(x.role === ROLES_PROJET.CHEF ? 'PO' : x.role)}</div>`).join('');
+  if (lignes) return lignes;
+  const r = ressource(ressourceId);
+  return r && estResponsableEquipe(r) ? C.badgeTon('Responsable d’équipe', 'violet') : '<span class="pale">hors projet</span>';
+}
 // Codes des projets où la personne est affectée (badges « DA-08 MO-21 »), vide si aucun
 const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
   .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
