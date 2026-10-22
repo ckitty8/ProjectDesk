@@ -188,7 +188,7 @@ const Previsionnel = {
               <td class="num">${totalReel ? '100 %' : '—'}</td><td></td><td></td></tr>
         </tbody></table></div>
       <div class="discret texte-12">Capacité = jours ouvrés du sprint hors fériés et congés × ${Calculs.nombre(CONFIG.HEURES_PAR_JOUR)} h × capacité de la personne.
-        Les heures se saisissent par projet dans Gestion des ressources › Saisir mes heures.</div>`;
+        Les heures se saisissent par projet dans Mon dashboard › Saisir mes heures.</div>`;
   }
 };
 

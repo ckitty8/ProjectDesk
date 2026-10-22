@@ -41,10 +41,10 @@ const Coquille = (() => {
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
     { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road' },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
-      // Saisie des heures rangée dans Gestion des ressources (porteur 2026-10-08 ; intertitre « Mon timesheet » retiré le 2026-10-12)
-      enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' },
-        // Le suivi des équipes (et la validation) se fait dans Suivi de mes équipes › Timesheet (porteur, 2026-10-12)
-        { id: 'monTimesheet', libelle: 'Saisir mes heures' }] },
+      enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
+    // Saisir mes heures : menu à part, sorti de Gestion des ressources (porteur, 2026-10-22) ; le suivi des équipes
+    // et la validation se font dans Suivi de mes équipes › Timesheet
+    { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time' },
     // Capacité : menu à part, au-dessus du Plan de charge (porteur, 2026-10-22 ; auparavant onglet de Congés & capacité)
     { id: 'capacite', libelle: 'Capacité', icone: 'capa' },
     // Réservé au créateur : voir Previsionnel.estVisible

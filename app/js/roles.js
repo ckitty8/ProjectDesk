@@ -14,58 +14,21 @@
 'use strict';
 
 const Roles = {
-  /* Rôles affichés, du plus large au plus restreint : clé, libellé, couleur, ce que le rôle permet.
-     Liste unique : reprise par la Simulation des rôles (simulation.js), hors Créateur. */
-  LISTE: [
-    { cle: 'createur', libelle: 'Créateur', couleur: COULEURS.createur, description: 'Tous les droits sur toutes les équipes ; seul à nommer un administrateur.' },
-    { cle: 'admin', libelle: 'Administrateur', couleur: COULEURS.primaire, description: 'Équipes, référentiels, jours fériés, comptes en attente.' },
-    { cle: 'responsable', libelle: 'Responsable d’équipe', couleur: COULEURS.violet,
-      description: 'Son unité : valide les timesheets, lit tous les daily de l’unité, règle les envois.' },
-    { cle: 'chef', libelle: 'Chef de projet', couleur: COULEURS.succes, description: 'Ses projets : plan de charge, envoi du daily, sprints.' },
-    { cle: 'membre', libelle: 'Membre de projet', couleur: COULEURS.neutre, description: 'Saisit son daily, ses heures et ses congés.' },
-    { cle: 'lecteur', libelle: 'Lecteur de projet', couleur: COULEURS.pale, description: 'Consulte ses projets sans les modifier.' },
-    { cle: 'sansEquipe', libelle: 'Compte en attente', couleur: COULEURS.orange, description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.' }
-  ],
-
-  /* Rôles d'une fiche ressource : liste de { cle, precision } (ex. Chef de projet · CDO).
-     Un même rôle de projet peut apparaître plusieurs fois (un par projet). */
-  dePersonne(r) {
-    const roles = [];
-    const compte = r.userId;
-    if (compte && (etat.d.createur || []).some(c => c.userId === compte)) roles.push({ cle: 'createur' });
-    if (compte && etat.d.administrateurs.some(a => a.userId === compte)) roles.push({ cle: 'admin' });
-    // Responsable : mêmes règles que le rôle d'accès (etat.js) — désigné sur une unité, ou owner / admin
-    // de l'organisation de son équipe
-    const unites = etat.d.equipes.filter(e => responsablesDe(e.id).includes(r));
-    if (!estResponsableDesigne(r) && estResponsableEquipe(r)) unites.push(equipe(r.equipeId));
-    unites.forEach(e => roles.push({ cle: 'responsable', precision: e.nom }));
-    const roleProjet = { [ROLES_PROJET.CHEF]: 'chef', [ROLES_PROJET.MEMBRE]: 'membre', [ROLES_PROJET.LECTEUR]: 'lecteur' };
-    etat.d.affectations.filter(a => a.ressourceId === r.id).forEach(a => {
-      const p = projet(a.projetId);
-      if (p && roleProjet[a.role]) roles.push({ cle: roleProjet[a.role], precision: p.nom });
-    });
-    // Chef désigné sur la fiche projet sans affectation « Chef de projet »
-    etat.d.projets.filter(p => p.chefId === r.id && !roles.some(x => x.cle === 'chef' && x.precision === p.nom))
-      .forEach(p => roles.push({ cle: 'chef', precision: p.nom }));
-    return roles;
-  },
-
-  // Personnes par rôle (pour la vue « par rôle ») : { cle: [{ nom, precision }] }
+  /* Vue « Qui a quel rôle » (alignée sur la Simulation, porteur 2026-10-22, maquette qui-a-quel-role/) : mêmes
+     cartes que la Simulation (Simulation.ROLES : les 6 rôles d'accès + Compte en attente, sans le Créateur).
+     Chaque fiche active est rangée sous le rôle choisi dans le tableau « Utilisateurs et rôles » (roleChoisi :
+     prévu s'il y en a un, sinon actuel), avec son équipe et, s'il y a lieu, « prévu » ou « sans compte ». */
   parRole() {
-    const groupes = Object.fromEntries(this.LISTE.map(role => [role.cle, []]));
-    ressourcesActives().forEach(r => this.dePersonne(r).forEach(x => groupes[x.cle].push({ nom: r.nom, precision: x.precision })));
-    // Créateur et administrateurs dont le compte n'est relié à aucune fiche ressource (toutes les fiches,
-    // présentes ou parties : une fiche inactive reste reliée au compte — DAT § 10, point 7)
-    const sansFiche = userId => !(etat.d.ressources || []).some(r => r.userId === userId);
-    (etat.d.createur || []).filter(c => sansFiche(c.userId)).forEach(c => groupes.createur.push({ nom: c.email, precision: 'compte sans fiche' }));
-    etat.d.administrateurs.filter(a => sansFiche(a.userId)).forEach(() => groupes.admin.push({ nom: 'Compte sans fiche ressource' }));
+    const groupes = Object.fromEntries(Simulation.ROLES.map(role => [role.cle, []]));
+    ressourcesActives().forEach(r => {
+      const role = this.roleChoisi(r), precisions = [equipe(r.equipeId).nom];
+      if (!r.userId) precisions.push('sans compte');
+      else if (rolePrevu(r)) precisions.push('prévu');
+      (groupes[role] || []).push({ nom: r.nom, precision: precisions.join(' · ') });
+    });
     etat.comptesEnAttente.filter(c => !c.invite).forEach(c => groupes.sansEquipe.push({ nom: c.nom || c.email, precision: c.email }));
+    Object.values(groupes).forEach(liste => liste.sort((x, y) => x.nom.localeCompare(y.nom)));
     return groupes;
-  },
-
-  badge(cle, precision) {
-    const role = this.LISTE.find(x => x.cle === cle);
-    return C.badge(role.libelle + (precision ? ' · ' + precision : ''), role.couleur);
   },
 
   /* ---------- Onglet Administration › Rôles (maquette docs/maquettes/affecter-roles/) ----------
@@ -107,7 +70,7 @@ const Roles = {
   // Cartes « par rôle » : qui a chaque rôle (créateur, administrateurs, responsables, rôles de projet, comptes en attente)
   cartesParRole() {
     const esc = C.esc, groupes = this.parRole();
-    return this.LISTE.map(role => {
+    return Simulation.ROLES.map(role => {
       const personnes = groupes[role.cle];
       return `<div class="carte" style="padding:12px 14px;border-top:4px solid ${role.couleur}">
         <div class="ligne-flex entre"><b style="color:${role.couleur}">${esc(role.libelle)}</b>

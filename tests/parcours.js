@@ -215,10 +215,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       ['La boucle Test & Learn', 'Carte d’expérience', 'Les phases d’un projet IA', 'Hallucinations', 'Pièges à éviter'].every(t => document.body.textContent.includes(t))));
     await capture('19c-astuces-test-learn');
     await page.click('[data-action="themeAstuces"][data-theme="agile"]'); await page.waitForTimeout(150);
-    // Menu : Saisir mes heures rangé dans Gestion des ressources (sans intertitre), plus d'entrée à part
-    verifier('Menu : Saisir mes heures dans Gestion des ressources (sans intertitre), section « Suivi de mes équipes » renommée', await page.evaluate(() => {
+    // Menu : Saisir mes heures en menu à part, juste sous Gestion des ressources (porteur, 2026-10-22)
+    verifier('Menu : Saisir mes heures en menu à part sous Gestion des ressources, section « Suivi de mes équipes » renommée', await page.evaluate(() => {
       const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
-      return sousMenus.some(t => t.includes('Congés') && t.includes('Saisir mes heures') && !t.includes('Mon timesheet'))
+      const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
+      return sousMenus.some(t => t.includes('Congés') && !t.includes('Saisir mes heures'))
+        && ids.indexOf('monTimesheet') === ids.indexOf('listeRessources') + 1
         && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet')
         && document.querySelector('.menu-titre').textContent.includes('Suivi de mes équipes');
     }));
@@ -845,8 +847,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('32-matrice-droits');
     await page.selectOption(cellule('utilisateur', 'projets'), 'lecture'); await page.waitForTimeout(400);
     await page.click('[data-action="vueRoles"][data-vue="qui"]'); await page.waitForTimeout(200);
-    verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle »',
-      matrice && verrou && enregistre && await page.evaluate(() => document.querySelectorAll('.grille-roles > .carte').length === Roles.LISTE.length),
+    verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle » sur les 6 rôles',
+      matrice && verrou && enregistre && await page.evaluate(() => [...document.querySelectorAll('.grille-roles > .carte b')].map(b => b.textContent.trim()).join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente'),
       JSON.stringify({ matrice, verrou, enregistre }));
     await page.click('[data-action="vueRoles"][data-vue="utilisateurs"]'); await page.waitForTimeout(150);
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
