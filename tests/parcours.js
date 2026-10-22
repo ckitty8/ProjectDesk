@@ -858,9 +858,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
     await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);
     await capture('28-simulation-roles');
-    await page.evaluate(() => { const liste = document.querySelector('select[name="personne-membre"]');
+    // Cartes = les 6 rôles d'accès de la matrice + Compte en attente (2026-10-22)
+    const cartesSimulation = await page.$$eval('.grille-simulation > .carte b', b => b.map(x => x.textContent.trim()));
+    verifier('Simulation : une carte par rôle d’accès (Administrateur … Lecture seule) et Compte en attente',
+      cartesSimulation.join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente', cartesSimulation.join(', '));
+    await page.evaluate(() => { const liste = document.querySelector('select[name="personne-utilisateur"]');
       liste.value = [...liste.options].find(o => o.textContent.startsWith('Thomas Bernard')).value; });
-    await page.click('[data-action="demarrerSimulation"][data-role="membre"]'); await page.waitForTimeout(300);
+    await page.click('[data-action="demarrerSimulation"][data-role="utilisateur"]'); await page.waitForTimeout(300);
     verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
       !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
       && !document.querySelector('[data-ecran="previsionnel"]') && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));

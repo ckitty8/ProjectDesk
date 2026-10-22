@@ -274,8 +274,9 @@ const peutAffecterSur = projet => travailleSurLeProjet(projet) && aDroit('affect
 const peutModifierFiche = r => (estMembreDe(r.equipeId) || etat.estAdmin) && aDroit('fiches_ressources');
 
 /* ---------- Matrice des droits (migration 031 ; même règle que mon_role / niveau_droit en base) ---------- */
-// Mon rôle d'accès : déclaré sur ma fiche, sinon administrateur, responsable, utilisateur (la simulation est prise en compte)
+// Mon rôle d'accès : celui de la simulation en cours, sinon déclaré sur ma fiche, sinon administrateur, responsable, utilisateur
 function monRole() {
+  if (etat.simulation && ROLES_ACCES[etat.simulation.cle]) return etat.simulation.cle;   // rôle de la carte de simulation
   const moi = maRessource();
   if (moi && roleDeclare(moi)) return roleDeclare(moi);
   if (etat.estAdmin) return 'admin';

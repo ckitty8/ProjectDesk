@@ -15,31 +15,27 @@
 'use strict';
 
 const Simulation = {
-  /* Rôles proposés : ceux de l'onglet ★ Rôles (Roles.LISTE, roles.js), sauf Créateur (c'est le rôle
-     de départ). Les rôles de « Rôles et droits » (Direction, Projet, Utilisateur, Lecture seule)
-     s'ajouteront dans Roles.LISTE. */
-  get ROLES() { return Roles.LISTE.filter(role => role.cle !== 'createur'); },
+  /* Rôles proposés : les 6 rôles d'accès d'Administration › Rôles et de la matrice des droits (ROLES_CHOISISSABLES,
+     ROLES_ACCES, config.js), puis « Compte en attente » (compte inscrit sans équipe) — porteur 2026-10-22,
+     maquette docs/maquettes/simulation-six-roles/. Le Créateur n'y figure pas (c'est le rôle de départ). */
+  get ROLES() {
+    return [...ROLES_CHOISISSABLES.map(cle => ({ cle, libelle: ROLES_ACCES[cle].libelle, description: ROLES_ACCES[cle].description,
+      couleur: ROLES_ACCES[cle].texte })),
+    { cle: 'sansEquipe', libelle: 'Compte en attente', description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.',
+      couleur: COULEURS.orange }];
+  },
 
   // Onglet réservé au créateur (masqué pendant une simulation : le bandeau permet d'en changer ou d'en sortir)
   estDisponible: () => etat.estCreateur,
 
-  /* Personnes qui ont un rôle (fiches présentes aujourd'hui), avec un libellé « Nom · précision » */
+  /* Personnes proposées pour un rôle : toutes les fiches actives reliées à un compte, celles qui ont déjà
+     ce rôle en tête (« · a ce rôle »), puis les autres avec leur rôle actuel. Le rôle de la carte leur est
+     appliqué le temps de la simulation (monRole) ; leurs équipes et leurs projets restent les leurs. */
   personnes(cle) {
-    const affectees = role => etat.d.affectations.filter(a => a.role === role && estActive(a.ressourceId))
-      .map(a => ({ r: ressource(a.ressourceId), precision: (projet(a.projetId) || {}).code }));
-    const listes = {
-      admin: () => ressourcesActives().filter(r => r.userId && etat.d.administrateurs.some(a => a.userId === r.userId)).map(r => ({ r, precision: 'administrateur' })),
-      responsable: () => etat.d.equipes.flatMap(e => responsablesDe(e.id).filter(r => estActive(r.id)).map(r => ({ r, precision: e.nom }))),
-      chef: () => affectees(ROLES_PROJET.CHEF),
-      membre: () => affectees(ROLES_PROJET.MEMBRE),
-      lecteur: () => affectees(ROLES_PROJET.LECTEUR),
-      sansEquipe: () => []
-    };
-    // Une ligne par personne (la première précision trouvée), triées par nom
-    const vues = new Map();
-    listes[cle]().filter(x => x.r).forEach(x => { if (!vues.has(x.r.id)) vues.set(x.r.id, x); });
-    return [...vues.values()].sort((a, b) => a.r.nom.localeCompare(b.r.nom))
-      .map(x => ({ valeur: x.r.id, libelle: `${x.r.nom}${x.precision ? ' · ' + x.precision : ''}` }));
+    const actuel = r => Roles.roleChoisi(r);
+    return ressourcesActives().filter(r => r.userId)
+      .sort((a, b) => (actuel(b) === cle) - (actuel(a) === cle) || a.nom.localeCompare(b.nom))
+      .map(r => ({ valeur: r.id, libelle: `${r.nom} · ${actuel(r) === cle ? 'a ce rôle' : 'aujourd’hui ' + ROLES_ACCES[actuel(r)].libelle}` }));
   },
 
   /* Démarre (ou change) la simulation : identité réelle mise de côté, identité simulée posée.
@@ -106,11 +102,12 @@ const Simulation = {
           ${sansPersonne || personnes.length ? '' : 'disabled'}>Voir l’application en tant que ${esc(role.libelle.toLowerCase())}</button></div>`;
     }).join('');
     return `<div class="carte encart-createur">
-        <b>Réservé au créateur.</b> Choisissez un rôle et une personne qui l’a : l’application s’affiche exactement comme pour elle
+        <b>Réservé au créateur.</b> Choisissez un rôle et une personne : l’application s’affiche comme pour elle avec ce rôle
         (menus, écrans, boutons, données visibles). <b>Lecture seule</b> : pendant la simulation rien n’est enregistré, pour ne jamais
         modifier les données réelles avec vos droits de créateur.</div>
       <div class="grille-simulation">${cartes}</div>
-      <div class="discret texte-12">Les rôles Direction, Projet, Utilisateur et Lecture seule s’ajouteront ici avec « Rôles et droits ».</div>`;
+      <div class="discret texte-12">Le rôle choisi s’applique à la personne pendant la simulation (droits de ce rôle dans la matrice) ;
+        ses équipes et ses projets restent les siens.</div>`;
   }
 };
 
