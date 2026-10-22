@@ -45,7 +45,7 @@ const Coquille = (() => {
       enfants: [{ id: 'conges', libelle: 'Congés & capacité' }, { id: 'listeRessources', libelle: 'Liste des ressources' },
         // Le suivi des équipes (et la validation) se fait dans Suivi de mes équipes › Timesheet (porteur, 2026-10-12)
         { id: 'monTimesheet', libelle: 'Saisir mes heures' }] },
-    // Réservé aux chefs de projet (et administrateurs) : voir Previsionnel.estVisible
+    // Réservé au créateur : voir Previsionnel.estVisible
     { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     // Pastille rouge : comptes inscrits qui attendent un accès (administrateurs, migration 024)

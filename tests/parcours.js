@@ -741,11 +741,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
       && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));
 
-    /* --- Plan de charge (migration 021) : chefs de projet seulement --- */
-    verifier('Prévisionnel : menu visible pour une cheffe de projet, caché sinon', !!(await page.$('[data-action="aller"][data-ecran="previsionnel"]'))
-      && await page.evaluate(() => { const admin = etat.estAdmin, aff = etat.d.affectations, projets = etat.d.projets;
-        etat.estAdmin = false; etat.d.affectations = aff.filter(a => a.role !== ROLES_PROJET.CHEF); etat.d.projets = projets.map(p => ({ ...p, chefId: null }));
-        const visible = Previsionnel.estVisible(); etat.estAdmin = admin; etat.d.affectations = aff; etat.d.projets = projets; return !visible; }));
+    /* --- Plan de charge (migration 021) : réservé au créateur (porteur, 2026-10-22) ---
+       Camille est administratrice (non créatrice) : menu absent ; le créateur est simulé le temps du bloc. */
+    const planCacheAdmin = !(await page.$('[data-action="aller"][data-ecran="previsionnel"]'));
+    await page.evaluate(() => { etat.estCreateur = true; rendre(); });
+    verifier('Plan de charge : menu réservé au créateur (absent pour une administratrice)', planCacheAdmin
+      && !!(await page.$('[data-action="aller"][data-ecran="previsionnel"]')));
     await aller('previsionnel'); await page.waitForTimeout(250);
     verifier('Prévisionnel : projets de la personne, % du projet et types de tâche (sous-total hors US)', (await texte()).includes('SSO & gestion des droits')
       && await page.$eval('input[data-action-change="partProjetPrevision"]', e => e.value) === '60' && (await texte()).includes('Total hors US'));
@@ -769,6 +770,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       return reel > 0 && document.querySelector('.contenu').textContent.includes(Previsionnel.format(reel));
     }));
     await capture('24-previsionnel-reel');
+    await page.evaluate(() => { etat.estCreateur = false; rendre(); });
 
     /* --- Compte sans équipe (migration 024) : en attente, accès donné par l'administratrice, entrée directe --- */
     const connecter = async email => {
