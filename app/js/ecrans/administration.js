@@ -1,31 +1,31 @@
 /* ============================================================
    Administration — tableaux « Équipes » et « Référentiels » de Mon dashboard › Administration
-   (mon-admin.js), consultation ou modification selon le paramètre « modifiable ».
+   (mon-admin.js) ; les référentiels en consultation ou en modification selon le paramètre « modifiable ».
    Plus de menu Administration dans Suivi de mes équipes (porteur, 2026-10-22).
    Champs du formulaire de demande retirés le 2026-10-05 (demandes gérées dans Azure DevOps).
    ============================================================ */
 'use strict';
 
 const Administration = {
-  // Tableau des équipes ; modifiable = boutons « Nouvelle équipe » / « Modifier »
-  equipes(modifiable) {
+  // Tableau des équipes : « Nouvelle équipe » (administrateurs), « Modifier » (qui gère l'équipe)
+  equipes() {
     const esc = C.esc;
     const lignes = etat.d.equipes.map(e => {
       const responsables = responsablesDe(e.id);
-      const peutModifier = modifiable && peutGererEquipe(e.id);
+      const peutModifier = peutGererEquipe(e.id);
       return `<tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)} ${C.code(e.prefixe)}</span></td>
         <td>${responsables.map(r => esc(r.nom)).join(', ') || '<span class="pale">—</span>'}</td>
         <td>${ressourcesActives().filter(r => r.equipeId === e.id).length}</td><td>${etat.d.projets.filter(p => p.equipeId === e.id).length}</td>
         <td class="num">${peutModifier ? `<a data-action="modifierEquipe" data-id="${e.id}">Modifier</a>` : ''}</td></tr>`;
     }).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Équipes ${C.aide('rolesEquipe')}</h2>
-        ${modifiable && etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleEquipe">+ Nouvelle équipe</button>' : ''}</div>
+        ${etat.estAdmin ? '<button class="btn primaire" data-action="nouvelleEquipe">+ Nouvelle équipe</button>' : ''}</div>
       <table class="tableau"><thead><tr><th>Équipe</th><th>Responsable</th><th>Membres</th><th>Projets</th><th></th></tr></thead>
       <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration).')}</td></tr>`}
       </tbody></table></div>`;
   },
 
-  // Onglet « Référentiels » (même onglet dans les deux Administration)
+  // Onglet « Référentiels » de Mon dashboard › Administration (libellé et nombre)
   ongletReferentiels: () => ({ id: 'referentiels', libelle: 'Référentiels', compte: etat.d.referentiels.length }),
 
   // Référentiels et leurs valeurs ; modifiable = renommer, recolorer, activer, ajouter

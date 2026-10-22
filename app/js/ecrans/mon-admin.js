@@ -44,7 +44,7 @@ Ecrans.monAdmin = {
     const onglet = ongletAffiche(liste, u.onglet);
     const corps = {
       comptes: () => this.comptes(), roles: () => Roles.onglet(), simulation: () => Simulation.onglet(),
-      equipes: () => Administration.equipes(true), referentiels: () => Administration.referentiels(modifieReferentiels),
+      equipes: () => Administration.equipes(), referentiels: () => Administration.referentiels(modifieReferentiels),
       feries: () => this.feries(modifieReferentiels), envoiDaily: () => this.envoiDaily(), sprints: () => this.sprints()
     }[onglet];
     return `

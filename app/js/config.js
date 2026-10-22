@@ -295,7 +295,7 @@ const GUIDE_ECRANS = {
     'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.',
     'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
-  previsionnel: ['Réservé aux chefs de projet : choisissez une personne (vous-même ou un membre de vos projets) pour prévoir la répartition de son temps entre ses projets.',
+  previsionnel: ['Réservé au créateur : choisissez une personne (vous-même ou un membre des projets) pour prévoir la répartition de son temps entre ses projets.',
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],

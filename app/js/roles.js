@@ -104,14 +104,14 @@ const Roles = {
   /* Matrice des droits (maquettes roles-droits/, matrice-sections/, matrice-par-menu/) : une colonne par rôle,
      la ligne « Périmètre », puis les menus de la barre latérale en deux sections — Suivi de mes équipes, Mon dashboard
      (SECTIONS_DROITS) — avec, pour chacun, ses droits (DROITS, propriété menu) et les menus ouverts à tous
-     (MENUS_SANS_DROIT). Le créateur a tout (colonne fixe, absente de Suivi › Administration › Rôles et accès) ;
+     (MENUS_SANS_DROIT). Le créateur a tout (colonne fixe) ;
      Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031). Modifiable avec le droit « roles » :
      chaque changement est enregistré aussitôt (table droits_roles) ; la base refuse sans ce droit. */
-  matrice(avecCreateur = true) {
-    const esc = C.esc, modifiable = aDroit('roles'), nbColonnes = 2 + (avecCreateur ? 1 : 0) + ROLES_CHOISISSABLES.length;
+  matrice() {
+    const esc = C.esc, modifiable = aDroit('roles'), nbColonnes = 3 + ROLES_CHOISISSABLES.length;
     const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
     const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
-    const createur = contenu => avecCreateur ? `<td class="centre">${contenu}</td>` : '';
+    const createur = contenu => `<td class="centre">${contenu}</td>`;   // colonne Créateur (tous les droits, fixe)
     /* Première colonne : « ↳ Onglet « … » » pour un droit d'onglet (migration 038), sinon le nom du menu, écrit
        seulement sur la première ligne du menu (lignes consécutives d'un même menu) */
     const nom = (d, i, liste) => d.onglet ? `<span class="ligne-onglet">↳ Onglet « ${esc(d.onglet)} »</span>`
@@ -125,7 +125,7 @@ const Roles = {
     return `<div class="carte"><div class="carte-titre"><h2>Matrice des droits</h2>
         <span class="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle${modifiable ? '' : ' · consultation'}</span></div>
       <div class="defilement-x"><table class="tableau tableau-matrice"><thead><tr><th>Menu / onglet</th><th>Ce qu’on peut y faire</th>
-        ${avecCreateur ? '<th class="centre">Créateur</th>' : ''}${entete}</tr></thead>
+        <th class="centre">Créateur</th>${entete}</tr></thead>
         <tbody><tr class="groupe"><td><b>Périmètre</b></td><td class="discret">ce que couvre le rôle</td>
           ${createur(`<span class="discret texte-12">${esc(PERIMETRES.createur)}</span>`)}${perimetres}</tr>${sections}</tbody></table></div></div>
       <div class="discret texte-12">Les droits de menu et d’onglet règlent l’affichage ; ce qu’on peut modifier est appliqué par la base.

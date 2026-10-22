@@ -1,6 +1,6 @@
 /* ============================================================
    Mon dashboard › Plan de charge (maquette docs/maquettes/previsionnel-temps/)
-   Réservé aux chefs de projet (et administrateurs). Remplace le tableur du porteur
+   Réservé au créateur (depuis 2.23 ; auparavant chefs de projet et administrateurs). Remplace le tableur du porteur
    « Suivi temps tech lead », pour toute personne affectée (pas seulement les tech leads).
    - Onglet « Prévisionnel » : par mois sur 12 mois, jours ouvrés (fériés), congés
      (Congés), jours travaillés, puis par projet de la personne :
@@ -201,8 +201,8 @@ Ecrans.previsionnel = {
     const personnes = Previsionnel.personnes(), r = Previsionnel.personneChoisie(personnes);
     if (!r) return `<div class="ecran">${entete}<div class="carte">${C.vide('Aucune personne affectée à vos projets.')}</div></div>`;
 
-    // Onglets selon leur droit (matrice, migration 038 ; le créateur les a tous)
-    const liste = ongletsPermis('previsionnel', [{ id: 'prevision', libelle: 'Prévisionnel' }, { id: 'reel', libelle: 'Temps réel par sprint' }]);
+    // Onglets (écran réservé au créateur : pas de droit d'onglet dans la matrice depuis 2.28)
+    const liste = [{ id: 'prevision', libelle: 'Prévisionnel' }, { id: 'reel', libelle: 'Temps réel par sprint' }];
     const onglet = ongletAffiche(liste, ui('previsionnel', { onglet: 'prevision' }).onglet);
     const puces = liste.map(o => `<button class="puce${onglet === o.id ? ' active' : ''}" data-action="ongletPrevision" data-onglet="${o.id}">${o.libelle}</button>`).join('');
     const choixPersonne = C.liste(personnes.map(p => ({ valeur: p.id, libelle: `${p.nom} — ${Previsionnel.projetsDe(p).map(x => x.nom).join(', ')}` })), r.id,

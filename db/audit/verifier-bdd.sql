@@ -134,8 +134,9 @@ ecarts as (
   union all
   select 'Daily sur un projet où la personne n''est pas affectée', 'avertissement', count(*), string_agg(distinct p.code, ', ')
     from public.notes_daily_projet n join public.projets p on p.id = n.projet_id
+    -- Auteur = compte relié à la fiche, ou « fiche:<id> » pour un daily importé d'une personne sans compte (migration 034)
     where not exists (select 1 from public.affectations a join public.ressources r on r.id = a.ressource_id
-                      where a.projet_id = n.projet_id and r.user_id = n.user_id) having count(*) > 0
+                      where a.projet_id = n.projet_id and (r.user_id = n.user_id or 'fiche:' || r.id = n.user_id)) having count(*) > 0
   union all
   select 'Envoi du daily actif sans destinataire', 'avertissement', count(*), string_agg(p.code, ', ')
     from public.envois_daily_projet e join public.projets p on p.id = e.projet_id

@@ -79,7 +79,7 @@ reproductibles (identifiants numérotés dans le serveur simulé, notifications 
     (`HEURES_PAR_JOUR`, `* capacite`, sommes de jours, filtres de présence…) ;
   - listes de personnes : `ressourcesPresentes` / `ressourcesActives` (DAT § 2, menus liés) ;
   - droits d'affichage : fonctions de `etat.js` (`peutPiloterProjet`, `peutGererEquipe`, `peutLireDailyProjet`…), miroir
-    des règles RLS ; jamais un test de rôle recopié dans un écran ; liste des rôles : `Roles.LISTE` (`roles.js`) ;
+    des règles RLS ; jamais un test de rôle recopié dans un écran ; liste des rôles : `ROLES_CHOISISSABLES` / `ROLES_ACCES` (`config.js`), cartes `Simulation.ROLES` ;
   - listes métier : référentiels en base (`valeursDe`), jamais une liste en dur dans un écran.
 - Une même notion porte **le même nom** partout (menu, titre d'écran, DAT, guide d'aide).
 - Les écrans de la section **Suivi de mes équipes** (ex-« Général ») restent en lecture seule, hors validation des feuilles de temps (contrôle du parcours).
@@ -103,7 +103,7 @@ plus reconstructible.
 **Corrections** : préparer un fichier `db/migrations/NNN_<objet>.sql` commenté, le montrer au
 porteur et attendre son « ok ». Structure additive (index, contrainte) : accord simple. Suppression
 (fonction, table, colonne) ou modification de données : accord **explicite**, branche de sauvegarde
-Neon avant, comptage des données avant / après, puis `update_data_api` (DAT § 10).
+Neon avant **seulement si le porteur le demande** (décision du 2026-10-18 : plus de branche de sauvegarde, une seule base), comptage des données avant / après, puis `update_data_api` (DAT § 10).
 
 ## 5. Documents
 
