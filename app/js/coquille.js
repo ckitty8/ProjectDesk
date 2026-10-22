@@ -34,8 +34,8 @@ const Coquille = (() => {
     { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
     { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj', droit: 'suivi_projets' },
     { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
-    { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' },
-    { id: 'administration', libelle: 'Administration', icone: 'admin', droit: 'suivi_administration' }
+    // Pas d'Administration dans Suivi de mes équipes (porteur, 2026-10-22) : elle est dans Mon dashboard
+    { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' }
   ];
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },

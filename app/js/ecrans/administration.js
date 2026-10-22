@@ -1,12 +1,8 @@
 /* ============================================================
-   Suivi de mes équipes › Administration (maquette 04-gAdmin.png) — LECTURE SEULE
-   Onglets Équipes, Référentiels (champs du formulaire de demande retirés le 2026-10-05 :
-   demandes gérées dans Azure DevOps).
-   Règle : la section « Suivi de mes équipes » ne modifie jamais rien. Les
-   modifications se font dans Mon dashboard › Administration
-   (administrateurs globaux ; contrôlé aussi par la base).
-   Les tableaux « Équipes » et « Référentiels » sont partagés avec
-   Mon admin via le paramètre « modifiable ».
+   Administration — tableaux « Équipes » et « Référentiels » de Mon dashboard › Administration
+   (mon-admin.js), consultation ou modification selon le paramètre « modifiable ».
+   Plus de menu Administration dans Suivi de mes équipes (porteur, 2026-10-22).
+   Champs du formulaire de demande retirés le 2026-10-05 (demandes gérées dans Azure DevOps).
    ============================================================ */
 'use strict';
 
@@ -54,34 +50,7 @@ const Administration = {
   }
 };
 
-Ecrans.administration = {
-  titre: 'Administration',
-  section: 'general',
-  rendre() {
-    /* Onglets selon leur droit (matrice, migration 038). « Rôles et accès » (au départ : administrateurs) : matrice
-       des droits sans la colonne Créateur, modifiable avec le droit « roles » (porteur 2026-10-18) — seconde
-       exception à la lecture seule de la section, après la validation des feuilles de temps */
-    const liste = ongletsPermis('administration', [
-      { id: 'equipes', libelle: 'Équipes', compte: etat.d.equipes.length },
-      Administration.ongletReferentiels(),
-      { id: 'roles', libelle: 'Rôles et accès', compte: ROLES_CHOISISSABLES.length }
-    ]);
-    const onglet = ongletAffiche(liste, ui('administration', { onglet: 'equipes' }).onglet);
-    const onglets = onglet ? C.onglets(liste, onglet, 'ongletAdministration') : '';
-    const corps = !onglet ? C.aucunOnglet()
-      : onglet === 'referentiels' ? Administration.referentiels(false)
-      : onglet === 'roles' ? Roles.matrice(false) : Administration.equipes(false);
-    const lienEdition = etat.estAdmin ? `<button class="btn" data-action="aller" data-ecran="monAdmin">Modifier (Mon dashboard › Administration)</button>` : '';
-    return `
-    <div class="ecran">
-      ${C.entete('Administration', 'Équipes et référentiels · consultation', lienEdition)}
-      ${onglets}${corps}
-    </div>`;
-  }
-};
-
 Object.assign(Actions, {
-  ongletAdministration: d => majUi('administration', { onglet: d.id }),
   choisirReferentiel: d => majUi('referentiels', { id: d.id }),
   nouvelleEquipe: () => majEtat({ modale: { type: 'equipe', id: null } }),
   // (modifierEquipe est défini dans modale.js : il charge aussi les membres de l'équipe)

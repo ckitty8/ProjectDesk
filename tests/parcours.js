@@ -138,27 +138,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.evaluate(() => majUi('ressources', { equipeId: '', statut: '', q: '' })); await page.waitForTimeout(150);
     await capture('05b-ressources-liste');
     await page.click('[data-action="ongletRessources"][data-id="calendrier"]');
-    await aller('administration'); await capture('06-administration');
-    // Rôles et accès (2026-10-16) : un rôle par ligne (sans le créateur), portée, fonctionnalités modifiées / consultées
-    await page.click('[data-action="ongletAdministration"][data-id="roles"]'); await page.waitForTimeout(150);
-    const acces = await page.evaluate(() => ({ roles: [...document.querySelectorAll('.contenu table thead th')].slice(2).map(t => t.textContent.trim()),
-      sections: [...document.querySelectorAll('.contenu table tbody tr.groupe')].map(t => t.textContent.trim()) }));
-    const celluleAcces = '.contenu select[data-action-change="majDroit"][data-role="lecture"][data-droit="daily_equipes"]';
-    const niveauAvant = await page.inputValue(celluleAcces), niveauEssai = niveauAvant === 'lecture' ? 'non' : 'lecture';
-    await page.selectOption(celluleAcces, niveauEssai); await page.waitForTimeout(400);
-    const accesEnregistre = await page.evaluate(n => etat.d.droitsRoles.find(d => d.role === 'lecture' && d.droit === 'daily_equipes').niveau === n, niveauEssai);
-    await page.selectOption(celluleAcces, niveauAvant); await page.waitForTimeout(400);
-    verifier('Administration › Rôles et accès : matrice sans le créateur, sections Suivi de mes équipes / Mon dashboard, modifiable',
-      acces.roles.length === 6 && !acces.roles.includes('Créateur') && acces.roles[0] === 'Administrateur'
-      && acces.sections[1] === 'Suivi de mes équipes' && acces.sections[2] === 'Mon dashboard' && accesEnregistre
-      && await page.evaluate(() => DROITS.filter(d => d.section === 'suivi' && !d.onglet).length === 7), JSON.stringify(acces));
-    // Droits par onglet (maquette matrice-par-onglet/, migration 038) : une ligne « ↳ Onglet » par onglet, modifiable
-    verifier('Matrice des droits : une ligne par onglet (Fil des dailys, Synthèse…), cases modifiables', await page.evaluate(() =>
-      document.querySelectorAll('.contenu .tableau-matrice .ligne-onglet').length === DROITS.filter(d => d.onglet).length
-      && document.querySelector('.contenu .tableau-matrice').textContent.includes('↳ Onglet « Synthèse de l’équipe »')
-      && !document.querySelector('.contenu select[data-role="responsable"][data-droit="onglet_daily_synthese"]').disabled));
-    await capture('06b-administration-roles');
-    await page.click('[data-action="ongletAdministration"][data-id="equipes"]');
+    // Pas de menu Administration dans Suivi de mes équipes, pour aucun rôle (porteur, 2026-10-22)
+    verifier('Suivi de mes équipes : pas de menu Administration', !(await page.$('.laterale [data-action="aller"][data-ecran="administration"]'))
+      && !!(await page.$('.laterale [data-action="aller"][data-ecran="monAdmin"]')));
     await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
     await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
     verifier('Timesheet (Suivi de mes équipes) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
@@ -167,10 +149,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* --- Règle : la section « Suivi de mes équipes » (ex-« Général ») est en lecture seule ---
        Aucun champ, formulaire ou action d'écriture (tous onglets), sauf la validation des feuilles de temps. */
     const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
-      'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant', 'ongletAdministration', 'choisirReferentiel',
+      'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
-      'majDroit',   // Administration › Rôles et accès : matrice des droits modifiable (porteur 2026-10-18)
       'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
@@ -178,12 +159,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
         .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
     const interdites = [];
-    for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes', 'administration']) {
+    for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes']) {
       await aller(ecran);
       if (ecran === 'ressources') {
         for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
-      } else if (ecran === 'administration') {
-        for (const onglet of ['equipes', 'referentiels', 'roles']) { await page.click(`[data-action="ongletAdministration"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+
       } else interdites.push(...await ecritures());
     }
     await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
@@ -850,6 +830,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const verrou = await page.$eval(cellule('admin', 'roles'), el => el.disabled);
     await page.selectOption(cellule('utilisateur', 'projets'), 'oui'); await page.waitForTimeout(400);
     const enregistre = await page.evaluate(() => etat.d.droitsRoles.find(d => d.role === 'utilisateur' && d.droit === 'projets').niveau === 'oui');
+    const sectionsMatrice = await page.$$eval('.tableau-matrice tbody tr.groupe', t => t.map(x => x.textContent.trim()));
+    verifier('Matrice des droits : sections Suivi de mes équipes / Mon dashboard, une ligne par onglet modifiable',
+      sectionsMatrice.includes('Suivi de mes équipes') && sectionsMatrice.includes('Mon dashboard') && await page.evaluate(() =>
+        document.querySelectorAll('.tableau-matrice .ligne-onglet').length === DROITS.filter(d => d.onglet).length
+        && document.querySelector('.tableau-matrice').textContent.includes('↳ Onglet « Synthèse de l’équipe »')
+        && !document.querySelector('select[data-role="responsable"][data-droit="onglet_daily_synthese"]').disabled), sectionsMatrice.join(' | '));
     await capture('32-matrice-droits');
     await page.selectOption(cellule('utilisateur', 'projets'), 'lecture'); await page.waitForTimeout(400);
     await page.click('[data-action="vueRoles"][data-vue="qui"]'); await page.waitForTimeout(200);
@@ -884,8 +870,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     });
     verifier('Matrice par menu : menu de Suivi masqué si « Non », repli sur l’ancien droit avant la migration 037',
       parMenu.masque && parMenu.repli, JSON.stringify(parMenu));
-    await aller('administration');
-    verifier('Administration › Rôles et accès : onglet absent pour un membre', !(await page.$('[data-action="ongletAdministration"][data-id="roles"]')));
+    verifier('Simulation : pas de menu Administration dans Suivi de mes équipes (membre)', !(await page.$('.laterale [data-ecran="administration"]')));
     await aller('daily'); await page.waitForTimeout(300);
     // Sa note du dernier jour de semaine : dans le texte, ou en « Rappel d'hier » (attribut placeholder) un samedi ou un dimanche
     verifier('Simulation : écrans de la personne (son daily par projet)', (await texte()).includes('SSO & gestion des droits')
