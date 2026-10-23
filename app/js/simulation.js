@@ -28,14 +28,16 @@ const Simulation = {
   // Onglet réservé au créateur (masqué pendant une simulation : le bandeau permet d'en changer ou d'en sortir)
   estDisponible: () => etat.estCreateur,
 
-  /* Personnes proposées pour un rôle : toutes les fiches actives reliées à un compte, celles qui ont déjà
-     ce rôle en tête (« · a ce rôle »), puis les autres avec leur rôle actuel. Le rôle de la carte leur est
-     appliqué le temps de la simulation (monRole) ; leurs équipes et leurs projets restent les leurs. */
+  /* Personnes proposées pour un rôle : toutes les fiches actives, celles qui ont déjà ce rôle en tête
+     (« · a ce rôle »), puis les autres avec leur rôle actuel. Le rôle de la carte leur est appliqué le temps
+     de la simulation (monRole) ; leurs équipes et leurs projets restent les leurs. Fiches sans compte
+     comprises, marquées « (sans compte) » (phase de recette, porteur 2026-10-23, maquette simulation-sans-compte/) :
+     leurs écrans personnels (Daily, Saisir mes heures) sont vides. */
   personnes(cle) {
     const actuel = r => Roles.roleChoisi(r);
-    return ressourcesActives().filter(r => r.userId)
+    return ressourcesActives()
       .sort((a, b) => (actuel(b) === cle) - (actuel(a) === cle) || a.nom.localeCompare(b.nom))
-      .map(r => ({ valeur: r.id, libelle: `${r.nom} · ${actuel(r) === cle ? 'a ce rôle' : 'aujourd’hui ' + ROLES_ACCES[actuel(r)].libelle}` }));
+      .map(r => ({ valeur: r.id, libelle: `${r.nom}${r.userId ? '' : ' (sans compte)'} · ${actuel(r) === cle ? 'a ce rôle' : 'aujourd’hui ' + ROLES_ACCES[actuel(r)].libelle}` }));
   },
 
   /* Démarre (ou change) la simulation : identité réelle mise de côté, identité simulée posée.

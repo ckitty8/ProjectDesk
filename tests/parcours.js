@@ -916,6 +916,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const cartesSimulation = await page.$$eval('.grille-simulation > .carte b', b => b.map(x => x.textContent.trim()));
     verifier('Simulation : une carte par rôle d’accès (Administrateur … Lecture seule) et Compte en attente',
       cartesSimulation.join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente', cartesSimulation.join(', '));
+    // Phase de recette (2026-10-23) : fiches sans compte proposées, marquées « (sans compte) »
+    const simulationSansCompte = await page.evaluate(() => {
+      const option = [...document.querySelectorAll('select[name="personne-responsable"] option')].find(o => o.textContent.includes('(sans compte)'));
+      if (!option) return null;
+      Simulation.demarrer('responsable', option.value);
+      const ok = !!document.querySelector('.bandeau-simulation') && maRessource().id === option.value && !maRessource().userId;
+      Simulation.arreter(); return ok;
+    });
+    verifier('Simulation : fiches sans compte proposées (« sans compte ») et simulables', simulationSansCompte === true, String(simulationSansCompte));
     await page.evaluate(() => { const liste = document.querySelector('select[name="personne-utilisateur"]');
       liste.value = [...liste.options].find(o => o.textContent.startsWith('Thomas Bernard')).value; });
     await page.click('[data-action="demarrerSimulation"][data-role="utilisateur"]'); await page.waitForTimeout(300);
