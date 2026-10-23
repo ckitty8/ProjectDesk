@@ -38,12 +38,11 @@ Ecrans.monAdmin = {
       { id: 'feries', libelle: 'Jours fériés', compte: etat.d.joursFeries.length },
       ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: (etat.d.envoisDaily || []).filter(x => x.mode !== 'aucun').length }] : []),
       { id: 'sprints', libelle: 'Sprints', compte: (etat.d.sprintsProjet || []).filter(x => x.debut).length },
-      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : []),
-      ...(Simulation.estDisponible() ? [{ id: 'simulation', libelle: '★ Simulation des rôles' }] : [])
+      ...(etat.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesActives().length }] : [])
     ]);
     const onglet = ongletAffiche(liste, u.onglet);
     const corps = {
-      comptes: () => this.comptes(), roles: () => Roles.onglet(), simulation: () => Simulation.onglet(),
+      comptes: () => this.comptes(), roles: () => Roles.onglet(),
       equipes: () => Administration.equipes(), referentiels: () => Administration.referentiels(modifieReferentiels),
       feries: () => this.feries(modifieReferentiels), envoiDaily: () => this.envoiDaily(), sprints: () => this.sprints()
     }[onglet];

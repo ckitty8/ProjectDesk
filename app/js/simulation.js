@@ -60,12 +60,11 @@ const Simulation = {
       ecran: cle === 'sansEquipe' ? 'choixEquipe' : 'dashboard' });
   },
 
-  // Fin de la simulation : identité réelle restaurée, retour à l'onglet de simulation
+  // Fin de la simulation : identité réelle restaurée, retour à Administration créateur
   arreter() {
     Object.assign(etat, etat.reel);
     etat.reel = null; etat.simulation = null;
-    majUi('monAdmin', { onglet: 'simulation' }, { rendre: false });
-    majEtat({ ecran: 'monAdmin', panneau: null, modale: null });
+    majEtat({ ecran: 'adminCreateur', panneau: null, modale: null });
   },
 
   libelleEnCours() {
@@ -125,3 +124,14 @@ Object.assign(Actions, {
   },
   arreterSimulation: () => Simulation.arreter()
 });
+
+/* Mon dashboard › Administration créateur (porteur, 2026-10-23) : menu réservé au créateur, à côté
+   d'Administration ; il contient la Simulation des rôles (auparavant onglet d'Administration). */
+Ecrans.adminCreateur = {
+  titre: 'Administration créateur',
+  section: 'moi',
+  rendre() {
+    const corps = Simulation.estDisponible() ? Simulation.onglet() : `<div class="carte">${C.vide('Écran réservé au créateur.')}</div>`;
+    return `<div class="ecran ecran-large">${C.entete('Administration créateur', 'Réservée au créateur · simulation des rôles')}${corps}</div>`;
+  }
+};

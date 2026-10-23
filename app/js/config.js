@@ -299,10 +299,10 @@ const GUIDE_ECRANS = {
     'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
+  adminCreateur: ['Réservée au créateur. Simulation des rôles : voir l’application comme une personne avec un rôle donné, ' +
+    'en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.'],
   monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, et la matrice des droits ' +
     '(ce que chaque rôle peut faire : Oui, Lecture, Non), menu par menu et onglet par onglet.',
-    'Onglet ★ Simulation des rôles (créateur) : voir l’application comme une personne de ' +
-    'chaque rôle, en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',
     'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',

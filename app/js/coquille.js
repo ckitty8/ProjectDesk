@@ -51,7 +51,9 @@ const Coquille = (() => {
     { id: 'previsionnel', libelle: 'Plan de charge', icone: 'prev', visible: () => Previsionnel.estVisible() },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     // Pastille rouge : comptes inscrits qui attendent un accès (administrateurs, migration 024)
-    { id: 'monAdmin', libelle: 'Administration', icone: 'admin', alerte: () => etat.comptesEnAttente.filter(c => !c.invite).length }
+    { id: 'monAdmin', libelle: 'Administration', icone: 'admin', alerte: () => etat.comptesEnAttente.filter(c => !c.invite).length },
+    // Administration créateur : réservée au créateur (porteur, 2026-10-23) — Simulation des rôles
+    { id: 'adminCreateur', libelle: 'Administration créateur', icone: 'admin', visible: () => Simulation.estDisponible() }
   ];
   const PLEIN_ECRAN = ['connexion', 'choixEquipe'];
 

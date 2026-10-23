@@ -852,7 +852,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       JSON.stringify({ matrice, verrou, enregistre }));
     await page.click('[data-action="vueRoles"][data-vue="utilisateurs"]'); await page.waitForTimeout(150);
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
-    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="simulation"]'); await page.waitForTimeout(200);
+    // Administration créateur (2026-10-23) : menu à part, la simulation n'est plus un onglet d'Administration
+    await aller('monAdmin');
+    const plusOngletSimulation = !(await page.$('[data-action="ongletMonAdmin"][data-id="simulation"]'));
+    await aller('adminCreateur'); await page.waitForTimeout(200);
+    verifier('Administration créateur : menu à part avec la Simulation des rôles (plus d’onglet dans Administration)',
+      plusOngletSimulation && (await texte()).includes('Voir l’application en tant que'));
     await capture('28-simulation-roles');
     // Cartes = les 6 rôles d'accès de la matrice + Compte en attente (2026-10-22)
     const cartesSimulation = await page.$$eval('.grille-simulation > .carte b', b => b.map(x => x.textContent.trim()));
@@ -890,7 +895,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation : compte sans équipe (écran d’attente avec bandeau)', (await texte()).includes('Votre compte est créé') && !!(await page.$('.bandeau-simulation')));
     await page.click('[data-action="arreterSimulation"]'); await page.waitForTimeout(300);
     verifier('Simulation : retour au rôle de créateur', await page.evaluate(() =>
-      etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'monAdmin'));
+      etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'adminCreateur'));
 
     /* --- Écran étroit : Galaxy Z Fold 7 déplié (≈ 884 px) — menu en tiroir, écrans sur toute la largeur --- */
     await page.setViewportSize({ width: 884, height: 1000 });
