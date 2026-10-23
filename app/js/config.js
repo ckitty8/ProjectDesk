@@ -102,6 +102,9 @@ const DROITS = [
   { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
   { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
+  // Sous-menu Sprints (2026-10-23, auparavant onglet d'Administration ; clé inchangée, enregistrée en base)
+  { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Projets et Roadmap', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
+    libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
   { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés', libelle: 'Congés et objectif de jours des autres' },
   { cle: 'onglet_conges_grille', section: 'dashboard', menu: 'Congés', onglet: 'Grille mensuelle', ecran: 'conges', id: 'grille',
     libelle: 'Saisie des congés du mois', repli: 'mon_dashboard' },
@@ -125,8 +128,6 @@ const DROITS = [
   { cle: 'piloter', section: 'dashboard', menu: 'Administration', libelle: 'Envoi du daily par e-mail' },
   { cle: 'onglet_admin_envoi_daily', section: 'dashboard', menu: 'Administration', onglet: 'Envoi du daily', ecran: 'monAdmin', id: 'envoiDaily',
     libelle: 'Envoi du daily par e-mail, projet par projet', repli: 'piloter' },
-  { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Administration', onglet: 'Sprints', ecran: 'monAdmin', id: 'sprints',
-    libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
   { cle: 'roles', section: 'dashboard', menu: 'Administration', onglet: 'Rôles', ecran: 'monAdmin', id: 'roles',
     libelle: 'Rôles des utilisateurs et matrice des droits' },
   { cle: 'nommer_admin', section: 'dashboard', menu: 'Administration', onglet: 'Nommer un administrateur', libelle: 'Nommer ou retirer un administrateur' },
@@ -249,7 +250,7 @@ const AIDES = {
     'compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ' +
     'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
-  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Administration › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
+  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Projets et Roadmap › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
     '»), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
   productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
     `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
@@ -293,10 +294,12 @@ const GUIDE_ECRANS = {
   mesProjets: ['« + Nouveau projet » crée un projet dans votre équipe ; un projet se modifie depuis Liste des ressources.',
     'Saisissez les mises en production (date, version, contenu, statut) des projets que vous pouvez modifier ; chaque champ s’enregistre dès qu’il change.',
     'Tout le monde les voit dans Suivi de mes équipes › Projets et Roadmap › Planning projet (repères ▲).'],
+  mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
+    'Ils s’affichent dans Suivi de mes équipes › Projets et Roadmap › Planning projet et servent à Capacité.'],
   conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   capacite: ['Capacité d’un projet par sprint : disponibilité des membres (congés, fériés, présence), capacité engageable, vélocité et répartition du sprint.',
-    'Choisissez le projet et le sprint (saisis dans Administration › Sprints) ; bouton « Méthode de calcul Scrum » pour les formules.'],
+    'Choisissez le projet et le sprint (saisis dans Projets et Roadmap › Sprints) ; bouton « Méthode de calcul Scrum » pour les formules.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
     'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle ' +
       'd’accès. Un projet : ses Product Owners, puis ses membres. Actifs et Inactifs se replient d’un clic.',
@@ -314,7 +317,6 @@ const GUIDE_ECRANS = {
     'Qui a quel rôle : les personnes rangées sous leur rôle d’accès.'],
   monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',
-    'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',
     'Les KPI Agile sont dans le menu Mon dashboard › Trucs et astuces.'],
   astuces: ['Deux thèmes en haut : « Agile » (KPI Scrum et Kanban, rôles Scrum) et « Roadmap » (construire et faire vivre une roadmap).',

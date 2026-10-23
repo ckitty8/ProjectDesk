@@ -57,7 +57,7 @@ concernées).
 - Le champ **Sprint** est une **liste déroulante** (pas de saisie libre).
 - Ses valeurs sont **celles configurées dans Administration** : un seul endroit pour la liste
   des sprints, qu'utilisent la roadmap et les autres écrans (règle n°4).
-- Liste utilisée : les **sprints du projet** saisis dans Mon dashboard › Administration › Sprints
+- Liste utilisée : les **sprints du projet** saisis dans Mon dashboard › Projets et Roadmap › Sprints (Administration › Sprints jusqu’en 2.38)
   (nom de la version, début, fin — table `sprints_projet`, migration 014), affichés
   « nom · début → fin ».
 - À l'import, chaque nom de sprint du fichier (Acrux, Alcor, 1.15.0, « Sprint 64 - 2025 »…)

@@ -17,7 +17,7 @@ const Capacite = {
     const projets = Calendrier.projetsAvecMembres();
     return parId('projets', ui('capacite', {}).projetId) || projets.find(p => p.nom === 'CDO') || projets[0] || null;
   },
-  /* Sprints du projet : saisis par le porteur dans Administration › Sprints (version, début, fin ;
+  /* Sprints du projet : saisis dans Mon dashboard › Projets et Roadmap › Sprints (version, début, fin ;
      table sprints_projet, migration 014). Sprint affiché : celui choisi par les flèches ‹ ›,
      sinon le sprint en cours, sinon le dernier commencé, sinon le premier. */
   sprintChoisi(sprints) {
@@ -66,7 +66,7 @@ const Capacite = {
   // Boutons communs : réglage des sprints du projet et méthode de calcul
   boutons(p) {
     return `<button class="btn" data-action="allerSprints" data-id="${p.id}"
-      title="Saisir les sprints (version, début, fin) dans Administration › Sprints">Sprints du projet</button>
+      title="Saisir les sprints (version, début, fin) dans Projets et Roadmap › Sprints">Sprints du projet</button>
       <button class="btn" data-action="ouvrirMethodeCapacite">Méthode de calcul Scrum</button>`;
   },
   // Choix du projet (projets qui ont des membres)
@@ -187,7 +187,7 @@ const Capacite = {
     const sprints = sprintsDuProjet(p.id);
     if (!sprints.length) {
       return `${this.bandeau(p)}
-      <div class="carte">${C.vide(`Aucun sprint saisi pour ${p.nom} : ouvrez « Sprints du projet » (Administration › Sprints)
+      <div class="carte">${C.vide(`Aucun sprint saisi pour ${p.nom} : ouvrez « Sprints du projet » (Projets et Roadmap › Sprints)
         pour saisir la version, la date de début et la date de fin de chaque sprint.`)}</div>`;
     }
     const d = this.donnees(p, sprints);
@@ -204,7 +204,7 @@ Object.assign(Actions, {
 
   /* Saisie des points d'un sprint (engagés ou terminés) : mise à jour du sprint existant ;
      un champ vidé enregistre « non saisi » (null). Jamais de création ici : les sprints sont
-     créés à la main par le chef de projet (Administration › Sprints, porteur 2026-10-12). */
+     créés à la main par le chef de projet (Projets et Roadmap › Sprints ; porteur 2026-10-12). */
   saisirPoints(d, el) {
     const valeur = el.value === '' ? null : Number(el.value);
     if (valeur !== null && !(valeur >= 0)) return notifier('Nombre de points invalide', 'erreur');

@@ -493,7 +493,7 @@ function unitesRacines() {
   const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
   return [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')];
 }
-// Modifie des champs d'un sprint existant (Capacité : points ; Administration › Sprints : dates, numéro…)
+// Modifie des champs d'un sprint existant (Capacité : points ; Projets et Roadmap › Sprints : dates, numéro…)
 const modifierSprint = (projetId, numero, valeurs) =>
   executer(() => Api.modifier('sprints_projet', { projet_id: 'eq.' + projetId, numero: 'eq.' + numero }, valeurs), 'sprintsProjet');
 // Un projet n'a qu'un « Sprint N » par année (règle aussi garantie en base, migration 015)

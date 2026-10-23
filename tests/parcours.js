@@ -255,7 +255,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && !(await page.evaluate(() => etat.d.joursFeries.some(f => f.jour === '2026-05-25'))));
     await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
     verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
-    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]');
+    await page.click('.modale .fermer');
     verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
 
     // Daily des équipes PAR PROJET (migration 018) : notes du projet, blocages, règle de lecture
@@ -351,8 +351,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* Projets et Roadmap (2026-10-23, maquette menu-projets-roadmap/) : sous-menu Mises en production (Gantt retiré) */
     await aller('mesProjets'); await capture('09-mes-projets');
     const sousMenusProjets = await page.$$eval('.laterale [data-ecran="mesProjets"] + .sous-menu .sous-lien', l => l.map(x => x.textContent.trim()));
-    verifier('Mon dashboard › Projets et Roadmap : sous-menu Mises en production (plus de Gantt)',
-      sousMenusProjets.join('|') === 'Mises en production' && !(await texte()).includes('Gantt'), sousMenusProjets.join('|'));
+    verifier('Mon dashboard › Projets et Roadmap : sous-menus Mises en production et Sprints (plus de Gantt)',
+      sousMenusProjets.join('|') === 'Mises en production|Sprints' && !(await texte()).includes('Gantt'), sousMenusProjets.join('|'));
     // Panneau projet (édition, section Mon dashboard) : PF-14, projet dont Camille est cheffe
     await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
     await capture('10-panneau-projet');
@@ -445,15 +445,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
-    // Onglet Capacité : sans sprint saisi, message ; les sprints se saisissent dans Administration › Sprints
+    // Capacité : sans sprint saisi, message ; les sprints se saisissent dans Mon dashboard › Projets et Roadmap › Sprints (2026-10-23)
     await aller('capacite'); await page.waitForTimeout(200);
     const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
     await page.selectOption('select[data-action-change="projetCapaciteSaisie"]', projetEditable); await page.waitForTimeout(200);
     const sansSprint = (await texte()).includes('Aucun sprint saisi');
-    // 4 sprints de 2 semaines autour d'aujourd'hui (le 3e est le sprint en cours), saisis dans Administration › Sprints
+    // 4 sprints de 2 semaines autour d'aujourd'hui (le 3e est le sprint en cours), saisis dans Projets et Roadmap › Sprints
     const dates = await page.evaluate(() => { const l = Calculs.lundi(Calculs.aujourdhui());
       return [-4, -2, 0, 2].map(k => [Calculs.ajouterJours(l, k * 7), Calculs.ajouterJours(l, k * 7 + 11)]); });
-    await page.click('[data-action="allerSprints"]'); await page.waitForTimeout(250);   // Administration › Sprints, sur ce projet
+    await page.click('[data-action="allerSprints"]'); await page.waitForTimeout(250);   // Projets et Roadmap › Sprints, sur ce projet
     for (let i = 0; i < dates.length; i++) {
       await page.fill('input[form="ajout-sprint"][name=nom]', 'V' + (i + 1));
       await page.fill('input[form="ajout-sprint"][name=debut]', dates[i][0]); await page.fill('input[form="ajout-sprint"][name=fin]', dates[i][1]);
@@ -463,14 +463,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const anneeCourante = Number(dates[2][0].slice(0, 4));
     await page.click(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`).catch(() => {});
     const autreAnneeVide = await page.evaluate(() => !document.querySelector('input[data-action-change="majSprint"][data-champ="numeroSprint"]'));
-    await page.evaluate(a => majUi('monAdmin', { anneeSprints: a }), anneeCourante); await page.waitForTimeout(150);
-    verifier('Administration › Sprints : numéro « Sprint N », année, version, début, fin ; affichage par année', sansSprint
+    await page.evaluate(a => majUi('sprints', { anneeSprints: a }), anneeCourante); await page.waitForTimeout(150);
+    await capture('09c-sprints');
+    verifier('Projets et Roadmap › Sprints : numéro « Sprint N », année, version, début, fin ; affichage par année ; plus d’onglet dans Administration', sansSprint
       && await page.evaluate(id => sprintsDuProjet(id).map(s => `${s.numeroSprint}/${s.nom}`).join() === '1/V1,2/V2,3/V3,4/V4', projetEditable)
       && await page.evaluate(id => sprintsDuProjet(id).every(s => anneeSprint(s) === Number(s.debut.slice(0, 4))), projetEditable)
       && (await page.$$('input[data-action-change="majSprint"][data-champ="numeroSprint"]')).length === 4
       && (!(await page.$(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`)) || autreAnneeVide)
-      && await page.evaluate(() => etat.ecran === 'monAdmin' && ui('monAdmin').onglet === 'sprints'));
-    await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);   // onglet par défaut pour la suite
+      && await page.evaluate(() => etat.ecran === 'mesSprints' && !!document.querySelector('.laterale .sous-lien.actif[data-ecran="mesSprints"]'))
+      && await page.evaluate(() => { allerA('monAdmin'); return !document.querySelector('[data-action="ongletMonAdmin"][data-id="sprints"]'); }));
     await aller('capacite'); await page.waitForTimeout(200);
     verifier('Capacité : menu à part au-dessus du Plan de charge, plus d’onglet Capacité dans Congés', await page.evaluate(() => {
       const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
@@ -776,10 +777,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_projet: etat.modale.projetId, p_cle: etat.modale.cle }));
     verifier('Envoi du daily : fenêtre Power Automate du projet (URI, corps avec clé, aperçu)', !!corpsFlux && corpsFlux.includes('p_cle')
       && await page.evaluate(() => { const m = document.querySelector('.modale'); return !!m && m.innerHTML.includes('/rpc/daily_projet') && m.textContent.includes('Blocages du jour'); }));
-    await page.click('.modale .fermer'); await page.click('[data-action="ongletMonAdmin"][data-id="sprints"]'); await page.waitForTimeout(150);
+    await page.click('.modale .fermer'); await page.waitForTimeout(150);
     // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
-      && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Sprints'));
+      && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Envoi du daily'));
 
     /* --- Plan de charge (migration 021) : réservé au créateur (porteur, 2026-10-22) ---
        Camille est administratrice (non créatrice) : menu absent ; le créateur est simulé le temps du bloc. */

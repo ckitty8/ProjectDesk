@@ -150,7 +150,7 @@ const Previsionnel = {
   reel(r) {
     const esc = C.esc, projets = this.projetsDe(r), ref = this.projetSprints(projets);
     if (!ref) return `<div class="carte encart">Aucun sprint daté sur les projets de ${esc(r.nom)} :
-      renseignez les dates des sprints dans Mon dashboard › Administration › Sprints.</div>`;
+      renseignez les dates des sprints dans Mon dashboard › Projets et Roadmap › Sprints.</div>`;
     const sprints = sprintsDuProjet(ref.id), s = this.sprintChoisi(sprints), rang = sprints.indexOf(s), fer = feries();
     const capaciteH = Calculs.heuresAttenduesJours(r, Calculs.joursOuvresEntre(s.debut, s.fin, fer), etat.d.absences, fer);
     const lignes = projets.map(p => ({ p, cible: this.part(p.id, r.id), prevu: Calculs.partDe(capaciteH, this.part(p.id, r.id)),

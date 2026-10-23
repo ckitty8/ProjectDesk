@@ -4,7 +4,7 @@
    - Projets : projets groupés par équipe, filtre par équipe (notion de ticket retirée de
      l'application à la demande du porteur, 2026-09-27) ; un clic ouvre le panneau de détail ;
    - Planning projet (porteur 2026-10-23, maquette planning-projet/) : sur une frise de 6 mois, les sprints
-     de chaque projet (Mon dashboard › Administration › Sprints) et ses dates de mise en production
+     de chaque projet (Mon dashboard › Projets et Roadmap › Sprints) et ses dates de mise en production
      (Mon dashboard › Projets et Roadmap › Mises en production) — PlanningProjet. Remplace les onglets
      « Planning des sprints » et « Planning des MEP » (2.32-2.33).
    ============================================================ */
@@ -99,7 +99,7 @@ const PlanningProjet = {
         <button class="btn" data-action="planningProjetDecaler" data-sens="-1">‹</button>
         <b>${Calculs.libelleMois(...this.anneeMois(per.debut))} → ${Calculs.libelleMois(...this.anneeMois(per.fin))}</b>
         <button class="btn" data-action="planningProjetDecaler" data-sens="1">›</button></div>
-      <span class="discret texte-12">Sprints : Mon dashboard › Administration › Sprints · MEP : Mon dashboard › Projets et Roadmap</span></div>`;
+      <span class="discret texte-12">Sprints et MEP : saisis dans Mon dashboard › Projets et Roadmap</span></div>`;
   },
   // Repère d'une mise en production : ▲ + version à sa date, couleur de son statut, détail en infobulle
   repereMep(m, per) {
