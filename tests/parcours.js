@@ -108,25 +108,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue « Suivi de mes équipes » en lecture seule'));
     await page.click('.fermer');
-    /* Projets et Roadmap › Planning des sprints (2026-10-23) : sprints datés de chaque projet sur une frise de 6 mois */
-    await page.evaluate(() => majUi('planningSprints', { debut: '2026-09-01' }));
-    await page.click('[data-action="ongletProjets"][data-id="sprints"]'); await page.waitForTimeout(150);
-    const blocsSprints = await page.$$eval('.planning-sprints .gantt-sprint', b => b.map(x => x.textContent.trim()));
-    await page.click('[data-action="planningSprintsDecaler"][data-sens="1"]'); await page.waitForTimeout(150);
+    /* Projets et Roadmap › Planning projet (2026-10-23) : sprints et mises en production de chaque projet sur une frise de 6 mois */
+    await page.evaluate(() => majUi('planningProjet', { debut: '2026-09-01' }));
+    await page.click('[data-action="ongletProjets"][data-id="planning"]'); await page.waitForTimeout(150);
+    const blocsSprints = await page.$$eval('.planning-projet .gantt-sprint', b => b.map(x => x.textContent.trim()));
+    const reperesMep = await page.$$eval('.planning-projet .gantt-mep', b => b.map(x => x.textContent.trim()));
+    const ongletsProjets = await page.$$eval('[data-action="ongletProjets"]', b => b.map(x => x.textContent.trim()));
+    await page.click('[data-action="planningProjetDecaler"][data-sens="1"]'); await page.waitForTimeout(150);
     const periodeSuivante = await page.textContent('.encart-compact b');
-    verifier('Projets et Roadmap › Planning des sprints : blocs S19 et S20 de PF-14, navigation par mois',
-      blocsSprints.includes('S19') && blocsSprints.includes('S20') && periodeSuivante.startsWith('octobre 2026'), blocsSprints.join(' ') + ' / ' + periodeSuivante);
-    await page.evaluate(() => majUi('planningSprints', { debut: '2026-09-01' })); await page.waitForTimeout(150);
-    await capture('04b-planning-sprints');
-    await page.click('[data-action="planningSprintsAujourdhui"]');
-    /* Projets et Roadmap › Planning des MEP (2026-10-23, migration 039) : MEP groupées par mois, prochaine MEP prévue en avant */
-    await page.click('[data-action="ongletProjets"][data-id="mep"]'); await page.click('[data-action="planningMepPassees"]'); await page.waitForTimeout(150);
-    const planningMep = await page.$$eval('.contenu tbody tr', t => t.map(x => x.textContent.replace(/\s+/g, ' ').trim()));
-    verifier('Projets et Roadmap › Planning des MEP : 4 MEP groupées par mois, statuts affichés',
-      planningMep.filter(l => /V\d/.test(l)).length === 4 && planningMep.includes('octobre 2026') && planningMep.includes('novembre 2026')
-      && planningMep.some(l => l.includes('Reportée')) && (await page.$$('.ligne-prochaine')).length <= 1, planningMep.join(' | '));
-    await capture('04c-planning-mep');
-    await page.click('[data-action="planningMepPassees"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
+    verifier('Projets et Roadmap › Planning projet : sprints S19 / S20 de PF-14 et les 4 MEP (▲), navigation par mois',
+      ongletsProjets.join('|') === 'Projets|Planning projet' && blocsSprints.includes('S19') && blocsSprints.includes('S20')
+      && ['V2.0', 'V1.3', 'V2.1', 'V3.0'].every(v => reperesMep.includes('▲ ' + v)) && periodeSuivante.startsWith('octobre 2026'),
+      blocsSprints.join(' ') + ' / ' + reperesMep.join(' ') + ' / ' + periodeSuivante);
+    await page.evaluate(() => majUi('planningProjet', { debut: '2026-09-01' })); await page.waitForTimeout(150);
+    await capture('04b-planning-projet');
+    await page.click('[data-action="planningProjetAujourdhui"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     /* Gestion des ressources (2026-10-16) : onglets Calendrier / Liste des ressources, dates de naissance
        (jour et mois seulement à l'écran ; 🎂 dans le calendrier, rappel des anniversaires du mois) */
@@ -172,7 +168,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
       'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
-      'ongletProjets', 'planningSprintsDecaler', 'planningSprintsAujourdhui', 'planningMepPassees',
+      'ongletProjets', 'planningProjetDecaler', 'planningProjetAujourdhui',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
@@ -184,7 +180,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       if (ecran === 'ressources') {
         for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else if (ecran === 'projets') {
-        for (const onglet of ['mep', 'sprints', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+        for (const onglet of ['planning', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
 
       } else interdites.push(...await ecritures());
     }
@@ -352,11 +348,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Daily : jour de congé → « aucun daily attendu », cartes repliées', !!jourConge && (await texte()).includes('aucun daily attendu') && !(await page.$('textarea[data-champ="hier"]')));
     await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
 
-    /* Projets et Roadmap (2026-10-23, maquette menu-projets-roadmap/) : sous-menus Gantt (à venir) et Mises en production */
+    /* Projets et Roadmap (2026-10-23, maquette menu-projets-roadmap/) : sous-menu Mises en production (Gantt retiré) */
     await aller('mesProjets'); await capture('09-mes-projets');
     const sousMenusProjets = await page.$$eval('.laterale [data-ecran="mesProjets"] + .sous-menu .sous-lien', l => l.map(x => x.textContent.trim()));
-    verifier('Mon dashboard › Projets et Roadmap : sous-menus Gantt et Mises en production, Gantt à venir',
-      sousMenusProjets.join('|') === 'Gantt|Mises en production' && (await texte()).includes('fonctionnalité à venir'), sousMenusProjets.join('|'));
+    verifier('Mon dashboard › Projets et Roadmap : sous-menu Mises en production (plus de Gantt)',
+      sousMenusProjets.join('|') === 'Mises en production' && !(await texte()).includes('Gantt'), sousMenusProjets.join('|'));
     // Panneau projet (édition, section Mon dashboard) : PF-14, projet dont Camille est cheffe
     await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
     await capture('10-panneau-projet');
@@ -365,7 +361,6 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && !(await page.textContent('.panneau')).includes('Résultat clé'));
     await page.click('.fermer');
     /* Mon dashboard › Projets et Roadmap › MEP (2026-10-23) : saisie des mises en production des projets modifiables */
-    await aller('mesMep'); await page.waitForTimeout(150);
     const nbMep = async () => page.$$eval('[data-action-change="majMep"][data-champ="jour"]', l => l.length);
     const mepAvant = await nbMep();
     const idProjetMep = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
@@ -380,7 +375,6 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`[data-action="supprimerMep"][data-id="${ajoutee.id}"]`); await page.waitForTimeout(300);
     verifier('Mon dashboard › Projets et Roadmap › MEP : ajout, changement de statut et suppression d’une MEP',
       mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
-    await aller('mesProjets');
     await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
     await page.waitForTimeout(300);

@@ -1,39 +1,23 @@
 /* ============================================================
    Mon dashboard › Projets et Roadmap (maquette menu-projets-roadmap/, porteur 2026-10-23) :
-   sous-menus de la barre latérale, comme Gestion des ressources —
-   - Gantt (Ecrans.mesProjets) : contenu à développer plus tard ; boutons « Objectifs de l'équipe »
-     et « + Nouveau projet » ;
-   - Mises en production (Ecrans.mesMep) : saisie des MEP des projets que l'utilisateur peut
-     modifier (table mises_en_production, migration 039), consultées dans Suivi de mes équipes ›
-     Projets et Roadmap › Planning des MEP.
+   sous-menu de la barre latérale, comme Gestion des ressources — Mises en production :
+   saisie des MEP des projets que l'utilisateur peut modifier (table mises_en_production,
+   migration 039), affichées dans Suivi de mes équipes › Projets et Roadmap › Planning projet.
+   Le sous-menu « Gantt » a été retiré (porteur : le planning projet est dans Suivi de mes équipes).
    ============================================================ */
 'use strict';
 
 Ecrans.mesProjets = {
   titre: 'Projets et Roadmap',
   section: 'moi',
-  // Sous-menu Gantt : contenu retiré, à développer plus tard (porteur, 2026-10-23) ; les boutons de création restent
   rendre() {
     const actions = `<button class="btn" data-action="ouvrirObjectifs">Objectifs de l’équipe</button>
       <button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
-    return `
-    <div class="ecran">
-      ${C.entete('Gantt de mes projets', 'Planning des projets où vous êtes affecté(e)', actions)}
-      <div class="carte">${C.vide('Gantt des projets : fonctionnalité à venir.')}</div>
-    </div>`;
-  }
-};
-
-// Sous-menu Mises en production (Projets et Roadmap › Mises en production)
-Ecrans.mesMep = {
-  titre: 'Projets et Roadmap',
-  section: 'moi',
-  rendre() {
     return `<div class="ecran">${C.entete('Mises en production',
-      'MEP des projets que vous pouvez modifier · consultées dans Suivi de mes équipes › Projets et Roadmap')}${this.mep()}</div>`;
+      'MEP des projets que vous pouvez modifier · affichées dans Suivi de mes équipes › Projets et Roadmap › Planning projet', actions)}${this.mep()}</div>`;
   },
 
-  /* Onglet MEP : formulaire d'ajout puis liste modifiable des MEP des projets que je peux modifier
+  /* Formulaire d'ajout puis liste modifiable des MEP des projets que je peux modifier
      (peutEditerProjet, miroir de la règle RLS de mises_en_production) */
   mep() {
     const projets = etat.d.projets.filter(peutEditerProjet).sort(parCode);
@@ -51,7 +35,7 @@ Ecrans.mesMep = {
         <table class="tableau tableau-sprints"><thead><tr><th>Date</th><th>Projet</th><th>Version</th><th>Contenu</th><th>Statut</th><th></th></tr></thead>
           <tbody>${lignes || `<tr><td colspan="6" class="pale">Aucune mise en production saisie.</td></tr>`}</tbody></table></div>
       <div class="discret texte-12">Chaque chef de projet saisit les MEP de ses projets ; tout le monde les consulte dans
-        Suivi de mes équipes › Projets et Roadmap › Planning des MEP.</div>`;
+        Suivi de mes équipes › Projets et Roadmap › Planning projet.</div>`;
   },
   // Ligne modifiable d'une MEP : chaque champ s'enregistre dès qu'il change (majMep)
   ligneMep(m) {

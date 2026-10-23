@@ -140,13 +140,14 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .gantt-ligne > div:first-child { padding: 10px 16px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .gantt-piste { position: relative; }
 .gantt-titre-col { padding: 9px 16px; margin: 0; }
-/* Planning des sprints (Suivi › Projets et Roadmap, 2026-10-23) : un bloc par sprint sur la piste du projet */
+/* Planning projet (Suivi › Projets et Roadmap, 2026-10-23) : un bloc par sprint, un repère ▲ par MEP sur la piste du projet */
 .gantt-sprint { position: absolute; top: 18px; height: 22px; border-radius: 3px; background: var(--fond-entete);
   border: 1px solid var(--bordure); font-size: 10px; line-height: 20px; text-align: center; color: var(--discret); overflow: hidden; white-space: nowrap; }
 .gantt-sprint.en-cours { background: var(--primaire); border-color: var(--primaire); color: #fff; font-weight: 600; }
+.planning-projet .gantt-ligne { min-height: 64px; } .planning-projet .gantt-sprint { top: 9px; }
+.gantt-mep { position: absolute; top: 36px; transform: translateX(-4px); font-size: 10px; font-weight: 600; white-space: nowrap; }
 .couleur-primaire { color: var(--primaire); }
-/* Planning des MEP (Suivi › Projets et Roadmap) et saisie des MEP (Mon dashboard › Projets et Roadmap › MEP), 2026-10-23 */
-.tableau tr.ligne-prochaine td { background: var(--primaire-clair); }
+/* Saisie des MEP (Mon dashboard › Projets et Roadmap › Mises en production), 2026-10-23 */
 .formulaire-mep { gap: 8px; padding: 12px 16px; flex-wrap: wrap; }
 .champ.champ-version { width: 100px; } .champ.champ-contenu { width: 320px; }
 .gantt-jour { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--primaire); opacity: .5; }
