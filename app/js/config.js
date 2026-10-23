@@ -75,7 +75,7 @@ const ROLES_ACCES = {
 // Rôles proposés dans Administration › Rôles (dans cet ordre)
 const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
 
-/* Matrice des droits (Administration › Rôles, maquette docs/maquettes/roles-droits/, porteur « ok étape 2 »
+/* Matrice des droits (Administration créateur depuis le 2026-10-23, auparavant Administration › Rôles ; maquette docs/maquettes/roles-droits/, porteur « ok étape 2 »
    2026-10-13). Clés fixes : chacune est reliée à des règles de la base (migration 031, fonction a_droit) ;
    les NIVEAUX (oui / lecture / non) se règlent dans l'application (table droits_roles). */
 const DROITS = [
@@ -308,9 +308,10 @@ const GUIDE_ECRANS = {
       '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
     'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
   adminCreateur: ['Réservée au créateur. Simulation des rôles : voir l’application comme une personne avec un rôle donné, ' +
-    'en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.'],
-  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne, et la matrice des droits ' +
-    '(ce que chaque rôle peut faire : Oui, Lecture, Non), menu par menu et onglet par onglet.',
+    'en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
+    'Matrice des droits : ce que chaque rôle peut faire (Oui, Lecture, Non), menu par menu et onglet par onglet ; modifiable par le créateur seul.',
+    'Qui a quel rôle : les personnes rangées sous leur rôle d’accès.'],
+  monAdmin: ['Onglet Rôles (administrateurs) : le rôle d’accès de chaque personne.',
     'Onglet Comptes en attente (administrateurs) : les personnes inscrites qui n’ont pas encore accès ; choisissez leur équipe et leur fiche, puis « Donner l’accès ».',
     'Onglet Sprints : les sprints de chaque projet (version, début, fin), utilisés par l’onglet Capacité.',
     'Pour les administrateurs : équipes, référentiels (listes et libellés) et jours fériés.',

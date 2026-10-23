@@ -128,12 +128,21 @@ Object.assign(Actions, {
 });
 
 /* Mon dashboard › Administration créateur (porteur, 2026-10-23) : menu réservé au créateur, à côté
-   d'Administration ; il contient la Simulation des rôles (auparavant onglet d'Administration). */
+   d'Administration. Onglets : Simulation des rôles (auparavant onglet d'Administration), Matrice des droits
+   et Qui a quel rôle (auparavant vues d'Administration › Rôles ; maquette matrice-createur/). */
 Ecrans.adminCreateur = {
   titre: 'Administration créateur',
   section: 'moi',
+  ONGLETS: [{ id: 'simulation', libelle: 'Simulation des rôles' }, { id: 'matrice', libelle: 'Matrice des droits' },
+    { id: 'qui', libelle: 'Qui a quel rôle' }],
   rendre() {
-    const corps = Simulation.estDisponible() ? Simulation.onglet() : `<div class="carte">${C.vide('Écran réservé au créateur.')}</div>`;
-    return `<div class="ecran ecran-large">${C.entete('Administration créateur', 'Réservée au créateur · simulation des rôles')}${corps}</div>`;
+    const onglet = ui('adminCreateur', { onglet: 'simulation' }).onglet;
+    const contenus = { simulation: () => Simulation.onglet(), matrice: () => Roles.matrice(),
+      qui: () => `<div class="grille-roles">${Roles.cartesParRole()}</div>` };
+    const corps = !Simulation.estDisponible() ? `<div class="carte">${C.vide('Écran réservé au créateur.')}</div>`
+      : C.onglets(this.ONGLETS, onglet, 'ongletAdminCreateur') + (contenus[onglet] || contenus.simulation)();
+    return `<div class="ecran ecran-large">${C.entete('Administration créateur',
+      'Réservée au créateur · simulation des rôles, matrice des droits, qui a quel rôle')}${corps}</div>`;
   }
 };
+Object.assign(Actions, { ongletAdminCreateur: d => majUi('adminCreateur', { onglet: d.id }) });

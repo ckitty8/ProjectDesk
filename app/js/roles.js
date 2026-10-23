@@ -1,5 +1,7 @@
 /* ============================================================
-   Rôles : Administration › onglet « Rôles » (administrateurs)
+   Rôles : Administration › onglet « Rôles » (administrateurs) : « Utilisateurs et rôles » ;
+   Administration créateur (créateur seul, porteur 2026-10-23, maquette matrice-createur/) :
+   onglets « Matrice des droits » et « Qui a quel rôle » (matrice(), cartesParRole()).
    (maquettes docs/maquettes/liste-roles/ et affecter-roles/ ; porteur 2026-10-12 et 2026-10-13)
    ------------------------------------------------------------
    - Rôle d'accès de chaque personne, choisi ici (Administrateur, Responsable d'équipe, Membre) :
@@ -105,10 +107,10 @@ const Roles = {
      la ligne « Périmètre », puis les menus de la barre latérale en deux sections — Suivi de mes équipes, Mon dashboard
      (SECTIONS_DROITS) — avec, pour chacun, ses droits (DROITS, propriété menu) et les menus ouverts à tous
      (MENUS_SANS_DROIT). Le créateur a tout (colonne fixe) ;
-     Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031). Modifiable avec le droit « roles » :
-     chaque changement est enregistré aussitôt (table droits_roles) ; la base refuse sans ce droit. */
+     Administrateur × Rôles reste « Oui » (garde-fou de la base, migration 031). Modifiable par le créateur seul
+     (migration 041) : chaque changement est enregistré aussitôt (table droits_roles) ; la base refuse aux autres. */
   matrice() {
-    const esc = C.esc, modifiable = aDroit('roles'), nbColonnes = 3 + ROLES_CHOISISSABLES.length;
+    const esc = C.esc, modifiable = etat.estCreateur, nbColonnes = 3 + ROLES_CHOISISSABLES.length;
     const entete = ROLES_CHOISISSABLES.map(role => `<th class="centre">${esc(ROLES_ACCES[role].libelle)}</th>`).join('');
     const perimetres = ROLES_CHOISISSABLES.map(role => `<td class="centre discret texte-12">${esc(PERIMETRES[role])}</td>`).join('');
     const createur = contenu => `<td class="centre">${contenu}</td>`;   // colonne Créateur (tous les droits, fixe)
@@ -144,7 +146,7 @@ const Roles = {
     return lignes;
   },
 
-  /* Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit). Figée sans le droit « roles »,
+  /* Case d'un rôle × droit : liste Oui / Lecture / Non, enregistrée aussitôt (majDroit). Figée hors créateur,
      pour Administrateur × Rôles, et pour un droit absent de la table droits_roles (niveau de repli affiché, voir niveauDuRole) */
   celluleNiveau(role, droit, modifiable) {
     const niveau = niveauDuRole(role, droit);
@@ -154,14 +156,9 @@ const Roles = {
       data-role="${role}" data-droit="${droit}"${fixe ? ' disabled' : ''}`)}</td>`;
   },
 
-  // Onglet Rôles : trois vues — utilisateurs et rôles, matrice des droits, qui a quel rôle
+  // Onglet Rôles d'Administration : utilisateurs et rôles (matrice et « qui a quel rôle » : Administration créateur)
   onglet() {
-    const vue = ui('roles', { vue: 'utilisateurs' }).vue;
-    const puce = (cle, libelle) => `<button class="puce${vue === cle ? ' active' : ''}" data-action="vueRoles" data-vue="${cle}">${libelle}</button>`;
-    const corps = vue === 'matrice' ? this.matrice()
-      : vue === 'qui' ? `<div class="grille-roles">${this.cartesParRole()}</div>` : this.utilisateurs();
-    return `<div class="puces">${puce('utilisateurs', 'Utilisateurs et rôles')}${puce('matrice', 'Matrice des droits')}${puce('qui', 'Qui a quel rôle')}</div>
-      ${corps}`;
+    return this.utilisateurs();
   }
 };
 
@@ -175,7 +172,6 @@ Object.assign(Actions, {
     }, 'administrateurs', 'responsablesEquipe', 'rolesPrevus', 'rolesAcces');
   },
   filtreRoles: (d, el) => majUi('roles', { [d.filtre]: el.value }),
-  vueRoles: d => majUi('roles', { vue: d.vue }),
   // Niveau d'un droit pour un rôle (matrice) : enregistré aussitôt ; la base refuse sans le droit « roles »
   majDroit(d, el) {
     executer(() => Api.modifier('droits_roles', { role: 'eq.' + d.role, droit: 'eq.' + d.droit }, { niveau: el.value }), 'droitsRoles');
