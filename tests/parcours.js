@@ -352,15 +352,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Daily : jour de congé → « aucun daily attendu », cartes repliées', !!jourConge && (await texte()).includes('aucun daily attendu') && !(await page.$('textarea[data-champ="hier"]')));
     await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
 
+    /* Projets et Roadmap (2026-10-23, maquette menu-projets-roadmap/) : sous-menus Gantt (à venir) et Mises en production */
     await aller('mesProjets'); await capture('09-mes-projets');
-    await page.click('.gantt-ligne:has-text("PF-14") .gantt-barre');   // projet dont Camille est cheffe await page.waitForTimeout(200);
+    const sousMenusProjets = await page.$$eval('.laterale [data-ecran="mesProjets"] + .sous-menu .sous-lien', l => l.map(x => x.textContent.trim()));
+    verifier('Mon dashboard › Projets et Roadmap : sous-menus Gantt et Mises en production, Gantt à venir',
+      sousMenusProjets.join('|') === 'Gantt|Mises en production' && (await texte()).includes('fonctionnalité à venir'), sousMenusProjets.join('|'));
+    // Panneau projet (édition, section Mon dashboard) : PF-14, projet dont Camille est cheffe
+    await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
     await capture('10-panneau-projet');
     verifier('Panneau : ni objectif, ni période, ni statut, ni avancement, ni tickets',
       !(await page.$('.panneau [data-champ="statut"], .panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
       && !(await page.textContent('.panneau')).includes('Résultat clé'));
     await page.click('.fermer');
     /* Mon dashboard › Projets et Roadmap › MEP (2026-10-23) : saisie des mises en production des projets modifiables */
-    await page.click('[data-action="ongletMesProjets"][data-id="mep"]'); await page.waitForTimeout(150);
+    await aller('mesMep'); await page.waitForTimeout(150);
     const nbMep = async () => page.$$eval('[data-action-change="majMep"][data-champ="jour"]', l => l.length);
     const mepAvant = await nbMep();
     const idProjetMep = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
@@ -375,7 +380,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click(`[data-action="supprimerMep"][data-id="${ajoutee.id}"]`); await page.waitForTimeout(300);
     verifier('Mon dashboard › Projets et Roadmap › MEP : ajout, changement de statut et suppression d’une MEP',
       mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
-    await page.click('[data-action="ongletMesProjets"][data-id="gantt"]');
+    await aller('mesProjets');
     await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
     await page.waitForTimeout(300);

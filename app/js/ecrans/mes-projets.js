@@ -1,10 +1,10 @@
 /* ============================================================
-   Mon dashboard › Projets et Roadmap (maquette 07-mProjets.png)
-   Onglets (porteur 2026-10-23, maquette roadmap-mep-sprints/4-saisie-mon-dashboard.png) :
-   - Gantt : diagramme des projets où l'utilisateur est affecté. Barre claire = durée
-     planifiée, barre pleine = avancement. Clic sur une barre : panneau projet ;
-   - MEP : saisie des mises en production des projets que l'utilisateur peut modifier
-     (table mises_en_production, migration 039), consultées dans Suivi de mes équipes ›
+   Mon dashboard › Projets et Roadmap (maquette menu-projets-roadmap/, porteur 2026-10-23) :
+   sous-menus de la barre latérale, comme Gestion des ressources —
+   - Gantt (Ecrans.mesProjets) : contenu à développer plus tard ; boutons « Objectifs de l'équipe »
+     et « + Nouveau projet » ;
+   - Mises en production (Ecrans.mesMep) : saisie des MEP des projets que l'utilisateur peut
+     modifier (table mises_en_production, migration 039), consultées dans Suivi de mes équipes ›
      Projets et Roadmap › Planning des MEP.
    ============================================================ */
 'use strict';
@@ -12,55 +12,25 @@
 Ecrans.mesProjets = {
   titre: 'Projets et Roadmap',
   section: 'moi',
+  // Sous-menu Gantt : contenu retiré, à développer plus tard (porteur, 2026-10-23) ; les boutons de création restent
   rendre() {
-    const moi = maRessource(), onglet = ui('mesProjets', { onglet: 'gantt' }).onglet;
-    const mesAffectations = moi ? etat.d.affectations.filter(a => a.ressourceId === moi.id) : [];
-    const lignes = mesAffectations.map(a => ({ p: projet(a.projetId), role: a.role })).filter(x => x.p && x.p.debut && x.p.fin)
-      .sort((x, y) => x.p.debut.localeCompare(y.p.debut));
-    const nbChef = lignes.filter(x => x.role === ROLES_PROJET.CHEF).length;
-
     const actions = `<button class="btn" data-action="ouvrirObjectifs">Objectifs de l’équipe</button>
       <button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
-    const avertissement = !moi ? `<div class="carte encart-moyen">Votre compte n’est lié à aucune fiche ressource.
-      Demandez à votre équipe de créer votre fiche (Liste des ressources) avec votre email : le lien se fait à la connexion.</div>` : '';
-    const onglets = C.onglets([{ id: 'gantt', libelle: 'Gantt' }, { id: 'mep', libelle: 'MEP' }], onglet, 'ongletMesProjets');
-
     return `
     <div class="ecran">
-      ${C.entete('Mes projets et Roadmap', `${lignes.length} projets dont ${nbChef} en tant que chef de projet · cliquez sur une barre pour ouvrir le projet`, actions)}
-      ${avertissement}${onglets}
-      ${onglet === 'mep' ? this.mep() : this.gantt(lignes)}
+      ${C.entete('Gantt de mes projets', 'Planning des projets où vous êtes affecté(e)', actions)}
+      <div class="carte">${C.vide('Gantt des projets : fonctionnalité à venir.')}</div>
     </div>`;
-  },
+  }
+};
 
-  // Onglet Gantt : échelle du 1er du mois du début le plus tôt à la fin du mois de l'échéance la plus tardive
-  gantt(lignes) {
-    const esc = C.esc, jour = Calculs.aujourdhui();
-    let frise = '';
-    if (lignes.length) {
-      const debut = lignes.reduce((m, x) => x.p.debut < m ? x.p.debut : m, jour).slice(0, 8) + '01';
-      const finMax = lignes.reduce((m, x) => x.p.fin > m ? x.p.fin : m, jour);
-      const dFin = Calculs.depuisIso(finMax); const fin = Calculs.versIso(new Date(dFin.getFullYear(), dFin.getMonth() + 1, 0));
-      const total = Calculs.ecartJours(debut, fin) + 1;
-      const position = iso => Math.max(0, Math.min(100, Calculs.ecartJours(debut, iso) / total * 100));
-      const mois = []; for (let d = Calculs.depuisIso(debut); Calculs.versIso(d) <= fin; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
-        const nbJours = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-        mois.push(`<div style="width:${nbJours / total * 100}%">${Calculs.MOIS_COURTS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}</div>`);
-      }
-      frise = `<div class="gantt-mois"><div class="libelle gantt-titre-col">Projet</div><div class="mois">${mois.join('')}</div></div>` +
-        lignes.map(({ p, role }) => {
-          const eq = equipe(p.equipeId), g = position(p.debut), l = position(p.fin) - g;
-          return `<div class="gantt-ligne"><div><div>${C.code(p.code)} ${esc(p.nom)}</div>
-              <div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)} ${C.badgeRef('role', role)}</div></div>
-            <div class="gantt-piste"><div class="gantt-jour" style="left:${position(jour)}%"></div>
-              <div class="gantt-barre" style="left:${g}%;width:${l}%;background:${C.teinte(eq.couleur, .12)}" data-action="ouvrirProjet" data-id="${p.id}"
-                title="${Calculs.formatCourt(p.debut)} → ${Calculs.formatCourt(p.fin)}">
-                <div class="gantt-plein" style="width:${Math.max(p.avancement, 8)}%;background:${eq.couleur}">${p.avancement}%</div></div></div></div>`;
-        }).join('');
-    }
-    return `<div class="carte">${frise || C.vide('Aucun projet daté où vous êtes affecté(e).')}</div>
-      <div class="discret"><span class="couleur-primaire">—</span> Aujourd’hui, ${Calculs.formatCourt(jour)} &nbsp;
-        Barre claire : durée planifiée · barre pleine : avancement</div>`;
+// Sous-menu Mises en production (Projets et Roadmap › Mises en production)
+Ecrans.mesMep = {
+  titre: 'Projets et Roadmap',
+  section: 'moi',
+  rendre() {
+    return `<div class="ecran">${C.entete('Mises en production',
+      'MEP des projets que vous pouvez modifier · consultées dans Suivi de mes équipes › Projets et Roadmap')}${this.mep()}</div>`;
   },
 
   /* Onglet MEP : formulaire d'ajout puis liste modifiable des MEP des projets que je peux modifier
@@ -98,7 +68,6 @@ Ecrans.mesProjets = {
 Object.assign(Actions, {
   nouveauProjet: d => majEtat({ panneau: { type: 'nouveauProjet', equipeId: (d && d.equipe) || null } }),
   ouvrirObjectifs: () => majEtat({ modale: { type: 'objectifs' } }),
-  ongletMesProjets: d => majUi('mesProjets', { onglet: d.id }),
   /* Mises en production (table mises_en_production, migration 039) */
   ajouterMep(d, form) {
     const f = Object.fromEntries(new FormData(form));

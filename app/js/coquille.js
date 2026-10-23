@@ -39,7 +39,9 @@ const Coquille = (() => {
   ];
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
-    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road' },
+    // Projets et Roadmap : sous-menus comme Gestion des ressources (porteur 2026-10-23, maquette menu-projets-roadmap/)
+    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
+      enfants: [{ id: 'mesProjets', libelle: 'Gantt' }, { id: 'mesMep', libelle: 'Mises en production' }] },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
       enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
     // Saisir mes heures : menu à part, sorti de Gestion des ressources (porteur, 2026-10-22) ; le suivi des équipes
