@@ -18,7 +18,7 @@ const Modale = {
     const m = etat.modale;
     const corps = {
       affectation: this.affectation, rattachement: this.rattachement, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide,
-      methodeCapacite: this.methodeCapacite, envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily
+      envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily
     }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
   },
@@ -187,27 +187,6 @@ const Modale = {
     return `<div class="colonne">${this.entete(guide.titre)}
       <div class="panneau-corps">${guide.paragraphes.map(p => `<p class="sans-marge">${esc(p)}</p>`).join('')}
         <p class="discret" style="margin:0;font-size:12px">Astuce : survolez les ⓘ pour le détail d’un chiffre ou d’une règle.</p></div></div>`;
-  },
-
-  /* ---------- Méthode de calcul de l'onglet Capacité ----------
-     Formules seules (les chiffres du projet sont dans l'onglet) ; paramètres lus dans CONFIG. */
-  methodeCapacite() {
-    const n = Calculs.nombre, focus = Math.round(CONFIG.FACTEUR_FOCUS * 100);
-    const bloc = (titre, lignes) => `<div><h3 style="margin:0 0 4px">${titre}</h3><ul style="margin:0;padding-left:18px">${lignes.map(l => `<li>${l}</li>`).join('')}</ul></div>`;
-    return `<div class="colonne">${this.entete('Méthode de calcul · Scrum')}
-      <div class="panneau-corps">
-        ${bloc('Capacité par sprint', ['<b>Théorique</b> = jours ouvrés du sprint (hors week-ends et fériés) × capacité (%) de chaque membre',
-          '<b>Disponible</b> = théorique − absences (demi-journée = 0,5) ; jours avant l’arrivée ou après le départ exclus'])}
-        ${bloc('Capacité engageable (Scrum)', [`<b>Engageable</b> = (disponible − cérémonies) × facteur de focus`,
-          `cérémonies : ${n(CONFIG.CEREMONIES_JOURS_SPRINT)} j par personne et par sprint (planning, daily, revue, rétrospective, affinage)`,
-          `facteur de focus : ${focus} % (interruptions, support, réunions hors sprint)`, `en heures : engageable × ${n(CONFIG.HEURES_PAR_JOUR)} h`])}
-        ${bloc('Vélocité', [`<b>Vélocité</b> = moyenne des points terminés sur les ${CONFIG.SPRINTS_MOYENNE_VELOCITE} derniers sprints`,
-          '<b>Prévision</b> du sprint = vélocité × (capacité du sprint ÷ capacité moyenne des sprints de référence)',
-          'ne se compare pas entre équipes : elle sert à prévoir'])}
-        ${bloc('Répartition idéale d’un sprint', ['<b>Jours par catégorie</b> = jours disponibles du sprint × part saisie pour ce sprint',
-          'parts suggérées (pratiques Scrum usuelles, en grisé tant qu’elles ne sont pas saisies) : '
-            + REPARTITION_SPRINT.map(c => `${C.esc(c.categorie)} ${c.part} %`).join(' · ')])}
-      </div></div>`;
   },
 
   /* ---------- Envoi du daily : mise en place du flux Power Automate ----------

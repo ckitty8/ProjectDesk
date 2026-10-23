@@ -4,7 +4,7 @@
    Création et modification des sprints de chaque projet (table sprints_projet) : numéro, année,
    version, début, fin. Modifiable par ceux qui peuvent modifier le projet (peutEditerProjet).
    Les sprints s'affichent dans Suivi de mes équipes › Projets et Roadmap › Planning projet et
-   servent à Capacité (bouton « Sprints du projet » → allerSprints).
+   servent aussi à la roadmap (docs/specifications/roadmap.md § 2).
    ============================================================ */
 'use strict';
 
@@ -13,13 +13,13 @@ Ecrans.mesSprints = {
   section: 'moi',
   rendre() {
     return `<div class="ecran">${C.entete('Sprints',
-      'Sprints de vos projets · affichés dans Suivi de mes équipes › Projets et Roadmap › Planning projet et utilisés par Capacité')}${this.sprints()}</div>`;
+      'Sprints de vos projets · affichés dans Suivi de mes équipes › Projets et Roadmap › Planning projet')}${this.sprints()}</div>`;
   },
 
   /* ---------- Sprints de chaque projet ----------
      Saisis par le porteur pour chaque projet (demande du 2026-10-05) : nom de la version, date de
      début, date de fin (table sprints_projet, migration 014). Un seul endroit pour la liste des
-     sprints : l'onglet Capacité et, demain, la roadmap (liste déroulante) l'utilisent
+     sprints : la roadmap (liste déroulante) l'utilisera
      (docs/specifications/roadmap.md § 2). Modifiable par ceux qui peuvent modifier le projet. */
   sprints() {
     const projets = etat.d.projets;
@@ -72,8 +72,6 @@ Ecrans.mesSprints = {
 
 Object.assign(Actions, {
   projetSprints: (_, el) => majUi('sprints', { projetSprints: el.value }),
-  // Depuis Capacité : ouvre Projets et Roadmap › Sprints sur le projet affiché
-  allerSprints: d => { majUi('sprints', { projetSprints: d.id }, { rendre: false }); allerA('mesSprints'); },
   /* Sprints du projet (table sprints_projet ; clé projet + numéro, attribué à l'ajout) */
   anneeSprints: d => majUi('sprints', { anneeSprints: Number(d.annee) }),
   ajouterSprint(d, form) {

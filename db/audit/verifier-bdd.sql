@@ -121,7 +121,7 @@ ecarts as (
   select 'Sprint : début après la fin', 'erreur', count(*), string_agg(numero::text, ', ')
     from public.sprints_projet where debut > fin having count(*) > 0
   union all
-  select 'Sprint sans dates (inutilisable par Capacité)', 'avertissement', count(*), string_agg(p.code || ' n°' || s.numero, ', ')
+  select 'Sprint sans dates (absent du planning projet)', 'avertissement', count(*), string_agg(p.code || ' n°' || s.numero, ', ')
     from public.sprints_projet s join public.projets p on p.id = s.projet_id where s.debut is null or s.fin is null having count(*) > 0
   union all
   select 'Daily sur un projet où la personne n''est pas affectée', 'avertissement', count(*), string_agg(distinct p.code, ', ')

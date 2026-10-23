@@ -493,7 +493,7 @@ function unitesRacines() {
   const racines = etat.d.equipes.filter(e => !e.parentId || !parId('equipes', e.parentId));
   return [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')];
 }
-// Modifie des champs d'un sprint existant (Capacité : points ; Projets et Roadmap › Sprints : dates, numéro…)
+// Modifie des champs d'un sprint existant (Projets et Roadmap › Sprints : dates, numéro…)
 const modifierSprint = (projetId, numero, valeurs) =>
   executer(() => Api.modifier('sprints_projet', { projet_id: 'eq.' + projetId, numero: 'eq.' + numero }, valeurs), 'sprintsProjet');
 // Un projet n'a qu'un « Sprint N » par année (règle aussi garantie en base, migration 015)
@@ -501,8 +501,6 @@ const sprintDejaPris = (projetId, annee, numeroSprint, saufNumero = null) => (et
   .some(s => s.projetId === projetId && s.numero !== saufNumero && Number(s.numeroSprint) === numeroSprint && anneeSprint(s) === annee);
 // Année d'un sprint : saisie (migration 015), sinon celle de sa date de début
 const anneeSprint = s => Number(s.annee) || Number((s.debut || '').slice(0, 4));
-// Libellé d'un sprint : « Sprint 3 · V3.2 » (numéro saisi et version), à défaut l'un des deux
-const nomSprint = s => [s.numeroSprint ? 'Sprint ' + s.numeroSprint : '', s.nom || ''].filter(Boolean).join(' · ') || 'Sprint ' + s.numero;
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
 // Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
 const objectifJoursTravail = (equipeId, annee) => {

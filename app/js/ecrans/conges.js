@@ -7,9 +7,6 @@
      cliquer sur les jours pour l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux
      jours attendus par le client (par équipe et par année ; maquette recap-jours-travailles).
-   - Capacité : page vide pour le moment (contenu à définir avec le
-     porteur), avec le bouton « Méthode de calcul Scrum » en haut à droite qui ouvre la pop-in
-     des formules (capacité, vélocité, répartition idéale d'un sprint) — maquette capacite-scrum/.
    Modifiable : sa propre ligne et celles de ses équipes (règle RLS).
    ============================================================ */
 'use strict';
@@ -120,7 +117,6 @@ Object.assign(Actions, {
     if (!(jours > 0 && jours <= 366)) return notifier('Nombre de jours invalide', 'erreur');
     executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
   },
-  ouvrirMethodeCapacite: () => majEtat({ modale: { type: 'methodeCapacite' } }),
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
 
   // Clic sur un jour : applique le type choisi, ou retire l'absence si c'est le même type (ou « Effacer »)

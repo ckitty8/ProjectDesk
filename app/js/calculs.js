@@ -74,23 +74,6 @@ const Calculs = (() => {
     return { numero: ref.numero + index, debut, fin: ajouterJours(debut, CONFIG.DUREE_SPRINT_JOURS - 3) };
   }
 
-  /* Vélocité (Scrum) : moyenne des points terminés sur les sprints de référence ; prévision du
-     sprint = vélocité × (capacité du sprint ÷ capacité moyenne des sprints de référence), pour
-     tenir compte des absences. `historique` = [{ points, capacite }]. */
-  function velocite(historique, capaciteSprint) {
-    const moyennePoints = moyenne(historique.map(h => h.points));
-    const moyenneCapacite = moyenne(historique.map(h => h.capacite));
-    return { velocite: moyennePoints, capaciteMoyenne: moyenneCapacite,
-      prevision: moyenneCapacite ? moyennePoints * capaciteSprint / moyenneCapacite : 0 };
-  }
-  /* Répartition idéale d'un sprint : jours par catégorie = jours disponibles × part SAISIE pour le sprint
-     (migration 040, porteur 2026-10-23). parts = { catégorie: % saisi }. Sans saisie : part et jours null
-     (la part de REPARTITION_SPRINT reste en « suggestion », elle n'est pas comptée). */
-  const repartitionSprint = (disponible, parts) => REPARTITION_SPRINT.map(c => {
-    const part = parts[c.categorie] ?? null;
-    return { ...c, suggestion: c.part, part, jours: part == null ? null : disponible * part / 100 };
-  });
-
   /* ---------- Projets ---------- */
   const estTermine = p => p.statut === STATUTS_PROJET.TERMINE;
   const projetsActifs = projets => projets.filter(p => !estTermine(p));
@@ -287,7 +270,7 @@ const Calculs = (() => {
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
     lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois, nomMois, estAnniversaire, anniversairesDuMois,
-    trimestreDe, nombre, pourcent, sprintDe, velocite, repartitionSprint, estTermine, projetsActifs, avancementMoyen,
+    trimestreDe, nombre, pourcent, sprintDe, estTermine, projetsActifs, avancementMoyen,
     projetsASurveiller, progressionObjectif, atteinteTrimestre,
     estPresent, estPresentSur, libellePresence,
     capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois,

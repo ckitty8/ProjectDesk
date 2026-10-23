@@ -33,14 +33,12 @@ const CONFIG = {
   // Timesheet : journée de référence et cible d'occupation (dashboard)
   HEURES_PAR_JOUR: 7.5,
 
-  // Calcul type Scrum (affiché à titre d'information dans Capacité par sprint) :
+  // Calcul type Scrum (exemple chiffré de Trucs et astuces) :
   // temps des cérémonies par personne et par sprint de 2 semaines (planning 4 h, daily 10 × 15 min,
   // revue 2 h, rétrospective 1,5 h, affinage du backlog ~1,5 h ≈ 11,5 h ≈ 1,5 j) et facteur de
   // focus (part du temps restant réellement consacrée au sprint : interruptions, support, réunions).
   CEREMONIES_JOURS_SPRINT: 1.5,
   FACTEUR_FOCUS: 0.8,
-  // Vélocité : moyenne glissante sur les N derniers sprints terminés (pratique Scrum usuelle : 3)
-  SPRINTS_MOYENNE_VELOCITE: 3,
   CIBLE_OCCUPATION: 85,
 
   // Projets « à surveiller » : échéance dans moins de N jours
@@ -101,7 +99,7 @@ const DROITS = [
   { cle: 'suivi_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
   { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
-  { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints, capacité' },
+  { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints' },
   // Sous-menu Sprints (2026-10-23, auparavant onglet d'Administration ; clé inchangée, enregistrée en base)
   { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Projets et Roadmap', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
     libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
@@ -112,8 +110,6 @@ const DROITS = [
     libelle: 'Jours travaillés et congés de l’année', repli: 'mon_dashboard' },
   { cle: 'fiches_ressources', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Fiches des personnes, dates d’arrivée et de fin' },
   { cle: 'affecter', section: 'dashboard', menu: 'Liste des ressources', libelle: 'Affecter des personnes aux projets' },
-  { cle: 'onglet_conges_capacite', section: 'dashboard', menu: 'Capacité', ecran: 'capacite',
-    libelle: 'Capacité des projets par sprint (menu Capacité)', repli: 'mon_dashboard' },
   { cle: 'administration', section: 'dashboard', menu: 'Administration', libelle: 'Équipes, référentiels, jours fériés' },
   { cle: 'comptes', section: 'dashboard', menu: 'Administration', onglet: 'Comptes en attente', ecran: 'monAdmin', id: 'comptes',
     libelle: 'Donner l’accès aux comptes en attente' },
@@ -174,22 +170,6 @@ const STATUTS_MEP = [
   { valeur: 'reportee', libelle: 'Reportée', ton: 'attention' }
 ];
 const ENVOI_DAILY_DEFAUT = { mode: 'aucun', heure: '09:30', jours: '1,2,3,4,5', sansFeries: true, destinataires: '' };
-/* Catégories de travail d'un sprint et part SUGGÉRÉE (demande du porteur 2026-09-27).
-   Depuis le 2026-10-23 (migration 040), la part idéale se saisit pour chaque sprint dans Capacité ;
-   la part ci-dessous n'est qu'une suggestion affichée en grisé. Source : pratiques Scrum usuelles. Total = 100 %. La part
-   « Cérémonies / réunions » (15 %) correspond à CEREMONIES_JOURS_SPRINT (1,5 j) sur un sprint
-   de 10 jours ouvrés : les deux règles restent cohérentes. */
-const REPARTITION_SPRINT = [
-  { categorie: 'User stories', part: 40, couleur: '#003CC8', aide: 'Fonctionnalités à valeur métier (le cœur du sprint).' },
-  { categorie: 'Incidents (prod)', part: 10, couleur: '#D14343', aide: 'Réserve pour les incidents de production non planifiables.' },
-  { categorie: 'Bugs (qualif)', part: 10, couleur: '#D98A1C', aide: 'Corrections des anomalies trouvées en qualification.' },
-  { categorie: 'Tests', part: 10, couleur: '#0F8A6B', aide: 'Tests, recette, automatisation.' },
-  { categorie: 'Technique (serveur, cache, API)', part: 8, couleur: '#7A3FC2', aide: 'Socle technique, dette, performance.' },
-  { categorie: 'Documentation', part: 5, couleur: '#4A5363', aide: 'Documentation fonctionnelle et technique.' },
-  { categorie: 'Autres sujets', part: 2, couleur: '#8A93A3', aide: 'Imprévus divers.' },
-  { categorie: 'Cérémonies / réunions', part: 15, couleur: '#B25E09', aide: 'Planning, daily, revue, rétrospective, affinage.' }
-];
-
 /* Méthodes de gestion de projet (référentiel « methode », migration 022 ; demande du porteur 2026-10-08) :
    choisies à la création du projet ; des menus dépendront de la méthode (gestion multi-projet).
    Libellés système (renommables en Administration › Référentiels, retrouvés par leur clé). */
@@ -251,7 +231,7 @@ const AIDES = {
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ' +
     'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Projets et Roadmap › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
-    '»), l’année, le nom de la version, sa date de début et sa date de fin. L’onglet Capacité calcule la capacité, la vélocité et la répartition sur ces sprints.',
+    '»), l’année, le nom de la version, sa date de début et sa date de fin.',
   productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
     `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
   statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
@@ -295,11 +275,9 @@ const GUIDE_ECRANS = {
     'Saisissez les mises en production (date, version, contenu, statut) des projets que vous pouvez modifier ; chaque champ s’enregistre dès qu’il change.',
     'Tout le monde les voit dans Suivi de mes équipes › Projets et Roadmap › Planning projet (repères ▲).'],
   mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
-    'Ils s’affichent dans Suivi de mes équipes › Projets et Roadmap › Planning projet et servent à Capacité.'],
+    'Ils s’affichent dans Suivi de mes équipes › Projets et Roadmap › Planning projet.'],
   conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
-  capacite: ['Capacité d’un projet par sprint : disponibilité des membres (congés, fériés, présence), capacité engageable, vélocité et répartition du sprint.',
-    'Choisissez le projet et le sprint (saisis dans Projets et Roadmap › Sprints) ; bouton « Méthode de calcul Scrum » pour les formules.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
     'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle ' +
       'd’accès. Un projet : ses Product Owners, puis ses membres. Actifs et Inactifs se replient d’un clic.',
@@ -347,7 +325,7 @@ const KPI_AGILE = [
       ['velocite', 'Vélocité', 'Points (ou éléments du backlog) terminés par sprint ; moyenne glissante des 3 derniers sprints.',
         'Sert à prévoir ; ne se compare pas entre équipes.'],
       ['capacite', 'Capacité', 'Jours-homme disponibles sur le sprint (absences, fériés, temps partiel déduits).',
-        'Menu Mon dashboard › Capacité ; calcul type : (disponible − cérémonies) × focus.'],
+        'Calcul type : (disponible − cérémonies) × focus.'],
       ['engagement', 'Engagement tenu (say/do)', 'Points terminés ÷ points engagés au sprint planning.', 'Cible 80–100 % ; en dessous, l’équipe s’engage trop.'],
       ['burndown', 'Burndown du sprint', 'Travail restant (points ou heures) jour par jour.', 'Une courbe plate = blocage ; une chute tardive = éléments trop gros.'],
       ['burnup', 'Burnup de release', 'Travail terminé cumulé face au périmètre total.', 'Montre aussi l’ajout de périmètre en cours de route.'],
@@ -482,7 +460,7 @@ const ROADMAP_ASTUCES = {
     'Partir du résultat attendu (problème à résoudre), pas de la fonctionnalité',
     'Relier chaque étape à un objectif / résultat clé',
     'Précision décroissante : trimestre sûr, au-delà indicatif',
-    'Vérifier la capacité (Capacité, congés) avant de s’engager',
+    'Vérifier la capacité (congés) avant de s’engager',
     'Revoir à date fixe et afficher la date de mise à jour',
     'Adapter le niveau de détail au public (direction, équipe, métiers)'],
   pieges: [

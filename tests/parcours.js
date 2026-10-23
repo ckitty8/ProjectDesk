@@ -445,15 +445,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
       return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
-    // Capacité : sans sprint saisi, message ; les sprints se saisissent dans Mon dashboard › Projets et Roadmap › Sprints (2026-10-23)
-    await aller('capacite'); await page.waitForTimeout(200);
+    // Sprints : sans sprint saisi au départ ; ils se saisissent dans Mon dashboard › Projets et Roadmap › Sprints (2026-10-23)
     const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
-    await page.selectOption('select[data-action-change="projetCapaciteSaisie"]', projetEditable); await page.waitForTimeout(200);
-    const sansSprint = (await texte()).includes('Aucun sprint saisi');
+    const sansSprint = await page.evaluate(id => sprintsDuProjet(id).length === 0, projetEditable);
     // 4 sprints de 2 semaines autour d'aujourd'hui (le 3e est le sprint en cours), saisis dans Projets et Roadmap › Sprints
     const dates = await page.evaluate(() => { const l = Calculs.lundi(Calculs.aujourdhui());
       return [-4, -2, 0, 2].map(k => [Calculs.ajouterJours(l, k * 7), Calculs.ajouterJours(l, k * 7 + 11)]); });
-    await page.click('[data-action="allerSprints"]'); await page.waitForTimeout(250);   // Projets et Roadmap › Sprints, sur ce projet
+    await aller('mesSprints'); await page.waitForTimeout(250);   // Projets et Roadmap › Sprints
+    await page.selectOption('select[data-action-change="projetSprints"]', projetEditable); await page.waitForTimeout(200);
     for (let i = 0; i < dates.length; i++) {
       await page.fill('input[form="ajout-sprint"][name=nom]', 'V' + (i + 1));
       await page.fill('input[form="ajout-sprint"][name=debut]', dates[i][0]); await page.fill('input[form="ajout-sprint"][name=fin]', dates[i][1]);
@@ -472,45 +471,6 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (!(await page.$(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`)) || autreAnneeVide)
       && await page.evaluate(() => etat.ecran === 'mesSprints' && !!document.querySelector('.laterale .sous-lien.actif[data-ecran="mesSprints"]'))
       && await page.evaluate(() => { allerA('monAdmin'); return !document.querySelector('[data-action="ongletMonAdmin"][data-id="sprints"]'); }));
-    await aller('capacite'); await page.waitForTimeout(200);
-    verifier('Capacité : menu à part, plus d’onglet Capacité dans Congés', await page.evaluate(() => {
-      const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
-      return ids.indexOf('capacite') > ids.indexOf('conges')
-        && !Ecrans.conges.onglets(2026).some(o => o.id === 'capacite');
-    }));
-    verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
-      && (await texte()).includes('Capacité engageable') && (await texte()).includes('Capacité des membres'));
-    await capture('11b-capacite');
-    await page.click('[data-action="sprintCapacite"] >> nth=0'); await page.waitForTimeout(150);
-    const ailleurs = !(await texte()).includes('· en cours');
-    await page.click('[data-action="capaciteAujourdhui"]'); await page.waitForTimeout(150);
-    verifier('Capacité : bouton « Aujourd’hui » → sprint en cours', ailleurs && (await texte()).includes('· en cours'));
-    // Saisie : points terminés du sprint précédent (V2) → vélocité ; jours réels d'une catégorie
-    await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', '21');
-    await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', 'Tab'); await page.waitForTimeout(400);
-    await page.fill('input[data-action-change="saisirRepartition"][data-champ="jours"] >> nth=0', '11');
-    await page.press('input[data-action-change="saisirRepartition"][data-champ="jours"] >> nth=0', 'Tab'); await page.waitForTimeout(400);
-    verifier('Capacité : saisie des points (vélocité) et des jours réels enregistrée', await page.evaluate(() =>
-      etat.d.sprintsProjet.some(s => s.nom === 'V2' && Number(s.pointsTermines) === 21) && etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.jours) === 11))
-      && (await page.textContent('.grille-kpi')).includes('21 pts'));
-    /* Répartition (migration 040, porteur 2026-10-23) : part idéale saisie par sprint ; sans saisie, pas d'idéal (suggestion en grisé) */
-    const sansPart = await page.$eval('input[data-champ="part"][data-categorie="User stories"]', e => e.value === '' && e.placeholder === '40');
-    await page.fill('input[data-champ="part"][data-categorie="User stories"]', '45');
-    await page.press('input[data-champ="part"][data-categorie="User stories"]', 'Tab'); await page.waitForTimeout(400);
-    const ligneUs = await page.$eval('input[data-champ="part"][data-categorie="User stories"]', e => e.closest('tr').textContent.replace(/\s+/g, ' '));
-    const disponible = await page.evaluate(() => Calculs.nombre(etat.d.repartitionsSprint.length && Capacite.donnees(Capacite.projetChoisi(),
-      sprintsDuProjet(Capacite.projetChoisi().id)).capSprint.disponible * 0.45));
-    verifier('Capacité › Répartition : part idéale saisie pour le sprint, idéal (j) calculé, alerte si le total ≠ 100 %',
-      sansPart && ligneUs.includes(disponible + ' j') && (await texte()).includes('il manque 55 %')
-      && await page.evaluate(() => etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.part) === 45 && Number(r.jours) === 11)),
-      ligneUs);
-    await page.evaluate(() => { const c = document.querySelector('.contenu'); c.scrollTop = c.scrollHeight; });
-    await capture('11c-capacite-repartition');
-    await page.evaluate(() => { document.querySelector('.contenu').scrollTop = 0; });
-    await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
-    const methode = (await page.textContent('.modale')) || '';
-    await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);
-    verifier('Capacité : pop-in « Méthode de calcul Scrum »', ['Capacité engageable', 'Vélocité', 'Répartition idéale', 'Incidents (prod)', 'Cérémonies / réunions'].every(t => methode.includes(t)));
     await aller('conges'); await page.click('[data-action="ongletConges"][data-id="grille"]');
     // Novembre 2026 (Armistice, demi-journée de Léa le 13) : indépendant de la date du jour
     await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10 })); await page.waitForTimeout(150);

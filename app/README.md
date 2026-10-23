@@ -1,7 +1,7 @@
 # ProjectDesk — application
 
 Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap,
-ressources, congés et capacité, timesheet, daily (les demandes sont gérées dans Azure DevOps).
+ressources, congés, timesheet, daily (les demandes sont gérées dans Azure DevOps).
 Architecture, écrans, tables et droits : [`docs/DAT.md`](../docs/DAT.md).
 
 © 2026 CIRITEC. Tous droits réservés — logiciel propriétaire, voir [`LICENSE`](../LICENSE).
