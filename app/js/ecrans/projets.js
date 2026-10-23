@@ -3,6 +3,8 @@
    Onglets (porteur 2026-10-23, maquette roadmap-mep-sprints/) :
    - Projets : projets groupés par équipe, filtre par équipe (notion de ticket retirée de
      l'application à la demande du porteur, 2026-09-27) ; un clic ouvre le panneau de détail ;
+   - Planning des MEP : mises en production des projets par mois (PlanningMep, table mises_en_production,
+     saisies dans Mon dashboard › Projets et Roadmap › MEP) ;
    - Planning des sprints : les sprints de chaque projet sur une frise de 6 mois (PlanningSprints).
    ============================================================ */
 'use strict';
@@ -17,11 +19,13 @@ Ecrans.projets = {
     const filtres = puce('toutes', 'Toutes les équipes', COULEURS.pale) + etat.d.equipes.map(e => puce(e.id, e.nom, e.couleur)).join('');
     // Projets des équipes filtrées (le filtre vaut pour les deux onglets)
     const projets = etat.d.projets.filter(p => u.equipe === 'toutes' || p.equipeId === u.equipe);
-    const onglets = C.onglets([{ id: 'projets', libelle: 'Projets' }, { id: 'sprints', libelle: 'Planning des sprints' }], u.onglet, 'ongletProjets');
+    const onglets = C.onglets([{ id: 'projets', libelle: 'Projets' }, { id: 'mep', libelle: 'Planning des MEP' },
+      { id: 'sprints', libelle: 'Planning des sprints' }], u.onglet, 'ongletProjets');
+    const contenus = { projets: () => this.tableau(u), mep: () => PlanningMep.rendre(projets), sprints: () => PlanningSprints.rendre(projets) };
     return `
     <div class="ecran">
       ${C.entete('Projets et Roadmap', `${etat.d.projets.length} projets · objectifs, avancement et sprints par équipe`, `<div class="puces">${filtres}</div>`)}
-      ${onglets}${u.onglet === 'sprints' ? PlanningSprints.rendre(projets) : this.tableau(u)}
+      ${onglets}${(contenus[u.onglet] || contenus.projets)()}
     </div>`;
   },
 
@@ -62,6 +66,37 @@ Ecrans.projets = {
    sprint en cours en bleu, trait vertical = aujourd'hui, version et dates au survol. Les sprints sont ceux saisis
    dans Mon dashboard › Administration › Sprints (sprintsDuProjet, etat.js). Période : 6 mois à partir du mois
    précédent le mois en cours, décalable mois par mois (‹ Aujourd'hui ›). */
+/* ---------- Onglet Planning des MEP (2026-10-23, maquette roadmap-mep-sprints/2-planning-mep.png) ----------
+   Une ligne par mise en production, groupées par mois ; la prochaine MEP prévue est mise en avant.
+   Par défaut à partir du 1er du mois en cours ; « Voir les MEP passées » affiche tout l'historique. */
+const PlanningMep = {
+  // Ligne d'une MEP : date, projet, version, contenu, statut
+  ligne(m, prochaine) {
+    const p = projet(m.projetId), esc = C.esc;
+    return `<tr${prochaine ? ' class="ligne-prochaine"' : ''}><td><b>${Calculs.formatCourt(m.jour)}</b>${prochaine ? ' ' + C.badgeTon('Prochaine', 'info') : ''}</td>
+      <td>${C.code(p.code)} ${esc(p.nom)}</td><td>${esc(m.version || '')}</td><td>${esc(m.contenu || '')}</td><td>${badgeMep(m.statut)}</td></tr>`;
+  },
+
+  rendre(projets) {
+    const passees = ui('planningMep', {}).passees, jour = Calculs.aujourdhui(), debutMois = jour.slice(0, 8) + '01';
+    const meps = misesEnProductionDe(projets).filter(m => passees || m.jour >= debutMois);
+    const prochaine = meps.find(m => m.statut === 'prevue' && m.jour >= jour);
+    let moisCourant = '';
+    // Une ligne de groupe à chaque changement de mois, puis les MEP du mois
+    const lignes = meps.map(m => {
+      const mois = m.jour.slice(0, 7), groupe = mois !== moisCourant
+        ? `<tr class="groupe"><td colspan="5">${Calculs.libelleMois(...PlanningSprints.anneeMois(m.jour))}</td></tr>` : '';
+      moisCourant = mois;
+      return groupe + this.ligne(m, m === prochaine);
+    }).join('');
+    return `<div class="ligne-flex entre encart-compact">
+        <button class="btn" data-action="planningMepPassees">${passees ? 'Masquer les MEP passées' : 'Voir les MEP passées'}</button>
+        <span class="discret texte-12">MEP saisies dans Mon dashboard › Projets et Roadmap › MEP</span></div>
+      <div class="carte"><table class="tableau"><thead><tr><th>Date</th><th>Projet</th><th>Version</th><th>Contenu</th><th>Statut</th></tr></thead>
+        <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucune mise en production prévue.')}</td></tr>`}</tbody></table></div>`;
+  }
+};
+
 const PlanningSprints = {
   NB_MOIS: 6,
   // Premier jour de la période affichée (ISO) : choisi par les flèches, sinon le 1er du mois précédent
@@ -115,6 +150,7 @@ const PlanningSprints = {
 Object.assign(Actions, {
   filtrerEquipeProjets: d => majUi('projets', { equipe: d.id }),
   ongletProjets: d => majUi('projets', { onglet: d.id }),
+  planningMepPassees: () => majUi('planningMep', { passees: !ui('planningMep', {}).passees }),
   // Planning des sprints : décaler la période d'un mois, ou revenir à la période par défaut
   planningSprintsDecaler(d) {
     const m = Calculs.depuisIso(PlanningSprints.debut());

@@ -45,7 +45,7 @@ const TABLES = {
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
   responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
-  rattachements: 'membres_equipe'
+  rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production'
 };
 const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
@@ -457,6 +457,11 @@ const noteProjet = (userId, projetId, jour) =>
 // Sprints d'un projet saisis par le porteur (version, début, fin), du plus ancien au plus récent
 const sprintsDuProjet = projetId => (etat.d.sprintsProjet || []).filter(s => s.projetId === projetId && s.debut && s.fin)
   .sort((a, b) => a.debut.localeCompare(b.debut));
+// Mises en production des projets donnés (migration 039), de la plus proche à la plus lointaine
+const misesEnProductionDe = projets => (etat.d.misesEnProduction || []).filter(m => projets.some(p => p.id === m.projetId))
+  .sort((a, b) => a.jour.localeCompare(b.jour));
+// Badge du statut d'une mise en production (STATUTS_MEP)
+const badgeMep = statut => { const s = STATUTS_MEP.find(x => x.valeur === statut) || STATUTS_MEP[0]; return C.badgeTon(s.libelle, s.ton); };
 // Affectations d'une personne à des projets existants
 const affectationsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId && projet(a.projetId));
 // Badges « Projet · rôle » d'une personne (fiche, Administration › Rôles), ou le texte « vide »

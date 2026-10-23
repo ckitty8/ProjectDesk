@@ -205,6 +205,11 @@ function amorcer() {
   bd.previsions_temps = [['PF-14', 60], ['PF-17', 20], ['PR-03', 20]].map(([code, part]) => ({ projet_id: idProjet(code), ressource_id: idCamille, part }));
   bd.sprints_projet.push({ projet_id: idProjet('PF-14'), numero: 1, numero_sprint: 19, annee: 2026, nom: 'V1.9', debut: '2026-09-14', fin: '2026-09-25' },
     { projet_id: idProjet('PF-14'), numero: 2, numero_sprint: 20, annee: 2026, nom: 'V2.0', debut: '2026-09-28', fin: '2026-10-09' });
+  // Mises en production (migration 039) : Planning des MEP de Suivi, saisie dans Mon dashboard › Projets et Roadmap › MEP
+  bd.mises_en_production = [['PF-14', '2026-10-09', 'V2.0', 'Connecteur LDAP, mapping des rôles', 'faite'],
+    ['DA-08', '2026-10-30', 'V1.3', 'Rapport de trésorerie, alertes de dépassement', 'prevue'], ['PF-14', '2026-11-06', 'V2.1', 'SSO Azure AD (pilote)', 'prevue'],
+    ['MO-21', '2026-11-20', 'V3.0', 'Synchronisation hors-ligne', 'reportee']]
+    .map(([code, jour, version, contenu, statut]) => ({ id: uuid(), projet_id: idProjet(code), jour, version, contenu, statut }));
   bd.notes_daily_projet = [
     { user_id: thomas.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
     { user_id: camille.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' }];

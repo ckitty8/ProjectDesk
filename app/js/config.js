@@ -165,6 +165,13 @@ const MODES_ENVOI_DAILY = [
   { valeur: 'power_automate', libelle: 'Power Automate' },
   { valeur: 'direct', libelle: 'Envoi direct' }
 ];
+/* Statuts d'une mise en production (porteur 2026-10-23, maquette roadmap-mep-sprints/) : même liste
+   que la contrainte de la table mises_en_production (migration 039) ; ton = couleur du badge (TONS) */
+const STATUTS_MEP = [
+  { valeur: 'prevue', libelle: 'Prévue', ton: 'info' },
+  { valeur: 'faite', libelle: 'Faite', ton: 'succes' },
+  { valeur: 'reportee', libelle: 'Reportée', ton: 'attention' }
+];
 const ENVOI_DAILY_DEFAUT = { mode: 'aucun', heure: '09:30', jours: '1,2,3,4,5', sansFeries: true, destinataires: '' };
 /* Répartition idéale du temps d'un sprint par catégorie de travail (demande du porteur 2026-09-27).
    Source : pratiques Scrum usuelles, à ajuster par le porteur. Total = 100 %. La part

@@ -118,7 +118,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       blocsSprints.includes('S19') && blocsSprints.includes('S20') && periodeSuivante.startsWith('octobre 2026'), blocsSprints.join(' ') + ' / ' + periodeSuivante);
     await page.evaluate(() => majUi('planningSprints', { debut: '2026-09-01' })); await page.waitForTimeout(150);
     await capture('04b-planning-sprints');
-    await page.click('[data-action="planningSprintsAujourdhui"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
+    await page.click('[data-action="planningSprintsAujourdhui"]');
+    /* Projets et Roadmap › Planning des MEP (2026-10-23, migration 039) : MEP groupées par mois, prochaine MEP prévue en avant */
+    await page.click('[data-action="ongletProjets"][data-id="mep"]'); await page.click('[data-action="planningMepPassees"]'); await page.waitForTimeout(150);
+    const planningMep = await page.$$eval('.contenu tbody tr', t => t.map(x => x.textContent.replace(/\s+/g, ' ').trim()));
+    verifier('Projets et Roadmap › Planning des MEP : 4 MEP groupées par mois, statuts affichés',
+      planningMep.filter(l => /V\d/.test(l)).length === 4 && planningMep.includes('octobre 2026') && planningMep.includes('novembre 2026')
+      && planningMep.some(l => l.includes('Reportée')) && (await page.$$('.ligne-prochaine')).length <= 1, planningMep.join(' | '));
+    await capture('04c-planning-mep');
+    await page.click('[data-action="planningMepPassees"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     /* Gestion des ressources (2026-10-16) : onglets Calendrier / Liste des ressources, dates de naissance
        (jour et mois seulement à l'écran ; 🎂 dans le calendrier, rappel des anniversaires du mois) */
@@ -164,7 +172,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
       'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
-      'ongletProjets', 'planningSprintsDecaler', 'planningSprintsAujourdhui',
+      'ongletProjets', 'planningSprintsDecaler', 'planningSprintsAujourdhui', 'planningMepPassees',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
@@ -176,7 +184,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       if (ecran === 'ressources') {
         for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
       } else if (ecran === 'projets') {
-        for (const onglet of ['sprints', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+        for (const onglet of ['mep', 'sprints', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
 
       } else interdites.push(...await ecritures());
     }
@@ -351,6 +359,23 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       !(await page.$('.panneau [data-champ="statut"], .panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
       && !(await page.textContent('.panneau')).includes('Résultat clé'));
     await page.click('.fermer');
+    /* Mon dashboard › Projets et Roadmap › MEP (2026-10-23) : saisie des mises en production des projets modifiables */
+    await page.click('[data-action="ongletMesProjets"][data-id="mep"]'); await page.waitForTimeout(150);
+    const nbMep = async () => page.$$eval('[data-action-change="majMep"][data-champ="jour"]', l => l.length);
+    const mepAvant = await nbMep();
+    const idProjetMep = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
+    await page.selectOption('form[data-action-envoi="ajouterMep"] [name=projet]', idProjetMep);
+    await page.fill('form[data-action-envoi="ajouterMep"] [name=jour]', '2026-12-04');
+    await page.fill('form[data-action-envoi="ajouterMep"] [name=version]', 'V2.2');
+    await page.click('form[data-action-envoi="ajouterMep"] button'); await page.waitForTimeout(300);
+    const ajoutee = await page.evaluate(() => etat.d.misesEnProduction.find(m => m.version === 'V2.2'));
+    await page.selectOption(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="statut"]`, 'faite'); await page.waitForTimeout(300);
+    const statutModifie = await page.evaluate(id => etat.d.misesEnProduction.find(m => m.id === id).statut, ajoutee.id);
+    await capture('09b-saisie-mep');
+    await page.click(`[data-action="supprimerMep"][data-id="${ajoutee.id}"]`); await page.waitForTimeout(300);
+    verifier('Mon dashboard › Projets et Roadmap › MEP : ajout, changement de statut et suppression d’une MEP',
+      mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
+    await page.click('[data-action="ongletMesProjets"][data-id="gantt"]');
     await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
     await page.waitForTimeout(300);
