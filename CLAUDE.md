@@ -97,5 +97,8 @@ Objectif du porteur : aucune ligne inutile ni code mort ; une application repren
   `project-desk-sepia.vercel.app`). La branche `roadmap` n'est **plus** mise à jour (consigne du
   porteur, 2026-10-13) ; la branche `gestion-des-ressources` est abandonnée (même date).
 
+- [ ] Fin de développement : envoyer au porteur le lien de la version de `main` en ligne
+  (https://project-desk-sepia.vercel.app) avec le numéro de version livré (consigne du porteur, 2026-10-23).
+
 - [ ] `node scripts/verifier-docs.js` → « ✔ Documents vérifiés »
 - [ ] Relecture humaine des documents : README, DAT, CLAUDE.md cohérents entre eux
