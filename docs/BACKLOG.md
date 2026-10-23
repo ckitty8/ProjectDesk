@@ -142,7 +142,7 @@ Application HTML/CSS/JS native sans build, base Neon (Postgres, Auth, Data API),
 | Feature | FT-08.1 | Sprints d'un projet saisis à la main (numéro, année, début, fin) | ✅ | 1.58, 1.63, 2.01 |
 | Feature | FT-08.2 | Mises en production (saisie dans Mon dashboard) | ✅ | 2.33, 2.37 |
 | Feature | FT-08.3 | Planning projet (sprints et mises en production sur une frise) | ✅ | 2.32, 2.38 |
-| Feature | FT-08.4 | Spécification Roadmap (rang de traitement DSI, sprint en liste) | ⏸ | roadmap.md |
+| Feature | FT-08.4 | **Roadmap fonctionnelle** : liste des demandes classées par rang DSI, vues Liste et Kanban, fiche de demande (US-005 à US-012, § 3) | ⏸ P2 | roadmap.md |
 | Feature | FT-08.5 | Gantt des projets (contenu retiré, « on le développera plus tard ») | 🕓 P3 | 2.37 |
 | Feature | FT-08.6 | Recherche ⌘K de l'en-tête (affichée, inactive) (O1) | 🕓 P3 | § 12 |
 
@@ -177,6 +177,23 @@ Application HTML/CSS/JS native sans build, base Neon (Postgres, Auth, Data API),
 | US-002 | FT-09.5 | En tant que porteur, je veux recetter l'application avec de vrais comptes, afin de valider les droits en conditions réelles. | P1 | 🕓 |
 | US-003 | FT-02.6 | En tant qu'utilisateur, je veux me connecter avec Google sans identifiants partagés, afin de passer en production. | P2 | 🕓 |
 | US-004 | FT-02.7 | En tant qu'administrateur, je veux que l'e-mail soit vérifié avant l'accès, afin de sécuriser les comptes. | P2 | 🕓 |
+
+### Feature FT-08.4 · Roadmap fonctionnelle (⏸ en attente)
+
+Source : `docs/specifications/roadmap.md` (règles et maquettes `docs/maquettes/roadmap/retenu-*.png`
+déjà validées). En attente depuis le 2026-10-08 : les demandes sont gérées dans Azure DevOps ;
+la Feature repasse en 🕓 Prévu dès que le porteur décide de la reprendre (ou d'importer depuis Azure DevOps).
+
+| ID | US | Statut |
+|----|----|--------|
+| US-005 | En tant que PO, je veux saisir une demande (demandeur, parcours, priorité, impacts client / collaborateur, complexité, stratégique), afin de la faire entrer dans la roadmap. | ⏸ |
+| US-006 | En tant que DSI, je veux que le rang de traitement soit calculé (stratégique, puis priorité, puis score = (0,5 × client + 0,3 × collaborateur) ÷ (0,2 × complexité)), afin de savoir quoi traiter en premier. | ⏸ |
+| US-007 | En tant que DSI, je veux voir « complexité à saisir » plutôt qu'un score de 0, afin de repérer les demandes non chiffrées. | ⏸ |
+| US-008 | En tant que PO, je veux choisir le sprint d'une demande dans une liste alimentée par Administration › Sprints, afin d'éviter les saisies libres. | ⏸ |
+| US-009 | En tant qu'utilisateur, je veux une vue Liste triée par rang avec filtres statut, parcours et demandeur, afin de parcourir la roadmap. | ⏸ |
+| US-010 | En tant qu'utilisateur, je veux une vue Kanban par statut où glisser une carte change son statut, afin de suivre l'avancement. | ⏸ |
+| US-011 | En tant qu'utilisateur, je veux ouvrir la fiche d'une demande dans le panneau latéral (identification, priorisation, développement, recette), afin de la consulter ou la modifier selon mes droits. | ⏸ |
+| US-012 | En tant que responsable, je veux les indicateurs (demandes ouvertes, en recette, chiffrage restant en j-h, complexité à saisir) et la même vue en lecture seule dans Suivi de mes équipes, afin de piloter. | ⏸ |
 
 ## 4. Bugs ouverts
 
