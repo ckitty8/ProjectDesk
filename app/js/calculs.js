@@ -83,8 +83,13 @@ const Calculs = (() => {
     return { velocite: moyennePoints, capaciteMoyenne: moyenneCapacite,
       prevision: moyenneCapacite ? moyennePoints * capaciteSprint / moyenneCapacite : 0 };
   }
-  // Répartition idéale d'un sprint : jours par catégorie = jours disponibles × part (REPARTITION_SPRINT)
-  const repartitionSprint = disponible => REPARTITION_SPRINT.map(c => ({ ...c, jours: disponible * c.part / 100 }));
+  /* Répartition idéale d'un sprint : jours par catégorie = jours disponibles × part SAISIE pour le sprint
+     (migration 040, porteur 2026-10-23). parts = { catégorie: % saisi }. Sans saisie : part et jours null
+     (la part de REPARTITION_SPRINT reste en « suggestion », elle n'est pas comptée). */
+  const repartitionSprint = (disponible, parts) => REPARTITION_SPRINT.map(c => {
+    const part = parts[c.categorie] ?? null;
+    return { ...c, suggestion: c.part, part, jours: part == null ? null : disponible * part / 100 };
+  });
 
   /* ---------- Projets ---------- */
   const estTermine = p => p.statut === STATUTS_PROJET.TERMINE;

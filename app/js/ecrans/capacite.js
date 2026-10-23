@@ -5,7 +5,7 @@
    - indicateurs : disponible, engageable (Scrum), vélocité, prévision ;
    - capacité des membres (calculée : congés, fériés, arrivées et départs) ;
    - vélocité : points engagés / terminés SAISIS par sprint ;
-   - répartition du sprint : idéal (REPARTITION_SPRINT) et jours réels SAISIS par catégorie.
+   - répartition du sprint : part idéale (%) et jours réels SAISIS par catégorie (part suggérée : REPARTITION_SPRINT).
    Calculs : Calculs.capacitePeriode, capaciteScrum, velocite, repartitionSprint.
    Saisies : tables sprints_projet et repartitions_sprint (etat.d.sprintsProjet, repartitionsSprint).
    ============================================================ */
@@ -28,9 +28,19 @@ const Capacite = {
   },
   // Saisies d'un projet pour un sprint (lignes vides si rien n'est encore saisi)
   saisieSprint: (projetId, numero) => (etat.d.sprintsProjet || []).find(s => s.projetId === projetId && s.numero === numero) || {},
-  joursReels: (projetId, numero, categorie) => {
-    const r = (etat.d.repartitionsSprint || []).find(x => x.projetId === projetId && x.numero === numero && x.categorie === categorie);
-    return r ? Number(r.jours) : null;
+  // Saisie de répartition d'une catégorie pour un sprint (part idéale et jours réels), ou null
+  saisieRepartition: (projetId, numero, categorie) =>
+    (etat.d.repartitionsSprint || []).find(x => x.projetId === projetId && x.numero === numero && x.categorie === categorie) || null,
+  joursReels(projetId, numero, categorie) {
+    const r = this.saisieRepartition(projetId, numero, categorie);
+    return r && r.jours != null ? Number(r.jours) : null;
+  },
+  // Parts idéales saisies pour un sprint : { catégorie: % } (migration 040)
+  partsSaisies(projetId, numero) {
+    const parts = {};
+    (etat.d.repartitionsSprint || []).filter(x => x.projetId === projetId && x.numero === numero && x.part != null)
+      .forEach(x => { parts[x.categorie] = Number(x.part); });
+    return parts;
   },
 
   /* Données du sprint affiché, calculées une fois pour toutes les cartes :
@@ -130,26 +140,41 @@ const Capacite = {
         <td class="num">${v ? n(v.velocite) + ' pts' : '—'}</td><td class="num">${v ? '≈ ' + n(v.prevision) + ' pts prévus' : ''}</td></tr></tbody></table></div>`;
   },
 
-  // Répartition du sprint : idéal calculé (REPARTITION_SPRINT), jours réels saisis par catégorie, écart
+  /* Répartition du sprint (maquette capacite-repartition-saisie/, porteur 2026-10-23) : part idéale (%)
+     et jours réels SAISIS par catégorie ; idéal (j) = disponible × part saisie ; la part suggérée
+     (REPARTITION_SPRINT) n'apparaît qu'en grisé et n'est pas comptée */
   carteRepartition(d) {
     const esc = C.esc, n = Calculs.nombre, { p, sprint, capSprint, modifiable } = d;
-    const lignes = Calculs.repartitionSprint(capSprint.disponible).map(c => {
+    const categories = Calculs.repartitionSprint(capSprint.disponible, this.partsSaisies(p.id, sprint.numero));
+    const champ = (c, nom, valeur, attributs) => `<input type="number" min="0" ${attributs} class="champ saisie-points" value="${valeur ?? ''}"
+      ${modifiable ? '' : 'disabled'} data-action-change="saisirRepartition" data-champ="${nom}" data-projet="${p.id}" data-numero="${sprint.numero}"
+      data-categorie="${esc(c.categorie)}">`;
+    const lignes = categories.map(c => {
       const reel = this.joursReels(p.id, sprint.numero, c.categorie);
-      const ecart = reel == null ? ''
+      const ecart = reel == null || c.jours == null ? ''
         : `<span class="${reel - c.jours > 0.5 ? 'reste-negatif' : 'discret'}">${reel - c.jours > 0 ? '+' : ''}${n(reel - c.jours)} j</span>`;
-      return `<tr><td><span class="ligne-flex">${C.pastille(c.couleur)}${esc(c.categorie)}</span></td><td class="num">${c.part} %</td>
-        <td class="num">${n(c.jours)} j</td>
-        <td class="num"><input type="number" min="0" step="0.5" class="champ saisie-points" value="${reel ?? ''}" placeholder="—" ${modifiable ? '' : 'disabled'}
-          data-action-change="saisirRepartition" data-projet="${p.id}" data-numero="${sprint.numero}" data-categorie="${esc(c.categorie)}"></td>
-        <td class="num">${ecart}</td></tr>`;
+      return `<tr><td><span class="ligne-flex">${C.pastille(c.couleur)}${esc(c.categorie)}</span></td>
+        <td class="num">${champ(c, 'part', c.part, `max="100" step="0.5" placeholder="${c.suggestion}"`)} %</td>
+        <td class="num">${c.jours == null ? '<span class="pale">—</span>' : n(c.jours) + ' j'}</td>
+        <td class="num">${champ(c, 'jours', reel, 'step="0.5" placeholder="—"')}</td><td class="num">${ecart}</td></tr>`;
     }).join('');
-    const totalReel = REPARTITION_SPRINT.reduce((s, c) => s + (this.joursReels(p.id, sprint.numero, c.categorie) || 0), 0);
     return `<div class="carte"><div class="carte-titre"><h2>Répartition · ${esc(nomSprint(sprint))}</h2>
-      <span class="discret">idéal calculé · réel à saisir (jours)</span></div>
-      <table class="tableau"><thead><tr><th>Catégorie</th><th class="num">Idéal</th><th class="num">Idéal (j)</th>
+      <span class="discret">idéal et réel à saisir pour chaque sprint</span></div>
+      <div class="discret texte-12 encart-compact">Saisissez la part idéale (%) de chaque catégorie pour ce sprint ; la valeur grisée est une
+        suggestion, elle n’est pas comptée tant qu’elle n’est pas saisie. Idéal (j) = disponible du sprint (${n(capSprint.disponible)} j) × part.</div>
+      <table class="tableau"><thead><tr><th>Catégorie</th><th class="num">Idéal (%) · saisi</th><th class="num">Idéal (j)</th>
         <th class="num">Réel (j)</th><th class="num">Écart</th></tr></thead>
-      <tbody>${lignes}<tr class="groupe"><td>Total</td><td class="num">100 %</td><td class="num">${n(capSprint.disponible)} j</td>
-        <td class="num">${n(totalReel)} j</td><td></td></tr></tbody></table></div>`;
+      <tbody>${lignes}${this.totalRepartition(categories, p, sprint)}</tbody></table></div>`;
+  },
+  // Ligne Total de la répartition : somme des parts saisies (alerte si ≠ 100 %, sans bloquer), des jours idéaux et réels
+  totalRepartition(categories, p, sprint) {
+    const n = Calculs.nombre, saisies = categories.filter(c => c.part != null);
+    const totalPart = saisies.reduce((s, c) => s + c.part, 0), totalIdeal = saisies.reduce((s, c) => s + c.jours, 0);
+    const totalReel = categories.reduce((s, c) => s + (this.joursReels(p.id, sprint.numero, c.categorie) || 0), 0);
+    const alerte = saisies.length && totalPart !== 100
+      ? ` ${C.badgeTon(totalPart < 100 ? `≠ 100 % : il manque ${n(100 - totalPart)} %` : `≠ 100 % : ${n(totalPart - 100)} % en trop`, 'attention')}` : '';
+    return `<tr class="groupe"><td>Total</td><td class="num"><span class="${alerte ? 'reste-negatif' : ''}">${n(totalPart)} %</span>${alerte}</td>
+      <td class="num">${n(totalIdeal)} j</td><td class="num">${n(totalReel)} j</td><td></td></tr>`;
   },
 
   // Onglet Capacité : sans projet ou sans sprint, un message ; sinon en-tête, indicateurs et les trois cartes
@@ -185,16 +210,20 @@ Object.assign(Actions, {
     if (valeur !== null && !(valeur >= 0)) return notifier('Nombre de points invalide', 'erreur');
     modifierSprint(d.projet, d.numero, { [d.champ]: valeur });
   },
-  /* Jours réels d'une catégorie pour un sprint : upsert ; un champ vidé supprime la saisie */
+  /* Part idéale (%) ou jours réels d'une catégorie pour un sprint (data-champ = part | jours) : upsert ;
+     un champ vidé efface la valeur, et la ligne entière si l'autre valeur est vide aussi (contrainte de la migration 040) */
   saisirRepartition(d, el) {
     const cle = { projetId: d.projet, numero: Number(d.numero), categorie: d.categorie };
+    const filtre = { projet_id: 'eq.' + cle.projetId, numero: 'eq.' + cle.numero, categorie: 'eq.' + cle.categorie };
     if (el.value === '') {
-      const filtre = { projet_id: 'eq.' + cle.projetId, numero: 'eq.' + cle.numero, categorie: 'eq.' + cle.categorie };
-      return executer(() => Api.supprimer('repartitions_sprint', filtre), 'repartitionsSprint');
+      const ligne = Capacite.saisieRepartition(cle.projetId, cle.numero, cle.categorie), autre = d.champ === 'part' ? 'jours' : 'part';
+      if (!ligne) return;
+      return executer(() => ligne[autre] == null ? Api.supprimer('repartitions_sprint', filtre)
+        : Api.modifier('repartitions_sprint', filtre, { [d.champ]: null }), 'repartitionsSprint');
     }
-    const jours = Number(el.value);
-    if (!(jours >= 0)) return notifier('Nombre de jours invalide', 'erreur');
-    executer(() => Api.creer('repartitions_sprint', { ...cle, jours }, 'projet_id,numero,categorie'), 'repartitionsSprint');
+    const valeur = Number(el.value);
+    if (!(valeur >= 0) || (d.champ === 'part' && valeur > 100)) return notifier(d.champ === 'part' ? 'Part invalide (0 à 100 %)' : 'Nombre de jours invalide', 'erreur');
+    executer(() => Api.creer('repartitions_sprint', { ...cle, [d.champ]: valeur }, 'projet_id,numero,categorie'), 'repartitionsSprint');
   }
 });
 

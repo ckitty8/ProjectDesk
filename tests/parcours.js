@@ -488,11 +488,25 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Saisie : points terminés du sprint précédent (V2) → vélocité ; jours réels d'une catégorie
     await page.fill('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', '21');
     await page.press('input[data-action-change="saisirPoints"][data-champ="pointsTermines"] >> nth=1', 'Tab'); await page.waitForTimeout(400);
-    await page.fill('input[data-action-change="saisirRepartition"] >> nth=0', '11');
-    await page.press('input[data-action-change="saisirRepartition"] >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    await page.fill('input[data-action-change="saisirRepartition"][data-champ="jours"] >> nth=0', '11');
+    await page.press('input[data-action-change="saisirRepartition"][data-champ="jours"] >> nth=0', 'Tab'); await page.waitForTimeout(400);
     verifier('Capacité : saisie des points (vélocité) et des jours réels enregistrée', await page.evaluate(() =>
       etat.d.sprintsProjet.some(s => s.nom === 'V2' && Number(s.pointsTermines) === 21) && etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.jours) === 11))
       && (await page.textContent('.grille-kpi')).includes('21 pts'));
+    /* Répartition (migration 040, porteur 2026-10-23) : part idéale saisie par sprint ; sans saisie, pas d'idéal (suggestion en grisé) */
+    const sansPart = await page.$eval('input[data-champ="part"][data-categorie="User stories"]', e => e.value === '' && e.placeholder === '40');
+    await page.fill('input[data-champ="part"][data-categorie="User stories"]', '45');
+    await page.press('input[data-champ="part"][data-categorie="User stories"]', 'Tab'); await page.waitForTimeout(400);
+    const ligneUs = await page.$eval('input[data-champ="part"][data-categorie="User stories"]', e => e.closest('tr').textContent.replace(/\s+/g, ' '));
+    const disponible = await page.evaluate(() => Calculs.nombre(etat.d.repartitionsSprint.length && Capacite.donnees(Capacite.projetChoisi(),
+      sprintsDuProjet(Capacite.projetChoisi().id)).capSprint.disponible * 0.45));
+    verifier('Capacité › Répartition : part idéale saisie pour le sprint, idéal (j) calculé, alerte si le total ≠ 100 %',
+      sansPart && ligneUs.includes(disponible + ' j') && (await texte()).includes('il manque 55 %')
+      && await page.evaluate(() => etat.d.repartitionsSprint.some(r => r.categorie === 'User stories' && Number(r.part) === 45 && Number(r.jours) === 11)),
+      ligneUs);
+    await page.evaluate(() => { const c = document.querySelector('.contenu'); c.scrollTop = c.scrollHeight; });
+    await capture('11c-capacite-repartition');
+    await page.evaluate(() => { document.querySelector('.contenu').scrollTop = 0; });
     await page.click('[data-action="ouvrirMethodeCapacite"]'); await page.waitForTimeout(150);
     const methode = (await page.textContent('.modale')) || '';
     await page.click('.modale [data-action="fermer"]'); await page.waitForTimeout(150);

@@ -204,8 +204,9 @@ const Modale = {
         ${bloc('Vélocité', [`<b>Vélocité</b> = moyenne des points terminés sur les ${CONFIG.SPRINTS_MOYENNE_VELOCITE} derniers sprints`,
           '<b>Prévision</b> du sprint = vélocité × (capacité du sprint ÷ capacité moyenne des sprints de référence)',
           'ne se compare pas entre équipes : elle sert à prévoir'])}
-        ${bloc('Répartition idéale d’un sprint', ['<b>Jours par catégorie</b> = jours disponibles du sprint × part de la catégorie',
-          'parts proposées (pratiques Scrum usuelles, à ajuster) : ' + REPARTITION_SPRINT.map(c => `${C.esc(c.categorie)} ${c.part} %`).join(' · ')])}
+        ${bloc('Répartition idéale d’un sprint', ['<b>Jours par catégorie</b> = jours disponibles du sprint × part saisie pour ce sprint',
+          'parts suggérées (pratiques Scrum usuelles, en grisé tant qu’elles ne sont pas saisies) : '
+            + REPARTITION_SPRINT.map(c => `${C.esc(c.categorie)} ${c.part} %`).join(' · ')])}
       </div></div>`;
   },
 

@@ -173,8 +173,9 @@ const STATUTS_MEP = [
   { valeur: 'reportee', libelle: 'Reportée', ton: 'attention' }
 ];
 const ENVOI_DAILY_DEFAUT = { mode: 'aucun', heure: '09:30', jours: '1,2,3,4,5', sansFeries: true, destinataires: '' };
-/* Répartition idéale du temps d'un sprint par catégorie de travail (demande du porteur 2026-09-27).
-   Source : pratiques Scrum usuelles, à ajuster par le porteur. Total = 100 %. La part
+/* Catégories de travail d'un sprint et part SUGGÉRÉE (demande du porteur 2026-09-27).
+   Depuis le 2026-10-23 (migration 040), la part idéale se saisit pour chaque sprint dans Capacité ;
+   la part ci-dessous n'est qu'une suggestion affichée en grisé. Source : pratiques Scrum usuelles. Total = 100 %. La part
    « Cérémonies / réunions » (15 %) correspond à CEREMONIES_JOURS_SPRINT (1,5 j) sur un sprint
    de 10 jours ouvrés : les deux règles restent cohérentes. */
 const REPARTITION_SPRINT = [
