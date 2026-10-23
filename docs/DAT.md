@@ -156,6 +156,7 @@
 | 2.39    | 2026-10-23 | **Création des sprints dans Mon dashboard › Projets et Roadmap › Sprints** (porteur : « je veux la création des sprints, celui présent dans administration » ; maquette `sprints-mon-dashboard/` validée « ok », déplacement accepté) : nouvel écran `mesSprints` (`sprints.js`, code repris de mon-admin.js) ; onglet Sprints retiré d'Administration ; droit `onglet_admin_sprints` rangé sous Projets et Roadmap (clé inchangée) ; « Sprints du projet » de Capacité ouvre ce sous-menu ; aides mises à jour. Base inchangée. 147 contrôles (§ 2.1, § 3.3) |
 | 2.40    | 2026-10-23 | **Plan de charge retiré** (porteur : « retire plan de charge ») : menu, écran `previsionnel.js`, calculs `previsionMois` / `partDe` / `heuresProjetPeriode` / `joursEnHeures` / `heuresEnJours`, texte d'aide, tests et captures 23-24 supprimés ; mentions retirées de l'aide, des rôles et de l'audit. 141 contrôles. **Aucune donnée touchée (règle n°8)** : les tables `previsions_temps` et `types_tache_projet` restent en base, simplement plus lues par l'application. |
 | 2.41    | 2026-10-23 | **Capacité retirée** (porteur : « supprime tout ce qui est en rapport avec plan de charge, capacité ») : menu, écran `capacite.js`, pop-in « Méthode de calcul Scrum », droit `onglet_conges_capacite` (ligne de la matrice), calculs `velocite` / `repartitionSprint`, constantes `REPARTITION_SPRINT` / `SPRINTS_MOYENNE_VELOCITE`, aides, tests et captures 11b-11c supprimés. **Conservés** : le champ `capacite` (%) de la fiche d'une personne (il sert aux heures attendues du timesheet), `Calculs.capacitePeriode` / `capaciteScrum` (exemples chiffrés de Trucs et astuces), et le glossaire des KPI Agile. 135 contrôles. **Aucune donnée touchée (règle n°8)** : `repartitions_sprint` et les points des sprints restent en base, non lus. |
+| 2.42    | 2026-10-23 | **Périmètre de lecture et de modification par rôle** (porteur : « Thomas n'est pas affecté au projet CDO mais il peut paramétrer des sprints, il voit les éléments CDO … le responsable d'une équipe ne peut pas voir les éléments d'une autre équipe » ; règles validées « oui ») : migrations **042** et **043** (fonctions et règles seulement, **aucune donnée touchée** : 3 équipes, 7 projets, 7 personnes, 14 affectations, 155 absences, 1 temps, 2 sprints avant et après). Avant : toute personne membre d'UNE équipe lisait les projets, personnes, absences et temps de TOUTES les équipes (`est_membre_equipe`), et tout membre d'une équipe modifiait / supprimait ses projets. Maintenant : administrateur et créateur tout ; direction / responsable leur unité et sous-unités ; projet / utilisateur eux-mêmes, leurs projets et les personnes de ces projets ; heures et feuilles de temps : la personne et ceux qui gèrent son unité ; un rattachement (`membres_equipe`) ne donne aucun droit mais permet au responsable d'accueil de voir la fiche et les absences. Modifier ou supprimer un projet : responsable / direction de l'unité ou affecté Chef de projet / Membre. Côté écran : `equipesGerees()` et `appliquerPerimetre()` (`etat.js`) font voir à la **simulation** exactement ce que verrait la personne ; `travailleSurLeProjet` ne retient plus « membre de l'équipe ». Les écrans (Liste des ressources, Daily, Dashboard…) n'affichent donc que ce qui est lisible. 137 contrôles (§ 3, § 5) |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -376,12 +377,18 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | Fonction | Rôle |
 |----------|------|
 | `mes_equipes()` | Équipes (enregistrées dans `equipes`) dont l'utilisateur est membre Neon Auth ; **toutes** pour le créateur |
-| `est_membre_equipe()` | Au moins une équipe → droit de lecture global |
+| `est_membre_equipe()` | Au moins une équipe (n'ouvre plus la lecture des données métier depuis 2.42, remplacée par le périmètre ci-dessous ; reste utilisée par quelques règles marginales) |
 | `est_admin()` | Présent dans `administrateurs`, ou créateur |
 | `est_createur()` | Présent dans `createur` (migration 025) |
 | `est_responsable_equipe(equipe)` | Rôle `owner` ou `admin` dans l'organisation, ou créateur |
 | `mes_ressources()` | Fiches ressources liées au compte |
-| `peut_editer_projet(projet)` | Membre de l'équipe du projet, ou affecté « Chef de projet » / « Membre » |
+| `peut_editer_projet(projet)` | Administrateur ; responsable / direction de l'unité du projet (hors lecture seule) ; affecté « Chef de projet » / « Membre ». **Un simple membre de l'équipe n'y est plus autorisé** (2.42, migration 042) |
+| `mes_fiches()` | Fiches liées au compte, y compris en lecture seule (migration 042) |
+| `mes_unites_gerees()` | Unités dont je suis responsable (`responsables_equipe`, ou owner / admin de l'organisation) **avec leurs sous-unités** ; toutes pour l'administrateur et le créateur (migration 042) |
+| `peut_voir_projet(projet)` | Lecture d'un projet : administrateur, projet d'une unité que je gère, ou projet où je suis chef / affecté (migration 042) |
+| `peut_voir_ressource(personne)` | Lecture d'une personne : administrateur, moi, personne d'une unité que je gère, rattaché à une de ces unités, ou personne affectée à l'un de mes projets (migration 042) |
+| `peut_voir_temps(personne)` | Lecture des heures et feuilles de temps : administrateur, moi, ou personne d'une unité que je gère (pas les collègues de projet) |
+| `peut_voir_equipe(unité)` | Lecture des objectifs d'une unité : administrateur, unité que je gère ou unité de ma fiche |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
 | `accepter_mes_invitations()` | À la connexion : accepte les invitations en attente adressées à l'email du compte (jeton JWT) — ligne de membre dans l'équipe, invitation « accepted » — pour un compte sans équipe ou le créateur ; échéance non bloquante (migration 026) |
 | `comptes_en_attente()` | Inscrits sans équipe de ProjectDesk, ni administrateurs, ni écartés : nom, email, inscription, dernière connexion, invitation en attente ; administrateurs seulement (liste vide sinon) — lit les tables de Neon Auth (migration 024) |
@@ -404,16 +411,16 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `roles_prevus` | administrateurs | personne en direct : fonctions `affecter_role` (administrateur) et `appliquer_mes_roles_prevus` (connexion) |
 | `createur` | administrateurs (et sa propre ligne) | personne (pas de droit d'écriture) |
 | `comptes_ignores` | administrateurs | administrateurs |
-| `ressources` | membres, administrateurs | équipe concernée, administrateurs |
-| `objectifs`, `resultats_cles` | membres, administrateurs | équipe concernée |
-| `projets` | membres, administrateurs | création : équipe ; modification : `peut_editer_projet` ; suppression : équipe |
-| `affectations` | membres, administrateurs | `peut_editer_projet` |
-| `objectifs_jours_travail` | membres, administrateurs | administrateurs, responsables de l'équipe |
-| `sprints_projet`, `repartitions_sprint`, `mises_en_production` | membres, administrateurs | `peut_editer_projet`, administrateurs |
-| `envois_daily_projet` | membres, administrateurs | `peut_gerer_envoi_projet` |
-| `previsions_temps`, `types_tache_projet` | membres, administrateurs | `peut_gerer_envoi_projet` |
+| `ressources` | `peut_voir_ressource` | équipe concernée, administrateurs |
+| `objectifs`, `resultats_cles` | `peut_voir_equipe` | équipe concernée |
+| `projets` | `peut_voir_projet` | création : équipe ; modification et suppression (migration 043) : `peut_editer_projet` |
+| `affectations` | `peut_voir_projet` | `peut_editer_projet` |
+| `objectifs_jours_travail` | `peut_voir_equipe` | administrateurs, responsables de l'équipe |
+| `sprints_projet`, `repartitions_sprint`, `mises_en_production` | `peut_voir_projet` | `peut_editer_projet`, administrateurs |
+| `envois_daily_projet` | `peut_voir_projet` | `peut_gerer_envoi_projet` |
+| `previsions_temps`, `types_tache_projet` | `peut_voir_projet` | `peut_gerer_envoi_projet` |
 | `cles_envoi_daily_projet` | personne (fonctions seulement) | personne (fonctions seulement) |
-| `absences`, `temps_saisis`, `feuilles_temps` | membres, administrateurs | la personne elle-même ou son équipe |
+| `absences` (`peut_voir_ressource`), `temps_saisis`, `feuilles_temps` (`peut_voir_temps`) | périmètre du rôle (2.42) | la personne elle-même ou son équipe |
 | `notes_daily_projet` | auteur ; `peut_lire_daily_projet(projet)` : affectés au projet, responsable (fiche `responsable_id` ou owner/admin) de l'unité du projet ou d'une unité parente, administrateurs | auteur |
 | toutes | — | rôle `anonymous` : aucun droit |
 
@@ -516,7 +523,7 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, identifiants numérotés (et non aléatoires) pour des captures reproductibles, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (135 contrôles, dont « Suivi de mes équipes en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (137 contrôles, dont « Suivi de mes équipes en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.

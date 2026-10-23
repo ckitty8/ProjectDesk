@@ -886,11 +886,36 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('29-simulation-en-cours');
     verifier('Simulation : lecture seule (écriture refusée)', await page.evaluate(() =>
       Api.creer('absences', { ressourceId: maRessource().id, jour: '2026-12-01', type: 'Congés validé' }).then(() => false, e => e.message.includes('lecture seule'))));
+    // Périmètre (migration 042, porteur 2026-10-23) : un utilisateur ne voit ni ne modifie que ses projets, même ceux de son équipe
+    const perimetreUtilisateur = await page.evaluate(() => {
+      const moi = maRessource(), brut = etat.brut, miens = new Set(brut.affectations.filter(a => a.ressourceId === moi.id).map(a => a.projetId));
+      const caches = brut.projets.filter(p => !miens.has(p.id) && p.chefId !== moi.id);
+      return { vus: etat.d.projets.length, attendus: brut.projets.length - caches.length, total: brut.projets.length,
+        cachesMemeEquipe: caches.filter(p => p.equipeId === moi.equipeId).length, modifiables: caches.filter(peutEditerProjet).length,
+        sprintsAutres: etat.d.sprintsProjet.filter(x => caches.some(p => p.id === x.projetId)).length };
+    });
+    verifier('Simulation : un utilisateur ne voit et ne modifie que ses projets (pas ceux de son équipe où il n’est pas affecté)',
+      perimetreUtilisateur.vus === perimetreUtilisateur.attendus && perimetreUtilisateur.vus < perimetreUtilisateur.total
+      && perimetreUtilisateur.cachesMemeEquipe > 0 && perimetreUtilisateur.modifiables === 0 && perimetreUtilisateur.sprintsAutres === 0, JSON.stringify(perimetreUtilisateur));
     await page.selectOption('.bandeau-simulation select', 'sansEquipe|'); await page.waitForTimeout(300);
     verifier('Simulation : compte sans équipe (écran d’attente avec bandeau)', (await texte()).includes('Votre compte est créé') && !!(await page.$('.bandeau-simulation')));
     await page.click('[data-action="arreterSimulation"]'); await page.waitForTimeout(300);
     verifier('Simulation : retour au rôle de créateur', await page.evaluate(() =>
       etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'adminCreateur'));
+    // Un responsable ne voit pas les projets d'une autre équipe, sauf ceux où il est lui-même affecté (qu'il peut alors modifier)
+    const perimetreResponsable = await page.evaluate(() => {
+      const camille = etat.d.ressources.find(r => r.nom === 'Camille Laurent');
+      Simulation.demarrer('responsable', camille.id);
+      const gerees = equipesGerees(), brut = etat.brut, miens = new Set(brut.affectations.filter(a => a.ressourceId === camille.id).map(a => a.projetId));
+      const autres = brut.projets.filter(p => !gerees.has(p.equipeId) && !miens.has(p.id));
+      const resultat = { cachesExistent: autres.length, cachesVus: etat.d.projets.filter(p => autres.some(x => x.id === p.id)).length,
+        cachesModifiables: autres.filter(peutEditerProjet).length, sprintsCaches: etat.d.sprintsProjet.filter(x => autres.some(p => p.id === x.projetId)).length,
+        propresVus: etat.d.projets.filter(p => gerees.has(p.equipeId)).length === brut.projets.filter(p => gerees.has(p.equipeId)).length };
+      Simulation.arreter(); return resultat;
+    });
+    verifier('Simulation : un responsable ne voit ni ne modifie les projets d’une autre équipe où il n’est pas affecté',
+      perimetreResponsable.cachesExistent > 0 && perimetreResponsable.cachesVus === 0 && perimetreResponsable.cachesModifiables === 0
+      && perimetreResponsable.sprintsCaches === 0 && perimetreResponsable.propresVus, JSON.stringify(perimetreResponsable));
 
     /* --- Écran étroit : Galaxy Z Fold 7 déplié (≈ 884 px) — menu en tiroir, écrans sur toute la largeur --- */
     await page.setViewportSize({ width: 884, height: 1000 });

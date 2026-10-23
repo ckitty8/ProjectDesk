@@ -32,7 +32,8 @@ const etat = {
   simulation: null,         // { cle, ressourceId } : rôle simulé par le créateur (simulation.js)
   reel: null,               // identité réelle mise de côté pendant une simulation
   ui: {},                   // états d'affichage propres à chaque écran (onglets, filtres, mois...)
-  d: {}                     // données chargées (voir TABLES)
+  d: {},                    // données chargées (voir TABLES), limitées au périmètre du rôle pendant une simulation
+  brut: {}                  // données chargées avant le filtre de périmètre de la simulation (appliquerPerimetre)
 };
 
 // Tables chargées et nom de la clé dans etat.d
@@ -95,8 +96,9 @@ async function lireTable(cle) {
   return lignes;
 }
 function appliquerTable(cle, lignes) {
-  etat.d[cle] = lignes;
+  etat.d[cle] = etat.brut[cle] = lignes;
   if (cle === 'valeurs') synchroniserLibellesSysteme();
+  if (etat.simulation) appliquerPerimetre();
 }
 async function chargerTable(cle) { appliquerTable(cle, await lireTable(cle)); }
 // Libellés système (config.js) = libellés actuels en base, retrouvés par leur clé technique
@@ -258,11 +260,12 @@ const peutValiderEquipe = equipeId => estResponsableDe(equipeId) && aDroit('vali
 // Ma fiche ressource : celle de mon compte, ou celle de la personne simulée (simulation.js)
 const maRessource = () => etat.simulation ? ressource(etat.simulation.ressourceId)
   : (etat.d.ressources || []).find(r => r.userId === etat.session.user.id) || null;
-// Personne qui agit sur le projet : administrateur (périmètre « Tout », migration 032), membre de son équipe,
+// Personne qui agit sur le projet : administrateur (périmètre « Tout », migration 032), responsable ou direction
+// de l'unité du projet (migration 042 : un simple membre de l'équipe n'agit plus sur ses projets),
 // ou affectée Chef de projet / Membre (comme peut_editer_projet)
 function travailleSurLeProjet(projet) {
   if (!projet) return false;
-  if (etat.estAdmin || estMembreDe(projet.equipeId)) return true;
+  if (etat.estAdmin || equipesGerees().has(projet.equipeId)) return true;
   const moi = maRessource();
   return !!moi && etat.d.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id &&
     [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));
@@ -272,6 +275,60 @@ const peutEditerProjet = projet => travailleSurLeProjet(projet) && aDroit('proje
 const peutAffecterSur = projet => travailleSurLeProjet(projet) && aDroit('affecter');
 // Modifier la fiche d'une personne (Liste des ressources) : son équipe ou administrateur, et droit de la matrice
 const peutModifierFiche = r => (estMembreDe(r.equipeId) || etat.estAdmin) && aDroit('fiches_ressources');
+
+/* ---------- Périmètre de lecture (miroir des règles RLS de la migration 042) ----------
+   Unités que je gère : celles dont je suis responsable (responsables_equipe ou owner / admin de
+   l'organisation) avec leurs sous-unités ; administrateur et créateur : toutes (comme mes_unites_gerees). */
+function equipesGerees() {
+  const equipes = etat.d.equipes || [];
+  if (etat.estAdmin || etat.estCreateur) return new Set(equipes.map(e => e.id));
+  const moi = maRessource();
+  const gerees = new Set(equipes.filter(e => (moi && responsablesDe(e.id).includes(moi))
+    || ['owner', 'admin'].includes(etat.rolesEquipe[e.id])).map(e => e.id));
+  // Simulation : le rôle de la carte s'applique à la fiche choisie (Direction : son unité parente, comme appliquer_role)
+  if (etat.simulation && moi && ['responsable', 'direction'].includes(etat.simulation.cle)) {
+    const sienne = equipe(moi.equipeId);
+    gerees.add(etat.simulation.cle === 'direction' && sienne.parentId ? sienne.parentId : sienne.id);
+  }
+  // Sous-unités : on ajoute les unités dont le parent est déjà géré, jusqu'à ce qu'il n'y en ait plus
+  let ajout = true;
+  while (ajout) {
+    ajout = false;
+    equipes.forEach(e => { if (e.parentId && gerees.has(e.parentId) && !gerees.has(e.id)) { gerees.add(e.id); ajout = true; } });
+  }
+  return gerees;
+}
+/* En fonctionnement normal, la base ne renvoie déjà que ce que le compte a le droit de lire (RLS). Pendant une
+   simulation, les données sont lues avec le compte du créateur : on applique ici les mêmes règles que
+   peut_voir_projet / peut_voir_ressource / peut_voir_temps / peut_voir_equipe pour que la simulation montre
+   exactement ce que verrait la personne. Les données complètes restent dans etat.brut. */
+const CLES_PERIMETRE = ['ressources', 'projets', 'affectations', 'absences', 'temps', 'feuilles', 'sprintsProjet',
+  'repartitionsSprint', 'misesEnProduction', 'envoisDaily', 'objectifs', 'resultatsCles', 'objectifsTravail'];
+function appliquerPerimetre() {
+  CLES_PERIMETRE.forEach(cle => { if (etat.brut[cle]) etat.d[cle] = etat.brut[cle]; });   // données complètes d'abord
+  if (!etat.simulation) return;
+  const b = etat.brut, gerees = equipesGerees(), moi = maRessource();
+  const moiId = moi ? moi.id : null, monEquipe = moi ? moi.equipeId : null;
+  const mesProjets = new Set(b.affectations.filter(a => a.ressourceId === moiId).map(a => a.projetId));
+  const projetsVus = new Set(b.projets.filter(p => gerees.has(p.equipeId) || p.chefId === moiId || mesProjets.has(p.id)).map(p => p.id));
+  const collegues = new Set(b.affectations.filter(a => mesProjets.has(a.projetId)).map(a => a.ressourceId));
+  const rattaches = new Set((b.rattachements || []).filter(x => gerees.has(x.equipeId)).map(x => x.ressourceId));
+  const equipeDe = id => (b.ressources.find(r => r.id === id) || {}).equipeId;
+  const voitPersonne = id => id === moiId || gerees.has(equipeDe(id)) || collegues.has(id) || rattaches.has(id);
+  const voitTemps = id => id === moiId || gerees.has(equipeDe(id));
+  const voitEquipe = id => gerees.has(id) || (!!monEquipe && id === monEquipe);
+  const objectifsVus = new Set(b.objectifs.filter(o => voitEquipe(o.equipeId)).map(o => o.id));
+  const parProjet = lignes => lignes.filter(x => projetsVus.has(x.projetId));
+  Object.assign(etat.d, {
+    projets: b.projets.filter(p => projetsVus.has(p.id)), affectations: parProjet(b.affectations),
+    ressources: b.ressources.filter(r => voitPersonne(r.id)), absences: b.absences.filter(a => voitPersonne(a.ressourceId)),
+    temps: b.temps.filter(t => voitTemps(t.ressourceId)), feuilles: b.feuilles.filter(f => voitTemps(f.ressourceId)),
+    sprintsProjet: parProjet(b.sprintsProjet), repartitionsSprint: parProjet(b.repartitionsSprint),
+    misesEnProduction: parProjet(b.misesEnProduction), envoisDaily: parProjet(b.envoisDaily),
+    objectifs: b.objectifs.filter(o => objectifsVus.has(o.id)), resultatsCles: b.resultatsCles.filter(k => objectifsVus.has(k.objectifId)),
+    objectifsTravail: b.objectifsTravail.filter(o => voitEquipe(o.equipeId))
+  });
+}
 
 /* ---------- Matrice des droits (migration 031 ; même règle que mon_role / niveau_droit en base) ---------- */
 // Mon rôle d'accès : celui de la simulation en cours, sinon déclaré sur ma fiche, sinon administrateur, responsable, utilisateur

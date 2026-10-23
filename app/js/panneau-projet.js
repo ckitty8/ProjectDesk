@@ -50,7 +50,7 @@ const Panneau = {
         <div><div class="libelle">Équipe projet</div>${membres.map(a => { const r = ressource(a.ressourceId); return r ? `<div class="ligne-flex ligne-liste">
           ${C.avatar(r.nom)}<span class="extensible">${esc(r.nom)}</span>${C.badgeRef('role', a.role)}</div>` : ''; }).join('') || '<span class="pale">Aucun membre.</span>'}
           ${editable ? `<a data-action="assigner" data-projet="${p.id}">+ Membre</a>` : ''}</div>
-        ${editable && estMembreDe(p.equipeId) ? `<div style="border-top:1px solid var(--bordure-fine);padding-top:12px">
+        ${editable ? `<div style="border-top:1px solid var(--bordure-fine);padding-top:12px">
           <button class="btn danger" data-action="supprimerProjet" data-id="${p.id}">Supprimer le projet</button></div>` : ''}
       </div>
     </aside>`;

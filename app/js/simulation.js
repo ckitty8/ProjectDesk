@@ -58,6 +58,7 @@ const Simulation = {
     etat.organisations = equipeSimulee ? [{ id: equipeSimulee.id, name: equipeSimulee.nom }] : [];
     etat.rolesEquipe = equipeSimulee ? { [equipeSimulee.id]: responsablesDe(equipeSimulee.id).includes(r) ? 'owner' : 'member' } : {};
     etat.comptesEnAttente = etat.estAdmin ? etat.reel.comptesEnAttente : [];
+    appliquerPerimetre();   // données limitées à ce que verrait la personne (migration 042)
     majEtat({ equipeCourante: equipeSimulee ? equipeSimulee.id : null, panneau: null, modale: null,
       ecran: cle === 'sansEquipe' ? 'choixEquipe' : 'dashboard' });
   },
@@ -66,6 +67,7 @@ const Simulation = {
   arreter() {
     Object.assign(etat, etat.reel);
     etat.reel = null; etat.simulation = null;
+    appliquerPerimetre();   // données complètes du créateur de nouveau
     majEtat({ ecran: 'adminCreateur', panneau: null, modale: null });
   },
 
