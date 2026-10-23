@@ -406,7 +406,7 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .largeur-auto, input.largeur-auto, select.largeur-auto { width: auto; }
 .colonne { display: flex; flex-direction: column; } .colonne-modale { display: flex; flex-direction: column; min-height: 0; }
 .defilement { overflow: auto; } .ecran-large { max-width: 1500px; }
-.sans-marge { margin: 0; } .marge-bas { margin-bottom: 20px; } .retrait { padding-left: 18px; } .ligne-liste { padding: 5px 0; }
+.sans-marge { margin: 0; } .marge-bas { margin-bottom: 20px; } .ligne-liste { padding: 5px 0; }
 /* Encarts (cartes d'information) : marges intérieures ; variante orange d'alerte */
 .encart-moyen { padding: 14px 16px; } .encart-compact { padding: 12px 16px; }
 .encart { padding: 16px; } .encart-alerte { background: #FFF8EC; border-color: #F3D9A8; }

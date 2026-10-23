@@ -197,12 +197,7 @@ function amorcer() {
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
     { projet_id: idProjet('PF-17'), mode: 'direct', heure: '10:00', jours: '1,2,3,4', sans_feries: true, destinataires: 'equipe-projet@test.fr' }];
-  // Plan de charge (migration 021) : types de tâche de PF-14, répartition de Camille,
-  // deux sprints datés de PF-14 (heures saisies du 21 au 25/09 dans le premier)
-  bd.types_tache_projet = [['US', 36], ['Incident', 20], ['Bug', 6], ['Doc', 5], ['Test / Aller retour', 9], ['Technique', 4], ['Autres sujets', 20]]
-    .map(([libelle, part], i) => ({ id: uuid(), projet_id: idProjet('PF-14'), libelle, part, ordre: i + 1 }));
-  const idCamille = bd.ressources.find(r => r.nom === 'Camille Laurent').id;
-  bd.previsions_temps = [['PF-14', 60], ['PF-17', 20], ['PR-03', 20]].map(([code, part]) => ({ projet_id: idProjet(code), ressource_id: idCamille, part }));
+  // Deux sprints datés de PF-14 (heures saisies du 21 au 25/09 dans le premier)
   bd.sprints_projet.push({ projet_id: idProjet('PF-14'), numero: 1, numero_sprint: 19, annee: 2026, nom: 'V1.9', debut: '2026-09-14', fin: '2026-09-25' },
     { projet_id: idProjet('PF-14'), numero: 2, numero_sprint: 20, annee: 2026, nom: 'V2.0', debut: '2026-09-28', fin: '2026-10-09' });
   // Mises en production (migration 039) : Planning des MEP de Suivi, saisie dans Mon dashboard › Projets et Roadmap › MEP

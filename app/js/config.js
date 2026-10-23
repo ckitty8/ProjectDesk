@@ -64,12 +64,12 @@ const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecte
    « Chef de projet » se déduit de ses projets ; « Pas encore de compte » de sa fiche. */
 const ROLES_ACCES = {
   admin: { libelle: 'Administrateur', description: 'Tous les écrans et l’Administration', texte: '#0033AD', fond: '#E8EEFF' },
-  direction: { libelle: 'Direction', description: 'Sa direction et ses équipes : timesheets, daily, plan de charge', texte: '#3B2A8C', fond: '#E9E6FA' },
+  direction: { libelle: 'Direction', description: 'Sa direction et ses équipes : timesheets, daily', texte: '#3B2A8C', fond: '#E9E6FA' },
   responsable: { libelle: 'Responsable d’équipe', description: 'Son équipe : timesheets à valider, tous les daily, congés', texte: '#5B2DA0', fond: '#EDE6FA' },
-  projet: { libelle: 'Projet', description: 'Chef de projet sur ses projets : plan de charge, envoi du daily', texte: '#0B6B4F', fond: '#E3F5EC' },
+  projet: { libelle: 'Projet', description: 'Chef de projet sur ses projets : envoi du daily', texte: '#0B6B4F', fond: '#E3F5EC' },
   utilisateur: { libelle: 'Utilisateur', description: 'Son daily, ses heures, ses congés ; consulte le reste', texte: '#4A5363', fond: '#F1F3F7' },
   lecture: { libelle: 'Lecture seule', description: 'Consulte, ne modifie rien (pas de Mon dashboard)', texte: '#6B7485', fond: '#F4F5F7' },
-  chef: { libelle: 'Chef de projet', description: 'Ses projets : membres, plan de charge, envoi du daily', texte: '#8A5300', fond: '#FFF1D6' },
+  chef: { libelle: 'Chef de projet', description: 'Ses projets : membres, envoi du daily', texte: '#8A5300', fond: '#FFF1D6' },
   sansCompte: { libelle: 'Pas encore de compte', description: 'Fiche sans compte de connexion : aucun accès', texte: '#A32020', fond: '#FDECEC' }
 };
 // Rôles proposés dans Administration › Rôles (dans cet ordre)
@@ -124,7 +124,7 @@ const DROITS = [
     libelle: 'Listes de valeurs', repli: 'administration' },
   { cle: 'onglet_admin_feries', section: 'dashboard', menu: 'Administration', onglet: 'Jours fériés', ecran: 'monAdmin', id: 'feries',
     libelle: 'Calendrier des jours fériés', repli: 'administration' },
-  // Plan de charge réservé au créateur (2.23) : « piloter » ne règle plus que l'envoi du daily (porteur 2026-10-22, option 1)
+  // « piloter » ne règle que l'envoi du daily (Plan de charge retiré en 2.40, porteur 2026-10-23)
   { cle: 'piloter', section: 'dashboard', menu: 'Administration', libelle: 'Envoi du daily par e-mail' },
   { cle: 'onglet_admin_envoi_daily', section: 'dashboard', menu: 'Administration', onglet: 'Envoi du daily', ecran: 'monAdmin', id: 'envoiDaily',
     libelle: 'Envoi du daily par e-mail, projet par projet', repli: 'piloter' },
@@ -307,10 +307,6 @@ const GUIDE_ECRANS = {
     'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.',
     'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
-  previsionnel: ['Réservé au créateur : choisissez une personne (vous-même ou un membre des projets) pour prévoir la répartition de son temps entre ses projets.',
-    'Onglet Prévisionnel : jours travaillés du mois (fériés et congés repris automatiquement) × % du temps sur le projet ' +
-      '× % de chaque type de tâche. Saisissez les % du projet et des types de tâche des projets dont vous êtes chef.',
-    'Onglet Temps réel par sprint : heures prévues et heures réellement saisies (Saisir mes heures) sur les dates d’un sprint, par projet.'],
   adminCreateur: ['Réservée au créateur. Simulation des rôles : voir l’application comme une personne avec un rôle donné, ' +
     'en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Matrice des droits : ce que chaque rôle peut faire (Oui, Lecture, Non), menu par menu et onglet par onglet ; modifiable par le créateur seul.',
@@ -486,7 +482,7 @@ const ROADMAP_ASTUCES = {
     'Partir du résultat attendu (problème à résoudre), pas de la fonctionnalité',
     'Relier chaque étape à un objectif / résultat clé',
     'Précision décroissante : trimestre sûr, au-delà indicatif',
-    'Vérifier la capacité (Plan de charge, congés) avant de s’engager',
+    'Vérifier la capacité (Capacité, congés) avant de s’engager',
     'Revoir à date fixe et afficher la date de mise à jour',
     'Adapter le niveau de détail au public (direction, équipe, métiers)'],
   pieges: [

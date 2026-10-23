@@ -121,16 +121,8 @@ ecarts as (
   select 'Sprint : début après la fin', 'erreur', count(*), string_agg(numero::text, ', ')
     from public.sprints_projet where debut > fin having count(*) > 0
   union all
-  select 'Sprint sans dates (inutilisable par Capacité et Plan de charge)', 'avertissement', count(*), string_agg(p.code || ' n°' || s.numero, ', ')
+  select 'Sprint sans dates (inutilisable par Capacité)', 'avertissement', count(*), string_agg(p.code || ' n°' || s.numero, ', ')
     from public.sprints_projet s join public.projets p on p.id = s.projet_id where s.debut is null or s.fin is null having count(*) > 0
-  union all
-  select 'Plan de charge : une personne prévue à plus de 100 %', 'erreur', count(*), string_agg(nom || ' ' || total || ' %', ', ')
-    from (select r.nom, sum(v.part) total from public.previsions_temps v join public.ressources r on r.id = v.ressource_id group by r.nom having sum(v.part) > 100) x
-    having count(*) > 0
-  union all
-  select 'Plan de charge : types de tâche d''un projet ≠ 100 %', 'avertissement', count(*), string_agg(code || ' ' || total || ' %', ', ')
-    from (select p.code, sum(t.part) total from public.types_tache_projet t join public.projets p on p.id = t.projet_id group by p.code having sum(t.part) <> 100) x
-    having count(*) > 0
   union all
   select 'Daily sur un projet où la personne n''est pas affectée', 'avertissement', count(*), string_agg(distinct p.code, ', ')
     from public.notes_daily_projet n join public.projets p on p.id = n.projet_id

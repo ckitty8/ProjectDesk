@@ -43,11 +43,11 @@ const TABLES = {
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
-  previsionsTemps: 'previsions_temps', typesTache: 'types_tache_projet', createur: 'createur',
+  createur: 'createur',
   responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
   rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production'
 };
-const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', typesTache: 'projet_id,ordre' };
+const TRIS = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
 // Filtres de chargement : les notes de daily (celles que je peux lire, voir peut_lire_daily_projet)
 // sont limitées aux JOURS_DAILY derniers jours pour garder un chargement léger.
 const JOURS_DAILY = 90;
@@ -82,7 +82,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : COULEURS.pale;
 const CLES_UNIQUES = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
-  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', previsionsTemps: 'projet_id,ressource_id', createur: 'user_id',
+  notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', createur: 'user_id',
   responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
   rattachements: 'equipe_id,ressource_id' };
 const ordreDe = cle => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
@@ -443,7 +443,7 @@ function suisChefDuProjet(p) {
   return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF)
     || (!!aff && aff.role !== ROLES_PROJET.LECTEUR && roleDeclare(moi) === 'projet');
 }
-/* Qui pilote un projet — règle l'envoi de son daily et son plan de charge (même règle
+/* Qui pilote un projet — règle l'envoi de son daily (même règle
    que peut_gerer_envoi_projet en base, migrations 019 et 021) : administrateur, chef du projet,
    ou responsable de son unité ou d'une unité parente. */
 const peutPiloterProjet = p => (etat.estAdmin || suisChefDuProjet(p) || suisResponsableDuProjet(p)) && aDroit('piloter');

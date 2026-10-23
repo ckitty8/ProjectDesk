@@ -473,9 +473,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.evaluate(() => etat.ecran === 'mesSprints' && !!document.querySelector('.laterale .sous-lien.actif[data-ecran="mesSprints"]'))
       && await page.evaluate(() => { allerA('monAdmin'); return !document.querySelector('[data-action="ongletMonAdmin"][data-id="sprints"]'); }));
     await aller('capacite'); await page.waitForTimeout(200);
-    verifier('Capacité : menu à part au-dessus du Plan de charge, plus d’onglet Capacité dans Congés', await page.evaluate(() => {
+    verifier('Capacité : menu à part, plus d’onglet Capacité dans Congés', await page.evaluate(() => {
       const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
-      return ids.indexOf('capacite') > ids.indexOf('conges') && (ids.indexOf('previsionnel') < 0 || ids.indexOf('capacite') < ids.indexOf('previsionnel'))
+      return ids.indexOf('capacite') > ids.indexOf('conges')
         && !Ecrans.conges.onglets(2026).some(o => o.id === 'capacite');
     }));
     verifier('Capacité : sprint en cours du projet, indicateurs et capacité des membres', (await texte()).includes('V3 · en cours')
@@ -782,36 +782,6 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
       && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Envoi du daily'));
 
-    /* --- Plan de charge (migration 021) : réservé au créateur (porteur, 2026-10-22) ---
-       Camille est administratrice (non créatrice) : menu absent ; le créateur est simulé le temps du bloc. */
-    const planCacheAdmin = !(await page.$('[data-action="aller"][data-ecran="previsionnel"]'));
-    await page.evaluate(() => { etat.estCreateur = true; rendre(); });
-    verifier('Plan de charge : menu réservé au créateur (absent pour une administratrice)', planCacheAdmin
-      && !!(await page.$('[data-action="aller"][data-ecran="previsionnel"]')));
-    await aller('previsionnel'); await page.waitForTimeout(250);
-    verifier('Prévisionnel : projets de la personne, % du projet et types de tâche (sous-total hors US)', (await texte()).includes('SSO & gestion des droits')
-      && await page.$eval('input[data-action-change="partProjetPrevision"]', e => e.value) === '60' && (await texte()).includes('Total hors US'));
-    verifier('Prévisionnel : jours = jours travaillés × % projet × % type', await page.evaluate(() => {
-      const r = maRessource(), d = Calculs.depuisIso(Calculs.aujourdhui());
-      const m = Calculs.previsionMois(r, d.getFullYear(), d.getMonth(), etat.d.absences, feries());
-      const attendu = Previsionnel.format(m.disponibles * 0.6 * 0.36);
-      const ligneUs = [...document.querySelectorAll('.contenu tr')].find(tr => (tr.querySelector('input.champ') || {}).value === 'US');
-      return !!ligneUs && ligneUs.querySelectorAll('td.num')[1].textContent.trim() === attendu;
-    }));
-    await capture('23-previsionnel');
-    await page.fill('input[data-action-change="partProjetPrevision"]', '50'); await page.dispatchEvent('input[data-action-change="partProjetPrevision"]', 'change'); await page.waitForTimeout(300);
-    verifier('Prévisionnel : % du projet enregistré', await page.evaluate(() => Previsionnel.part(etat.d.projets.find(p => p.code === 'PF-14').id, maRessource().id) === 50));
-    await page.fill('form[data-action-envoi="ajouterTypeTache"] input[name=libelle]', 'Revue de code'); await page.click('form[data-action-envoi="ajouterTypeTache"] button'); await page.waitForTimeout(300);
-    verifier('Prévisionnel : type de tâche ajouté', await page.evaluate(() => etat.d.typesTache.some(t => t.libelle === 'Revue de code')));
-    await page.click('[data-action="ongletPrevision"][data-onglet="reel"]'); await page.waitForTimeout(250);
-    await page.evaluate(() => majUi('previsionnel', { sprint: 1 })); await page.waitForTimeout(200);
-    verifier('Temps réel par sprint : heures saisies du sprint par projet', await page.evaluate(() => {
-      const r = maRessource(), pf14 = etat.d.projets.find(p => p.code === 'PF-14');
-      const reel = Calculs.heuresProjetPeriode(r.id, pf14.id, '2026-09-14', '2026-09-25', etat.d.temps);
-      return reel > 0 && document.querySelector('.contenu').textContent.includes(Previsionnel.format(reel));
-    }));
-    await capture('24-previsionnel-reel');
-    await page.evaluate(() => { etat.estCreateur = false; rendre(); });
 
     /* --- Compte sans équipe (migration 024) : en attente, accès donné par l'administratrice, entrée directe --- */
     const connecter = async email => {
@@ -933,7 +903,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="demarrerSimulation"][data-role="utilisateur"]'); await page.waitForTimeout(300);
     verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
       !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
-      && !document.querySelector('[data-ecran="previsionnel"]') && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
+      && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
     // Droits par menu de Suivi de mes équipes (migration 037) : menu masqué si « Non » ; avant la migration, repli sur « general »
     const parMenu = await page.evaluate(() => {
       const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'suivi_projets'), avant = ligne.niveau;

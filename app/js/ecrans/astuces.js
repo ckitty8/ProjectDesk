@@ -62,7 +62,7 @@ Ecrans.astuces = {
       <div class="grille-conseils">${this.listeConseils('✔ Bonnes pratiques', TONS.succes.texte, R.bonnesPratiques)}
         ${this.listeConseils('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
       <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : la roadmap se construit dans <b>Projets et Roadmap</b> (Gantt),
-        la méthode du projet se choisit à sa création, la capacité se vérifie dans <b>Plan de charge</b> et les objectifs se suivent
+        la méthode du projet se choisit à sa création, la capacité se vérifie dans <b>Capacité</b> et les objectifs se suivent
         dans le <b>Dashboard général</b> (OKR).</div>`;
   },
 
@@ -98,7 +98,7 @@ Ecrans.astuces = {
       <div class="grille-conseils">${this.listeConseils('✕ Pièges à éviter', 'var(--danger)', T.pieges)}
         <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : notez chaque expérience et sa décision dans le <b>Daily</b>
           du projet IA (les blocages remontent dans Daily des équipes), planifiez les phases dans <b>Projets et Roadmap</b>
-          (format Now / Next / Later) et réservez la boîte de temps dans <b>Plan de charge</b>.</div></div>`;
+          (format Now / Next / Later) et réservez la boîte de temps dans <b>Capacité</b>.</div></div>`;
   },
 
   /* ---------- Rôles Scrum : organigramme détaillé ----------
