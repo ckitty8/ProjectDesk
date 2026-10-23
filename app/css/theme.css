@@ -141,6 +141,12 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .gantt-piste { position: relative; }
 .gantt-barre { position: absolute; top: 16px; height: 26px; border-radius: 5px; cursor: pointer; overflow: hidden; }
 .gantt-plein { height: 100%; color: #fff; font-weight: 600; font-size: 12px; padding: 5px 8px; white-space: nowrap; }
+.gantt-titre-col { padding: 9px 16px; margin: 0; }
+/* Planning des sprints (Suivi › Projets et Roadmap, 2026-10-23) : un bloc par sprint sur la piste du projet */
+.gantt-sprint { position: absolute; top: 18px; height: 22px; border-radius: 3px; background: var(--fond-entete);
+  border: 1px solid var(--bordure); font-size: 10px; line-height: 20px; text-align: center; color: var(--discret); overflow: hidden; white-space: nowrap; }
+.gantt-sprint.en-cours { background: var(--primaire); border-color: var(--primaire); color: #fff; font-weight: 600; }
+.couleur-primaire { color: var(--primaire); }
 .gantt-jour { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--primaire); opacity: .5; }
 .gantt-mois { display: grid; grid-template-columns: 300px minmax(0, 1fr); border-bottom: 1px solid var(--bordure); background: var(--fond-entete); }
 .gantt-mois .mois { display: flex; } .gantt-mois .mois div { border-left: 1px solid var(--bordure-fine); padding: 9px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); }

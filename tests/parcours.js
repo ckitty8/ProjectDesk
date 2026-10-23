@@ -108,6 +108,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
     verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue « Suivi de mes équipes » en lecture seule'));
     await page.click('.fermer');
+    /* Projets et Roadmap › Planning des sprints (2026-10-23) : sprints datés de chaque projet sur une frise de 6 mois */
+    await page.evaluate(() => majUi('planningSprints', { debut: '2026-09-01' }));
+    await page.click('[data-action="ongletProjets"][data-id="sprints"]'); await page.waitForTimeout(150);
+    const blocsSprints = await page.$$eval('.planning-sprints .gantt-sprint', b => b.map(x => x.textContent.trim()));
+    await page.click('[data-action="planningSprintsDecaler"][data-sens="1"]'); await page.waitForTimeout(150);
+    const periodeSuivante = await page.textContent('.encart-compact b');
+    verifier('Projets et Roadmap › Planning des sprints : blocs S19 et S20 de PF-14, navigation par mois',
+      blocsSprints.includes('S19') && blocsSprints.includes('S20') && periodeSuivante.startsWith('octobre 2026'), blocsSprints.join(' ') + ' / ' + periodeSuivante);
+    await page.evaluate(() => majUi('planningSprints', { debut: '2026-09-01' })); await page.waitForTimeout(150);
+    await capture('04b-planning-sprints');
+    await page.click('[data-action="planningSprintsAujourdhui"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
     await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
     /* Gestion des ressources (2026-10-16) : onglets Calendrier / Liste des ressources, dates de naissance
        (jour et mois seulement à l'écran ; 🎂 dans le calendrier, rappel des anniversaires du mois) */
@@ -153,6 +164,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
       'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
+      'ongletProjets', 'planningSprintsDecaler', 'planningSprintsAujourdhui',
       'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
       'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
     const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
@@ -163,6 +175,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await aller(ecran);
       if (ecran === 'ressources') {
         for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
+      } else if (ecran === 'projets') {
+        for (const onglet of ['sprints', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
 
       } else interdites.push(...await ecritures());
     }

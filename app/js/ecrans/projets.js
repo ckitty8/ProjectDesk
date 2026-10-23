@@ -1,8 +1,9 @@
 /* ============================================================
    Suivi de mes équipes › Projets et Roadmap (maquette 02-gProjets.png) — lecture
-   Projets groupés par équipe, filtre par équipe (notion de ticket retirée
-   de l'application à la demande du porteur, 2026-09-27).
-   Un clic sur un projet ouvre le panneau de détail.
+   Onglets (porteur 2026-10-23, maquette roadmap-mep-sprints/) :
+   - Projets : projets groupés par équipe, filtre par équipe (notion de ticket retirée de
+     l'application à la demande du porteur, 2026-09-27) ; un clic ouvre le panneau de détail ;
+   - Planning des sprints : les sprints de chaque projet sur une frise de 6 mois (PlanningSprints).
    ============================================================ */
 'use strict';
 
@@ -10,30 +11,34 @@ Ecrans.projets = {
   titre: 'Projets et Roadmap',
   section: 'general',
   rendre() {
-    const esc = C.esc;
-    const u = ui('projets', { equipe: 'toutes' });
-    const { projets, equipes } = etat.d;
-
+    const esc = C.esc, u = ui('projets', { equipe: 'toutes', onglet: 'projets' });
     const puce = (id, nom, couleur) => `<button class="puce${u.equipe === id ? ' active' : ''}" data-action="filtrerEquipeProjets" data-id="${id}">
       ${C.pastille(couleur)}${esc(nom)}</button>`;
-    const filtres = puce('toutes', 'Toutes les équipes', COULEURS.pale) + equipes.map(e => puce(e.id, e.nom, e.couleur)).join('');
+    const filtres = puce('toutes', 'Toutes les équipes', COULEURS.pale) + etat.d.equipes.map(e => puce(e.id, e.nom, e.couleur)).join('');
+    // Projets des équipes filtrées (le filtre vaut pour les deux onglets)
+    const projets = etat.d.projets.filter(p => u.equipe === 'toutes' || p.equipeId === u.equipe);
+    const onglets = C.onglets([{ id: 'projets', libelle: 'Projets' }, { id: 'sprints', libelle: 'Planning des sprints' }], u.onglet, 'ongletProjets');
+    return `
+    <div class="ecran">
+      ${C.entete('Projets et Roadmap', `${etat.d.projets.length} projets · objectifs, avancement et sprints par équipe`, `<div class="puces">${filtres}</div>`)}
+      ${onglets}${u.onglet === 'sprints' ? PlanningSprints.rendre(projets) : this.tableau(u)}
+    </div>`;
+  },
 
-    const lignes = equipes.filter(e => u.equipe === 'toutes' || e.id === u.equipe).map(e => {
-      const siens = projets.filter(p => p.equipeId === e.id);
+  // Onglet Projets : tableau des projets groupés par équipe
+  tableau(u) {
+    const esc = C.esc;
+    const lignes = etat.d.equipes.filter(e => u.equipe === 'toutes' || e.id === u.equipe).map(e => {
+      const siens = etat.d.projets.filter(p => p.equipeId === e.id);
       if (!siens.length) return '';
       return `<tr class="groupe"><td colspan="6"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}
           <span class="discret poids-normal">${siens.length} projets · ${Calculs.pourcent(Calculs.avancementMoyen(siens))} d’avancement moyen</span></span></td></tr>`
         + siens.map(p => this.ligneProjet(p)).join('');
     }).join('');
-
-    return `
-    <div class="ecran">
-      ${C.entete('Projets et Roadmap', `${projets.length} projets · objectifs et avancement par équipe`, `<div class="puces">${filtres}</div>`)}
-      <div class="carte"><table class="tableau">
+    return `<div class="carte"><table class="tableau">
         <thead><tr><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th>
           <th>Échéance</th><th>Statut</th></tr></thead>
-        <tbody>${lignes || `<tr><td colspan="6">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
-    </div>`;
+        <tbody>${lignes || `<tr><td colspan="6">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>`;
   },
 
   // Ligne d'un projet (un clic ouvre le panneau de détail)
@@ -52,6 +57,68 @@ Ecrans.projets = {
   }
 };
 
+/* ---------- Onglet Planning des sprints (maquette roadmap-mep-sprints/3-planning-sprints.png) ----------
+   Une ligne par projet qui a des sprints sur la période, ses sprints en blocs « S12 » sur une frise de 6 mois ;
+   sprint en cours en bleu, trait vertical = aujourd'hui, version et dates au survol. Les sprints sont ceux saisis
+   dans Mon dashboard › Administration › Sprints (sprintsDuProjet, etat.js). Période : 6 mois à partir du mois
+   précédent le mois en cours, décalable mois par mois (‹ Aujourd'hui ›). */
+const PlanningSprints = {
+  NB_MOIS: 6,
+  // Premier jour de la période affichée (ISO) : choisi par les flèches, sinon le 1er du mois précédent
+  debut() {
+    const choisi = ui('planningSprints', {}).debut;
+    if (choisi) return choisi;
+    const d = Calculs.depuisIso(Calculs.aujourdhui());
+    return Calculs.versIso(new Date(d.getFullYear(), d.getMonth() - 1, 1));
+  },
+  // Période : début, fin (dernier jour du 6e mois), nombre de jours et en-tête des mois
+  periode() {
+    const d = Calculs.depuisIso(this.debut()), debut = this.debut();
+    const fin = Calculs.versIso(new Date(d.getFullYear(), d.getMonth() + this.NB_MOIS, 0)), total = Calculs.ecartJours(debut, fin) + 1;
+    const mois = Array.from({ length: this.NB_MOIS }, (_, i) => new Date(d.getFullYear(), d.getMonth() + i, 1)).map(m => {
+      const nbJours = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+      return `<div style="width:${nbJours / total * 100}%">${Calculs.MOIS_COURTS[m.getMonth()]} ${String(m.getFullYear()).slice(2)}</div>`;
+    }).join('');
+    return { debut, fin, total, mois, position: iso => Math.max(0, Math.min(100, Calculs.ecartJours(debut, iso) / total * 100)) };
+  },
+  // Bloc d'un sprint : « S » + numéro de sprint, sprint en cours mis en avant, version et dates en infobulle
+  bloc(s, per, jour) {
+    const g = per.position(s.debut), l = Math.max(per.position(s.fin) - g, 0.5), numero = s.numeroSprint || s.numero;
+    const titre = `Sprint ${numero}${s.nom ? ' · ' + s.nom : ''} : ${Calculs.formatCourt(s.debut)} → ${Calculs.formatCourt(s.fin)}`;
+    return `<div class="gantt-sprint${s.debut <= jour && jour <= s.fin ? ' en-cours' : ''}" style="left:${g}%;width:${l}%"
+      title="${C.esc(titre)}">S${numero}</div>`;
+  },
+  // Navigation de période et rappel de l'endroit où les sprints se saisissent
+  navigation(per) {
+    return `<div class="ligne-flex entre encart-compact"><div class="ligne-flex">
+        <button class="btn" data-action="planningSprintsAujourdhui">Aujourd’hui</button>
+        <button class="btn" data-action="planningSprintsDecaler" data-sens="-1">‹</button>
+        <b>${Calculs.libelleMois(...this.anneeMois(per.debut))} → ${Calculs.libelleMois(...this.anneeMois(per.fin))}</b>
+        <button class="btn" data-action="planningSprintsDecaler" data-sens="1">›</button></div>
+      <span class="discret texte-12">Sprints saisis dans Mon dashboard › Administration › Sprints</span></div>`;
+  },
+  anneeMois(iso) { const d = Calculs.depuisIso(iso); return [d.getFullYear(), d.getMonth()]; },
+
+  rendre(projets) {
+    const per = this.periode(), jour = Calculs.aujourdhui();
+    const lignes = projets.map(p => ({ p, sprints: sprintsDuProjet(p.id).filter(s => s.debut <= per.fin && s.fin >= per.debut) }))
+      .filter(x => x.sprints.length).map(({ p, sprints }) => `<div class="gantt-ligne"><div><div>${C.code(p.code)} ${C.esc(p.nom)}</div></div>
+        <div class="gantt-piste">${jour >= per.debut && jour <= per.fin ? `<div class="gantt-jour" style="left:${per.position(jour)}%"></div>` : ''}
+          ${sprints.map(s => this.bloc(s, per, jour)).join('')}</div></div>`).join('');
+    return `${this.navigation(per)}
+      <div class="carte planning-sprints"><div class="gantt-mois"><div class="libelle gantt-titre-col">Projet</div><div class="mois">${per.mois}</div></div>
+        ${lignes || C.vide('Aucun sprint saisi sur cette période.')}</div>
+      <div class="discret texte-12"><span class="couleur-primaire">—</span> Aujourd’hui · en bleu : sprint en cours · survol : version et dates du sprint</div>`;
+  }
+};
+
 Object.assign(Actions, {
-  filtrerEquipeProjets: d => majUi('projets', { equipe: d.id })
+  filtrerEquipeProjets: d => majUi('projets', { equipe: d.id }),
+  ongletProjets: d => majUi('projets', { onglet: d.id }),
+  // Planning des sprints : décaler la période d'un mois, ou revenir à la période par défaut
+  planningSprintsDecaler(d) {
+    const m = Calculs.depuisIso(PlanningSprints.debut());
+    majUi('planningSprints', { debut: Calculs.versIso(new Date(m.getFullYear(), m.getMonth() + Number(d.sens), 1)) });
+  },
+  planningSprintsAujourdhui: () => majUi('planningSprints', { debut: null })
 });
