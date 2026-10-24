@@ -51,7 +51,7 @@ Ecrans.projets = {
     const kr = parId('resultatsCles', p.resultatCleId), obj = kr ? parId('objectifs', kr.objectifId) : null;
     return `
       <tr class="cliquable" data-action="ouvrirProjet" data-id="${p.id}">
-        <td>${esc(p.nom)}<div>${C.code(p.code)}</div></td>
+        <td>${esc(p.nom)}</td>
         <td>${obj ? `${esc(obj.code)} · ${esc(obj.titre)}<div class="discret">${esc(kr.code)} · ${esc(kr.libelle)}</div>` : '<span class="pale">—</span>'}</td>
         <td>${chef ? `<span class="ligne-flex">${C.avatar(chef.nom)}${esc(chef.nom)}</span>` : '<span class="pale">—</span>'}</td>
         <td style="min-width:150px"><span class="ligne-flex">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}
@@ -113,7 +113,7 @@ const PlanningProjet = {
     const per = this.periode(), jour = Calculs.aujourdhui(), dansPeriode = (debut, fin) => debut <= per.fin && fin >= per.debut;
     const lignes = projets.map(p => ({ p, sprints: sprintsDuProjet(p.id).filter(s => dansPeriode(s.debut, s.fin)),
       meps: misesEnProductionDe([p]).filter(m => dansPeriode(m.jour, m.jour)) }))
-      .filter(x => x.sprints.length || x.meps.length).map(({ p, sprints, meps }) => `<div class="gantt-ligne"><div><div>${C.code(p.code)} ${C.esc(p.nom)}</div></div>
+      .filter(x => x.sprints.length || x.meps.length).map(({ p, sprints, meps }) => `<div class="gantt-ligne"><div><div>${C.esc(p.nom)}</div></div>
         <div class="gantt-piste">${jour >= per.debut && jour <= per.fin ? `<div class="gantt-jour" style="left:${per.position(jour)}%"></div>` : ''}
           ${sprints.map(s => this.bloc(s, per, jour)).join('')}${meps.map(m => this.repereMep(m, per)).join('')}</div></div>`).join('');
     return `${this.navigation(per)}

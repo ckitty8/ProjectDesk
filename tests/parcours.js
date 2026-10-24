@@ -298,7 +298,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     }));
     await page.click(`[data-action="filtrerDailyEquipes"][data-id="${await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id)}"]`); await page.waitForTimeout(200);
     verifier('Daily des équipes : filtre par projet', await page.evaluate(() =>
-      [...document.querySelectorAll('.fil-entree .code')].every(c => c.textContent === 'PF-14') && !!document.querySelector('.filtre-fil.actif')));
+      [...document.querySelectorAll('.fil-entree .etiquette')].every(c => c.textContent === etat.d.projets.find(p => p.code === 'PF-14').nom) && !!document.querySelector('.filtre-fil.actif')));
     /* Daily importé d'une personne sans compte (CR Daily Excel, migration 034) : auteur « fiche:<id> », affiché sur sa carte */
     const sansCompte = await page.evaluate(() => {
       // Dernier jour de semaine (le samedi et le dimanche ne sont pas affichés par Daily des équipes)
@@ -679,7 +679,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');
     await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
     const choisie = await page.$eval('select[name=ressource]', s => s.options[s.selectedIndex].text);
-    const pf17Coche = await page.$eval('label:has-text("PF-17") input[name=projet]', c => c.checked);
+    const pf17Coche = await page.$eval('label:has-text("Portail développeurs") input[name=projet]', c => c.checked);
     await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
     verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
       && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));

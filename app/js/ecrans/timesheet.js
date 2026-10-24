@@ -49,11 +49,11 @@ function tableauFeuilles(equipes, avecValidation = false) {
     if (statut !== 'validee' && saisi < attendu) totaux.aCompleter++;
     if (statut === 'soumise' && peutValiderEquipe(e.id)) totaux.aValider++;   // feuilles que JE peux valider
 
-    const codes = codesProjetsDe(r.id);
+    const projets = nomsProjetsDe(r.id);
     const boutons = statut === 'soumise' && peutValiderEquipe(e.id)
       ? `<button class="btn petit" data-action="renvoyerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Renvoyer</button>
          <button class="btn petit succes" data-action="validerFeuille" data-ressource="${r.id}" data-semaine="${cle}">Valider</button>` : '';
-    return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td>${codes}</td>
+    return `<tr><td><span class="ligne-flex">${C.avatar(r.nom)}${esc(r.nom)}</span></td><td>${projets}</td>
       <td class="num"><b>${Calculs.nombre(saisi)} h</b> <span class="discret">/ ${Calculs.nombre(attendu)} h</span></td>
       <td style="width:18%">${C.barre(Math.min(100, completude))}</td>
       <td class="num">${attendu ? Calculs.pourcent(completude) : '—'}</td><td>${C.badgeFeuille(statut)}</td>

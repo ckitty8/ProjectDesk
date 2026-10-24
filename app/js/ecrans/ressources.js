@@ -35,7 +35,7 @@ const Calendrier = {
     return `<div class="ligne-flex" style="margin-left:14px"><div class="puces">
         <button class="puce${v.mode === 'equipe' ? ' active' : ''}" data-action="vueCalendrier" data-mode="equipe">Par équipe</button>
         <button class="puce${v.mode === 'projet' ? ' active' : ''}" data-action="vueCalendrier" data-mode="projet">Par projet</button></div>
-      ${v.mode === 'projet' ? C.liste(this.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p ? p.id : '',
+      ${v.mode === 'projet' ? C.liste(this.projetsAvecMembres().map(x => ({ valeur: x.id, libelle: x.nom })), p ? p.id : '',
         'class="champ champ-compact" data-action-change="projetCalendrier"') : ''}</div>`;
   },
 
@@ -74,7 +74,7 @@ const Calendrier = {
   etiquettes(r) {
     const esc = C.esc, MAX = 3;
     const liste = etat.d.affectations.filter(a => a.ressourceId === r.id).map(a => projet(a.projetId)).filter(Boolean);
-    return liste.slice(0, MAX).map(p => `<span class="etiquette" title="${esc(p.code + ' · ' + p.nom)}">${esc(p.nom)}</span>`).join('')
+    return liste.slice(0, MAX).map(p => `<span class="etiquette" title="${esc(p.nom)}">${esc(p.nom)}</span>`).join('')
       + (liste.length > MAX ? `<span class="etiquette" title="${esc(liste.slice(MAX).map(p => p.nom).join(', '))}">+${liste.length - MAX}</span>` : '');
   },
 
@@ -155,7 +155,7 @@ const Calendrier = {
     const p = this.projetChoisi();
     if (!p) return '';
     const membres = this.membresDe(ctx, p);
-    const titre = `${C.icone('projet', 14)}${C.code(p.code)} ${C.esc(p.nom)} <span class="discret poids-normal">${membres.length} membres</span>`;
+    const titre = `${C.icone('projet', 14)}${C.esc(p.nom)} <span class="discret poids-normal">${membres.length} membres</span>`;
     return this.ligneGroupe(ctx, titre, 0, false) + membres.map(id => this.lignePersonne(ctx, ressource(id), 1)).join('') + this.ligneSynthese(ctx, p, 1);
   },
 

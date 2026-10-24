@@ -25,7 +25,7 @@ Ecrans.mesSprints = {
     const projets = etat.d.projets;
     const p = parId('projets', ui('sprints', {}).projetSprints) || projets.find(x => x.nom === 'CDO') || projets[0];
     if (!p) return `<div class="carte">${C.vide('Aucun projet.')}</div>`;
-    const selecteur = C.liste(projets.map(x => ({ valeur: x.id, libelle: `${x.code} · ${x.nom}` })), p.id,
+    const selecteur = C.liste(projets.map(x => ({ valeur: x.id, libelle: x.nom })), p.id,
       'class="champ champ-compact" data-action-change="projetSprints"');
     // Affichage par année (demande du porteur, 2026-10-05) : années des sprints du projet + année en cours
     const annee = Number(ui('sprints', {}).anneeSprints) || Number(Calculs.aujourdhui().slice(0, 4));

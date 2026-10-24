@@ -31,7 +31,7 @@ const Panneau = {
     const champ = (nom, html) => editable ? html.replace('<CHAMP', `data-action-change="majProjet" data-champ="${nom}" data-id="${p.id}"`) : '';
     const personnesEquipe = personnesProposees(p.equipeId);
     return `<aside class="panneau">
-      <div class="panneau-entete"><div class="extensible"><div class="ligne-flex discret">${C.code(p.code)} ${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
+      <div class="panneau-entete"><div class="extensible"><div class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</div>
           ${editable ? champ('nom', `<input class="champ" style="font-size:16px;font-weight:600;margin-top:4px" value="${esc(p.nom)}" required <CHAMP>`)
             : `<h2 style="font-size:18px;margin-top:4px">${esc(p.nom)}</h2>`}</div>
         <button class="fermer" data-action="fermer" title="Fermer">✕</button></div>

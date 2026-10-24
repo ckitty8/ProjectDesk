@@ -130,7 +130,7 @@ Ecrans.listeRessources = {
     ].join('');
     const lignesProjets = projets.map(p => {
       const { productOwners, membres } = this.rolesDuProjet(p, ressources);
-      return `<tr class="cliquable" data-action="choisirNoeud" data-type="projet" data-id="${p.id}"><td>${C.code(p.code)}</td><td><b style="font-weight:500">${esc(p.nom)}</b></td>
+      return `<tr class="cliquable" data-action="choisirNoeud" data-type="projet" data-id="${p.id}"><td><b style="font-weight:500">${esc(p.nom)}</b></td>
         <td>${C.badgeRef('stp', p.statut)}</td><td>${esc(productOwners.map(r => r.nom).join(', ')) || '<span class="pale">—</span>'}</td>
           <td class="num">${membres.length}</td></tr>`;
     }).join('');
@@ -139,7 +139,7 @@ Ecrans.listeRessources = {
         <div class="discret">${projets.length} projet(s) · ${personnes.length} personne(s)${compteRattaches}</div></div><span class="extensible"></span>${boutons}</div>
       ${responsable ? this.carteResponsable(responsable, affectee(responsable)) : ''}
       <div class="carte"><div class="carte-titre"><h2>Projets</h2>${membre ? `<a data-action="nouveauProjet" data-equipe="${e.id}">+ Projet</a>` : ''}</div>
-        <table class="tableau"><thead><tr><th>Code</th><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
+        <table class="tableau"><thead><tr><th>Projet</th><th>Statut</th><th>Product Owners</th><th class="num">Membres</th></tr></thead>
         <tbody>${lignesProjets || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>
       <div class="carte"><div class="carte-titre"><h2>Membres de l’équipe ${esc(e.nom)}</h2>
         <span class="ligne-flex">${peutRattacherA(e.id) ? `<a data-action="rattacherPersonne" data-equipe="${e.id}">+ Personne existante</a>` : ''}
@@ -169,7 +169,7 @@ Ecrans.listeRessources = {
     const indicateur = (n, libelle) => `<div><b>${n}</b><span class="discret">${libelle}</span></div>`;
     return `
       <div class="carte detail-entete"><div><a class="discret" data-action="choisirNoeud" data-type="equipe" data-id="${p.equipeId}">${esc(equipe(p.equipeId).nom)} ›</a>
-        <h2 class="detail-titre">${esc(p.nom)} ${C.code(p.code)} ${C.badgeRef('stp', p.statut)}</h2></div><span class="extensible"></span>
+        <h2 class="detail-titre">${esc(p.nom)} ${C.badgeRef('stp', p.statut)}</h2></div><span class="extensible"></span>
         <div class="detail-kpi">${indicateur(productOwners.length, 'Product Owners')}${indicateur(membres.length, 'membres')}${indicateur(departs, 'départ(s) prévu(s)')}</div>
         <button class="btn" data-action="ouvrirProjet" data-id="${p.id}">${editable ? 'Modifier le projet' : 'Voir le projet'}</button></div>
       <div class="carte"><div class="carte-titre"><h2>Product Owners ${C.aide('productOwners')}</h2><span class="discret">rôle « ${esc(ROLES_PROJET.CHEF)} »</span></div>

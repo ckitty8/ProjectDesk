@@ -43,7 +43,7 @@ const Roles = {
   // Projets d'une personne, un par ligne : code, nom et son rôle sur le projet
   projetsDe(r) {
     const esc = C.esc;
-    return affectationsDe(r.id).map(a => `<div class="ligne-flex projet-role">${C.code(projet(a.projetId).code)}${esc(projet(a.projetId).nom)}
+    return affectationsDe(r.id).map(a => `<div class="ligne-flex projet-role">${esc(projet(a.projetId).nom)}
       <span class="discret texte-12">· ${esc(a.role)}</span></div>`).join('') || '<span class="pale">aucun projet</span>';
   },
 

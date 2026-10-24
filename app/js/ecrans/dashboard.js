@@ -54,7 +54,7 @@ Ecrans.dashboard = {
   // Projets à surveiller (à risque, en retard, échéance proche) : un clic ouvre le projet
   lignesASurveiller(jour) {
     return Calculs.projetsASurveiller(etat.d.projets, jour).map(p => `
-      <tr class="cliquable" data-action="ouvrirProjet" data-id="${p.id}"><td>${C.code(p.code)}</td>
+      <tr class="cliquable" data-action="ouvrirProjet" data-id="${p.id}">
         <td>${C.esc(p.nom)}<div class="discret texte-12">${C.esc(equipe(p.equipeId).nom)} · échéance ${Calculs.formatCourt(p.fin)}</div></td>
         <td class="num">${C.badgeRef('stp', p.statut)}</td></tr>`).join('');
   },

@@ -38,7 +38,7 @@ const Modale = {
         // Coché : déjà affecté, ou projet d'où l'on vient (« + Membre »)
         const a = actuelles.find(x => x.projetId === p.id), coche = a || m.projetId === p.id;
         return `<label class="ligne-flex ligne-liste"><input type="checkbox" name="projet" value="${p.id}" ${coche ? 'checked' : ''}>
-          ${C.code(p.code)}<span class="extensible">${esc(p.nom)}</span>
+          <span class="extensible">${esc(p.nom)}</span>
           ${C.liste(valeursDe('role').map(v => v.libelle), a ? a.role : (p.id === m.projetId && m.role) || ROLES_PROJET.MEMBRE,
             `class="champ champ-mini" name="role-${p.id}"`)}</label>`;
       }).join('');
@@ -47,7 +47,7 @@ const Modale = {
     // Équipe où créer une nouvelle personne : celle du projet d'origine, sinon l'équipe ouverte
     const equipeNouvelle = m.projetId ? projet(m.projetId).equipeId : etat.equipeCourante;
     return `<form class="pile" style="gap:0;min-height:0;flex:1;display:flex;flex-direction:column" data-action-envoi="enregistrerAffectations">
-      ${this.entete(m.projetId ? `Ajouter une ressource à ${projet(m.projetId).code}` : rId ? `Affectations de ${ressource(rId).nom}` : 'Assigner une ressource')}
+      ${this.entete(m.projetId ? `Ajouter une ressource à ${projet(m.projetId).nom}` : rId ? `Affectations de ${ressource(rId).nom}` : 'Assigner une ressource')}
       <div class="panneau-corps"><div><label class="libelle">Ressource</label>
         ${C.liste([{ valeur: '', libelle: personnes.length ? '— choisir —' : '— aucune fiche : créez la personne —' }, ...personnes], rId,
           'class="champ" name="ressource" required data-action-change="choisirRessourceAffectation"')}
@@ -200,7 +200,7 @@ const Modale = {
       <div class="ligne-flex"><input class="champ" readonly value="${esc(valeur)}" style="font-family:monospace;font-size:12px">
       <button type="button" class="btn petit" data-action="copierTexte" data-texte="${esc(valeur)}">Copier</button></div></div>`;
     const etape = (n, texte) => `<li style="margin-bottom:6px">${texte}</li>`;
-    return `<div class="colonne">${this.entete('Power Automate · daily ' + p.code + ' · ' + p.nom)}
+    return `<div class="colonne">${this.entete('Power Automate · daily ' + p.nom)}
       <div class="panneau-corps">
         <ol style="margin:0;padding-left:18px">
           ${etape(1, 'Nouveau flux <b>planifié</b> : périodicité 1 jour, à l’heure réglée dans l’onglet (fuseau Paris).')}
@@ -229,7 +229,7 @@ const Modale = {
     const raccourci = (cle, libelle) => `<button type="button" class="puce${m.periode === cle ? ' active' : ''}" data-action="periodeExportDaily" data-periode="${cle}">
       ${libelle}</button>`;
     const projets = projetsDailyVisibles().map(p => `<label class="ligne-flex" style="padding:4px 0">
-      <input type="checkbox" name="projet" value="${p.id}" ${m.projets.includes(p.id) ? 'checked' : ''}>${C.code(p.code)}<span>${esc(p.nom)}</span></label>`).join('');
+      <input type="checkbox" name="projet" value="${p.id}" ${m.projets.includes(p.id) ? 'checked' : ''}><span>${esc(p.nom)}</span></label>`).join('');
     const option = (nom, libelle) => `<label class="ligne-flex" style="padding:3px 0"><input type="checkbox" name="${nom}" checked>${libelle}</label>`;
     return `<form class="colonne-modale" data-action-envoi="telechargerDailyExcel">
       ${this.entete('Exporter le daily en Excel')}

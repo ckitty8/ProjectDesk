@@ -541,9 +541,9 @@ function lignesProjetsDe(ressourceId) {
   const r = ressource(ressourceId);
   return r && estResponsableEquipe(r) ? C.badgeTon('Responsable d’équipe', 'violet') : '<span class="pale">hors projet</span>';
 }
-// Codes des projets où la personne est affectée (badges « DA-08 MO-21 »), vide si aucun
-const codesProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
-  .map(a => projet(a.projetId)).filter(Boolean).map(p => C.code(p.code)).join(' ');
+// Noms des projets où la personne est affectée (étiquettes « VISTA Digital »), vide si aucun
+const nomsProjetsDe = ressourceId => etat.d.affectations.filter(a => a.ressourceId === ressourceId)
+  .map(a => projet(a.projetId)).filter(Boolean).map(p => `<span class="etiquette">${C.esc(p.nom)}</span>`).join(' ');
 /* Unités du haut de l'arborescence (sans parent, ou parent introuvable) : directions d'abord,
    puis équipes isolées — ordre des arbres de Congés et de la Gestion des ressources */
 function unitesRacines() {

@@ -121,7 +121,7 @@ Ecrans.monAdmin = {
         : r.mode === 'direct'
           ? '<span class="discret texte-12">L’application enverra l’e-mail à l’heure choisie — <b>à venir</b> (étape 2 : service d’envoi à créer)</span>'
         : '<span class="pale">—</span>';
-      return `<tr><td><span class="ligne-flex">${C.pastille(equipe(p.equipeId).couleur)}${C.code(p.code)}<b>${esc(p.nom)}</b></span></td>
+      return `<tr><td><span class="ligne-flex">${C.pastille(equipe(p.equipeId).couleur)}<b>${esc(p.nom)}</b></span></td>
         <td>${C.liste(MODES_ENVOI_DAILY, r.mode, `class="champ" style="height:30px;width:150px" ${attr('mode')}`)}</td>
         <td><input class="champ" type="time" style="height:30px;width:120px" value="${esc(r.heure)}" ${actif ? '' : 'disabled'} ${attr('heure')}></td>
         <td><div class="puces" style="flex-wrap:nowrap;gap:4px">

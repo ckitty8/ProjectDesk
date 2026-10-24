@@ -157,7 +157,7 @@ Ecrans.astuces = {
     const choisi = parId('projets', ui('astuces', {}).projetId) || projets.find(p => p.nom === 'CDO') || projets[0];
     if (!choisi) return `<div class="carte">${C.vide('Aucun projet avec des membres : les exemples ont besoin d’un projet.')}</div>`;
     const ex = this.exemplesKpi(choisi);
-    const selecteur = C.liste(projets.map(p => ({ valeur: p.id, libelle: `${p.code} · ${p.nom}` })), choisi.id,
+    const selecteur = C.liste(projets.map(p => ({ valeur: p.id, libelle: p.nom })), choisi.id,
       'class="champ largeur-auto" data-action-change="projetAstuces"');
     const sections = KPI_AGILE.map(sec => `<div class="carte"><div class="carte-titre"><h2>${esc(sec.titre)}</h2></div>
       <table class="tableau tableau-kpi"><thead><tr><th>Indicateur</th><th>Définition / formule</th><th>Comment le lire</th><th>Exemple · ${esc(choisi.nom)}</th></tr></thead>

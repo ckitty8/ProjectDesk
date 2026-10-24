@@ -94,7 +94,7 @@ Ecrans.dailyEquipes = {
       (x.titre ? `<b>${esc(x.titre)}</b><br>` : '') + x.lignes.map(l => `• ${esc(l)}<br>`).join('')).join('');
     const blocages = Calculs.blocagesDaily(note.texte).map(b => `<span class="pastille-blocage">⚠ ${esc(b)}</span>`).join('');
     return `<div class="fil-entree">${C.avatar(r.nom)}<div class="extensible">
-      <div class="ligne-flex"><b>${esc(r.nom)}</b>${C.code(p.code)}<span class="pale texte-12">${heure}</span></div>
+      <div class="ligne-flex"><b>${esc(r.nom)}</b><span class="etiquette">${esc(p.nom)}</span><span class="pale texte-12">${heure}</span></div>
       <div class="fil-texte">${rubriques}</div>${blocages}</div></div>`;
   },
   // Filtres de gauche : projets puis personnes, avec le nombre de dailys de la semaine
@@ -195,7 +195,8 @@ const Synthese = {
     return `<div class="carte panneau-lecture actif"><div class="ligne-flex">${C.avatar(r.nom)}<div class="extensible"><b>${esc(r.nom)}</b>
         <div class="discret texte-12">${Calculs.formatLong(choisie.jour)}</div></div>
         <button class="lien-btn" data-action="fermerCaseDaily" title="Fermer">✕</button></div>
-      ${notes.map(x => `<div class="lecture-note">${C.code(x.p.code)}<div class="fil-texte">${Ecrans.dailyEquipes.noteHtml(x.n.texte)}</div></div>`).join('')
+      ${notes.map(x => `<div class="lecture-note"><span class="etiquette">${C.esc(x.p.nom)}</span>
+        <div class="fil-texte">${Ecrans.dailyEquipes.noteHtml(x.n.texte)}</div></div>`).join('')
         || C.vide('Pas de daily ce jour-là.')}
       <div class="ligne-flex"><button class="btn" data-action="decalerCaseDaily" data-sens="-1">‹ Jour précédent</button>
         <button class="btn" data-action="decalerCaseDaily" data-sens="1">Jour suivant ›</button></div></div>`;

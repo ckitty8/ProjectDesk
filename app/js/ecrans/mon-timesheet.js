@@ -41,7 +41,7 @@ Ecrans.monTimesheet = {
     };
     const lignes = mesProjets.map(p => {
       const total = jours.reduce((s, j) => s + Number(heure(p.id, j) || 0), 0);
-      return `<tr><td class="col-projet">${C.code(p.code)} ${esc(p.nom)}</td>${jours.map(j => caseJour(p, j)).join('')}
+      return `<tr><td class="col-projet">${esc(p.nom)}</td>${jours.map(j => caseJour(p, j)).join('')}
         <td class="num"><b>${Calculs.nombre(total)} h</b></td></tr>`;
     }).join('');
     const h = Calculs.heuresMois(moi.id, m.annee, m.mois, etat.d.temps);

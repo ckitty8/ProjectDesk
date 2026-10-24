@@ -22,7 +22,7 @@ Ecrans.mesProjets = {
   mep() {
     const projets = etat.d.projets.filter(peutEditerProjet).sort(parCode);
     if (!projets.length) return `<div class="carte">${C.vide('Vous ne pouvez modifier aucun projet : pas de mise en production à saisir.')}</div>`;
-    const choixProjets = projets.map(p => ({ valeur: p.id, libelle: `${p.code} · ${p.nom}` }));
+    const choixProjets = projets.map(p => ({ valeur: p.id, libelle: p.nom }));
     const formulaire = `<form class="ligne-flex formulaire-mep" data-action-envoi="ajouterMep">
         ${C.liste(choixProjets, projets[0].id, 'class="champ champ-compact" name="projet"')}
         <input class="champ champ-date" type="date" name="jour" required>
@@ -41,7 +41,7 @@ Ecrans.mesProjets = {
   ligneMep(m) {
     const p = projet(m.projetId), attr = champ => `data-action-change="majMep" data-id="${m.id}" data-champ="${champ}"`;
     return `<tr><td><input class="champ champ-date" type="date" value="${m.jour}" ${attr('jour')}></td>
-      <td>${C.code(p.code)} ${C.esc(p.nom)}</td>
+      <td>${C.esc(p.nom)}</td>
       <td><input class="champ champ-version" value="${C.esc(m.version || '')}" maxlength="40" ${attr('version')}></td>
       <td><input class="champ champ-contenu" value="${C.esc(m.contenu || '')}" maxlength="500" ${attr('contenu')}></td>
       <td>${C.liste(STATUTS_MEP, m.statut, `class="champ champ-compact" ${attr('statut')}`)}</td>

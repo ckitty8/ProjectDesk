@@ -39,7 +39,7 @@ Ecrans.daily = {
     const rempli = champs.hier.trim() || champs.aujourdhui.trim() || champs.blocages.trim();
     const etatCarte = absentJournee ? C.badgeTon('Absent(e)', 'neutre')
       : rempli ? C.badgeTon('Renseigné', 'succes') : C.badgeTon('À saisir', 'attention');
-    const entete = `<div class="carte-titre"><span class="ligne-flex">${C.code(p.code)}<h2 style="font-size:15px">${esc(p.nom)}</h2></span>${etatCarte}</div>`;
+    const entete = `<div class="carte-titre"><span class="ligne-flex"><h2 style="font-size:15px">${esc(p.nom)}</h2></span>${etatCarte}</div>`;
     if (absentJournee && !rempli) return `<div class="carte">${entete}</div>`;   // carte repliée un jour d'absence
     const champ = (cle, titre, aide) => `<label class="champ-daily" style="padding:8px 0 0"><span class="libelle">${titre}</span>
       <textarea class="note-daily" style="min-height:62px" data-action-saisie="saisirNoteProjet" data-projet="${p.id}" data-champ="${cle}"
