@@ -367,14 +367,23 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption('form[data-action-envoi="ajouterMep"] [name=projet]', idProjetMep);
     await page.fill('form[data-action-envoi="ajouterMep"] [name=jour]', '2026-12-04');
     await page.fill('form[data-action-envoi="ajouterMep"] [name=version]', 'V2.2');
+    await page.fill('form[data-action-envoi="ajouterMep"] [name=bugs]', '3');
+    await page.fill('form[data-action-envoi="ajouterMep"] [name=incidents]', '1');
+    await page.fill('form[data-action-envoi="ajouterMep"] [name=us]', '5');
     await page.click('form[data-action-envoi="ajouterMep"] button'); await page.waitForTimeout(300);
     const ajoutee = await page.evaluate(() => etat.d.misesEnProduction.find(m => m.version === 'V2.2'));
     await page.selectOption(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="statut"]`, 'faite'); await page.waitForTimeout(300);
     const statutModifie = await page.evaluate(id => etat.d.misesEnProduction.find(m => m.id === id).statut, ajoutee.id);
+    // Tickets livrés (migration 044) : à la place du contenu ; un compteur se modifie dans la ligne
+    await page.fill(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="nbUs"]`, '6');
+    await page.press(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="nbUs"]`, 'Tab'); await page.waitForTimeout(300);
+    const tickets = await page.evaluate(id => { const m = etat.d.misesEnProduction.find(x => x.id === id); return [m.nbBugs, m.nbIncidents, m.nbUs].join('/'); }, ajoutee.id);
     await capture('09b-saisie-mep');
     await page.click(`[data-action="supprimerMep"][data-id="${ajoutee.id}"]`); await page.waitForTimeout(300);
     verifier('Mon dashboard › Projets et Roadmap › MEP : ajout, changement de statut et suppression d’une MEP',
       mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
+    verifier('MEP : nombre de bugs, d’incidents et d’US livrés (à la place du contenu), modifiable', ajoutee.nbBugs === 3 && ajoutee.nbIncidents === 1
+      && ajoutee.nbUs === 5 && tickets === '3/1/6' && !(await page.$('[data-action-change="majMep"][data-champ="contenu"]')), tickets);
     await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
     await page.waitForTimeout(300);

@@ -204,7 +204,7 @@ function amorcer() {
   bd.mises_en_production = [['PF-14', '2026-10-09', 'V2.0', 'Connecteur LDAP, mapping des rôles', 'faite'],
     ['DA-08', '2026-10-30', 'V1.3', 'Rapport de trésorerie, alertes de dépassement', 'prevue'], ['PF-14', '2026-11-06', 'V2.1', 'SSO Azure AD (pilote)', 'prevue'],
     ['MO-21', '2026-11-20', 'V3.0', 'Synchronisation hors-ligne', 'reportee']]
-    .map(([code, jour, version, contenu, statut]) => ({ id: uuid(), projet_id: idProjet(code), jour, version, contenu, statut }));
+    .map(([code, jour, version, contenu, statut]) => ({ id: uuid(), projet_id: idProjet(code), jour, version, contenu, statut, nb_bugs: contenu.length % 4, nb_incidents: contenu.length % 3, nb_us: contenu.length % 7 + 1 }));
   bd.notes_daily_projet = [
     { user_id: thomas.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Connecteur LDAP : corrections de revue\n\nAujourd’hui\n- Mapping des rôles applicatifs\n\nBlocages\n- Identifiants de recette expirés' },
     { user_id: camille.id, jour: jourJ, projet_id: idProjet('PF-14'), texte: 'Hier\n- Revue de la PR connecteur LDAP avec Thomas\n\nAujourd’hui\n- Finaliser le plan de migration SSO\n\nBlocages\n- Accès annuaire côté DSI toujours en attente' }];

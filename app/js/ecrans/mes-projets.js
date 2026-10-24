@@ -7,6 +7,16 @@
    ============================================================ */
 'use strict';
 
+/* Tickets livrés par une mise en production (porteur 2026-10-24, migration 044) : le nombre de Bug, Incident
+   et US, dans cet ordre ; `champ` = colonne de mises_en_production, `cle` = nom du champ du formulaire d'ajout */
+const COMPTEURS_MEP = [
+  { cle: 'bugs', champ: 'nbBugs', libelle: 'Bugs', titre: 'Nombre de bugs livrés' },
+  { cle: 'incidents', champ: 'nbIncidents', libelle: 'Incidents', titre: 'Nombre d’incidents livrés' },
+  { cle: 'us', champ: 'nbUs', libelle: 'US', titre: 'Nombre d’US livrées' }
+];
+// Entier positif ou nul saisi dans un champ (vide ou invalide = 0)
+const nombreEntier = texte => Math.max(0, Math.floor(Number(texte) || 0));
+
 Ecrans.mesProjets = {
   titre: 'Projets et Roadmap',
   section: 'moi',
@@ -14,7 +24,8 @@ Ecrans.mesProjets = {
     const actions = `<button class="btn" data-action="ouvrirObjectifs">Objectifs de l’équipe</button>
       <button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
     return `<div class="ecran">${C.entete('Mises en production',
-      'MEP des projets que vous pouvez modifier · affichées dans Suivi de mes équipes › Projets et Roadmap › Planning projet', actions)}${this.mep()}</div>`;
+      'MEP des projets que vous pouvez modifier (date, version, tickets livrés) · ' +
+      'affichées dans Suivi de mes équipes › Projets et Roadmap › Planning projet', actions)}${this.mep()}</div>`;
   },
 
   /* Formulaire d'ajout puis liste modifiable des MEP des projets que je peux modifier
@@ -23,17 +34,20 @@ Ecrans.mesProjets = {
     const projets = etat.d.projets.filter(peutEditerProjet).sort(parCode);
     if (!projets.length) return `<div class="carte">${C.vide('Vous ne pouvez modifier aucun projet : pas de mise en production à saisir.')}</div>`;
     const choixProjets = projets.map(p => ({ valeur: p.id, libelle: p.nom }));
+    const champsAjout = COMPTEURS_MEP.map(c =>
+      `<input class="champ champ-nombre" type="number" min="0" name="${c.cle}" value="0" title="${c.titre}">`).join('');
+    const entetesCompteurs = COMPTEURS_MEP.map(c => `<th class="num" title="${c.titre}">${c.libelle}</th>`).join('');
     const formulaire = `<form class="ligne-flex formulaire-mep" data-action-envoi="ajouterMep">
         ${C.liste(choixProjets, projets[0].id, 'class="champ champ-compact" name="projet"')}
         <input class="champ champ-date" type="date" name="jour" required>
         <input class="champ champ-version" name="version" placeholder="Version" maxlength="40">
-        <input class="champ champ-contenu" name="contenu" placeholder="Contenu" maxlength="500">
+        ${champsAjout}
         ${C.liste(STATUTS_MEP, 'prevue', 'class="champ champ-compact" name="statut"')}
         <button class="btn primaire">Ajouter</button></form>`;
     const lignes = misesEnProductionDe(projets).map(m => this.ligneMep(m)).join('');
     return `<div class="carte"><div class="carte-titre"><h2>Mises en production de mes projets</h2></div>${formulaire}
-        <table class="tableau tableau-sprints"><thead><tr><th>Date</th><th>Projet</th><th>Version</th><th>Contenu</th><th>Statut</th><th></th></tr></thead>
-          <tbody>${lignes || `<tr><td colspan="6" class="pale">Aucune mise en production saisie.</td></tr>`}</tbody></table></div>
+        <table class="tableau tableau-sprints"><thead><tr><th>Date</th><th>Projet</th><th>Version</th>${entetesCompteurs}<th>Statut</th><th></th></tr></thead>
+          <tbody>${lignes || `<tr><td colspan="8" class="pale">Aucune mise en production saisie.</td></tr>`}</tbody></table></div>
       <div class="discret texte-12">Chaque chef de projet saisit les MEP de ses projets ; tout le monde les consulte dans
         Suivi de mes équipes › Projets et Roadmap › Planning projet.</div>`;
   },
@@ -43,7 +57,8 @@ Ecrans.mesProjets = {
     return `<tr><td><input class="champ champ-date" type="date" value="${m.jour}" ${attr('jour')}></td>
       <td>${C.esc(p.nom)}</td>
       <td><input class="champ champ-version" value="${C.esc(m.version || '')}" maxlength="40" ${attr('version')}></td>
-      <td><input class="champ champ-contenu" value="${C.esc(m.contenu || '')}" maxlength="500" ${attr('contenu')}></td>
+      ${COMPTEURS_MEP.map(c =>
+        `<td><input class="champ champ-nombre" type="number" min="0" value="${m[c.champ] || 0}" ${attr(c.champ)}></td>`).join('')}
       <td>${C.liste(STATUTS_MEP, m.statut, `class="champ champ-compact" ${attr('statut')}`)}</td>
       <td>${C.boutonIcone('supprimer', 'supprimerMep', `data-id="${m.id}"`, 'Supprimer cette mise en production')}</td></tr>`;
   }
@@ -56,11 +71,12 @@ Object.assign(Actions, {
   ajouterMep(d, form) {
     const f = Object.fromEntries(new FormData(form));
     executer(() => Api.creer('mises_en_production', { projetId: f.projet, jour: f.jour, version: f.version.trim() || null,
-      contenu: f.contenu.trim() || null, statut: f.statut }), 'misesEnProduction');
+      ...Object.fromEntries(COMPTEURS_MEP.map(c => [c.champ, nombreEntier(f[c.cle])])), statut: f.statut }), 'misesEnProduction');
   },
   // Modification d'un champ ; la date est obligatoire (on remet l'ancienne valeur si elle est vidée)
   majMep(d, el) {
-    const valeur = el.value.trim() || null;
+    const compteur = COMPTEURS_MEP.some(c => c.champ === d.champ);
+    const valeur = compteur ? nombreEntier(el.value) : el.value.trim() || null;
     if (d.champ === 'jour' && !valeur) {
       el.value = etat.d.misesEnProduction.find(m => m.id === d.id).jour;
       return notifier('La date de la MEP est obligatoire', 'erreur');

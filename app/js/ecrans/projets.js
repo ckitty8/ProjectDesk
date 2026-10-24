@@ -104,7 +104,9 @@ const PlanningProjet = {
   // Repère d'une mise en production : ▲ + version à sa date, couleur de son statut, détail en infobulle
   repereMep(m, per) {
     const statut = STATUTS_MEP.find(x => x.valeur === m.statut) || STATUTS_MEP[0];
-    const titre = `MEP ${m.version || ''} · ${Calculs.formatCourt(m.jour)} · ${statut.libelle}${m.contenu ? ' : ' + m.contenu : ''}`;
+    // Tickets livrés (migration 044) : « 5 US · 3 bugs · 1 incidents », vide si aucun
+    const tickets = m.nbBugs || m.nbIncidents || m.nbUs ? ` : ${m.nbUs || 0} US · ${m.nbBugs || 0} bugs · ${m.nbIncidents || 0} incidents` : '';
+    const titre = `MEP ${m.version || ''} · ${Calculs.formatCourt(m.jour)} · ${statut.libelle}${tickets}`;
     return `<div class="gantt-mep" style="left:${per.position(m.jour)}%;color:${TONS[statut.ton].texte}" title="${C.esc(titre)}">▲ ${C.esc(m.version || 'MEP')}</div>`;
   },
   anneeMois(iso) { const d = Calculs.depuisIso(iso); return [d.getFullYear(), d.getMonth()]; },

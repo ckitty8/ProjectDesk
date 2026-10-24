@@ -149,7 +149,7 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .couleur-primaire { color: var(--primaire); }
 /* Saisie des MEP (Mon dashboard › Projets et Roadmap › Mises en production), 2026-10-23 */
 .formulaire-mep { gap: 8px; padding: 12px 16px; flex-wrap: wrap; }
-.champ.champ-version { width: 100px; } .champ.champ-contenu { width: 320px; }
+.champ.champ-version { width: 100px; } .champ.champ-nombre { width: 80px; text-align: right; }
 .gantt-jour { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--primaire); opacity: .5; }
 .gantt-mois { display: grid; grid-template-columns: 300px minmax(0, 1fr); border-bottom: 1px solid var(--bordure); background: var(--fond-entete); }
 .gantt-mois .mois { display: flex; } .gantt-mois .mois div { border-left: 1px solid var(--bordure-fine); padding: 9px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); }
