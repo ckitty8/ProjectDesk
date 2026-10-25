@@ -252,12 +252,12 @@ const ExportDaily = {
     const date = jour => jour.split('-').reverse().join('/');
     const STYLE_STATUT = { 'Renseigné': 'vert', 'Absent(e)': 'gris', 'Sans compte': 'gris', 'Manquant': 'orange' };
     // Quatre premières colonnes communes aux deux onglets : qui, quand, sur quel projet
-    const COLONNES_COMMUNES = [{ titre: 'Date', largeur: 12 }, { titre: 'Code projet', largeur: 11 }, { titre: 'Projet', largeur: 28 }, { titre: 'Personne', largeur: 22 }];
+    const COLONNES_COMMUNES = [{ titre: 'Date', largeur: 12 }, { titre: 'Projet', largeur: 28 }, { titre: 'Personne', largeur: 22 }];
     const daily = {
       nom: 'Daily',
       colonnes: [...COLONNES_COMMUNES, { titre: 'Statut', largeur: 13 }, { titre: 'Hier', largeur: 45 },
         { titre: 'Aujourd’hui', largeur: 45 }, { titre: 'Blocages', largeur: 40 }, { titre: 'Absence', largeur: 18 }],
-      lignes: lignes.map(l => [date(l.jour), l.projet.code, l.projet.nom, l.personne,
+      lignes: lignes.map(l => [date(l.jour), l.projet.nom, l.personne,
         { texte: l.statut, style: STYLE_STATUT[l.statut] }, l.champs.hier, l.champs.aujourdhui,
         { texte: l.blocages.join('\n'), style: 'rouge' }, l.absence])
     };
@@ -265,7 +265,7 @@ const ExportDaily = {
     const blocages = {
       nom: 'Blocages',
       colonnes: [...COLONNES_COMMUNES, { titre: 'Blocage', largeur: 70 }],
-      lignes: lignes.flatMap(l => l.blocages.map(b => [date(l.jour), l.projet.code, l.projet.nom, l.personne, { texte: b, style: 'rouge' }]))
+      lignes: lignes.flatMap(l => l.blocages.map(b => [date(l.jour), l.projet.nom, l.personne, { texte: b, style: 'rouge' }]))
     };
     return [daily, blocages];
   }

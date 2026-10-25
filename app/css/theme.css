@@ -158,8 +158,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .interrupteur { width: 32px; height: 18px; border-radius: 9px; background: #D5DAE3; position: relative; border: 0; cursor: pointer; flex: 0 0 32px; }
 .interrupteur::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
 .interrupteur.actif { background: var(--primaire); } .interrupteur.actif::after { left: 16px; }
-.saisie-heure { width: 64px; text-align: center; height: 30px; border: 1px solid var(--bordure); border-radius: 6px; background: #fff; }
-.saisie-heure:disabled { background: var(--fond-doux); color: var(--discret); }
 /* Saisie mensuelle des heures (Mon timesheet › Saisir mes heures) : une colonne par jour de semaine */
 .defilement-x { overflow-x: auto; }
 .grille-mois th, .grille-mois td { padding: 6px 2px; text-align: center; font-size: 12px; }

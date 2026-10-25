@@ -384,11 +384,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
     verifier('MEP : nombre de bugs, d’incidents et d’US livrés (à la place du contenu), modifiable', ajoutee.nbBugs === 3 && ajoutee.nbIncidents === 1
       && ajoutee.nbUs === 5 && tickets === '3/1/6' && !(await page.$('[data-action-change="majMep"][data-champ="contenu"]')), tickets);
-    await page.click('[data-action="ouvrirObjectifs"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="ajouterObjectif"] input', 'Objectif de test'); await page.click('form[data-action-envoi="ajouterObjectif"] button');
-    await page.waitForTimeout(300);
-    verifier('Objectifs : objectif ajouté', (await texte()).includes('Objectif de test'));
-    await page.click('.fermer');
+    verifier('Mon dashboard › Projets et Roadmap : plus de bouton « Objectifs de l’équipe » (porteur 2026-10-25)',
+      !(await page.$('[data-action="ouvrirObjectifs"]')) && !(await texte()).includes('Objectifs de l’équipe'));
     await page.click('[data-action="nouveauProjet"]'); await page.waitForTimeout(200);
     await page.fill('form[data-action-envoi="creerProjet"] input[name=nom]', 'Projet de test');
     verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));

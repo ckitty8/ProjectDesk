@@ -21,8 +21,7 @@ Ecrans.mesProjets = {
   titre: 'Projets et Roadmap',
   section: 'moi',
   rendre() {
-    const actions = `<button class="btn" data-action="ouvrirObjectifs">Objectifs de l’équipe</button>
-      <button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
+    const actions = `<button class="btn primaire" data-action="nouveauProjet">+ Nouveau projet</button>`;
     return `<div class="ecran">${C.entete('Mises en production',
       'MEP des projets que vous pouvez modifier (date, version, tickets livrés) · ' +
       'affichées dans Suivi de mes équipes › Projets et Roadmap › Planning projet', actions)}${this.mep()}</div>`;
@@ -66,7 +65,6 @@ Ecrans.mesProjets = {
 
 Object.assign(Actions, {
   nouveauProjet: d => majEtat({ panneau: { type: 'nouveauProjet', equipeId: (d && d.equipe) || null } }),
-  ouvrirObjectifs: () => majEtat({ modale: { type: 'objectifs' } }),
   /* Mises en production (table mises_en_production, migration 039) */
   ajouterMep(d, form) {
     const f = Object.fromEntries(new FormData(form));

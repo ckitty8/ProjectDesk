@@ -17,7 +17,7 @@ const Modale = {
   rendre() {
     const m = etat.modale;
     const corps = {
-      affectation: this.affectation, rattachement: this.rattachement, ressource: this.ressource, equipe: this.equipe, objectifs: this.objectifs, aide: this.aide,
+      affectation: this.affectation, rattachement: this.rattachement, ressource: this.ressource, equipe: this.equipe, aide: this.aide,
       envoiPowerAutomate: this.envoiPowerAutomate, exportDaily: this.exportDaily
     }[m.type].call(this, m);
     return `<div class="modale">${corps}</div>`;
@@ -247,38 +247,6 @@ const Modale = {
       </div>
       <div class="panneau-pied"><span class="extensible"></span><button type="button" class="btn" data-action="fermer">Annuler</button>
         <button class="btn primaire">Télécharger le fichier Excel</button></div></form>`;
-  },
-
-  /* ---------- Objectifs (OKR) de l'équipe courante ---------- */
-  objectifs() {
-    const esc = C.esc, jour = Calculs.aujourdhui(), eqId = etat.equipeCourante;
-    const periode = ui('objectifs', { annee: Number(jour.slice(0, 4)), trimestre: Calculs.trimestreDe(jour) });
-    const modifiable = estMembreDe(eqId);
-    const objs = etat.d.objectifs.filter(o => o.equipeId === eqId && o.annee === periode.annee && o.trimestre === periode.trimestre);
-    const blocs = objs.map(o => {
-      const krs = etat.d.resultatsCles.filter(k => k.objectifId === o.id);
-      return `<div class="carte" style="padding:12px 14px">
-        <div class="ligne-flex">${C.code(o.code)}<b class="extensible">${esc(o.titre)}</b>
-          ${modifiable ? C.liste(Object.keys(CONFIANCES).map(c => ({ valeur: c, libelle: 'Confiance ' + c })), o.confiance,
-            `class="champ champ-mini" data-action-change="confianceObjectif" data-id="${o.id}"`) : ''}</div>
-        ${krs.map(k => `<div class="ligne-flex" style="margin-top:8px">${C.code(k.code)}<span class="extensible">${esc(k.libelle)}</span>
-          ${modifiable
-            ? `<input type="number" min="0" max="100" class="saisie-heure" value="${k.progression}" data-action-change="progressionKr" data-id="${k.id}"> %`
-            : k.progression + ' %'}</div>`).join('')}
-        ${modifiable ? `<form class="ligne-flex" style="margin-top:8px" data-action-envoi="ajouterKr" data-objectif="${o.id}">
-          <input class="champ" name="libelle" placeholder="Nouveau résultat clé (ex. Disponibilité 99,9 %)" required><button class="btn petit">Ajouter</button></form>` : ''}
-      </div>`;
-    }).join('');
-    return `<div class="colonne-modale">
-      ${this.entete(`Objectifs ${equipe(eqId).nom} · T${periode.trimestre} ${periode.annee}`)}
-      <div class="panneau-corps">
-        <div class="puces">${[1, 2, 3, 4].map(q =>
-          `<button class="puce${q === periode.trimestre ? ' active' : ''}" data-action="trimestreObjectifs" data-t="${q}">T${q}</button>`).join('')}</div>
-        ${blocs || C.vide('Aucun objectif sur ce trimestre.')}
-        ${modifiable ? `<form class="ligne-flex" data-action-envoi="ajouterObjectif">
-          <input class="champ" name="titre" placeholder="Nouvel objectif (ex. Fiabiliser la plateforme)" required>
-          <button class="btn primaire">Ajouter l’objectif</button></form>` : ''}
-      </div></div>`;
   }
 };
 
@@ -366,23 +334,5 @@ Object.assign(Actions, {
     const f = new FormData(form);
     try { await Api.inviterMembre(d.id, f.get('email'), f.get('role')); notifier('Invitation envoyée'); await Actions.modifierEquipe({ id: d.id }); }
     catch (e) { notifier(e.message, 'erreur'); }
-  },
-
-  /* Objectifs */
-  trimestreObjectifs: d => majUi('objectifs', { trimestre: Number(d.t) }),
-  ajouterObjectif(_, form) {
-    const p = ui('objectifs', { annee: Number(Calculs.aujourdhui().slice(0, 4)), trimestre: Calculs.trimestreDe(Calculs.aujourdhui()) });
-    const numero = etat.d.objectifs.filter(o => o.equipeId === etat.equipeCourante && o.annee === p.annee).length + 1;
-    const objectif = { equipeId: etat.equipeCourante, annee: p.annee, trimestre: p.trimestre, code: 'O' + numero, titre: new FormData(form).get('titre') };
-    executer(() => Api.creer('objectifs', objectif), 'objectifs');
-  },
-  confianceObjectif: (d, el) => executer(() => Api.modifier('objectifs', { id: 'eq.' + d.id }, { confiance: el.value }), 'objectifs'),
-  ajouterKr(d, form) {
-    const o = parId('objectifs', d.objectif), n = etat.d.resultatsCles.filter(k => k.objectifId === o.id).length + 1;
-    executer(() => Api.creer('resultats_cles', { objectifId: o.id, code: `KR${o.code.slice(1)}.${n}`, libelle: new FormData(form).get('libelle') }), 'resultatsCles');
-  },
-  progressionKr(d, el) {
-    const v = Math.max(0, Math.min(100, Number(el.value) || 0));
-    executer(() => Api.modifier('resultats_cles', { id: 'eq.' + d.id }, { progression: v }), 'resultatsCles');
   }
 });
