@@ -64,7 +64,6 @@ h2 { font-size: 15px; font-weight: 600; margin: 0; }
 .avatar.grand { width: 32px; height: 32px; flex-basis: 32px; background: #2B4DB8; color: #fff; font-size: 12px; }
 .barre { display: inline-block; height: 6px; border-radius: 3px; background: #EEF1F5; width: 100%; overflow: hidden; vertical-align: middle; }
 .barre > span { display: block; height: 100%; border-radius: 3px; }
-.barre.fine { height: 4px; }
 .btn { height: 32px; padding: 0 12px; border-radius: 7px; border: 1px solid var(--bordure); background: #fff; font-weight: 500; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .btn:hover { background: var(--fond-doux); }
 .btn.primaire { background: var(--primaire); border-color: var(--primaire); color: #fff; } .btn.primaire:hover { background: var(--primaire-fonce); }
@@ -318,8 +317,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 /* ---------- Grilles d'écran (remplacent des styles en ligne, pour pouvoir s'adapter à l'écran) ---------- */
 .ecran-daily { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; max-width: 1280px; }
 .ecran-daily .historique { margin-top: 58px; }
-.grille-objectifs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.grille-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .75fr); gap: 16px; align-items: start; }
 .bouton-menu { display: none; font-size: 17px; padding: 0 10px; }
 
 /* ---------- Écran étroit : Galaxy Z Fold 7 déplié (≈ 880 px de large), tablette ----------
@@ -340,10 +337,10 @@ table.tableau { width: 100%; border-collapse: collapse; }
 }
 /* Sous 960 px : les écrans à deux colonnes passent sur une seule (historique du daily sous la saisie) */
 @media (max-width: 960px) {
-  .ecran-daily, .grille-dashboard, .liste-ressources { grid-template-columns: minmax(0, 1fr); }
+  .ecran-daily, .liste-ressources { grid-template-columns: minmax(0, 1fr); }
   .nav-ressources { position: static; }
   .ecran-daily .historique { margin-top: 0; }
-  .grille-objectifs, .grille-simulation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grille-simulation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grille-kpi, .grille-kpi.q4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .entete-ecran { flex-wrap: wrap; align-items: flex-start; }
 }

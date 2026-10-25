@@ -75,22 +75,7 @@ function amorcer() {
     '1996-03-12', '1987-02-22', '1992-11-26', '1995-01-17', '1989-08-08', '1997-04-19'];
   bd.ressources.forEach((r, i) => { r.date_naissance = NAISSANCES[i]; });
 
-  const OBJ = [['pf', 'O1', 'Fiabiliser la plateforme', 'haute', [['KR1.1', 'Disponibilité 99,9 %', 80], ['KR1.2', 'Temps de rétablissement < 30 min', 62], ['KR1.3', 'Onboarding dév. < 1 jour', 20]]],
-    ['pf', 'O2', 'Sécuriser les accès', 'moyenne', [['KR2.1', '100 % des apps en SSO', 45], ['KR2.2', 'Revue trimestrielle des droits', 50]]],
-    ['da', 'O3', 'Décider avec la donnée', 'haute', [['KR3.1', '12 sources connectées', 64], ['KR3.2', '5 rapports automatisés', 88]]],
-    ['mo', 'O4', 'Équiper les équipes terrain', 'faible', [['KR4.1', '300 utilisateurs actifs', 38], ['KR4.2', 'Taux d’ouverture push 40 %', 100]]],
-    ['pr', 'O5', 'Simplifier les demandes internes', 'moyenne', [['KR5.1', 'Délai de traitement < 5 jours', 55], ['KR5.2', 'Satisfaction demandeurs > 4/5', 40]]],
-    ['pr', 'O6', 'Unifier l’expérience des outils', 'moyenne', [['KR6.1', 'Design system adopté par 4 équipes', 30], ['KR6.2', '20 composants documentés', 35]]]];
-  bd.objectifs = []; bd.resultats_cles = []; const idKr = {};
-  OBJ.forEach(([eq, code, titre, confiance, krs]) => {
-    const id = uuid(); bd.objectifs.push({ id, equipe_id: idEq[eq], annee: 2026, trimestre: 4, code, titre, confiance });
-    krs.forEach(([c, libelle, progression]) => { const k = uuid(); idKr[c] = k; bd.resultats_cles.push({ id: k, objectif_id: id, code: c, libelle, progression }); });
-  });
-  // Historique des trimestres passés (progression par trimestre)
-  const Q = { pf: [82, 76, 71], da: [70, 78, 85], mo: [64, 58, 49], pr: [75, 80, 68] };
-  Object.entries(Q).forEach(([eq, vals]) => vals.forEach((v, i) => { const id = uuid();
-    bd.objectifs.push({ id, equipe_id: idEq[eq], annee: 2026, trimestre: i + 1, code: 'O' + (i + 1), titre: 'Objectif T' + (i + 1), confiance: 'moyenne' });
-    bd.resultats_cles.push({ id: uuid(), objectif_id: id, code: 'KR', libelle: 'Résultat', progression: v }); }));
+  bd.objectifs = []; bd.resultats_cles = [];   // objectifs (OKR) retirés de l'application (porteur 2026-10-25) : tables vides
 
   const PROJ = [['PF-12', 'Migration Kubernetes', 'pf', 'KR1.1', 'jd', 72, '2026-07-01', '2026-11-15', 'En cours', 'Migration des 22 services applicatifs vers le cluster Kubernetes managé.', ['Conteneuriser les services batch', 'Configurer l’autoscaling du cluster', 'Migrer la base de sessions', 'Plan de bascule et rollback']],
     ['PF-14', 'SSO & gestion des droits', 'pf', 'KR2.1', 'cl', 45, '2026-08-15', '2026-11-30', 'À risque', 'Généraliser l’authentification unique sur les applications internes.', ['Connecteur annuaire LDAP', 'Mapping des rôles applicatifs', 'Migration de l’outil RH vers le SSO', 'Recette sécurité']],
@@ -106,7 +91,7 @@ function amorcer() {
     const id = uuid(); idPr[code] = id;
     // Méthode (migration 022) : une méthode différente selon le projet pour les écrans et les tests
     const methode = ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'][bd.projets.length % 4];
-    bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, resultat_cle_id: idKr[kr], chef_id: idP[chef], debut, fin, statut, avancement, methode });
+    bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, chef_id: idP[chef], debut, fin, statut, avancement, methode });
   });
   const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Lecteur'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
     ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Lecteur'],

@@ -83,7 +83,7 @@ const DROITS = [
   /* onglet : droit d'un onglet (porteur 2026-10-18, maquette docs/maquettes/matrice-par-onglet/, migration 038) —
      ligne « ↳ Onglet » de la matrice ; ecran + id : écran et identifiant de l'onglet masqué si le droit est « Non »
      (ongletPermis, etat.js). Repli : droit dont l'onglet reprend le niveau (valeur de départ de la migration 038). */
-  { cle: 'suivi_dashboard', section: 'suivi', menu: 'Dashboard général', libelle: 'Consulter les objectifs (OKR) et les projets à surveiller', repli: 'general' },
+  { cle: 'suivi_dashboard', section: 'suivi', menu: 'Dashboard général', libelle: 'Consulter les indicateurs et les projets à surveiller', repli: 'general' },
   { cle: 'daily_equipes', section: 'suivi', menu: 'Daily des équipes', libelle: 'Lire le daily des équipes' },
   { cle: 'onglet_daily_fil', section: 'suivi', menu: 'Daily des équipes', onglet: 'Fil des dailys', ecran: 'dailyEquipes', id: 'fil',
     libelle: 'Notes de la semaine, blocages ouverts', repli: 'daily_equipes' },
@@ -99,7 +99,7 @@ const DROITS = [
   { cle: 'suivi_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
   { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
-  { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Projets, roadmap, objectifs, sprints' },
+  { cle: 'projets', section: 'dashboard', menu: 'Projets et Roadmap', libelle: 'Mises en production, projets' },
   // Sous-menu Sprints (2026-10-23, auparavant onglet d'Administration ; clé inchangée, enregistrée en base)
   { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Projets et Roadmap', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
     libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
@@ -203,7 +203,6 @@ const STATUTS_FEUILLE = {
   validee: { libelle: 'Validée', fond: '#E3F5EC', texte: '#0B6B4F' },
   a_completer: { libelle: 'À compléter', fond: '#FFF1DC', texte: '#8A4B00' }
 };
-const CONFIANCES = { haute: ['#E3F5EC', '#0B6B4F'], moyenne: ['#FFF1DC', '#8A4B00'], faible: ['#FDE8E8', '#A32020'] };
 
 // Surcharge éventuelle (tests automatisés avec un serveur simulé)
 if (window.CONFIG_SURCHARGE) Object.assign(CONFIG, window.CONFIG_SURCHARGE);
@@ -261,8 +260,8 @@ const AIDES = {
    GUIDES : pages générales du menu Aide. Chaque guide = liste de paragraphes.
    ============================================================ */
 const GUIDE_ECRANS = {
-  dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés, objectifs (OKR) du trimestre, progression par trimestre et projets à surveiller.',
-    'Choisissez le trimestre avec les boutons T1 à T4. Survolez les ⓘ pour le détail des calculs.'],
+  dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés et projets à surveiller.',
+    'Survolez les ⓘ pour le détail des calculs.'],
   projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
   ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.',
     'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés.'],

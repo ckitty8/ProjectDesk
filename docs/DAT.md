@@ -163,6 +163,7 @@
 | 2.46    | 2026-10-25 | **Cohérence matrice des droits ↔ affichage** (porteur : « il y a un problème de cohérence entre la matrice des droits et ce qui est affiché pour chaque rôle ») : audit des 6 rôles avec la matrice réelle de production. Écarts trouvés et corrigés : (1) le menu Mon dashboard › Projets et Roadmap était masqué en bloc par le droit « projets » alors que la matrice donnait « Oui » au rôle Utilisateur pour l'onglet Sprints — chaque sous-menu suit maintenant sa propre ligne (Mises en production = « projets », Sprints = `onglet_admin_sprints`), le menu parent n'existe que si l'un des deux est ouvert, et la ligne `onglet_admin_sprints` du rôle Utilisateur est passée à « Non » (**une ligne de `droits_roles` modifiée**, à la demande du porteur) ; (2) les descriptions des rôles (cartes de Simulation, « Qui a quel rôle ») étaient du texte fixe qui ne suivait plus la matrice — elles sont désormais **calculées** (`Coquille.resumeDuRole`) par la même fonction que la barre latérale (`menusDuRole`), donc jamais en décalage. Nouveau contrôle automatique : pour chaque rôle, menus et sous-menus affichés = ce que la matrice ouvre. Constats laissés au porteur (données de la matrice, non modifiées) : le rôle Direction a « Non » sur Mon dashboard, donc ses droits « fiches » et « affecter », exercés dans Mon dashboard, sont inutilisables ; la base garde d'anciennes lignes de droits sans effet (`onglet_charge_*`, `onglet_conges_capacite`, `suivi_administration`, `onglet_suivi_*`). 141 contrôles |
 | 2.47    | 2026-10-25 | **Anciennes lignes de droits supprimées** (porteur : « oui » à la proposition de nettoyage) : **42 lignes de `droits_roles` supprimées** (7 droits × 6 rôles) qui ne correspondaient plus à aucun écran depuis le retrait de Plan de charge (`onglet_charge_prevision`, `onglet_charge_reel`), de Capacité (`onglet_conges_capacite`) et de l'Administration de Suivi de mes équipes (`suivi_administration`, `onglet_suivi_equipes`, `onglet_suivi_referentiels`, `onglet_suivi_roles`). Vérifié avant : aucune fonction, règle de la base ni code de l'application ne les cite ; la matrice (31 droits × 6 rôles) est inchangée. Données de test alignées. 141 contrôles |
 | 2.48    | 2026-10-25 | **Objectifs de l'équipe retirés de la saisie, code projet retiré des exports** (porteur : « Objectifs de l'équipe, ça j'en veux pas » ; « Colonne code dans les exports Excel du daily : on retire ») : bouton et fenêtre « Objectifs de l'équipe » de Mon dashboard › Projets et Roadmap supprimés (ajout d'objectif, de résultat clé, confiance, progression ; actions et styles associés) ; l'export Excel du daily des équipes n'a plus de colonne « Code projet » (onglets Daily et Blocages). **Aucune donnée touchée** : les tables `objectifs` et `resultats_cles` (vides) restent en base et le Dashboard général continue de lire les objectifs existants ; le droit « Projets » reste sans effet sur la création de projet pour le rôle Utilisateur (« Non »), sans autre changement. 141 contrôles |
+| 2.49    | 2026-10-25 | **Objectifs (OKR) retirés de l'application** (porteur : « retire tout ce qui est en rapport avec l'objectif, on s'en fiche ») : Dashboard général réduit aux indicateurs et aux projets à surveiller (plus d'objectifs du trimestre, de boutons T1-T4 ni de progression par trimestre) ; colonne « Objectif · Résultat clé » retirée de Projets et Roadmap ; calculs `progressionObjectif` / `atteinteTrimestre`, constante `CONFIANCES`, chargement des tables `objectifs` et `resultats_cles`, aides et styles associés supprimés. **Aucune donnée touchée** : les tables `objectifs` et `resultats_cles` (vides) et la colonne `projets.resultat_cle_id` restent en base, non lues. **Conservé** : l'objectif de jours attendus par le client (Congés › Récap annuel, table `objectifs_jours_travail`), qui n'est pas un OKR, et les fiches pédagogiques de Trucs et astuces qui parlent d'OKR en général. 141 contrôles |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -170,7 +171,7 @@
 ## 1. Objet
 
 **ProjectDesk** (nom affiché dans l'application, paramètre `NOM_APPLICATION` de `config.js`) :
-application web **multi-projets, multi-équipes** de pilotage : objectifs (OKR), projets et
+application web **multi-projets, multi-équipes** de pilotage : projets et
 roadmap, ressources, congés, feuilles de temps, notes de daily, demandes
 entrantes (formulaire administrable). Maquette de référence :
 `docs/maquettes/pilotage-projet/source/Pilotage_Projet.dc.html`.
@@ -243,7 +244,7 @@ Principes :
 | `app/js/composants.js` | Badges, pastilles, avatars, barres, onglets, KPI, listes, **mention de propriété `mentionPropriete`** (« © 2026 CIRITEC », `PROPRIETAIRE` / `ANNEE_DROITS` de `config.js`), **bulles d'information `aide(clé)`** (textes dans `AIDES` de `config.js` ; positionnées par `placerBulle` pour n'être jamais coupées) (échappement HTML `esc`) |
 | `app/js/coquille.js` | Barre latérale, en-tête, fil d'Ariane, **bouton Aide** (menu : aide sur l'écran, premiers pas, rôles et droits, contact si `CONTACT_AIDE` est renseigné, « À propos » © CIRITEC ; textes `GUIDE_ECRANS` / `GUIDES` de `config.js`), bloc utilisateur (badge « ★ Créateur », capture `27-createur.png`, mention « © 2026 CIRITEC · Tous droits réservés » en dessous), pastille rouge des comptes en attente sur Administration |
 | `app/js/panneau-projet.js` | Panneau latéral « Projet » (détail/édition, dont la **méthode**) et « Nouveau projet » (code, nom, description, chef, **méthode obligatoire** : une carte par valeur du référentiel `methode`, description `DESCRIPTIONS_METHODES` de `config.js`) |
-| `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), objectifs, mise en place Power Automate, **export du daily en Excel** |
+| `app/js/modale.js` | Fenêtres : méthode de calcul Scrum, affectations, fiche ressource (dont dates d’arrivée et de départ facultatives), équipe (membres, invitations), mise en place Power Automate, **export du daily en Excel** |
 | `app/js/roles.js` | **Rôles** (administrateurs) : rôle d'accès de chaque personne choisi dans une liste (`affecter_role`), filtres — onglet d'Administration « Rôles » ; matrice des droits (`matrice`, `celluleNiveau`, `lignesSection`) et « Qui a quel rôle » (`parRole`, `cartesParRole` : cartes de `Simulation.ROLES`, personnes sous leur rôle choisi), affichés dans **Administration créateur** (créateur seul, 2.36) |
 | `app/js/simulation.js` | **Simulation des rôles** (créateur) : rôles proposés : les 6 rôles d'accès (`ROLES_CHOISISSABLES`, `ROLES_ACCES`) + Compte en attente (2.22) ; personnes reliées à un compte, celles qui ont le rôle en tête (`Simulation.personnes`) ; le rôle de la carte s'applique pendant la simulation (`monRole`), identité simulée posée / restaurée (`etat.simulation`, `etat.reel`), bandeau, écran Administration créateur (`Ecrans.adminCreateur`) ; lecture seule garantie par `Api` (`refuserEnSimulation`) |
 | `app/js/excel.js` | Fabrication d'un fichier **.xlsx** dans le navigateur, sans bibliothèque : XML Office Open (textes en ligne, jamais interprétés comme formules), en-tête figée, filtres, largeurs, styles fixes ; archive ZIP « stockée » avec CRC-32 ; téléchargement (`Excel.telecharger`) |
@@ -265,7 +266,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 
 | Écran | Fichier | Contenu | Capture |
 |-------|---------|---------|---------|
-| `dashboard` | `dashboard.js` | KPI, objectifs du trimestre (T1–T4), progression par trimestre et par équipe, projets à surveiller | `03-dashboard.png` |
+| `dashboard` | `dashboard.js` | KPI (projets actifs, avancement moyen, projets à risque, taux d'occupation) et projets à surveiller — objectifs OKR retirés en 2.49 | `03-dashboard.png` |
 | `projets` | `projets.js` | Onglets **Projets** (projets groupés par équipe, panneau en lecture) et **Planning projet** (2.38, maquette `planning-projet/` : sur une frise de 6 mois, les **sprints** de chaque projet — table `sprints_projet`, saisis dans Mon dashboard › Projets et Roadmap › Sprints, sprint en cours en bleu — et ses **mises en production** en repères ▲ + version, couleur du statut — table `mises_en_production`, saisies dans Mon dashboard › Projets et Roadmap › Mises en production ; navigation par mois ; remplace les onglets Planning des sprints (2.32) et Planning des MEP (2.33)) ; filtre d'équipe commun aux onglets. Roadmap : à venir | `04-projets.png`, `04b-planning-projet.png` |
 | `ressources` | `ressources.js` | Deux onglets (2.17). **Calendrier** : calendrier mensuel des absences (composant `Calendrier`, personnes présentes sur le mois), 🎂 le jour de l'anniversaire d'une personne sans absence. **Liste des ressources** : annuaire de **toutes** les fiches — recherche par nom, filtres Équipe et Statut, colonnes Nom, Équipe, Poste, Projets (nom et rôle, 2.18), Capacité, **Statut** (Actif / Inactif dès qu'une date de fin est saisie, « fin le … », inactifs grisés en fin de liste), **Anniversaire** (jour et mois, 🎂 si c'est le mois en cours) et rappel « Anniversaires du mois » (personnes actives) | `05-ressources.png`, `05b-ressources-liste.png` |
 | `timesheet` | `timesheet.js` | Feuilles **du mois** par personne, toutes équipes (navigation `MoisTemps`) : projets, saisi / attendu, complétude, statut (`tableauFeuilles`). **Suivi et validation** (depuis 1.89, maquette `menus-general/`) : le responsable d'une équipe y **valide ou renvoie** les feuilles soumises de ses équipes (seule écriture de la section) ; indicateur « Feuilles à valider » | `07-timesheet.png`, `20-timesheet-validation.png` |
@@ -301,7 +302,7 @@ Nécessaires au fonctionnement, dans le style de la maquette (maquettes des comp
 validées : `docs/maquettes/pilotage-projet/complements/`) :
 - écrans connexion, choix d'équipe, Mon timesheet, bloc utilisateur ;
 - panneau **Nouveau projet** (aussi ouvert par « Créer le projet » sur une demande acceptée) : code, nom,
-  description, chef de projet ; résultat clé, dates et statut ne sont pas demandés à la création
+  description, chef de projet ; dates et statut ne sont pas demandés à la création
   (statut « Planifié » par défaut) ;
 - panneau projet réduit (demande du porteur) à : nom, description, chef de projet, équipe projet
   (membres et rôles), suppression du projet — **modifiable** si `peutEditerProjet` ; objectif, résultat
@@ -331,8 +332,8 @@ Toutes les tables métier ont `modifie_par` / `modifie_le` (trigger `tracer_modi
 | `valeurs_referentiel` | `libelle`, `abrege`, `couleur`, `actif`, `systeme`, `cle` (clé technique d'une valeur système, ex. `chef`, `en_cours`, `cp`, `ferie` ; posable une fois puis figée), `ordre` | → `referentiels` |
 | `jours_feries` | `jour`, `libelle` (2026–2027) | `jour` |
 | `ressources` | Personnes : `equipe_id`, `nom`, `poste` (référentiel `poste`), `type_contrat` (référentiel `contrat`), `capacite` (%), `email`, `user_id` (compte lié), `date_arrivee` / `date_depart` (facultatives, départ ≥ arrivée — migration 012), `date_naissance` (facultative, migration 036 : date complète dans la fiche seulement, écrans en jour et mois) | → `equipes` |
-| `objectifs` | OKR : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
-| `resultats_cles` | `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
+| `objectifs` | **Inutilisée depuis 2.49** (OKR retirés de l'application, table conservée) : `equipe_id`, `annee`, `trimestre`, `code`, `titre`, `confiance` | → `equipes` |
+| `resultats_cles` | **Inutilisée depuis 2.49** : `objectif_id`, `code`, `libelle`, `progression` (0–100) | → `objectifs` |
 | `projets` | `code` (unique), `nom`, `equipe_id`, `resultat_cle_id`, `chef_id`, `debut`, `fin`, `statut`, `avancement`, `methode` (libellé du référentiel `methode`, migration 022) | → `equipes`, `resultats_cles`, `ressources` |
 | `affectations` | `projet_id`, `ressource_id`, `role` (Chef de projet / Membre / Lecteur) | unique (projet, ressource) |
 | `objectifs_jours_travail` | Jours de travail attendus par le client : `equipe_id`, `annee`, `jours` (défaut `JOURS_TRAVAIL_CLIENT_DEFAUT` = 218 si absent) | clé (équipe, année) |
@@ -393,7 +394,7 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `peut_voir_projet(projet)` | Lecture d'un projet : administrateur, projet d'une unité que je gère, ou projet où je suis chef / affecté (migration 042) |
 | `peut_voir_ressource(personne)` | Lecture d'une personne : administrateur, moi, personne d'une unité que je gère, rattaché à une de ces unités, ou personne affectée à l'un de mes projets (migration 042) |
 | `peut_voir_temps(personne)` | Lecture des heures et feuilles de temps : administrateur, moi, ou personne d'une unité que je gère (pas les collègues de projet) |
-| `peut_voir_equipe(unité)` | Lecture des objectifs d'une unité : administrateur, unité que je gère ou unité de ma fiche |
+| `peut_voir_equipe(unité)` | Lecture des jours attendus par le client d'une unité (`objectifs_jours_travail`) : administrateur, unité que je gère ou unité de ma fiche |
 | `lier_ma_ressource()` | Lie le compte à la fiche ressource de même email (appelée à la connexion) |
 | `accepter_mes_invitations()` | À la connexion : accepte les invitations en attente adressées à l'email du compte (jeton JWT) — ligne de membre dans l'équipe, invitation « accepted » — pour un compte sans équipe ou le créateur ; échéance non bloquante (migration 026) |
 | `comptes_en_attente()` | Inscrits sans équipe de ProjectDesk, ni administrateurs, ni écartés : nom, email, inscription, dernière connexion, invitation en attente ; administrateurs seulement (liste vide sinon) — lit les tables de Neon Auth (migration 024) |
@@ -417,7 +418,7 @@ désactivé) ; ces cases ne sont ni cliquables ni décomptées.
 | `createur` | administrateurs (et sa propre ligne) | personne (pas de droit d'écriture) |
 | `comptes_ignores` | administrateurs | administrateurs |
 | `ressources` | `peut_voir_ressource` | équipe concernée, administrateurs |
-| `objectifs`, `resultats_cles` | `peut_voir_equipe` | équipe concernée |
+| `objectifs`, `resultats_cles` (inutilisées) | `peut_voir_equipe` / via `objectifs` | équipe concernée |
 | `projets` | `peut_voir_projet` | création : équipe ; modification et suppression (migration 043) : `peut_editer_projet` |
 | `affectations` | `peut_voir_projet` | `peut_editer_projet` |
 | `objectifs_jours_travail` | `peut_voir_equipe` | administrateurs, responsables de l'équipe |
@@ -453,8 +454,6 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 | Projets actifs = statut ≠ « Terminé » | `Calculs.projetsActifs` |
 | Avancement moyen = moyenne des `avancement` | `Calculs.avancementMoyen` |
 | À surveiller = « À risque », « En retard » ou échéance ≤ `ALERTE_ECHEANCE_JOURS` | `Calculs.projetsASurveiller` |
-| Progression d'un objectif = moyenne de ses résultats clés | `Calculs.progressionObjectif` |
-| Atteinte trimestrielle d'une équipe = moyenne des objectifs du trimestre | `Calculs.atteinteTrimestre` |
 | Jours travaillés (mois) : sur les jours de semaine, C = absences de tout type hors jours fériés (demi-journée = 0,5), T = jours de semaine − fériés − C ; jours hors présence (avant `date_arrivee`, après `date_depart`) exclus, mois entièrement hors présence affichés « — » ; reste à prendre = Σ T − objectif client proratisé (objectif × jours de semaine de présence ÷ jours de semaine de l'année, arrondi à 0,5) | `Calculs.joursTravaillesMois`, `Calculs.recapJoursTravailles` |
 | Capacité type Scrum (exemples des KPI Agile, Trucs et astuces) : engageable = (disponible − Σ capacité × `CEREMONIES_JOURS_SPRINT`) × `FACTEUR_FOCUS` | `Calculs.capaciteScrum` |
 | Synthèse d'un projet : absents du jour / membres (demi-journée = 0,5) ; « partiel » si ≥ 1 absent, « critique » si plus de la moitié | `Calculs.absentsDuJour` |

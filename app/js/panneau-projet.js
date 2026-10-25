@@ -2,7 +2,7 @@
    Panneau latéral « Projet » (maquette 11-panneau-projet.png)
    - Détail réduit à la demande du porteur (2026-09-25) : nom,
      description, chef de projet, équipe projet (membres et rôles).
-     Objectif, résultat clé, période, statut, avancement et tickets ne
+     Résultat clé, période, statut, avancement et tickets ne
      sont plus affichés ici (colonnes conservées en base).
      Modifiable si peutEditerProjet (sinon lecture) ; suppression du
      projet par un membre de son équipe (règle RLS).
@@ -68,7 +68,7 @@ const Panneau = {
   // v.equipeId ; sinon l'équipe ouverte).
   // Champs réduits à la demande du porteur (2026-09-25) : code, nom, description, chef ;
   // + méthode obligatoire (2026-10-08 : Agile Scrum, Agile Kanban, Cascade, Cycle en V).
-  // Résultat clé, dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
+  // Dates et statut restent vides / par défaut (« Planifié », valeur SQL par défaut).
   nouveauProjet(v) {
     const esc = C.esc, eqId = v.equipeId || etat.equipeCourante, eq = equipe(eqId);
     const personnes = personnesProposees(eqId);

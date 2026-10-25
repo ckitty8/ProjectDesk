@@ -39,7 +39,7 @@ const etat = {
 // Tables chargées et nom de la clé dans etat.d
 const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
-  objectifs: 'objectifs', resultatsCles: 'resultats_cles', referentiels: 'referentiels',
+  referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
   absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
@@ -303,7 +303,7 @@ function equipesGerees() {
    peut_voir_projet / peut_voir_ressource / peut_voir_temps / peut_voir_equipe pour que la simulation montre
    exactement ce que verrait la personne. Les données complètes restent dans etat.brut. */
 const CLES_PERIMETRE = ['ressources', 'projets', 'affectations', 'absences', 'temps', 'feuilles', 'sprintsProjet',
-  'repartitionsSprint', 'misesEnProduction', 'envoisDaily', 'objectifs', 'resultatsCles', 'objectifsTravail'];
+  'repartitionsSprint', 'misesEnProduction', 'envoisDaily', 'objectifsTravail'];
 function appliquerPerimetre() {
   CLES_PERIMETRE.forEach(cle => { if (etat.brut[cle]) etat.d[cle] = etat.brut[cle]; });   // données complètes d'abord
   if (!etat.simulation) return;
@@ -317,7 +317,6 @@ function appliquerPerimetre() {
   const voitPersonne = id => id === moiId || gerees.has(equipeDe(id)) || collegues.has(id) || rattaches.has(id);
   const voitTemps = id => id === moiId || gerees.has(equipeDe(id));
   const voitEquipe = id => gerees.has(id) || (!!monEquipe && id === monEquipe);
-  const objectifsVus = new Set(b.objectifs.filter(o => voitEquipe(o.equipeId)).map(o => o.id));
   const parProjet = lignes => lignes.filter(x => projetsVus.has(x.projetId));
   Object.assign(etat.d, {
     projets: b.projets.filter(p => projetsVus.has(p.id)), affectations: parProjet(b.affectations),
@@ -325,7 +324,6 @@ function appliquerPerimetre() {
     temps: b.temps.filter(t => voitTemps(t.ressourceId)), feuilles: b.feuilles.filter(f => voitTemps(f.ressourceId)),
     sprintsProjet: parProjet(b.sprintsProjet), repartitionsSprint: parProjet(b.repartitionsSprint),
     misesEnProduction: parProjet(b.misesEnProduction), envoisDaily: parProjet(b.envoisDaily),
-    objectifs: b.objectifs.filter(o => objectifsVus.has(o.id)), resultatsCles: b.resultatsCles.filter(k => objectifsVus.has(k.objectifId)),
     objectifsTravail: b.objectifsTravail.filter(o => voitEquipe(o.equipeId))
   });
 }

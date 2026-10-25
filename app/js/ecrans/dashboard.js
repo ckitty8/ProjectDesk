@@ -1,7 +1,7 @@
 /* ============================================================
    Suivi de mes équipes › Dashboard général (maquette 01-gDash.png) — lecture
-   Indicateurs, objectifs du trimestre (OKR), progression par
-   trimestre et par équipe, projets à surveiller.
+   Indicateurs (projets actifs, avancement, risques, occupation) et
+   projets à surveiller (objectifs OKR retirés : porteur 2026-10-25).
    ============================================================ */
 'use strict';
 
@@ -21,36 +21,6 @@ Ecrans.dashboard = {
     ].join('');
   },
 
-  // Carte d'un objectif : équipe, confiance, progression, et chacun de ses résultats clés
-  carteObjectif(o) {
-    const esc = C.esc, eq = equipe(o.equipeId), krs = etat.d.resultatsCles.filter(k => k.objectifId === o.id);
-    const [fond, texte] = CONFIANCES[o.confiance];
-    return `
-      <div class="carte" style="padding:16px;display:flex;flex-direction:column;gap:10px">
-        <div class="ligne-flex entre"><span class="ligne-flex discret">${C.pastille(eq.couleur)}${esc(eq.nom)}</span>
-          ${C.badge('Confiance ' + o.confiance, texte, fond)}</div>
-        <h2>${esc(o.titre)}</h2>
-        <div class="ligne-flex">${C.barre(Calculs.progressionObjectif(krs), eq.couleur)}<b>${Calculs.pourcent(Calculs.progressionObjectif(krs))}</b></div>
-        <div style="border-top:1px solid var(--bordure-fine);padding-top:8px;display:flex;flex-direction:column;gap:6px">
-          ${krs.map(k => `<div class="ligne-flex">${C.code(k.code)}<span class="extensible">${esc(k.libelle)}</span>
-            <span style="width:48px">${C.barre(k.progression, COULEURS.barreClaire, 'fine')}</span><span class="num discret" style="width:38px">
-              ${k.progression}%</span></div>`).join('')}
-        </div>
-      </div>`;
-  },
-
-  // Progression par trimestre (atteinte moyenne des OKR) : une ligne par équipe, le trimestre en cours en bleu clair
-  lignesTrimestres(annee, trimestreCourant) {
-    const { objectifs, resultatsCles } = etat.d;
-    return etat.d.equipes.map(e => `
-      <tr><td><span class="ligne-flex">${C.pastille(e.couleur)}${C.esc(e.nom)}</span></td>
-        ${[1, 2, 3, 4].map(q => {
-          const v = Calculs.atteinteTrimestre(objectifs, resultatsCles, e.id, annee, q);
-          return `<td>${v === null ? '<span class="pale">—</span>' : `<span class="ligne-flex"><span style="width:50px">
-            ${C.barre(v, q === trimestreCourant ? COULEURS.barreClaire : e.couleur)}</span>${Calculs.pourcent(v)}</span>`}</td>`;
-        }).join('')}</tr>`).join('');
-  },
-
   // Projets à surveiller (à risque, en retard, échéance proche) : un clic ouvre le projet
   lignesASurveiller(jour) {
     return Calculs.projetsASurveiller(etat.d.projets, jour).map(p => `
@@ -60,33 +30,13 @@ Ecrans.dashboard = {
   },
 
   rendre() {
-    const jour = Calculs.aujourdhui(), annee = Number(jour.slice(0, 4));
-    const trimestreCourant = Calculs.trimestreDe(jour);
-    const t = ui('dashboard', { trimestre: trimestreCourant }).trimestre;
-    const objs = etat.d.objectifs.filter(o => o.annee === annee && o.trimestre === t);
-    const nbKr = etat.d.resultatsCles.filter(k => objs.some(o => o.id === k.objectifId)).length;
-    const surveiller = this.lignesASurveiller(jour);
+    const jour = Calculs.aujourdhui(), surveiller = this.lignesASurveiller(jour);
     return `
     <div class="ecran">
-      ${C.entete('Dashboard général', `Vue consolidée des équipes · T${t} ${annee}`,
-        `<div class="puces">${[1, 2, 3, 4].map(q =>
-          `<button class="puce${q === t ? ' active' : ''}" data-action="choisirTrimestre" data-t="${q}">T${q}</button>`).join('')}</div>`)}
+      ${C.entete('Dashboard général', 'Vue consolidée des équipes')}
       <div class="grille-kpi">${this.indicateurs(jour)}</div>
-      <div class="ligne-flex entre"><h2>Objectifs T${t} ${annee}</h2>
-        <span class="discret">${objs.length} objectifs · ${nbKr} résultats clés</span></div>
-      <div class="grille-objectifs">${objs.map(o => this.carteObjectif(o)).join('') || `<div class="carte">
-        ${C.vide('Aucun objectif pour ce trimestre (saisie : Mon dashboard › Projets et Roadmap).')}</div>`}</div>
-      <div class="grille-dashboard">
-        <div class="carte"><div class="carte-titre"><h2>Progression par trimestre</h2><span class="discret">Atteinte moyenne des OKR · ${annee}</span></div>
-          <table class="tableau"><thead><tr><th>Équipe</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th></tr></thead>
-          <tbody>${this.lignesTrimestres(annee, trimestreCourant)}</tbody></table></div>
-        <div class="carte"><div class="carte-titre"><h2>Projets à surveiller ${C.aide('projetsSurveiller')}</h2></div>
-          <table class="tableau"><tbody>${surveiller || `<tr><td>${C.vide('Aucun projet à risque ni échéance proche.')}</td></tr>`}</tbody></table></div>
-      </div>
+      <div class="carte"><div class="carte-titre"><h2>Projets à surveiller ${C.aide('projetsSurveiller')}</h2></div>
+        <table class="tableau"><tbody>${surveiller || `<tr><td>${C.vide('Aucun projet à risque ni échéance proche.')}</td></tr>`}</tbody></table></div>
     </div>`;
   }
 };
-
-Object.assign(Actions, {
-  choisirTrimestre: d => majUi('dashboard', { trimestre: Number(d.t) })
-});

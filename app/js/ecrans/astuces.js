@@ -62,8 +62,7 @@ Ecrans.astuces = {
       <div class="grille-conseils">${this.listeConseils('✔ Bonnes pratiques', TONS.succes.texte, R.bonnesPratiques)}
         ${this.listeConseils('✕ Pièges à éviter', 'var(--danger)', R.pieges)}</div>
       <div class="carte encart-compact"><b>Dans ${esc(CONFIG.NOM_APPLICATION)}</b> : la roadmap se construit dans <b>Projets et Roadmap</b> (Gantt),
-        la méthode du projet se choisit à sa création, et les objectifs se suivent
-        dans le <b>Dashboard général</b> (OKR).</div>`;
+        la méthode du projet se choisit à sa création.</div>`;
   },
 
   // Étapes reliées par des flèches : [[étape, explication, couleur], …] (fiches Roadmap et Test & Learn)

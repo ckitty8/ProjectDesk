@@ -59,7 +59,6 @@ const Calculs = (() => {
   const anniversairesDuMois = (ressources, mois) => ressources
     .filter(r => r.dateNaissance && depuisIso(r.dateNaissance).getMonth() === mois)
     .sort((a, b) => a.dateNaissance.slice(8).localeCompare(b.dateNaissance.slice(8)));
-  const trimestreDe = iso => Math.floor(depuisIso(iso).getMonth() / 3) + 1;
   // Nombre affiché à la française (virgule, 1 décimale max)
   const nombre = n => String(Math.round(n * 10) / 10).replace('.', ',');
   const pourcent = n => Math.round(n) + '%';
@@ -84,17 +83,6 @@ const Calculs = (() => {
     return projetsActifs(projets).filter(p =>
       [STATUTS_PROJET.A_RISQUE, STATUTS_PROJET.EN_RETARD].includes(p.statut) ||
       (p.fin && ecartJours(dateIso, p.fin) <= CONFIG.ALERTE_ECHEANCE_JOURS && ecartJours(dateIso, p.fin) >= 0));
-  }
-
-  /* ---------- Objectifs (OKR) ---------- */
-  // Progression d'un objectif = moyenne des progressions de ses résultats clés
-  const progressionObjectif = resultatsCles => moyenne(resultatsCles.map(k => k.progression || 0));
-
-  // Atteinte moyenne des OKR d'une équipe sur un trimestre (null si aucun objectif)
-  function atteinteTrimestre(objectifs, resultatsCles, equipeId, annee, trimestre) {
-    const objs = objectifs.filter(o => o.equipeId === equipeId && o.annee === annee && o.trimestre === trimestre);
-    if (!objs.length) return null;
-    return moyenne(objs.map(o => progressionObjectif(resultatsCles.filter(k => k.objectifId === o.id))));
   }
 
   /* ---------- Congés ---------- */
@@ -270,8 +258,8 @@ const Calculs = (() => {
   return {
     MOIS_COURTS, JOURS_INITIALES, versIso, depuisIso, aujourdhui, ajouterJours, ecartJours, estWeekend, estJourOuvre, dureeAbsence,
     lundi, joursOuvresEntre, joursDuMois, formatCourt, formatAvecAnnee, formatLong, libelleMois, nomMois, estAnniversaire, anniversairesDuMois,
-    trimestreDe, nombre, pourcent, sprintDe, estTermine, projetsActifs, avancementMoyen,
-    projetsASurveiller, progressionObjectif, atteinteTrimestre,
+    nombre, pourcent, sprintDe, estTermine, projetsActifs, avancementMoyen,
+    projetsASurveiller,
     estPresent, estPresentSur, libellePresence,
     capacitePeriode, capaciteScrum, absentsDuJour, joursTravaillesMois, recapJoursTravailles, heuresAttendues, joursSemaineMois,
     debutMois, heuresMois, heuresAttenduesMois, tauxOccupation, initiales, prochainCodeProjet,

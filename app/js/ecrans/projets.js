@@ -24,7 +24,7 @@ Ecrans.projets = {
     const contenus = { projets: () => this.tableau(u), planning: () => PlanningProjet.rendre(projets) };
     return `
     <div class="ecran">
-      ${C.entete('Projets et Roadmap', `${etat.d.projets.length} projets · objectifs, avancement et sprints par équipe`, `<div class="puces">${filtres}</div>`)}
+      ${C.entete('Projets et Roadmap', `${etat.d.projets.length} projets · avancement et sprints par équipe`, `<div class="puces">${filtres}</div>`)}
       ${onglets}${(contenus[u.onglet] || contenus.projets)()}
     </div>`;
   },
@@ -35,24 +35,22 @@ Ecrans.projets = {
     const lignes = etat.d.equipes.filter(e => u.equipe === 'toutes' || e.id === u.equipe).map(e => {
       const siens = etat.d.projets.filter(p => p.equipeId === e.id);
       if (!siens.length) return '';
-      return `<tr class="groupe"><td colspan="6"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}
+      return `<tr class="groupe"><td colspan="5"><span class="ligne-flex">${C.pastille(e.couleur)}${esc(e.nom)}
           <span class="discret poids-normal">${siens.length} projets · ${Calculs.pourcent(Calculs.avancementMoyen(siens))} d’avancement moyen</span></span></td></tr>`
         + siens.map(p => this.ligneProjet(p)).join('');
     }).join('');
     return `<div class="carte"><table class="tableau">
-        <thead><tr><th>Projet</th><th>Objectif · Résultat clé</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th>
+        <thead><tr><th>Projet</th><th>Chef de projet</th><th>Avancement ${C.aide('avancementProjet')}</th>
           <th>Échéance</th><th>Statut</th></tr></thead>
-        <tbody>${lignes || `<tr><td colspan="6">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>`;
+        <tbody>${lignes || `<tr><td colspan="5">${C.vide('Aucun projet.')}</td></tr>`}</tbody></table></div>`;
   },
 
   // Ligne d'un projet (un clic ouvre le panneau de détail)
   ligneProjet(p) {
     const esc = C.esc, chef = ressource(p.chefId);
-    const kr = parId('resultatsCles', p.resultatCleId), obj = kr ? parId('objectifs', kr.objectifId) : null;
     return `
       <tr class="cliquable" data-action="ouvrirProjet" data-id="${p.id}">
         <td>${esc(p.nom)}</td>
-        <td>${obj ? `${esc(obj.code)} · ${esc(obj.titre)}<div class="discret">${esc(kr.code)} · ${esc(kr.libelle)}</div>` : '<span class="pale">—</span>'}</td>
         <td>${chef ? `<span class="ligne-flex">${C.avatar(chef.nom)}${esc(chef.nom)}</span>` : '<span class="pale">—</span>'}</td>
         <td style="min-width:150px"><span class="ligne-flex">${C.barre(p.avancement, C.couleurStatutProjet(p.statut))}
           <span class="num" style="width:36px">${p.avancement}%</span></span></td>

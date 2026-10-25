@@ -7,7 +7,6 @@
    - ressource   : fiche d'une personne (nom, poste, capacité, dates, email, rôle d'accès)
    - equipe      : créer / modifier une unité (direction ou équipe : type,
                    rattachement, statut), membres et invitations
-   - objectifs   : objectifs (OKR) et résultats clés de mon équipe
    - envoiPowerAutomate : mise en place du flux qui envoie le daily d'une équipe
    - exportDaily : choix de la période et des projets du fichier Excel du daily
    ============================================================ */

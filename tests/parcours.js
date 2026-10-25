@@ -100,8 +100,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       return b.width >= 270 && b.left >= 0 && b.right <= innerWidth && b.bottom <= innerHeight
         && document.elementFromPoint(b.right - 10, b.top + 10).closest('.bulle') !== null; }));
     await page.mouse.move(700, 600);
-    await page.click('[data-action="choisirTrimestre"][data-t="4"]'); await page.waitForTimeout(200);
-    verifier('Dashboard : 6 objectifs au T4', (await texte()).includes('6 objectifs'));
+    verifier('Dashboard général : indicateurs et projets à surveiller, plus d’objectifs (OKR) ni de trimestres (porteur 2026-10-25)',
+      (await texte()).includes('Projets à surveiller') && !/objectif|OKR|T[1-4]\b/i.test(await page.textContent('.contenu')));
     await aller('projets'); await capture('04-projets');
     verifier('Projets : aucune notion de ticket (pilotage de projets uniquement)', !/ticket/i.test(await page.textContent('body'))
       && !(await page.$('[data-action="deplierProjet"]')));
@@ -163,7 +163,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     /* --- Règle : la section « Suivi de mes équipes » (ex-« Général ») est en lecture seule ---
        Aucun champ, formulaire ou action d'écriture (tous onglets), sauf la validation des feuilles de temps. */
-    const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'choisirTrimestre', 'filtrerEquipeProjets', 'deplierProjet',
+    const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'filtrerEquipeProjets', 'deplierProjet',
       'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant',
       'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
       'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',

@@ -1,6 +1,6 @@
 # ProjectDesk
 
-**ProjectDesk** : application web multi-projets et multi-équipes (OKR, projets et roadmap, ressources,
+**ProjectDesk** : application web multi-projets et multi-équipes (projets et roadmap, ressources,
 congés, timesheet, daily), sur Neon (Postgres, Auth, Data API) et Vercel.
 
 > **© 2026 CIRITEC. Tous droits réservés.** ProjectDesk est un logiciel propriétaire de CIRITEC :

@@ -1,6 +1,6 @@
 # ProjectDesk — application
 
-Application web multi-projets et multi-équipes : objectifs (OKR), projets et roadmap,
+Application web multi-projets et multi-équipes : projets et roadmap,
 ressources, congés, timesheet, daily (les demandes sont gérées dans Azure DevOps).
 Architecture, écrans, tables et droits : [`docs/DAT.md`](../docs/DAT.md).
 
