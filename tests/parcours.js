@@ -840,7 +840,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
         && document.querySelector('.tableau-matrice').textContent.includes('↳ Onglet « Synthèse de l’équipe »')
         && !document.querySelector('select[data-role="responsable"][data-droit="onglet_daily_synthese"]').disabled), sectionsMatrice.join(' | '));
     await capture('32-matrice-droits');
-    await page.selectOption(cellule('utilisateur', 'projets'), 'lecture'); await page.waitForTimeout(400);
+    await page.selectOption(cellule('utilisateur', 'projets'), 'non'); await page.waitForTimeout(400);   // valeur de départ du rôle Utilisateur (2026-10-25)
     await page.click('[data-action="ongletAdminCreateur"][data-id="qui"]'); await page.waitForTimeout(200);
     verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle » sur les 6 rôles',
       matrice && verrou && enregistre && await page.evaluate(() => [...document.querySelectorAll('.grille-roles > .carte b')].map(b => b.textContent.trim()).join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente'),
@@ -873,6 +873,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
       !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
       && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
+    verifier('Simulation : le rôle Utilisateur n’a pas le menu Projets et Roadmap de Mon dashboard',
+      !(await page.$('.laterale [data-ecran="mesProjets"]')) && !(await page.$('.laterale [data-ecran="mesSprints"]')));
     // Droits par menu de Suivi de mes équipes (migration 037) : menu masqué si « Non » ; avant la migration, repli sur « general »
     const parMenu = await page.evaluate(() => {
       const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'suivi_projets'), avant = ligne.niveau;

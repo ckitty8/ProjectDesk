@@ -39,7 +39,8 @@ const Coquille = (() => {
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
     // Projets et Roadmap : sous-menus comme Gestion des ressources (porteur 2026-10-23, maquette menu-projets-roadmap/)
-    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
+    // Menu masqué si le droit « projets » de la matrice est « Non » pour mon rôle (le rôle Utilisateur, porteur 2026-10-25)
+    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road', visible: () => niveauDroit('projets') !== 'non',
       enfants: [{ id: 'mesProjets', libelle: 'Mises en production' }, { id: 'mesSprints', libelle: 'Sprints' }] },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
       enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },

@@ -138,7 +138,7 @@ function amorcer() {
     suivi_ressources: 'oui oui oui oui oui oui', suivi_timesheet: 'oui oui oui oui oui oui', suivi_administration: 'oui oui oui oui oui oui',
     mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
     conges_equipe: 'oui oui oui lecture non non', valider_timesheet: 'oui oui oui non non non', fiches_ressources: 'oui oui oui non non non',
-    affecter: 'oui oui oui oui non non', projets: 'oui oui oui oui lecture lecture', piloter: 'oui oui oui oui non non',
+    affecter: 'oui oui oui oui non non', projets: 'oui oui oui oui non lecture', piloter: 'oui oui oui oui non non',
     administration: 'oui non non non non non', comptes: 'oui non non non non non', roles: 'oui non non non non non', nommer_admin: 'oui non non non non non'
   };
   // Droits par onglet (migration 038) : chacun reprend le niveau de son droit de départ
