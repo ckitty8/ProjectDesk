@@ -135,7 +135,7 @@ function amorcer() {
   // Matrice des droits (migrations 031, 037 : droits par menu de Suivi de mes équipes, et 038 : droits par onglet) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
   const MATRICE = {
     general: 'oui oui oui oui oui oui', suivi_dashboard: 'oui oui oui oui oui oui', suivi_projets: 'oui oui oui oui oui oui',
-    suivi_ressources: 'oui oui oui oui oui oui', suivi_timesheet: 'oui oui oui oui oui oui', suivi_administration: 'oui oui oui oui oui oui',
+    suivi_ressources: 'oui oui oui oui oui oui', suivi_timesheet: 'oui oui oui oui oui oui',
     mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
     conges_equipe: 'oui oui oui lecture non non', valider_timesheet: 'oui oui oui non non non', fiches_ressources: 'oui oui oui non non non',
     affecter: 'oui oui oui oui non non', projets: 'oui oui oui oui non lecture', piloter: 'oui oui oui oui non non',
@@ -143,9 +143,9 @@ function amorcer() {
   };
   // Droits par onglet (migration 038) : chacun reprend le niveau de son droit de départ
   const ONGLETS = { onglet_daily_fil: 'daily_equipes', onglet_daily_synthese: 'fiches_ressources', onglet_ressources_calendrier: 'suivi_ressources',
-    onglet_ressources_liste: 'suivi_ressources', onglet_suivi_equipes: 'suivi_administration', onglet_suivi_referentiels: 'suivi_administration',
-    onglet_suivi_roles: 'roles', onglet_conges_grille: 'mon_dashboard', onglet_conges_recap: 'mon_dashboard', onglet_conges_capacite: 'mon_dashboard',
-    onglet_charge_prevision: 'piloter', onglet_charge_reel: 'piloter', onglet_admin_equipes: 'fiches_ressources', onglet_admin_referentiels: 'administration',
+    onglet_ressources_liste: 'suivi_ressources',
+    onglet_conges_grille: 'mon_dashboard', onglet_conges_recap: 'mon_dashboard',
+    onglet_admin_equipes: 'fiches_ressources', onglet_admin_referentiels: 'administration',
     onglet_admin_feries: 'administration', onglet_admin_envoi_daily: 'piloter', onglet_admin_sprints: 'mon_dashboard',
     onglet_astuces_agile: 'general', onglet_astuces_roadmap: 'general', onglet_astuces_test_learn: 'general' };
   Object.entries(ONGLETS).forEach(([onglet, depart]) => { MATRICE[onglet] = MATRICE[depart]; });
