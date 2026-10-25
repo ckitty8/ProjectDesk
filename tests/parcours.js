@@ -875,6 +875,30 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
     verifier('Simulation : le rôle Utilisateur n’a pas le menu Projets et Roadmap de Mon dashboard',
       !(await page.$('.laterale [data-ecran="mesProjets"]')) && !(await page.$('.laterale [data-ecran="mesSprints"]')));
+    // Cohérence matrice ↔ affichage : pour chaque rôle, les menus de la barre latérale sont exactement ceux que la matrice ouvre
+    const incoherences = await page.evaluate(() => {
+      const ecarts = [], niveau = (role, droit) => niveauDuRole(role, droit);
+      const personne = etat.simulation.ressourceId;
+      ROLES_CHOISISSABLES.forEach(role => {
+        Simulation.demarrer(role, personne);
+        const affiche = new Set([...document.querySelectorAll('.laterale .menu-lien > span:first-of-type, .laterale .sous-lien')].map(e => e.textContent.trim()));
+        const dashboard = niveau(role, 'mon_dashboard') !== 'non', ouvert = d => niveau(role, d) !== 'non';
+        const attendu = { 'Dashboard général': ouvert('suivi_dashboard'), 'Daily des équipes': ouvert('daily_equipes'), 'Timesheet': ouvert('suivi_timesheet'),
+          'Mises en production': dashboard && ouvert('projets'), 'Sprints': dashboard && ouvert('onglet_admin_sprints'),
+          'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')), 'Saisir mes heures': dashboard,
+          'Liste des ressources': dashboard, 'Daily': dashboard };
+        Object.entries(attendu).forEach(([menu, doitEtre]) => { if (affiche.has(menu) !== doitEtre) ecarts.push(`${role} : « ${menu} » ${doitEtre ? 'manque' : 'affiché à tort'}`); });
+        // Le menu parent « Projets et Roadmap » de Mon dashboard n'existe que si l'un de ses sous-menus est ouvert
+        const parent = !!document.querySelector('.laterale .menu-lien[data-ecran="mesProjets"]');
+        if (parent !== (attendu['Mises en production'] || attendu['Sprints'])) ecarts.push(`${role} : menu parent Projets et Roadmap incohérent`);
+      });
+      Simulation.demarrer('utilisateur', personne);
+      return ecarts;
+    });
+    verifier('Matrice des droits ↔ affichage : pour chaque rôle, menus et sous-menus de la barre latérale = ce que la matrice ouvre', incoherences.length === 0, incoherences.join(' ; '));
+    verifier('Cartes des rôles : la description est calculée d’après la matrice (le rôle Utilisateur n’a plus Projets et Roadmap)',
+      await page.evaluate(() => { const u = Simulation.ROLES.find(r => r.cle === 'utilisateur').description;
+        return u.includes('Mon dashboard : Daily') && !u.includes('Projets et Roadmap (Mises'); }));
     // Droits par menu de Suivi de mes équipes (migration 037) : menu masqué si « Non » ; avant la migration, repli sur « general »
     const parMenu = await page.evaluate(() => {
       const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'suivi_projets'), avant = ligne.niveau;

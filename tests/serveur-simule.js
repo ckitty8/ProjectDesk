@@ -149,6 +149,7 @@ function amorcer() {
     onglet_admin_feries: 'administration', onglet_admin_envoi_daily: 'piloter', onglet_admin_sprints: 'mon_dashboard',
     onglet_astuces_agile: 'general', onglet_astuces_roadmap: 'general', onglet_astuces_test_learn: 'general' };
   Object.entries(ONGLETS).forEach(([onglet, depart]) => { MATRICE[onglet] = MATRICE[depart]; });
+  MATRICE.onglet_admin_sprints = 'oui oui oui oui non non';   // le rôle Utilisateur n'a pas Projets et Roadmap (porteur 2026-10-25)
   const ROLES_MATRICE = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
   bd.droits_roles = Object.entries(MATRICE).flatMap(([droit, niveaux]) =>
     niveaux.split(' ').map((niveau, i) => ({ role: ROLES_MATRICE[i], droit, niveau })));

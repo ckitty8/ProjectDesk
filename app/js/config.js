@@ -61,14 +61,14 @@ const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecte
    responsables_equipe, rôle dans l'organisation Neon Auth, roles_acces), d'où des clés fixes.
    « Chef de projet » se déduit de ses projets ; « Pas encore de compte » de sa fiche. */
 const ROLES_ACCES = {
-  admin: { libelle: 'Administrateur', description: 'Tous les écrans et l’Administration', texte: '#0033AD', fond: '#E8EEFF' },
-  direction: { libelle: 'Direction', description: 'Sa direction et ses équipes : timesheets, daily', texte: '#3B2A8C', fond: '#E9E6FA' },
-  responsable: { libelle: 'Responsable d’équipe', description: 'Son équipe : timesheets à valider, tous les daily, congés', texte: '#5B2DA0', fond: '#EDE6FA' },
-  projet: { libelle: 'Projet', description: 'Chef de projet sur ses projets : envoi du daily', texte: '#0B6B4F', fond: '#E3F5EC' },
-  utilisateur: { libelle: 'Utilisateur', description: 'Son daily, ses heures, ses congés ; consulte le reste', texte: '#4A5363', fond: '#F1F3F7' },
-  lecture: { libelle: 'Lecture seule', description: 'Consulte, ne modifie rien (pas de Mon dashboard)', texte: '#6B7485', fond: '#F4F5F7' },
-  chef: { libelle: 'Chef de projet', description: 'Ses projets : membres, envoi du daily', texte: '#8A5300', fond: '#FFF1D6' },
-  sansCompte: { libelle: 'Pas encore de compte', description: 'Fiche sans compte de connexion : aucun accès', texte: '#A32020', fond: '#FDECEC' }
+  admin: { libelle: 'Administrateur', texte: '#0033AD', fond: '#E8EEFF' },
+  direction: { libelle: 'Direction', texte: '#3B2A8C', fond: '#E9E6FA' },
+  responsable: { libelle: 'Responsable d’équipe', texte: '#5B2DA0', fond: '#EDE6FA' },
+  projet: { libelle: 'Projet', texte: '#0B6B4F', fond: '#E3F5EC' },
+  utilisateur: { libelle: 'Utilisateur', texte: '#4A5363', fond: '#F1F3F7' },
+  lecture: { libelle: 'Lecture seule', texte: '#6B7485', fond: '#F4F5F7' },
+  chef: { libelle: 'Chef de projet', texte: '#8A5300', fond: '#FFF1D6' },
+  sansCompte: { libelle: 'Pas encore de compte', texte: '#A32020', fond: '#FDECEC' }
 };
 // Rôles proposés dans Administration › Rôles (dans cet ordre)
 const ROLES_CHOISISSABLES = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];

@@ -39,9 +39,9 @@ const Coquille = (() => {
   const MENU_MOI = [
     { id: 'daily', libelle: 'Daily', icone: 'daily' },
     // Projets et Roadmap : sous-menus comme Gestion des ressources (porteur 2026-10-23, maquette menu-projets-roadmap/)
-    // Menu masqué si le droit « projets » de la matrice est « Non » pour mon rôle (le rôle Utilisateur, porteur 2026-10-25)
-    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road', visible: () => niveauDroit('projets') !== 'non',
-      enfants: [{ id: 'mesProjets', libelle: 'Mises en production' }, { id: 'mesSprints', libelle: 'Sprints' }] },
+    // Chaque sous-menu suit sa ligne de la matrice : Mises en production = droit « projets », Sprints = son onglet (porteur 2026-10-25)
+    { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
+      enfants: [{ id: 'mesProjets', libelle: 'Mises en production', droit: 'projets' }, { id: 'mesSprints', libelle: 'Sprints' }] },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
       enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
     // Saisir mes heures : menu à part, sorti de Gestion des ressources (porteur, 2026-10-22) ; le suivi des équipes
@@ -55,8 +55,27 @@ const Coquille = (() => {
   ];
   const PLEIN_ECRAN = ['connexion', 'choixEquipe'];
 
-  // Menu ouvert à mon rôle : son écran (ou, pour un menu à sous-menus, l'un de ses sous-menus) a un onglet permis
-  const menuOuvert = item => item.enfants ? item.enfants.some(e => ecranOuvert(e.id)) : ecranOuvert(item.id);
+  /* Menu ouvert à un rôle (le mien si aucun rôle n'est précisé) : son écran (ou, pour un menu à sous-menus, l'un de
+     ses sous-menus) a un onglet permis, et le droit propre du sous-menu n'est pas « Non » */
+  const enfantOuvert = (e, role) => (!e.droit || niveauPour(e.droit, role) !== 'non') && ecranOuvert(e.id, role);
+  const menuOuvert = (item, role) => item.enfants ? item.enfants.some(e => enfantOuvert(e, role)) : ecranOuvert(item.id, role);
+
+  /* Menus que voit un rôle, d'après la matrice : { suivi, moi } (listes de menus avec leurs sous-menus ouverts).
+     Sert à la barre latérale (mon rôle) et aux cartes des rôles (Simulation, Qui a quel rôle) : un seul calcul, donc
+     jamais d'écart entre ce qui est décrit et ce qui est affiché. Le menu du créateur n'est pas un menu de rôle. */
+  function menusDuRole(role) {
+    const suivi = MENU_GENERAL.filter(item => niveauPour(item.droit, role) !== 'non' && ecranOuvert(item.id, role));
+    const moi = niveauPour('mon_dashboard', role) === 'non' ? []
+      : MENU_MOI.filter(item => (role ? !item.visible : (!item.visible || item.visible())) && menuOuvert(item, role))
+        .map(item => ({ ...item, enfants: item.enfants && item.enfants.filter(e => enfantOuvert(e, role)) }));
+    return { suivi, moi };
+  }
+  // « Suivi : Dashboard général, Timesheet · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle
+  function resumeDuRole(role) {
+    const { suivi, moi } = menusDuRole(role);
+    const nom = m => m.libelle + (m.enfants ? ` (${m.enfants.map(e => e.libelle).join(', ')})` : '');
+    return `Suivi : ${suivi.map(nom).join(', ') || 'aucun menu'} · Mon dashboard : ${moi.map(nom).join(', ') || 'aucun menu'}`;
+  }
 
   function lienMenu(item) {
     const actif = etat.ecran === item.id && !item.enfants;
@@ -64,7 +83,7 @@ const Coquille = (() => {
     const html = `<a class="menu-lien${actif ? ' actif' : ''}" data-action="aller" data-ecran="${item.id}">${icone(item.icone)}
       <span>${esc(item.libelle)}</span>${alerte ? `<span class="pastille-alerte">${alerte}</span>` : ''}</a>`;
     if (!item.enfants) return html;
-    return html + `<div class="sous-menu">${item.enfants.filter(e => ecranOuvert(e.id)).map(e =>
+    return html + `<div class="sous-menu">${item.enfants.map(e =>
       `<a class="sous-lien${etat.ecran === e.id ? ' actif' : ''}" data-action="aller" data-ecran="${e.id}">${esc(e.libelle)}</a>`).join('')}</div>`;
   }
 
@@ -72,15 +91,15 @@ const Coquille = (() => {
   function barreLaterale() {
     const eq = equipe(etat.equipeCourante);
     const nom = etat.session.user.name || etat.session.user.email;
-    const menusSuivi = MENU_GENERAL.filter(item => niveauDroit(item.droit) !== 'non' && ecranOuvert(item.id));
+    const menus = menusDuRole();
     return `
     <aside class="laterale${ui('menuLateral', { ouvert: false }).ouvert ? ' ouverte' : ''}">
       ${C.marque()}
       <nav>
-        ${menusSuivi.length ? `<div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
-        ${menusSuivi.map(lienMenu).join('')}` : ''}
+        ${menus.suivi.length ? `<div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
+        ${menus.suivi.map(lienMenu).join('')}` : ''}
         ${niveauDroit('mon_dashboard') === 'non' ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
-        ${MENU_MOI.filter(item => (!item.visible || item.visible()) && menuOuvert(item)).map(lienMenu).join('')}`}
+        ${menus.moi.map(lienMenu).join('')}`}
       </nav>
       <div class="bloc-utilisateur">
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>
@@ -169,7 +188,7 @@ const Coquille = (() => {
     </div>`;
   }
 
-  return { rendre };
+  return { rendre, resumeDuRole };
 })();
 
 // Actions de la coquille

@@ -17,9 +17,10 @@
 const Simulation = {
   /* Rôles proposés : les 6 rôles d'accès d'Administration › Rôles et de la matrice des droits (ROLES_CHOISISSABLES,
      ROLES_ACCES, config.js), puis « Compte en attente » (compte inscrit sans équipe) — porteur 2026-10-22,
-     maquette docs/maquettes/simulation-six-roles/. Le Créateur n'y figure pas (c'est le rôle de départ). */
+     maquette docs/maquettes/simulation-six-roles/. Le Créateur n'y figure pas (c'est le rôle de départ).
+     La description de chaque rôle est calculée d'après la matrice des droits (Coquille.resumeDuRole). */
   get ROLES() {
-    return [...ROLES_CHOISISSABLES.map(cle => ({ cle, libelle: ROLES_ACCES[cle].libelle, description: ROLES_ACCES[cle].description,
+    return [...ROLES_CHOISISSABLES.map(cle => ({ cle, libelle: ROLES_ACCES[cle].libelle, description: Coquille.resumeDuRole(cle),
       couleur: ROLES_ACCES[cle].texte })),
     { cle: 'sansEquipe', libelle: 'Compte en attente', description: 'Inscrit, sans accès tant qu’un administrateur ne l’a pas donné.',
       couleur: COULEURS.orange }];

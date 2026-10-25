@@ -369,9 +369,11 @@ const ongletsPermis = (ecran, liste) => liste.filter(o => ongletPermis(ecran, o.
 // Onglet affiché : celui choisi s'il est permis, sinon le premier permis (undefined si aucun)
 const ongletAffiche = (liste, choisi) => (liste.find(o => o.id === choisi) || liste[0] || {}).id;
 // Écran ouvert à mon rôle : il n'a pas de droit d'onglet, ou au moins un de ses onglets est permis (menu masqué sinon)
-function ecranOuvert(ecran) {
+// Niveau d'un droit pour un rôle donné, ou pour moi si aucun rôle n'est précisé (barre latérale et cartes des rôles : mêmes règles)
+const niveauPour = (droit, role) => role ? niveauDuRole(role, droit) : niveauDroit(droit);
+function ecranOuvert(ecran, role) {
   const onglets = DROITS.filter(d => d.ecran === ecran);
-  return !onglets.length || onglets.some(d => niveauDroit(d.cle) !== 'non');
+  return !onglets.length || onglets.some(d => niveauPour(d.cle, role) !== 'non');
 }
 
 /* ---------- Accès pratiques aux données ---------- */
