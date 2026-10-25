@@ -243,8 +243,6 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .recap-travail .tot { background: #F3F6FF; font-weight: 600; }
 .recap-travail tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; }
 .recap-travail tr.total td { font-weight: 600; background: var(--fond-entete); }
-.recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
-.reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }
 
 
 /* Trucs et astuces : tableau des KPI et badges d'exemple */
@@ -368,7 +366,7 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .chaine-etape { flex: 1; min-width: 150px; padding: 10px 12px; border-radius: 8px; background: #F4F6FA; border-top: 4px solid; }
 .chaine-etape .discret, .grille-formats .discret { font-size: 12px; }
 .chaine-fleche { display: grid; place-items: center; padding: 0 6px; color: var(--discret); font-size: 18px; }
-.grille-formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.grille-formats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .grille-formats .carte { padding: 14px 16px; margin: 0; font-size: 12.5px; }
 .format-exemples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
 .format-exemples div { border-radius: 6px; padding: 6px 8px; font-size: 12px; }

@@ -22,10 +22,6 @@ const CONFIG = {
   NEON_AUTH_URL: 'https://ep-lucky-mud-b1gqp3gd.neonauth.c-5.eu-central-1.aws.neon.tech/neondb/auth',
   DATA_API_URL: 'https://ep-lucky-mud-b1gqp3gd.apirest.c-5.eu-central-1.aws.neon.tech/neondb/rest/v1',
 
-  // Jours de travail attendus par le client par personne et par an, si l'équipe n'a pas
-  // d'objectif saisi pour l'année (table objectifs_jours_travail ; valeur du fichier du porteur)
-  JOURS_TRAVAIL_CLIENT_DEFAUT: 218,
-
   // Sprints de 2 semaines : un sprint de référence sert à numéroter tous les autres
   SPRINT_REFERENCE: { numero: 19, debut: '2026-09-14' },
   DUREE_SPRINT_JOURS: 14,
@@ -103,7 +99,7 @@ const DROITS = [
   // Sous-menu Sprints (2026-10-23, auparavant onglet d'Administration ; clé inchangée, enregistrée en base)
   { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Projets et Roadmap', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
     libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
-  { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés', libelle: 'Congés et objectif de jours des autres' },
+  { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés', libelle: 'Congés des autres personnes' },
   { cle: 'onglet_conges_grille', section: 'dashboard', menu: 'Congés', onglet: 'Grille mensuelle', ecran: 'conges', id: 'grille',
     libelle: 'Saisie des congés du mois', repli: 'mon_dashboard' },
   { cle: 'onglet_conges_recap', section: 'dashboard', menu: 'Congés', onglet: 'Récap annuel', ecran: 'conges', id: 'recap',
@@ -224,11 +220,9 @@ const AIDES = {
   pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. ' +
     'Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
   datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni ' +
-    'en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',
+    'en congés, ni dans la capacité.',
   recapTravail: 'Pour chaque mois, sur les jours de semaine : C = congés posés dans le calendrier (tous types, une demi-journée ' +
     'compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
-  objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ' +
-    'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Projets et Roadmap › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
     '»), l’année, le nom de la version, sa date de début et sa date de fin.',
   productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
@@ -276,7 +270,7 @@ const GUIDE_ECRANS = {
     'Tout le monde les voit dans Suivi de mes équipes › Projets et Roadmap › Planning projet (repères ▲).'],
   mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
     'Ils s’affichent dans Suivi de mes équipes › Projets et Roadmap › Planning projet.'],
-  conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',
+  conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés et congés par mois).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
     'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle ' +
@@ -428,37 +422,34 @@ const QUI_FAIT_QUOI_SCRUM = {
    Fiche pratique en lecture seule : définition, chaîne vision → sprint, trois formats de roadmap,
    format conseillé selon la méthode du projet (METHODES de la création de projet), bonnes
    pratiques et pièges. Sources : pratiques usuelles de product management (roadmap
-   « Now / Next / Later », roadmap par objectifs OKR) et de gestion de projet (Gantt, cycle en V).
+   « Now / Next / Later ») et de gestion de projet (Gantt, cycle en V).
    ============================================================ */
 const ROADMAP_ASTUCES = {
   definition: 'Une roadmap dit où l’on va et pourquoi — pas la liste des tâches datées.',
-  precision: 'Elle traduit les objectifs (OKR) en grandes étapes ; le détail vit dans le backlog et ' +
+  precision: 'Elle traduit la vision en grandes étapes ; le détail vit dans le backlog et ' +
     'les sprints. Sa précision diminue avec l’horizon : sûr pour le trimestre, indicatif au-delà.',
   // Chaîne de la vision au sprint : [étape, explication, couleur]
   chaine: [
     ['Vision', 'Pourquoi le produit existe (3 à 5 ans)', '#003CC8'],
-    ['Objectifs (OKR)', 'Résultats visés ce trimestre / cette année', '#7A3FC2'],
-    ['Roadmap', 'Grandes étapes par horizon, reliées aux objectifs', '#0F8A6B'],
+    ['Roadmap', 'Grandes étapes par horizon, reliées à la vision', '#0F8A6B'],
     ['Backlog', 'Éléments priorisés, détaillés juste à temps', '#B25E09'],
     ['Sprint / release', 'Ce qui est livré et montré', '#4A5363']],
   // Formats : titre, sous-titre, couleur du titre, fond des 3 exemples, 3 exemples [titre, détail], quand l'utiliser
   formats: [
     { titre: 'Now / Next / Later', sousTitre: 'Horizons sans dates fermes', couleur: '#0F8A6B', fond: ['#E3F5EC', '#FFF1D6', '#F1F3F7'],
       exemples: [['Now', 'engagé, en cours'], ['Next', 'prochain, à affiner'], ['Later', 'idées, à valider']], quand: 'produit, incertitude forte, Kanban.' },
-    { titre: 'Par objectifs (OKR)', sousTitre: 'Une ligne par objectif, une colonne par trimestre', couleur: '#7A3FC2', fond: ['#EDE6FA', '#EDE6FA', '#EDE6FA'],
-      exemples: [['T1', 'O1 · KR1.1'], ['T2', 'O1 · KR1.2'], ['T3', 'O2 · KR2.1']], quand: 'direction, arbitrages entre équipes.' },
     { titre: 'Datée (Gantt)', sousTitre: 'Jalons, dépendances, chemin critique', couleur: '#003CC8', fond: ['#E8EEFF', '#E8EEFF', '#E8EEFF'],
       exemples: [['Cadrage', '→ 15/11'], ['Réalisation', '→ 31/01'], ['Recette', '→ 28/02']], quand: 'cascade, cycle en V, contrat ou contrainte réglementaire.' }],
   // Selon la méthode du projet : [méthode, format conseillé, unité de planification, revue de la roadmap]
   methodes: [
-    ['Agile Scrum', 'Now / Next / Later ou par objectifs', 'Releases et objectifs de sprint', 'À chaque sprint review'],
+    ['Agile Scrum', 'Now / Next / Later', 'Releases et objectifs de sprint', 'À chaque sprint review'],
     ['Agile Kanban', 'Now / Next / Later', 'Flux continu, éléments priorisés', 'Mensuelle (revue de flux)'],
     ['Cascade', 'Datée (Gantt)', 'Phases et jalons', 'Comité de pilotage'],
     ['Cycle en V', 'Datée (Gantt), conception et recettes en miroir', 'Phases, livrables, recettes', 'Comité de pilotage, à chaque jalon'],
     ['Test & Learn', 'Now / Next / Later par phase (exploration → pilote)', 'Expériences de 2 semaines', 'À chaque décision go / no-go']],
   bonnesPratiques: [
     'Partir du résultat attendu (problème à résoudre), pas de la fonctionnalité',
-    'Relier chaque étape à un objectif / résultat clé',
+    'Relier chaque étape à la vision du produit',
     'Précision décroissante : trimestre sûr, au-delà indicatif',
     'Vérifier la capacité (congés) avant de s’engager',
     'Revoir à date fixe et afficher la date de mise à jour',

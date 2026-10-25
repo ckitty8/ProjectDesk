@@ -138,7 +138,6 @@ function amorcer() {
   const ROLES_MATRICE = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
   bd.droits_roles = Object.entries(MATRICE).flatMap(([droit, niveaux]) =>
     niveaux.split(' ').map((niveau, i) => ({ role: ROLES_MATRICE[i], droit, niveau })));
-  bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // sans saisie au départ (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
   bd.ressources.forEach((r, i) => {
