@@ -881,7 +881,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
         const attendu = { 'Dashboard général': ouvert('suivi_dashboard'), 'Daily des équipes': ouvert('daily_equipes'), 'Timesheet': ouvert('suivi_timesheet'),
           'Mises en production': dashboard && ouvert('projets'), 'Sprints': dashboard && ouvert('onglet_admin_sprints'),
           'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')), 'Saisir mes heures': dashboard,
-          'Liste des ressources': dashboard, 'Daily': dashboard };
+          'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')), 'Daily': dashboard };
         Object.entries(attendu).forEach(([menu, doitEtre]) => { if (affiche.has(menu) !== doitEtre) ecarts.push(`${role} : « ${menu} » ${doitEtre ? 'manque' : 'affiché à tort'}`); });
         // Le menu parent « Projets et Roadmap » de Mon dashboard n'existe que si l'un de ses sous-menus est ouvert
         const parent = !!document.querySelector('.laterale .menu-lien[data-ecran="mesProjets"]');

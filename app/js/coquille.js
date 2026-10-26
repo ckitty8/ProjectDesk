@@ -43,7 +43,9 @@ const Coquille = (() => {
     { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
       enfants: [{ id: 'mesProjets', libelle: 'Mises en production', droit: 'projets' }, { id: 'mesSprints', libelle: 'Sprints' }] },
     { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
-      enfants: [{ id: 'conges', libelle: 'Congés' }, { id: 'listeRessources', libelle: 'Liste des ressources' }] },
+      enfants: [{ id: 'conges', libelle: 'Congés' },
+        // Liste des ressources : ouverte si le rôle a l'un de ses deux droits (fiches, affectations) — le rôle Utilisateur n'en a aucun
+        { id: 'listeRessources', libelle: 'Liste des ressources', droit: ['fiches_ressources', 'affecter'] }] },
     // Saisir mes heures : menu à part, sorti de Gestion des ressources (porteur, 2026-10-22) ; le suivi des équipes
     // et la validation se font dans Suivi de mes équipes › Timesheet
     { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time' },
@@ -57,7 +59,8 @@ const Coquille = (() => {
 
   /* Menu ouvert à un rôle (le mien si aucun rôle n'est précisé) : son écran (ou, pour un menu à sous-menus, l'un de
      ses sous-menus) a un onglet permis, et le droit propre du sous-menu n'est pas « Non » */
-  const enfantOuvert = (e, role) => (!e.droit || niveauPour(e.droit, role) !== 'non') && ecranOuvert(e.id, role);
+  const droitOuvert = (droit, role) => [].concat(droit).some(d => niveauPour(d, role) !== 'non');   // un droit, ou une liste dont un seul suffit
+  const enfantOuvert = (e, role) => (!e.droit || droitOuvert(e.droit, role)) && ecranOuvert(e.id, role);
   const menuOuvert = (item, role) => item.enfants ? item.enfants.some(e => enfantOuvert(e, role)) : ecranOuvert(item.id, role);
 
   /* Menus que voit un rôle, d'après la matrice : { suivi, moi } (listes de menus avec leurs sous-menus ouverts).
