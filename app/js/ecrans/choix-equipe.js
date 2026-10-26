@@ -32,7 +32,7 @@ Ecrans.choixEquipe = {
     if (!equipes && !invitations && !etat.estAdmin) return this.enAttente(prenom);
     return `
     <div class="plein-ecran"><div class="carte boite large">
-      ${this.bonjour(prenom)}
+      ${this.bonjour(prenom, !!etat.equipeCourante)}
       <div class="sous-titre marge-bas">Choisissez l’équipe dans laquelle vous travaillez. Vous pourrez en changer à tout moment.</div>
       ${invitations ? `<div class="libelle">Invitations reçues</div><div class="pile marge-bas">${invitations}</div>` : ''}
       <div class="libelle">Mes équipes</div>
@@ -42,8 +42,11 @@ Ecrans.choixEquipe = {
     </div></div>`;
   },
 
-  // En-tête commun aux deux vues : « Bonjour Prénom » et lien de déconnexion
-  bonjour: prenom => `<div class="ligne-flex entre"><h1>Bonjour ${C.esc(prenom)}</h1><a data-action="deconnexion">Déconnexion</a></div>`,
+  /* En-tête commun aux deux vues : « Bonjour Prénom ». Avec une équipe déjà ouverte, une croix ferme la fenêtre et revient à
+     l'écran précédent (porteur 2026-10-26) ; compte en attente d'accès : lien de déconnexion (changer de compte) */
+  bonjour: (prenom, fermable = false) => `<div class="ligne-flex entre"><h1>Bonjour ${C.esc(prenom)}</h1>${fermable
+    ? '<button class="lien-btn" data-action="fermerChoixEquipe" title="Fermer" aria-label="Fermer">✕</button>'
+    : etat.equipeCourante ? '' : '<a data-action="deconnexion">Déconnexion</a>'}</div>`,
 
   // Compte créé mais pas encore d'équipe : l'administrateur voit la demande (Comptes en attente)
   enAttente(prenom) {
@@ -71,6 +74,8 @@ Object.assign(Actions, {
     Api.activerOrganisation(d.id).catch(() => {});
     majEtat({ equipeCourante: d.id, ecran: 'dashboard' });
   },
+  // Croix de la fenêtre : retour à l'écran d'où l'on est venu (tableau de bord par défaut)
+  fermerChoixEquipe: () => allerA(ui('choixEquipe').retour || 'dashboard'),
   async accepterInvitation(d) {
     try { await Api.accepterInvitation(d.id); notifier('Invitation acceptée'); await demarrer(); }
     catch (e) { notifier(e.message, 'erreur'); }

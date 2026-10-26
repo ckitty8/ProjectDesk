@@ -87,6 +87,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
     await capture('02-choix-equipe');
     verifier('Choix d’équipe : invitation reçue affichée', (await texte()).includes('Produit'));
+    // Croix de fermeture à la place de « Déconnexion » (porteur 2026-10-26) : retour à l'écran d'où l'on vient
+    const croix = !!(await page.$('[data-action="fermerChoixEquipe"]')) && !(await page.$('.plein-ecran [data-action="deconnexion"]'));
+    await page.click('[data-action="fermerChoixEquipe"]'); await page.waitForSelector('.laterale');
+    verifier('Choix d’équipe : une croix ferme la fenêtre (retour à l’écran précédent), plus de bouton Déconnexion', croix && await page.evaluate(() => etat.ecran === 'dashboard'));
+    await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
     await page.click('[data-action="ouvrirEquipe"]');
     await page.waitForSelector('.laterale');
 
@@ -786,6 +791,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await connecter('elodie@test.fr');
     verifier('Compte sans équipe : entre directement après l’accès donné (invitation acceptée d’office)', await page.evaluate(() =>
       mesEquipes().length === 1 && etat.ecran !== 'choixEquipe' && !!maRessource()));
+    verifier('Une seule équipe et aucune invitation : pas de bouton « Changer » d’équipe', await page.evaluate(() =>
+      etat.invitations.length === 0 && !document.querySelector('.laterale [data-action="changerEquipe"]')));
 
     /* --- Administratrice sans équipe : entrée directe dans l'outil, création d'équipe --- */
     await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
@@ -879,16 +886,24 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       ROLES_CHOISISSABLES.forEach(role => {
         Simulation.demarrer(role, personne);
         const affiche = new Set([...document.querySelectorAll('.laterale .menu-lien > span:first-of-type, .laterale .sous-lien')].map(e => e.textContent.trim()));
-        const dashboard = niveau(role, 'mon_dashboard') !== 'non', ouvert = d => niveau(role, d) !== 'non';
+        // Lecture seule : Mon dashboard fermé ; sinon chaque menu suit ses propres lignes de la matrice
+        const dashboard = role !== 'lecture', ouvert = d => niveau(role, d) !== 'non';
         const attendu = { 'Dashboard général': ouvert('suivi_dashboard'), 'Daily des équipes': ouvert('daily_equipes'), 'Timesheet': ouvert('suivi_timesheet'),
           'Mises en production': dashboard && ouvert('projets'), 'Sprints': dashboard && ouvert('onglet_admin_sprints'),
-          'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')), 'Saisir mes heures': dashboard,
-          'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')), 'Daily': dashboard };
+          'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')), 'Saisir mes heures': dashboard && ouvert('mon_dashboard'),
+          'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')), 'Daily': dashboard && ouvert('mon_dashboard') };
         Object.entries(attendu).forEach(([menu, doitEtre]) => { if (affiche.has(menu) !== doitEtre) ecarts.push(`${role} : « ${menu} » ${doitEtre ? 'manque' : 'affiché à tort'}`); });
         // Le menu parent « Projets et Roadmap » de Mon dashboard n'existe que si l'un de ses sous-menus est ouvert
         const parent = !!document.querySelector('.laterale .menu-lien[data-ecran="mesProjets"]');
         if (parent !== (attendu['Mises en production'] || attendu['Sprints'])) ecarts.push(`${role} : menu parent Projets et Roadmap incohérent`);
       });
+      // Cas du porteur (2026-10-26) : « Daily · Saisir mes heures » à Non pour le rôle Responsable ne ferme que Daily et Saisir mes heures
+      const ligne = etat.d.droitsRoles.find(d => d.role === 'responsable' && d.droit === 'mon_dashboard'), avant = ligne.niveau;
+      ligne.niveau = 'non'; Simulation.demarrer('responsable', personne);
+      const liens = new Set([...document.querySelectorAll('.laterale .menu-lien > span:first-of-type, .laterale .sous-lien')].map(e => e.textContent.trim()));
+      if (liens.has('Daily') || liens.has('Saisir mes heures')) ecarts.push('responsable : Daily / Saisir mes heures encore affichés');
+      ['Gestion des ressources', 'Congés', 'Trucs et astuces', 'Administration'].forEach(m => { if (!liens.has(m)) ecarts.push(`responsable (Daily à Non) : « ${m} » a disparu`); });
+      ligne.niveau = avant;
       Simulation.demarrer('utilisateur', personne);
       return ecarts;
     });

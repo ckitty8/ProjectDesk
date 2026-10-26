@@ -37,7 +37,8 @@ const Coquille = (() => {
     { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' }
   ];
   const MENU_MOI = [
-    { id: 'daily', libelle: 'Daily', icone: 'daily' },
+    // Daily et Saisir mes heures : droit « mon_dashboard » (Daily · Saisir mes heures) ; chaque autre menu suit ses propres lignes de la matrice
+    { id: 'daily', libelle: 'Daily', icone: 'daily', droit: 'mon_dashboard' },
     // Projets et Roadmap : sous-menus comme Gestion des ressources (porteur 2026-10-23, maquette menu-projets-roadmap/)
     // Chaque sous-menu suit sa ligne de la matrice : Mises en production = droit « projets », Sprints = son onglet (porteur 2026-10-25)
     { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
@@ -48,7 +49,7 @@ const Coquille = (() => {
         { id: 'listeRessources', libelle: 'Liste des ressources', droit: ['fiches_ressources', 'affecter'] }] },
     // Saisir mes heures : menu à part, sorti de Gestion des ressources (porteur, 2026-10-22) ; le suivi des équipes
     // et la validation se font dans Suivi de mes équipes › Timesheet
-    { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time' },
+    { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time', droit: 'mon_dashboard' },
     { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
     // Pastille rouge : comptes inscrits qui attendent un accès (administrateurs, migration 024)
     { id: 'monAdmin', libelle: 'Administration', icone: 'admin', alerte: () => etat.comptesEnAttente.filter(c => !c.invite).length },
@@ -61,14 +62,17 @@ const Coquille = (() => {
      ses sous-menus) a un onglet permis, et le droit propre du sous-menu n'est pas « Non » */
   const droitOuvert = (droit, role) => [].concat(droit).some(d => niveauPour(d, role) !== 'non');   // un droit, ou une liste dont un seul suffit
   const enfantOuvert = (e, role) => (!e.droit || droitOuvert(e.droit, role)) && ecranOuvert(e.id, role);
-  const menuOuvert = (item, role) => item.enfants ? item.enfants.some(e => enfantOuvert(e, role)) : ecranOuvert(item.id, role);
+  const menuOuvert = (item, role) => item.enfants ? item.enfants.some(e => enfantOuvert(e, role))
+    : (!item.droit || droitOuvert(item.droit, role)) && ecranOuvert(item.id, role);
 
   /* Menus que voit un rôle, d'après la matrice : { suivi, moi } (listes de menus avec leurs sous-menus ouverts).
      Sert à la barre latérale (mon rôle) et aux cartes des rôles (Simulation, Qui a quel rôle) : un seul calcul, donc
      jamais d'écart entre ce qui est décrit et ce qui est affiché. Le menu du créateur n'est pas un menu de rôle. */
   function menusDuRole(role) {
     const suivi = MENU_GENERAL.filter(item => niveauPour(item.droit, role) !== 'non' && ecranOuvert(item.id, role));
-    const moi = niveauPour('mon_dashboard', role) === 'non' ? []
+    // Mon dashboard est fermé en Lecture seule (migration 030) ; sinon chaque menu suit ses droits : le droit « Daily · Saisir
+    // mes heures » ne ferme que Daily et Saisir mes heures (porteur 2026-10-26), pas toute la section
+    const moi = (role || monRole()) === 'lecture' ? []
       : MENU_MOI.filter(item => (role ? !item.visible : (!item.visible || item.visible())) && menuOuvert(item, role))
         .map(item => ({ ...item, enfants: item.enfants && item.enfants.filter(e => enfantOuvert(e, role)) }));
     return { suivi, moi };
@@ -101,12 +105,12 @@ const Coquille = (() => {
       <nav>
         ${menus.suivi.length ? `<div class="menu-titre"><span>Suivi de mes équipes ${C.aide('sectionGeneral')}</span><span>lecture</span></div>
         ${menus.suivi.map(lienMenu).join('')}` : ''}
-        ${niveauDroit('mon_dashboard') === 'non' ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
+        ${!menus.moi.length ? '' : `<div class="menu-titre"><span>Mon dashboard ${C.aide('sectionMoi')}</span><span>édition</span></div>
         ${menus.moi.map(lienMenu).join('')}`}
       </nav>
       <div class="bloc-utilisateur">
         <div class="bloc-equipe">${C.pastille(eq.couleur)}<span class="discret">Équipe</span><b>${etat.equipeCourante ? esc(eq.nom) : 'aucune'}</b>
-          ${mesEquipes().length ? '<a data-action="changerEquipe">Changer</a>' : ''}</div>
+          ${unChoixDEquipe() ? '<a data-action="changerEquipe">Changer</a>' : ''}</div>
         <div class="bloc-moi">${C.avatar(nom, true)}<div><div class="moi-nom">${esc(nom)}</div>
           ${etat.estCreateur ? '<span class="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>' : ''}
           ${etat.simulation ? '<span class="badge-createur" title="Simulation des rôles en cours">simulation</span>' : ''}
@@ -150,11 +154,17 @@ const Coquille = (() => {
   // Écran de Mon dashboard ouvert sans équipe, alors qu'il en demande une (sauf écran permis sans équipe)
   const attendUneEquipe = ecran => ecran.section === 'moi' && !etat.equipeCourante && !(ecran.sansEquipePermis && ecran.sansEquipePermis());
 
-  // Contenu de l'écran : Mon dashboard fermé en Lecture seule, équipe demandée si besoin, sinon l'écran
+  // « Changer » d'équipe n'a de sens que s'il y a un choix : au moins deux équipes, ou une invitation à accepter
+  const unChoixDEquipe = () => mesEquipes().length > 1 || etat.invitations.length > 0;
+
+  // L'écran ouvert (menu ou sous-menu de Mon dashboard) fait-il partie de ceux que mon rôle voit dans la barre latérale ?
+  const ecranMoiPermis = () => menusDuRole().moi.some(m => m.id === etat.ecran || (m.enfants || []).some(e => e.id === etat.ecran));
+
+  // Contenu de l'écran : écran fermé à mon rôle, équipe demandée si besoin, sinon l'écran
   function contenuEcran(ecran) {
-    if (ecran.section === 'moi' && niveauDroit('mon_dashboard') === 'non') {
-      return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px"><h2>Lecture seule</h2>
-        <p class="discret">Votre rôle permet de consulter « Suivi de mes équipes », sans rien modifier.</p>
+    if (ecran.section === 'moi' && !ecranMoiPermis()) {
+      return `<div class="ecran"><div class="carte" style="padding:20px;max-width:640px"><h2>Écran non ouvert à votre rôle</h2>
+        <p class="discret">Votre rôle permet de consulter « Suivi de mes équipes » ; cet écran de « Mon dashboard » n’est pas ouvert par la matrice des droits.</p>
         <button class="btn primaire" data-action="aller" data-ecran="dashboard">Ouvrir le Dashboard général</button></div></div>`;
     }
     return attendUneEquipe(ecran) ? sansEquipe() : ecran.rendre();
@@ -197,7 +207,8 @@ const Coquille = (() => {
 // Actions de la coquille
 Object.assign(Actions, {
   reessayer: () => demarrer(),
-  changerEquipe: () => allerA('choixEquipe'),
+  // Ouvre le choix d'équipe en mémorisant l'écran d'où l'on vient, pour que la croix de la fenêtre y revienne
+  changerEquipe: () => { majUi('choixEquipe', { retour: etat.ecran }, { rendre: false }); allerA('choixEquipe'); },
   async deconnexion() {
     await Api.deconnecter().catch(() => {});
     majEtat({ session: null, equipeCourante: null, ecran: 'connexion', d: {}, simulation: null, reel: null });
