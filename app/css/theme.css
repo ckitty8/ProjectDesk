@@ -70,6 +70,7 @@ h2 { font-size: 15px; font-weight: 600; margin: 0; }
 .btn.succes { background: var(--succes); border-color: var(--succes); color: #fff; }
 .btn.danger { color: var(--danger); } .btn.petit { height: 26px; padding: 0 9px; font-size: 12px; }
 .btn[disabled] { opacity: .45; cursor: default; }
+.separateur-puces { width: 1px; height: 22px; background: var(--bordure); margin: 0 6px; align-self: center; }
 .lien-btn { background: none; border: 0; color: var(--primaire); cursor: pointer; padding: 0; }
 input.champ, select.champ, textarea.champ, .champ { height: 34px; border: 1px solid var(--bordure); border-radius: 7px; background: var(--fond-doux); padding: 0 10px; width: 100%; }
 textarea.champ { height: auto; padding: 8px 10px; resize: vertical; }

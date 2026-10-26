@@ -509,6 +509,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Données rafraîchies au changement d’écran (sans F5)', !avantNavigation && await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20')));
     verifier('Lecture paginée : plus de 50 absences chargées malgré le plafond de 50 lignes par réponse', await page.evaluate(() => etat.d.absences.length > 50));
     verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
+    // Demi-journée (porteur 2026-10-26) : durée choisie avec le type ; même type et même durée = retrait ; autre durée = changement
+    const cibleConges = await page.evaluate(() => { const td = [...document.querySelectorAll('td[data-action="basculerAbsence"]')].find(t => !t.querySelector('.case-absence'));
+      return td ? { ressource: td.dataset.ressource, jour: td.dataset.jour } : null; });
+    const celluleConges = `td[data-action="basculerAbsence"][data-ressource="${cibleConges.ressource}"][data-jour="${cibleConges.jour}"]`;
+    const dureeDe = () => page.evaluate(c => { const a = etat.d.absences.find(x => x.ressourceId === c.ressource && x.jour === c.jour); return a ? Number(a.duree) : null; }, cibleConges);
+    await page.click('[data-action="choisirDuree"][data-duree="0.5"]'); await page.waitForTimeout(150);
+    await page.click(celluleConges); await page.waitForTimeout(350); const apresDemi = await dureeDe();
+    await page.click('[data-action="choisirDuree"][data-duree="1"]'); await page.waitForTimeout(150);
+    await page.click(celluleConges); await page.waitForTimeout(350); const apresChangement = await dureeDe();
+    await page.click(celluleConges); await page.waitForTimeout(350); const apresRetrait = await dureeDe();
+    verifier('Congés : demi-journée posable (0,5), durée modifiable, retrait au clic suivant', apresDemi === 0.5 && apresChangement === 1 && apresRetrait === null,
+      `${apresDemi} / ${apresChangement} / ${apresRetrait}`);
 
     await aller('listeRessources');
     /* Liste des ressources (piste 3, 2026-10-09) : navigation à gauche, détail à droite.

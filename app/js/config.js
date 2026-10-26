@@ -221,7 +221,8 @@ const AIDES = {
   tauxOccupation: `Heures saisies ÷ heures attendues de la semaine. Attendu = jours ouvrés (hors week-ends, fériés ` +
     `et absences) × ${CONFIG.HEURES_PAR_JOUR} h × capacité de chaque personne. Cible : ${CONFIG.CIBLE_OCCUPATION} %.`,
   projetsSurveiller: `Projets à risque, en retard, ou dont l’échéance tombe dans les ${CONFIG.ALERTE_ECHEANCE_JOURS} prochains jours.`,
-  pinceau: 'Choisissez un type puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. ' +
+  pinceau: 'Choisissez un type et une durée (journée ou demi-journée) puis cliquez sur un jour pour le poser ; cliquer à nouveau le retire. ' +
+    'Pour changer la durée d’un jour déjà posé, choisissez l’autre durée et cliquez dessus. ' +
     'Les jours fériés (JF) s’affichent automatiquement et ne se cliquent pas. « ½ » = demi-journée.',
   datesPresence: 'Facultatives. Les jours avant l’arrivée et après le départ ne comptent ni en jours travaillés, ni ' +
     'en congés, ni dans la capacité ; les jours attendus par le client sont proratisés sur la période de présence.',

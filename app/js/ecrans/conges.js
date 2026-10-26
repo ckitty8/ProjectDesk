@@ -15,6 +15,8 @@ Ecrans.conges = {
   titre: 'Gestion des ressources · Congés',
   section: 'moi',
   pinceau: () => ui('conges', { pinceau: ABSENCES.CP }).pinceau,
+  // Durée posée par un clic : 1 (journée) ou 0,5 (demi-journée) ; choisie avec le type d'absence (porteur 2026-10-26)
+  duree: () => ui('conges', { duree: 1 }).duree,
 
   /* ---------- Onglet Récap annuel : jours travaillés / congés / reste à prendre ----------
      Reprise de l'onglet « Jours de congés » du fichier du porteur (maquette
@@ -87,13 +89,15 @@ Ecrans.conges = {
     const pinceaux = [...valeursDe('abs').map(t => ({ id: t.libelle, libelle: t.libelle, couleur: t.couleur })), { id: 'effacer', libelle: 'Effacer', couleur: COULEURS.effacer }]
       .map(p => `<button class="puce${p.id === pinceau ? ' active' : ''}" data-action="choisirPinceau" data-id="${esc(p.id)}">
         <span class="pastille" style="background:${C.teinte(p.couleur, .2)};border:1px solid ${p.couleur}"></span>${esc(p.libelle)}</button>`).join('');
+    const durees = [[1, 'Journée'], [0.5, 'Demi-journée']].map(([valeur, libelle]) =>
+      `<button class="puce${valeur === this.duree() ? ' active' : ''}" data-action="choisirDuree" data-duree="${valeur}">${libelle}</button>`).join('');
 
     // Contenu de chaque onglet
     const liste = this.onglets(annee), onglet = ongletAffiche(liste, ui('conges', { onglet: 'grille' }).onglet);
     if (!onglet) return `<div class="ecran">${C.entete('Congés', '')}${C.aucunOnglet()}</div>`;
     // Sélecteur de mois juste au-dessus du calendrier, à gauche (demande du porteur)
     const grille = `<div class="carte"><div class="carte-titre"><div class="ligne-flex">${Calendrier.navigation()}${Calendrier.selecteurVue()}</div>
-      <div class="puces">${pinceaux}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
+      <div class="puces">${pinceaux}<span class="separateur-puces"></span>${durees}${C.aide('pinceau')}</div></div>${Calendrier.rendre(true)}</div>`;
     const recapAnnuel = this.recap(annee);
     const onglets = C.onglets(liste, onglet, 'ongletConges');
 
@@ -118,17 +122,18 @@ Object.assign(Actions, {
     executer(() => Api.creer('objectifs_jours_travail', { equipeId: d.equipe, annee: Number(d.annee), jours }, 'equipe_id,annee'), 'objectifsTravail');
   },
   choisirPinceau: d => majUi('conges', { pinceau: d.id }),
+  choisirDuree: d => majUi('conges', { duree: Number(d.duree) }),
 
-  // Clic sur un jour : applique le type choisi, ou retire l'absence si c'est le même type (ou « Effacer »)
+  /* Clic sur un jour : pose le type et la durée choisis (journée ou demi-journée) ; retire l'absence si elle a déjà
+     ce type et cette durée (ou avec « Effacer ») ; même type mais autre durée : la durée est changée */
   basculerAbsence(d) {
-    const pinceau = Ecrans.conges.pinceau();
-    // (un clic pose toujours une journée entière ; les demi-journées viennent de l'import du planning)
+    const pinceau = Ecrans.conges.pinceau(), duree = Ecrans.conges.duree();
     const existante = absenceDe(d.ressource, d.jour);
     const filtre = { ressource_id: 'eq.' + d.ressource, jour: 'eq.' + d.jour };
-    if (pinceau === 'effacer' || (existante && existante.type === pinceau)) {
+    if (pinceau === 'effacer' || (existante && existante.type === pinceau && Number(existante.duree || 1) === duree)) {
       if (existante) executer(() => Api.supprimer('absences', filtre), 'absences');
     } else {
-      executer(() => Api.creer('absences', { ressourceId: d.ressource, jour: d.jour, type: pinceau, duree: 1 }, 'ressource_id,jour'), 'absences');
+      executer(() => Api.creer('absences', { ressourceId: d.ressource, jour: d.jour, type: pinceau, duree }, 'ressource_id,jour'), 'absences');
     }
   }
 });
