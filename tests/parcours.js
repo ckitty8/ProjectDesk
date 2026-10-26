@@ -433,21 +433,23 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.$$('.calendrier tr.ligne-synthese')).length === 1);
     await page.click('[data-action="vueCalendrier"][data-mode="equipe"]'); await page.waitForTimeout(150);
     await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
-    // Récap annuel : T / C par mois et totaux (plus d'objectif de jours du client ni de reste à prendre, porteur 2026-10-25)
-    verifier('Congés : récap annuel (travaillés et congés, sans objectif client ni reste à prendre)', !(await texte()).includes('Reste à')
-      && !(await page.$('td[data-action="basculerAbsence"]')) && !(await page.$('input[data-action-change="objectifTravail"]'))
-      && await page.evaluate(() => { const r = Calculs.recapJoursTravailles('x', 2026, [], new Set()); return r.travailles === 261 && r.conges === 0; }));
+    // Récap annuel : T / C par mois et reste à prendre = total travaillé − objectif client de l'équipe
+    verifier('Congés : récap annuel (travaillés, congés, reste à prendre)', (await texte()).includes('Reste à') && !(await page.$('td[data-action="basculerAbsence"]'))
+      && await page.evaluate(() => { const r = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218); return r.travailles === 261 && r.reste === 43; }));
+    await page.fill('input.objectif-client >> nth=0', '220'); await page.press('input.objectif-client >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    verifier('Congés : objectif client modifiable par équipe et par année', await page.evaluate(() => etat.d.objectifsTravail.some(o => Number(o.jours) === 220 && Number(o.annee) === 2026))
+      && (await page.inputValue('input.objectif-client >> nth=0')) === '220');
     // Colonne C = congés seuls : novembre 2026 a 2 fériés en semaine (le 11 ; le 1er est un dimanche → 1)
     // et une demi-journée le 13 → C = 0,5, fériés comptés à part, T = 21 − 1 − 0,5
     verifier('Récap : les jours fériés ne sont pas comptés comme congés', await page.evaluate(() => {
       const m = Calculs.joursTravaillesMois('x', 2026, 10, [{ ressourceId: 'x', jour: '2026-11-13', type: 'Congés validé', duree: 0.5 }], new Set(['2026-11-01', '2026-11-11']));
       return m.conges === 0.5 && m.feries === 1 && m.travailles === 19.5;
     }));
-    // Arrivée le 1er avril 2026 : janvier à mars hors présence
-    verifier('Récap : date d’arrivée — mois hors présence', await page.evaluate(() => {
-      const rc = Calculs.recapJoursTravailles('x', 2026, [], new Set(), { dateArrivee: '2026-04-01' });
+    // Arrivée le 1er avril 2026 : janvier à mars hors présence, objectif 218 proratisé (197 / 261 jours de semaine)
+    verifier('Récap : date d’arrivée — mois hors présence et objectif proratisé', await page.evaluate(() => {
+      const rc = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218, { dateArrivee: '2026-04-01' });
       const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
-      return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && cap.theorique === 0;
+      return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
     }));
     // Sprints : sans sprint saisi au départ ; ils se saisissent dans Mon dashboard › Projets et Roadmap › Sprints (2026-10-23)
     const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);

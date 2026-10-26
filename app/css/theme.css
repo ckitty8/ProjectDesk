@@ -243,6 +243,8 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .recap-travail .tot { background: #F3F6FF; font-weight: 600; }
 .recap-travail tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; }
 .recap-travail tr.total td { font-weight: 600; background: var(--fond-entete); }
+.recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
+.reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }
 
 
 /* Trucs et astuces : tableau des KPI et badges d'exemple */

@@ -41,7 +41,7 @@ const TABLES = {
   equipes: 'equipes', ressources: 'ressources', projets: 'projets', affectations: 'affectations',
   referentiels: 'referentiels',
   valeurs: 'valeurs_referentiel', joursFeries: 'jours_feries',
-  absences: 'absences', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
+  absences: 'absences', objectifsTravail: 'objectifs_jours_travail', sprintsProjet: 'sprints_projet', repartitionsSprint: 'repartitions_sprint',
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   createur: 'createur',
@@ -81,7 +81,7 @@ const couleurSure = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : COULEURS.pale;
 
 // Clé unique de chaque table (défaut : id) : ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES = {
-  envoisDaily: 'projet_id', absences: 'ressource_id,jour', sprintsProjet: 'projet_id,numero',
+  envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', createur: 'user_id',
   responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
@@ -253,7 +253,7 @@ function mesEquipes() {
 }
 const estMembreDe = equipeId => mesEquipes().some(e => e.id === equipeId);
 const estResponsableDe = equipeId => etat.estCreateur || ['owner', 'admin'].includes(etat.rolesEquipe[equipeId]);
-// Gérer une équipe (membres, invitations, rôle d'accès) : administrateur ou responsable de l'équipe
+// Gérer une équipe (membres, invitations, objectif de jours, rôle d'accès) : administrateur ou responsable de l'équipe
 const peutGererEquipe = equipeId => (etat.estAdmin || estResponsableDe(equipeId)) && aDroit('fiches_ressources');
 // Valider / renvoyer les feuilles de temps d'une équipe : responsable de l'équipe et droit de la matrice
 const peutValiderEquipe = equipeId => estResponsableDe(equipeId) && aDroit('valider_timesheet');
@@ -303,12 +303,12 @@ function equipesGerees() {
    peut_voir_projet / peut_voir_ressource / peut_voir_temps / peut_voir_equipe pour que la simulation montre
    exactement ce que verrait la personne. Les données complètes restent dans etat.brut. */
 const CLES_PERIMETRE = ['ressources', 'projets', 'affectations', 'absences', 'temps', 'feuilles', 'sprintsProjet',
-  'repartitionsSprint', 'misesEnProduction', 'envoisDaily'];
+  'repartitionsSprint', 'misesEnProduction', 'envoisDaily', 'objectifsTravail'];
 function appliquerPerimetre() {
   CLES_PERIMETRE.forEach(cle => { if (etat.brut[cle]) etat.d[cle] = etat.brut[cle]; });   // données complètes d'abord
   if (!etat.simulation) return;
   const b = etat.brut, gerees = equipesGerees(), moi = maRessource();
-  const moiId = moi ? moi.id : null;
+  const moiId = moi ? moi.id : null, monEquipe = moi ? moi.equipeId : null;
   const mesProjets = new Set(b.affectations.filter(a => a.ressourceId === moiId).map(a => a.projetId));
   const projetsVus = new Set(b.projets.filter(p => gerees.has(p.equipeId) || p.chefId === moiId || mesProjets.has(p.id)).map(p => p.id));
   const collegues = new Set(b.affectations.filter(a => mesProjets.has(a.projetId)).map(a => a.ressourceId));
@@ -316,6 +316,7 @@ function appliquerPerimetre() {
   const equipeDe = id => (b.ressources.find(r => r.id === id) || {}).equipeId;
   const voitPersonne = id => id === moiId || gerees.has(equipeDe(id)) || collegues.has(id) || rattaches.has(id);
   const voitTemps = id => id === moiId || gerees.has(equipeDe(id));
+  const voitEquipe = id => gerees.has(id) || (!!monEquipe && id === monEquipe);
   const parProjet = lignes => lignes.filter(x => projetsVus.has(x.projetId));
   Object.assign(etat.d, {
     projets: b.projets.filter(p => projetsVus.has(p.id)), affectations: parProjet(b.affectations),
@@ -323,6 +324,7 @@ function appliquerPerimetre() {
     temps: b.temps.filter(t => voitTemps(t.ressourceId)), feuilles: b.feuilles.filter(f => voitTemps(f.ressourceId)),
     sprintsProjet: parProjet(b.sprintsProjet), repartitionsSprint: parProjet(b.repartitionsSprint),
     misesEnProduction: parProjet(b.misesEnProduction), envoisDaily: parProjet(b.envoisDaily),
+    objectifsTravail: b.objectifsTravail.filter(o => voitEquipe(o.equipeId))
   });
 }
 
@@ -557,6 +559,11 @@ const sprintDejaPris = (projetId, annee, numeroSprint, saufNumero = null) => (et
 // Année d'un sprint : saisie (migration 015), sinon celle de sa date de début
 const anneeSprint = s => Number(s.annee) || Number((s.debut || '').slice(0, 4));
 const feries = () => new Set((etat.d.joursFeries || []).map(j => j.jour));
+// Jours de travail attendus par le client pour une équipe et une année (défaut : config.js)
+const objectifJoursTravail = (equipeId, annee) => {
+  const o = (etat.d.objectifsTravail || []).find(x => x.equipeId === equipeId && Number(x.annee) === annee);
+  return o ? Number(o.jours) : CONFIG.JOURS_TRAVAIL_CLIENT_DEFAUT;
+};
 
 /* ---------- Mémoire locale (préférences du poste uniquement) ---------- */
 function lireMemoire(cle) { try { return localStorage.getItem('pp_' + cle); } catch (e) { return null; } }

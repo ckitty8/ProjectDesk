@@ -105,12 +105,17 @@ const Calculs = (() => {
     const conges = semaine.filter(j => !feries.has(j)).reduce((s, j) => s + (absent.get(j) || 0), 0);
     return { ouvres: semaine.length, feries: nbFeries, travailles: semaine.length - nbFeries - conges, conges };
   }
-  // Récap annuel d'une personne : 12 mois (jours travaillés et congés) et leurs totaux.
-  // Les jours avant l'arrivée ou après le départ ne comptent pas (voir joursTravaillesMois).
-  function recapJoursTravailles(ressourceId, annee, absences, feries, presence = {}) {
+  // Récap annuel d'une personne : 12 mois, totaux, et « reste à prendre » = total travaillé − objectif
+  // (jours de travail attendus par le client pour l'équipe et l'année ; négatif = jours pris en trop)
+  // Arrivée ou départ en cours d'année (décision du porteur 2026-09-27) : objectif proratisé =
+  // objectif × jours de semaine de présence ÷ jours de semaine de l'année, arrondi à la demi-journée.
+  function recapJoursTravailles(ressourceId, annee, absences, feries, objectif, presence = {}) {
     const mois = Array.from({ length: 12 }, (_, m) => joursTravaillesMois(ressourceId, annee, m, absences, feries, presence));
     const travailles = mois.reduce((s, m) => s + m.travailles, 0), conges = mois.reduce((s, m) => s + m.conges, 0);
-    return { mois, travailles, conges };
+    const ouvresAnnee = Array.from({ length: 12 }, (_, m) => joursDuMois(annee, m).filter(j => !estWeekend(j)).length).reduce((a, b) => a + b, 0);
+    const ouvresPresence = mois.reduce((s, m) => s + m.ouvres, 0);
+    const objectifPersonne = Math.round(objectif * ouvresPresence / ouvresAnnee * 2) / 2;
+    return { mois, travailles, conges, objectif: objectifPersonne, reste: travailles - objectifPersonne };
   }
 
   // Capacité « type » Scrum d'une équipe pour un sprint (information) :
