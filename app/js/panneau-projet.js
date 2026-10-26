@@ -1,8 +1,9 @@
 /* ============================================================
    Panneau latéral « Projet » (maquette 11-panneau-projet.png)
    - Détail réduit à la demande du porteur (2026-09-25) : nom,
-     description, chef de projet, équipe projet (membres et rôles).
-     Résultat clé, période, statut, avancement et tickets ne
+     description, chef de projet, équipe projet (membres et rôles) ;
+     + statut (2026-10-26, liste « Statuts projet » d'Administration › Référentiels).
+     Résultat clé, période, avancement et tickets ne
      sont plus affichés ici (colonnes conservées en base).
      Modifiable si peutEditerProjet (sinon lecture) ; suppression du
      projet par un membre de son équipe (règle RLS).
@@ -39,6 +40,8 @@ const Panneau = {
         ${editable ? champ('description', `<textarea class="champ" rows="2" placeholder="Description" <CHAMP>${esc(p.description || '')}</textarea>`)
           : p.description ? `<div>${esc(p.description)}</div>` : ''}
         <div class="infos">
+          <span>Statut</span><span>${editable ? champ('statut', C.liste(statutsProposes(p), p.statut, 'class="champ largeur-auto" <CHAMP'))
+            : C.badgeRef('stp', p.statut)}</span>
           <span>Méthode</span><span>${editable ? champ('methode', C.liste([{ valeur: '', libelle: '— à choisir —' }, ...valeursDe('methode').map(v => v.libelle)],
             p.methode || '', 'class="champ largeur-auto" <CHAMP'))
             : p.methode ? C.badgeRef('methode', p.methode) : '—'}</span>
@@ -89,6 +92,13 @@ const Panneau = {
       <div class="panneau-pied"><button type="button" class="btn" data-action="fermer">Annuler</button><button class="btn primaire">Créer le projet</button></div>
     </form></aside>`;
   }
+};
+
+// Statuts proposés pour un projet : les valeurs actives du référentiel « stp » (Administration › Référentiels, où l'on en ajoute),
+// plus le statut actuel du projet s'il a été désactivé depuis, pour ne pas le perdre à l'affichage
+const statutsProposes = p => {
+  const libelles = valeursDe('stp').map(v => v.libelle);
+  return libelles.includes(p.statut) ? libelles : [p.statut, ...libelles];
 };
 
 Object.assign(Actions, {

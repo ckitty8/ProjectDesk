@@ -361,9 +361,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Panneau projet (édition, section Mon dashboard) : PF-14, projet dont Camille est cheffe
     await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
     await capture('10-panneau-projet');
-    verifier('Panneau : ni objectif, ni période, ni statut, ni avancement, ni tickets',
-      !(await page.$('.panneau [data-champ="statut"], .panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
-      && !(await page.textContent('.panneau')).includes('Résultat clé'));
+    verifier('Panneau : ni objectif, ni période, ni avancement, ni tickets (le statut, lui, est modifiable)',
+      !(await page.$('.panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
+      && !(await page.textContent('.panneau')).includes('Résultat clé') && !!(await page.$('.panneau select[data-champ="statut"]')));
+    // Statut du projet modifiable par le chef de projet ou le responsable ; un statut ajouté dans Administration › Référentiels est proposé
+    await page.evaluate(() => { const f = document.createElement('form'); f.innerHTML = '<input name="libelle" value="En pause">'; Actions.ajouterValeur({ ref: 'stp' }, f); });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
+    const statutsPanneau = await page.$$eval('.panneau select[data-champ="statut"] option', o => o.map(x => x.textContent.trim()));
+    await page.selectOption('.panneau select[data-champ="statut"]', 'En pause'); await page.waitForTimeout(400);
+    verifier('Panneau projet : statut modifiable, statut ajouté dans les référentiels proposé et enregistré',
+      statutsPanneau.includes('En pause') && statutsPanneau.includes('Planifié') && await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').statut === 'En pause'),
+      statutsPanneau.join(', '));
+    await page.selectOption('.panneau select[data-champ="statut"]', 'À risque'); await page.waitForTimeout(400);
     await page.click('.fermer');
     /* Mon dashboard › Projets et Roadmap › MEP (2026-10-23) : saisie des mises en production des projets modifiables */
     const nbMep = async () => page.$$eval('[data-action-change="majMep"][data-champ="jour"]', l => l.length);
