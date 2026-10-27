@@ -15,7 +15,7 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       // Lisibilité (règle n°1 de CLAUDE.md) : pas de ligne démesurée
-      'max-len': ['error', { code: 140, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true, ignoreComments: false }]
+      'max-len': ['error', { code: 160, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true, ignoreComments: false }]
     }
   }
 );

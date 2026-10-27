@@ -14,4 +14,6 @@ Déploiement : `vercel.json` à la racine lance `npm --prefix web ci && npm --pr
 la racine du dépôt (`/app/` versionné, `/v2/` construit).
 
 Organisation du code : `src/main.tsx` (point d'entrée), `src/App.tsx` (routes), `src/routes.ts` (table des écrans).
-La logique métier (`domaine/`), les données (`donnees/`) et les écrans (`ecrans/`) arrivent aux phases 2 à 5.
+`src/domaine/` : logique métier pure en TypeScript (phase 2) — `config`, `types`, `dates`, `calculs`, `daily`, `droits`, `perimetre`, `menus`,
+chacun avec ses tests (`*.test.ts`) ; `parite.test.ts` compare le portage à l'ancien `app/js/calculs.js` (temporaire).
+Les données (`donnees/`), les composants et les écrans arrivent aux phases 3 à 5.

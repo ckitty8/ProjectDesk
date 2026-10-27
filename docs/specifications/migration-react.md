@@ -67,7 +67,7 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 
 - [x] Phase 0 — Cadrage (2026-10-27)
 - [x] Phase 1 — Socle (2026-10-27)
-- [ ] Phase 2 — Logique métier typée
+- [x] Phase 2 — Logique métier typée (2026-10-27)
 - [ ] Phase 3 — Données et session
 - [ ] Phase 4 — Composants de base
 - [ ] Phase 5 — Écrans (A, B, C, D)
