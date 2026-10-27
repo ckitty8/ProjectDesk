@@ -150,3 +150,28 @@ export const DROITS: readonly Droit[] = [
   { cle: 'onglet_astuces_test_learn', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Test & Learn', ecran: 'astuces', id: 'testLearn',
     libelle: 'Fiche pratique Test & Learn', repli: 'general' }
 ];
+
+/* ---------- Palette et tons (charte de la maquette pilotage-projet/) ---------- */
+
+/** Couleurs utilisées par le code. Celles des équipes et des valeurs de référentiel sont en base (administrables). */
+export const COULEURS = {
+  primaire: '#003CC8', barreClaire: '#8CA6E8', succes: '#0F8A6B', alerte: '#D98A1C', danger: '#D14343',
+  violet: '#7A3FC2', createur: '#5B2A9E', orange: '#B25E09', neutre: '#4A5363', pale: '#8A93A3', effacer: '#B3BAC7'
+} as const;
+
+/** Tons des badges : couleur du texte et du fond */
+export const TONS = {
+  neutre: { texte: '#4A5363', fond: '#F1F3F7' }, succes: { texte: '#0B6B4F', fond: '#E3F5EC' },
+  info: { texte: '#0033AD', fond: '#E8EEFF' }, attention: { texte: '#8A4B00', fond: '#FFF3E0' },
+  violet: { texte: '#5B2DA0', fond: '#EDE6FA' }
+} as const;
+export type Ton = keyof typeof TONS;
+
+/** Statuts d'une feuille de temps (contrainte CHECK en base) et leur affichage */
+export const STATUTS_FEUILLE = {
+  en_saisie: { libelle: 'En saisie', fond: '#E8EEFF', texte: '#0033AD' },
+  soumise: { libelle: 'Soumise', fond: '#F1E9FB', texte: '#5E2CA5' },
+  validee: { libelle: 'Validée', fond: '#E3F5EC', texte: '#0B6B4F' },
+  a_completer: { libelle: 'À compléter', fond: '#FFF1DC', texte: '#8A4B00' }
+} as const;
+export type StatutFeuille = keyof typeof STATUTS_FEUILLE;

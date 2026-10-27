@@ -5,14 +5,17 @@
    ============================================================ */
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
+import { BandeauSimulation } from './composants/BandeauSimulation';
+import { Catalogue } from './ecrans/Catalogue';
 import { Connexion } from './ecrans/Connexion';
 import { Diagnostic } from './ecrans/Diagnostic';
 import { SessionProvider, useSession } from './donnees/SessionProvider';
+import { libelleRoleSimule, decoderChoixSimulation } from './donnees/simulation';
 import { titrePage } from './routes';
 
 /** Écran selon l'état de la session : chargement, erreur, connexion, ou page de l'application */
 function Contenu() {
-  const { etat, erreur, recharger } = useSession();
+  const { etat, erreur, recharger, simulation, ctx, choixSimulation, demarrerSimulation, arreterSimulation } = useSession();
   if (etat === 'chargement') return <main className="boite-socle"><p>Chargement…</p></main>;
   if (etat === 'erreur') {
     return (
@@ -24,10 +27,18 @@ function Contenu() {
     );
   }
   if (etat === 'deconnecte') return <Connexion />;
+  const fiche = simulation && ctx ? ctx.ressources.find(r => r.id === simulation.ressourceId) : undefined;
   return (
-    <Routes>
-      <Route path="*" element={<Diagnostic />} />
-    </Routes>
+    <>
+      {simulation && (
+        <BandeauSimulation libelleRole={libelleRoleSimule(simulation.cle)} nomPersonne={fiche?.nom} choix={choixSimulation}
+          onChanger={v => demarrerSimulation(decoderChoixSimulation(v))} onArreter={arreterSimulation} />
+      )}
+      <Routes>
+        <Route path="/composants" element={<Catalogue />} />
+        <Route path="*" element={<Diagnostic />} />
+      </Routes>
+    </>
   );
 }
 

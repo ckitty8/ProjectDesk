@@ -18,6 +18,7 @@ import type { ResultatChargement } from './chargement';
 import { construireVue, identiteReelle } from './contexte';
 import { mesEquipes } from '../domaine/droits';
 import type { ContexteDroits, Simulation } from '../domaine/droits';
+import { choixSimulation } from './simulation';
 import type { Donnees } from './tables';
 
 export type EtatSession = 'chargement' | 'deconnecte' | 'erreur' | 'pret';
@@ -37,6 +38,8 @@ export interface ValeurSession {
   equipeCourante: string | null;
   choisirEquipe: (id: string) => void;
   simulation: Simulation | null;
+  /** Rôles et personnes proposés pour changer de simulation (calculés sur toutes les fiches, pas sur le périmètre simulé) */
+  choixSimulation: { valeur: string; libelle: string }[];
   demarrerSimulation: (simulation: Simulation) => void;
   arreterSimulation: () => void;
   seConnecter: (email: string, motDePasse: string) => Promise<void>;
@@ -113,6 +116,8 @@ function Interne({ children }: { children: ReactNode }) {
     : !compte ? 'deconnecte' : 'pret';
   const erreurBrute = compteQ.error ?? donneesQ.error;
 
+  const choixPourBandeau = useMemo(() => (brutes ? choixSimulation(brutes.ressources) : []), [brutes]);
+
   const valeur: ValeurSession = {
     etat,
     erreur: erreurBrute ? (erreurBrute as Error).message : null,
@@ -124,6 +129,7 @@ function Interne({ children }: { children: ReactNode }) {
     equipeCourante,
     choisirEquipe: id => { memoriserEquipe(id); setEquipeChoisie(id); },
     simulation,
+    choixSimulation: choixPourBandeau,
     demarrerSimulation: setSimulation,
     arreterSimulation: () => setSimulation(null),
     seConnecter: async (email, motDePasse) => {

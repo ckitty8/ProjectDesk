@@ -69,6 +69,6 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 1 — Socle (2026-10-27)
 - [x] Phase 2 — Logique métier typée (2026-10-27)
 - [x] Phase 3 — Données et session (2026-10-27)
-- [ ] Phase 4 — Composants de base
+- [x] Phase 4 — Composants de base (2026-10-27)
 - [ ] Phase 5 — Écrans (A, B, C, D)
 - [ ] Phase 6 — Bascule et nettoyage

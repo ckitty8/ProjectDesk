@@ -6,6 +6,8 @@
    l'équipe, fiche ressource) est remplacée par celle de la personne choisie, calculée d'après sa fiche. LECTURE SEULE :
    le client API refuse toute écriture (api.ts, definirSimulationActive), car la base appliquerait les droits réels du créateur.
    ============================================================ */
+import { LIBELLES_ROLES, ROLES_CHOISISSABLES } from '../domaine/config';
+import type { RoleAcces } from '../domaine/config';
 import { responsablesDe } from '../domaine/droits';
 import type { ContexteDroits, Simulation } from '../domaine/droits';
 import type { Ressource } from '../domaine/types';
@@ -34,4 +36,26 @@ export function identiteSimulee(base: ContexteDroits, simulation: Simulation, fi
     organisations: equipe ? [{ id: equipe.id }] : [],
     rolesEquipe: equipe ? { [equipe.id]: estResponsable ? 'owner' : 'member' } : {}
   };
+}
+
+/* ---------- Choix du rôle et de la personne (bandeau et page de simulation) ---------- */
+
+/** Libellé d'un rôle simulé (« Compte en attente » pour un compte sans équipe) */
+export const libelleRoleSimule = (cle: string): string =>
+  cle === ROLE_SANS_EQUIPE ? 'Compte en attente' : LIBELLES_ROLES[cle as RoleAcces] ?? cle;
+
+/** Liste « rôle — personne » du bandeau : un choix par rôle et par fiche (valeur « rôle|fiche »), puis le compte en attente.
+ *  Toutes les fiches sont proposées, par ordre alphabétique : le rôle de la carte leur est appliqué le temps de la simulation. */
+export function choixSimulation(ressources: readonly Pick<Ressource, 'id' | 'nom'>[]): { valeur: string; libelle: string }[] {
+  const triees = [...ressources].sort((a, b) => a.nom.localeCompare(b.nom));
+  return [
+    ...ROLES_CHOISISSABLES.flatMap(role => triees.map(r => ({ valeur: `${role}|${r.id}`, libelle: `${libelleRoleSimule(role)} — ${r.nom}` }))),
+    { valeur: `${ROLE_SANS_EQUIPE}|`, libelle: libelleRoleSimule(ROLE_SANS_EQUIPE) }
+  ];
+}
+
+/** Décode une valeur « rôle|fiche » du bandeau */
+export function decoderChoixSimulation(valeur: string): Simulation {
+  const [cle = '', ressourceId = ''] = valeur.split('|');
+  return { cle, ressourceId: ressourceId || null };
 }

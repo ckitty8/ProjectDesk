@@ -5,6 +5,7 @@
    Elle disparaît quand les écrans réels prennent la place (phase 5).
    ============================================================ */
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSession } from '../donnees/SessionProvider';
 import { CLES_TABLES, TABLES } from '../donnees/tables';
 import { ROLE_SANS_EQUIPE } from '../donnees/simulation';
@@ -68,6 +69,7 @@ export function Diagnostic() {
         <button className="btn" onClick={() => void recharger()}>Recharger les données</button>{' '}
         <button className="btn" onClick={() => void seDeconnecter()}>Se déconnecter</button>
       </p>
+      <p><Link to="/composants">Catalogue des composants</Link></p>
       <p><a href="/app/">Ouvrir l’application actuelle</a></p>
     </main>
   );

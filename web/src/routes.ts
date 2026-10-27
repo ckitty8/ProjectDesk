@@ -8,7 +8,8 @@ export interface Route {
 }
 
 export const ROUTES: readonly Route[] = [
-  { chemin: '/', titre: 'Session' }
+  { chemin: '/', titre: 'Session' },
+  { chemin: '/composants', titre: 'Catalogue des composants' }
 ];
 
 // Titre de l'onglet du navigateur pour une adresse (« ProjectDesk » si l'écran est inconnu)

@@ -11,5 +11,5 @@ export default defineConfig({
   base: '/v2/',
   plugins: [react()],
   build: { outDir: '../v2', emptyOutDir: true },
-  test: { environment: 'node', include: ['src/**/*.test.ts'] }
+  test: { environment: 'node', include: ['src/**/*.test.{ts,tsx}'] }
 });

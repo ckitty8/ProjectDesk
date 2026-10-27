@@ -11,8 +11,10 @@
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const PORT = 8125, BASE = `http://localhost:${PORT}`;
+const CAPTURES = path.resolve(__dirname, '../docs/maquettes/catalogue-composants');
 const resultats = [];
 const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!condition, detail }); };
 
@@ -78,11 +80,46 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('[data-testid=simulation-en-cours]');
     verifier('Simulation : le rôle simulé remplace celui du créateur', !(await page.textContent('[data-testid=role]')).includes('Créateur'));
     verifier('Simulation : les données sont limitées au périmètre de la personne', await lignes('projets') < projetsReels);
+    verifier('Simulation : le bandeau violet est affiché', await page.locator('.bandeau-simulation').count() === 1);
     verifier('Simulation : une seule équipe', (await page.locator('select[aria-label="Équipe ouverte"] option').count()) === 1);
-    await page.click('text=Arrêter la simulation');
+    await page.click('text=Revenir à mon rôle de créateur');
     await page.waitForFunction(() => !document.querySelector('[data-testid=simulation-en-cours]'));
+    verifier('Fin de simulation : le bandeau disparaît', await page.locator('.bandeau-simulation').count() === 0);
     verifier('Fin de simulation : données complètes de nouveau', await lignes('projets') === projetsReels);
     verifier('Fin de simulation : le créateur est de retour', (await page.textContent('[data-testid=role]')).includes('Créateur'));
+
+
+    /* ---------- Catalogue des composants (/v2/composants) ---------- */
+    await page.click('text=Catalogue des composants');
+    await page.waitForSelector('section[aria-label="Boutons"]');
+    const section = nom => page.locator(`section[aria-label="${nom}"]`);
+    verifier('Catalogue : toutes les sections sont présentes', await page.locator('.section-catalogue').count() === 9);
+    await section('Onglets').getByRole('tab', { name: /Équipe/ }).click();
+    verifier('Onglets : le clic change l\'onglet actif', (await page.textContent('[data-testid=onglet-actif]')).includes('b'));
+    await section('Tableau').locator('tr.cliquable', { hasText: 'Thomas Bernard' }).click();
+    verifier('Tableau : le clic sur une ligne l\'ouvre', (await page.textContent('[data-testid=ligne-ouverte]')).includes('Thomas Bernard'));
+    verifier('Tableau : une ligne inactive est grisée', await section('Tableau').locator('tr.inactive').count() === 1);
+    await page.click('text=Ouvrir le panneau');
+    verifier('Panneau : s\'ouvre avec son titre', await page.locator('.panneau[role=dialog] h2').textContent() === 'Projet VISTA');
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Panneau : la croix le ferme', await page.locator('.panneau').count() === 0);
+    await page.click('text=Ouvrir la fenêtre');
+    await page.keyboard.press('Escape');
+    verifier('Fenêtre modale : Échap la ferme', await page.locator('.modale').count() === 0);
+    await page.click('text=Ouvrir la fenêtre');
+    await page.click('[data-testid=voile]', { position: { x: 5, y: 5 } });
+    verifier('Fenêtre modale : un clic sur le voile la ferme', await page.locator('.modale').count() === 0);
+    const calendrier = section('Calendrier');
+    verifier('Calendrier : novembre 2026 affiché (30 jours)', (await calendrier.textContent('b')).includes('novembre 2026') && await calendrier.locator('thead th').count() === 30 + 2);
+    verifier('Calendrier : congé, demi-journée et jour férié affichés', await calendrier.locator('.case-absence').count() >= 3 && (await calendrier.textContent('.calendrier')).includes('CP½'));
+    await calendrier.locator('td.cliquable').first().click();
+    verifier('Calendrier : le clic sur une case est transmis à l\'écran', (await page.textContent('[data-testid=ligne-ouverte]')).startsWith('Ligne ouverte : absence'));
+    await calendrier.getByRole('button', { name: 'Mois suivant' }).click();
+    verifier('Calendrier : navigation vers décembre 2026', (await calendrier.textContent('b')).includes('décembre 2026'));
+    await calendrier.getByRole('button', { name: 'Mois précédent' }).click();
+    fs.mkdirSync(CAPTURES, { recursive: true });
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.screenshot({ path: path.join(CAPTURES, 'catalogue.png'), fullPage: true });
 
     verifier('Aucune erreur JavaScript', erreurs.length === 0, erreurs.join(' | '));
   } finally {
