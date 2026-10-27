@@ -456,3 +456,6 @@ select.niveau-non { color: var(--pale); }
 .section-catalogue { display: flex; flex-direction: column; gap: 10px; }
 .section-catalogue h2 { margin: 0; font-size: 16px; }
 .grille-kpi { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+/* Cartes d'information d'un écran (aucune équipe, écran non ouvert) */
+.encart-info-ecran { padding: 20px; max-width: 640px; }
+.lien-btn.moi-sortie { color: #7F8BA8; font: inherit; font-size: 11.5px; }

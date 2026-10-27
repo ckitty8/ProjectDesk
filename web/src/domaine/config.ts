@@ -9,6 +9,14 @@
 
 /** Paramètres techniques non administrables (source : app/js/config.js, valeurs du porteur) */
 export const CONFIG = {
+  // Nom de l'application affiché (barre latérale, connexion, onglet du navigateur)
+  NOM_APPLICATION: 'ProjectDesk',
+  // Propriétaire du logiciel (licence propriétaire LICENSE, demande du porteur 2026-10-12) : mention « © année propriétaire »
+  PROPRIETAIRE: 'CIRITEC',
+  ANNEE_DROITS: 2026,
+  // Adresse « Contacter l'administrateur » du menu Aide (vide : lien masqué)
+  CONTACT_AIDE: '',
+
   // Jours de travail attendus par le client par personne et par an, si l'équipe n'a pas d'objectif saisi
   // pour l'année (table objectifs_jours_travail ; valeur du fichier du porteur)
   JOURS_TRAVAIL_CLIENT_DEFAUT: 218,

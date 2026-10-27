@@ -63,6 +63,14 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - **Double maintenance** : limitée par le gel.
 - **Réglages Vercel** (dossier racine, commande de build) : à confirmer dans la console Vercel du projet ; le build est déclaré dans `vercel.json`.
 
+## Notes de la phase 5
+
+- Vague A livrée : Connexion, Choix d'équipe, Dashboard général, Trucs et astuces, avec la coquille (barre latérale, en-tête, Aide).
+  Les adresses sont dans `web/src/routes.ts` ; un écran non migré affiche « pas encore migré » (`migre: false`).
+- Reste de la vague A à compléter en vague B : un clic sur un projet à surveiller (Dashboard) ouvre le panneau du projet.
+- Pour migrer un écran : composant dans `web/src/ecrans/`, entrée dans `web/src/ecrans/index.ts`, `migre: true` dans `routes.ts`,
+  contrôles dans `tests/v2.js`, captures comparées à `docs/maquettes/etat-actuel/`.
+
 ## Avancement
 
 - [x] Phase 0 — Cadrage (2026-10-27)
@@ -70,5 +78,5 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 2 — Logique métier typée (2026-10-27)
 - [x] Phase 3 — Données et session (2026-10-27)
 - [x] Phase 4 — Composants de base (2026-10-27)
-- [ ] Phase 5 — Écrans (A, B, C, D)
+- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [ ] B, [ ] C, [ ] D
 - [ ] Phase 6 — Bascule et nettoyage

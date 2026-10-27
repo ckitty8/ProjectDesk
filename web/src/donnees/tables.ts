@@ -8,7 +8,8 @@
    ============================================================ */
 import { ajouterJours } from '../domaine/dates';
 import type { Absence, Affectation, CompteAdmin, Equipe, EnvoiDaily, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, ObjectifJoursTravail, Projet,
-  Rattachement, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi } from '../domaine/types';
+  Rattachement, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
+import type { JourFerie } from '../domaine/calendrier';
 import type { Ligne } from './api';
 
 /** Données chargées, par clé applicative (mêmes clés que etat.d dans l'application actuelle) */
@@ -33,8 +34,8 @@ export interface Donnees {
   administrateurs: readonly CompteAdmin[];
   createur: readonly CompteAdmin[];
   referentiels: readonly Ligne[];
-  valeurs: readonly Ligne[];
-  joursFeries: readonly Ligne[];
+  valeurs: readonly ValeurReferentiel[];
+  joursFeries: readonly JourFerie[];
   notesProjet: readonly Ligne[];
 }
 export type CleTable = keyof Donnees;

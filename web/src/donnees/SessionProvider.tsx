@@ -8,9 +8,10 @@
    La simulation de rôle (créateur seul) est un état local : elle ne relit rien, elle filtre les données déjà lues.
    ============================================================ */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
-import { connecter, deconnecter, definirSimulationActive } from './api';
+import { activerOrganisation, connecter, deconnecter, definirSimulationActive } from './api';
 import { chargerComptesEnAttente, chargerRoles, equipeAOuvrir, lireEquipeMemorisee, memoriserEquipe, ouvrirCompte } from './compte';
 import type { Compte, CompteEnAttente, RolesEquipes } from './compte';
 import { chargerDonnees } from './chargement';
@@ -46,6 +47,8 @@ export interface ValeurSession {
   seDeconnecter: () => Promise<void>;
   /** Relit les données (après une écriture, ou sur demande) */
   recharger: () => Promise<void>;
+  /** Relit tout : compte, équipes, invitations, données (après une connexion, une invitation acceptée…) */
+  actualiser: () => Promise<void>;
 }
 
 const Contexte = createContext<ValeurSession | null>(null);
@@ -62,6 +65,7 @@ export const creerClientRequetes = (): QueryClient =>
 
 function Interne({ children }: { children: ReactNode }) {
   const client = useQueryClient();
+  const navigate = useNavigate();
   const [simulation, setSimulation] = useState<Simulation | null>(null);
   const [equipeChoisie, setEquipeChoisie] = useState<string | null>(null);
 
@@ -127,7 +131,8 @@ function Interne({ children }: { children: ReactNode }) {
     tablesEnEchec: donneesQ.data?.echecs ?? [],
     comptesEnAttente: simulation && !vue?.ctx.estAdmin ? [] : comptesQ.data ?? [],
     equipeCourante,
-    choisirEquipe: id => { memoriserEquipe(id); setEquipeChoisie(id); },
+    // Équipe mémorisée sur ce poste et déclarée « active » côté Neon Auth (sans attendre la réponse)
+    choisirEquipe: id => { memoriserEquipe(id); setEquipeChoisie(id); activerOrganisation(id).catch(() => undefined); },
     simulation,
     choixSimulation: choixPourBandeau,
     demarrerSimulation: setSimulation,
@@ -144,8 +149,10 @@ function Interne({ children }: { children: ReactNode }) {
       client.removeQueries({ queryKey: ['donnees'] });
       client.removeQueries({ queryKey: ['roles'] });
       client.removeQueries({ queryKey: ['comptesEnAttente'] });
+      navigate('/', { replace: true });      // la prochaine connexion repart de l'écran d'arrivée, pas de l'écran quitté
     },
-    recharger: async () => { await client.invalidateQueries({ queryKey: ['donnees'] }); }
+    recharger: async () => { await client.invalidateQueries({ queryKey: ['donnees'] }); },
+    actualiser: async () => { await client.invalidateQueries(); }
   };
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

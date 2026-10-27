@@ -68,7 +68,7 @@ export function Catalogue() {
   return (
     <main className="catalogue">
       <EnteteEcran titre="Catalogue des composants" sousTitre="Briques de base de la nouvelle application (phase 4 de la migration)"
-        actions={<a href="/v2/">Retour à la session</a>} />
+        actions={<a href="/v2/session">Retour à la session</a>} />
 
       <Section titre="Boutons" note="Bouton (normal, primaire, succès, danger, petit) et BoutonIcone (le titre sert d'infobulle et de nom accessible).">
         <div className="ligne-flex">

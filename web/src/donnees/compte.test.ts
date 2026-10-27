@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { equipeAOuvrir } from './compte';
+import { contexte } from '../domaine/__fixtures__/donnees';
+import { ecranDArrivee, equipeAOuvrir } from './compte';
 import type { Equipe } from '../domaine/types';
 
 const direction: Equipe = { id: 'd', nom: 'Direction', parentId: null, type: 'direction' };
@@ -22,5 +23,17 @@ describe('équipe ouverte au démarrage', () => {
   });
   it('n\'ouvre rien sans équipe', () => {
     expect(equipeAOuvrir([], null, true)).toBeNull();
+  });
+});
+
+describe('écran d\'arrivée', () => {
+  it('compte sans équipe : attente d\'accès, sauf administrateur', () => {
+    expect(ecranDArrivee(contexte({ organisations: [] }), null)).toBe('choixEquipe');
+    expect(ecranDArrivee(contexte({ organisations: [], estAdmin: true }), null)).toBe('dashboard');
+    expect(ecranDArrivee(contexte({ organisations: [], estAdmin: true, equipes: [] }), null)).toBe('monAdmin');
+  });
+  it('équipe ouverte : dashboard ; sinon choix d\'équipe', () => {
+    expect(ecranDArrivee(contexte(), 'app')).toBe('dashboard');
+    expect(ecranDArrivee(contexte(), null)).toBe('choixEquipe');
   });
 });

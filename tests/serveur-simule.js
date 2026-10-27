@@ -6,7 +6,7 @@
                    organisations (= équipes), invitations ;
    - /rest/v1/*  : Neon Data API (sous-ensemble PostgREST : select,
                    filtres eq., order, insert/upsert, patch, delete, rpc) ;
-   - /app/*      : fichiers de l'application.
+   - /app/*      : fichiers de l'application ; /v2/* : nouvelle application React construite (npm --prefix web run build).
    Les règles RLS ne sont PAS simulées (elles sont testées en base) ;
    seules les notes daily sont filtrées par auteur.
    Données : celles de la maquette Pilotage_Projet.dc.html.
@@ -455,6 +455,8 @@ async function donnees(req, res, table, url) {
 /* ---------- Fichiers statiques ---------- */
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png' };
 function statique(res, chemin) {
+  // Nouvelle application (/v2/) : toute adresse sans fichier correspondant renvoie index.html, comme la réécriture de vercel.json
+  if (chemin.startsWith('/v2/') && !path.extname(chemin) && !chemin.endsWith('/')) chemin = '/v2/';
   const fichier = path.join(RACINE, chemin.endsWith('/') ? chemin + 'index.html' : chemin);
   if (!fichier.startsWith(RACINE) || !fs.existsSync(fichier)) { res.writeHead(404); return res.end('Introuvable'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(fichier)] || 'application/octet-stream' }); fs.createReadStream(fichier).pipe(res);

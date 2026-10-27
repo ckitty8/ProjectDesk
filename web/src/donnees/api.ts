@@ -85,7 +85,7 @@ const auth = (chemin: string): string => adresses().NEON_AUTH_URL + chemin;
 
 /** Utilisateur et session renvoyés par Neon Auth */
 export interface SessionAuth {
-  user: { id: string; name: string; email: string };
+  user: { id: string; name: string; email: string; emailVerified?: boolean };
   session?: Ligne;
 }
 
@@ -93,6 +93,28 @@ export const inscrire = (nom: string, email: string, motDePasse: string) =>
   appeler(auth('/sign-up/email'), json('POST', { name: nom, email, password: motDePasse }));
 export const connecter = (email: string, motDePasse: string) =>
   appeler(auth('/sign-in/email'), json('POST', { email, password: motDePasse }));
+
+/* Vérification de l'adresse email par code à 6 chiffres (Neon Auth, méthode « otp ») : envoi du code, puis vérification — qui ouvre
+   la session (réglage « connexion automatique après vérification »). */
+export const envoyerCodeVerification = (email: string) =>
+  appeler(auth('/email-otp/send-verification-otp'), json('POST', { email, type: 'email-verification' }));
+export const verifierEmail = (email: string, code: string) =>
+  appeler(auth('/email-otp/verify-email'), json('POST', { email, otp: code }));
+
+/* Mot de passe oublié (Better Auth) : Neon Auth envoie un email avec un lien qui revient sur l'application avec ?token=… ;
+   l'utilisateur y choisit son nouveau mot de passe. Personne d'autre (ni l'administrateur) ne le voit ni ne le choisit. */
+const adresseRetour = (): string => location.origin + location.pathname;
+
+export async function demanderReinitialisation(email: string): Promise<void> {
+  const corps = { email, redirectTo: adresseRetour() };
+  try { await appeler(auth('/request-password-reset'), json('POST', corps)); }
+  catch (e) {
+    if (!/404|not found/i.test((e as Error).message || '')) throw e;
+    await appeler(auth('/forget-password'), json('POST', corps));      // ancienne route Better Auth
+  }
+}
+export const reinitialiserMotDePasse = (token: string, motDePasse: string) =>
+  appeler(auth('/reset-password'), json('POST', { token, newPassword: motDePasse }));
 
 export async function deconnecter(): Promise<void> {
   jetonEnCache = null;
@@ -136,11 +158,14 @@ export async function obtenirJeton(): Promise<string> {
 export interface Organisation { id: string; name: string; slug?: string }
 export interface MembreOrganisation { id: string; userId: string; role: string; user?: { name?: string; email?: string } }
 export interface OrganisationDetaillee extends Organisation { members?: MembreOrganisation[] }
-export interface Invitation { id: string; status: string; organizationId?: string; email?: string }
+export interface Invitation { id: string; status: string; organizationId?: string; organizationName?: string; role?: string; email?: string }
 
 export const listerOrganisations = () => appeler<Organisation[] | null>(auth('/organization/list'));
 export const lireOrganisation = (organizationId: string) =>
   appeler<OrganisationDetaillee>(auth('/organization/get-full-organization?organizationId=' + encodeURIComponent(organizationId)));
+export const activerOrganisation = (organizationId: string) => appeler(auth('/organization/set-active'), json('POST', { organizationId }));
+export const accepterInvitation = (invitationId: string) => appeler(auth('/organization/accept-invitation'), json('POST', { invitationId }));
+export const refuserInvitation = (invitationId: string) => appeler(auth('/organization/reject-invitation'), json('POST', { invitationId }));
 export const listerMesInvitations = () => appeler<Invitation[] | null>(auth('/organization/list-user-invitations'));
 
 /* ---------- 3. Données (Neon Data API) ---------- */

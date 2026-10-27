@@ -18,7 +18,7 @@ Organisation du code : `src/main.tsx` (point d'entrée), `src/App.tsx` (routes),
 chacun avec ses tests (`*.test.ts`) ; `parite.test.ts` compare le portage à l'ancien `app/js/calculs.js` (temporaire).
 `src/donnees/` (phase 3) : `api` (client Neon Auth + Data API), `tables` (23 tables, tris, filtres), `chargement` (lecture tolérante),
 `compte` (session, équipes, rôles), `contexte` + `simulation` (droits et simulation de rôle), `SessionProvider` (TanStack Query).
-`src/ecrans/` : connexion et diagnostic provisoires. `src/composants/` (phase 4) : boutons, badges, cartes, onglets, tableau, panneau, modale, bandeau de simulation, calendrier ; catalogue visible sur `/v2/composants`.
-Les vrais écrans arrivent en phase 5.
+`src/Coquille.tsx` (barre latérale, en-tête, Aide), `src/routes.ts` (une adresse par écran) et `src/ecrans/` (écrans migrés, registre `index.ts`) ; `/session` et `/composants` sont des pages techniques. `src/composants/` (phase 4) : boutons, badges, cartes, onglets, tableau, panneau, modale, bandeau de simulation, calendrier ; catalogue visible sur `/v2/composants`.
+Phase 5 : vague A migrée (connexion, choix d'équipe, dashboard général, trucs et astuces) ; les autres écrans arrivent par vagues.
 
 Contrôle de bout en bout : `npm run build` puis, depuis la racine du dépôt, `node tests/v2.js` (serveur Neon simulé + Playwright).

@@ -1,44 +1,56 @@
 /* ============================================================
    Racine de la nouvelle application
-   Phase 3 : la session (connexion, jeton, tables, droits) est en place ; la page d'accueil est un diagnostic provisoire.
-   Les écrans réels arrivent aux phases 4 et 5.
+   Phase 5 (vague A) : connexion, choix d'équipe, dashboard général, trucs et astuces ; les autres écrans affichent « pas encore migré ».
+   Adresses : routes.ts (une par écran). Sans session, la connexion s'affiche quelle que soit l'adresse, puis on y revient.
    ============================================================ */
 import { useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
-import { BandeauSimulation } from './composants/BandeauSimulation';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Page } from './Coquille';
+import { Bouton } from './composants/Bouton';
 import { Catalogue } from './ecrans/Catalogue';
-import { Connexion } from './ecrans/Connexion';
+import { ChoixEquipe } from './ecrans/ChoixEquipe';
+import { Connexion, VerifierMonEmail } from './ecrans/Connexion';
 import { Diagnostic } from './ecrans/Diagnostic';
+import { EcranAMigrer } from './ecrans/EcranAMigrer';
+import { ECRANS } from './ecrans';
 import { SessionProvider, useSession } from './donnees/SessionProvider';
-import { libelleRoleSimule, decoderChoixSimulation } from './donnees/simulation';
-import { titrePage } from './routes';
+import { ecranDArrivee } from './donnees/compte';
+import { ROUTES, cheminDe, titrePage } from './routes';
 
-/** Écran selon l'état de la session : chargement, erreur, connexion, ou page de l'application */
+/** Adresse « / » : l'écran d'arrivée du compte (tableau de bord, choix d'équipe, administration…) */
+function Racine() {
+  const { ctx, equipeCourante } = useSession();
+  if (!ctx) return null;
+  return <Navigate to={cheminDe(ecranDArrivee(ctx, equipeCourante))} replace />;
+}
+
+/** Écrans de l'application, selon l'état de la session : chargement, erreur, connexion, ou les adresses de routes.ts */
 function Contenu() {
-  const { etat, erreur, recharger, simulation, ctx, choixSimulation, demarrerSimulation, arreterSimulation } = useSession();
+  const { etat, erreur, recharger } = useSession();
   if (etat === 'chargement') return <main className="boite-socle"><p>Chargement…</p></main>;
   if (etat === 'erreur') {
     return (
       <main className="boite-socle">
         <p role="alert" className="erreur-socle">Chargement impossible : {erreur}</p>
-        <button className="btn" onClick={() => window.location.reload()}>Réessayer</button>
-        <button className="btn" onClick={() => void recharger()}>Relire les données</button>
+        <Bouton onClick={() => window.location.reload()}>Réessayer</Bouton>{' '}
+        <Bouton onClick={() => void recharger()}>Relire les données</Bouton>
       </main>
     );
   }
   if (etat === 'deconnecte') return <Connexion />;
-  const fiche = simulation && ctx ? ctx.ressources.find(r => r.id === simulation.ressourceId) : undefined;
   return (
-    <>
-      {simulation && (
-        <BandeauSimulation libelleRole={libelleRoleSimule(simulation.cle)} nomPersonne={fiche?.nom} choix={choixSimulation}
-          onChanger={v => demarrerSimulation(decoderChoixSimulation(v))} onArreter={arreterSimulation} />
-      )}
-      <Routes>
-        <Route path="/composants" element={<Catalogue />} />
-        <Route path="*" element={<Diagnostic />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<Racine />} />
+      <Route path="/verifier-email" element={<VerifierMonEmail />} />
+      <Route path="/choix-equipe" element={<ChoixEquipe />} />
+      <Route path="/composants" element={<Catalogue />} />
+      <Route path="/session" element={<Diagnostic />} />
+      {ROUTES.filter(r => r.section !== 'plein').map(r => {
+        const Ecran = ECRANS[r.id];
+        return <Route key={r.id} path={r.chemin} element={<Page route={r}>{Ecran ? <Ecran /> : <EcranAMigrer route={r} />}</Page>} />;
+      })}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

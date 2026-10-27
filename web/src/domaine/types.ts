@@ -16,6 +16,8 @@ export interface Equipe {
   prefixe?: string;
   type?: string;
   couleur?: string;
+  /** Unité désactivée (false) : affichée « Inactive » */
+  actif?: boolean;
 }
 
 export interface Ressource {
@@ -119,4 +121,16 @@ export interface LigneDroit {
 /** Compte d'un administrateur ou du créateur (tables administrateurs et createur) */
 export interface CompteAdmin {
   userId: string;
+}
+
+/** Valeur d'une liste métier (table valeurs_referentiel) : type, priorité, statut, rôle, absence… ; la liste est désignée par « referentielId » */
+export interface ValeurReferentiel {
+  referentielId: string;
+  libelle: string;
+  couleur: string;
+  actif: boolean;
+  /** Clé technique d'une valeur « système » (utilisée par les calculs et les droits) */
+  cle?: string | null;
+  abrege?: string | null;
+  ordre?: number | null;
 }

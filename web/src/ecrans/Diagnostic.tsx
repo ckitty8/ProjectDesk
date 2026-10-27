@@ -69,7 +69,7 @@ export function Diagnostic() {
         <button className="btn" onClick={() => void recharger()}>Recharger les données</button>{' '}
         <button className="btn" onClick={() => void seDeconnecter()}>Se déconnecter</button>
       </p>
-      <p><Link to="/composants">Catalogue des composants</Link></p>
+      <p><Link to="/dashboard">Ouvrir le dashboard</Link> · <Link to="/composants">Catalogue des composants</Link></p>
       <p><a href="/app/">Ouvrir l’application actuelle</a></p>
     </main>
   );

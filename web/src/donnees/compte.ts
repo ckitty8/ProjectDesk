@@ -4,6 +4,8 @@
    ============================================================ */
 import { executer, lireOrganisation, lireSession, listerMesInvitations, listerOrganisations } from './api';
 import type { Invitation, Organisation, SessionAuth } from './api';
+import { ecranAccueil, mesEquipes } from '../domaine/droits';
+import type { ContexteDroits } from '../domaine/droits';
 import type { Equipe } from '../domaine/types';
 
 /** Ce que Neon Auth sait du compte connecté */
@@ -77,4 +79,13 @@ export function memoriserEquipe(id: string): void {
 export function equipeAOuvrir(equipes: readonly Equipe[], memorisee: string | null, estAdmin: boolean): Equipe | null {
   const parDefautAdmin = estAdmin ? (equipes.find(e => e.type !== 'direction') ?? equipes[0] ?? null) : null;
   return equipes.find(e => e.id === memorisee) ?? (equipes.length === 1 ? equipes[0] ?? null : parDefautAdmin);
+}
+
+/* Écran d'arrivée (adresse « / ») : un compte sans équipe attend l'accès (« Choix d'équipe ») ; un administrateur entre dans l'outil
+   (Administration s'il faut créer la première équipe, sinon le tableau de bord) ; sinon l'équipe ouverte donne le tableau de bord
+   (ou le daily si la matrice ferme le dashboard), et plusieurs équipes sans équipe mémorisée demandent un choix. */
+export function ecranDArrivee(ctx: ContexteDroits, equipeCourante: string | null): string {
+  const equipes = mesEquipes(ctx);
+  if (!equipes.length) return ctx.estAdmin ? (ctx.equipes.length ? ecranAccueil(ctx) : 'monAdmin') : 'choixEquipe';
+  return equipeCourante ? ecranAccueil(ctx) : 'choixEquipe';
 }
