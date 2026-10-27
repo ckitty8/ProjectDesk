@@ -869,7 +869,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption(cellule('utilisateur', 'projets'), 'non'); await page.waitForTimeout(400);   // valeur de départ du rôle Utilisateur (2026-10-25)
     await page.click('[data-action="ongletAdminCreateur"][data-id="qui"]'); await page.waitForTimeout(200);
     verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle » sur les 6 rôles',
-      matrice && verrou && enregistre && await page.evaluate(() => [...document.querySelectorAll('.grille-roles > .carte b')].map(b => b.textContent.trim()).join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente'),
+      matrice && verrou && enregistre && await page.evaluate(() => [...document.querySelectorAll('.tableau-qui-a-quel-role tr.groupe b')].map(b => b.textContent.trim()).join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente'),
       JSON.stringify({ matrice, verrou, enregistre }));
     await page.click('[data-action="ongletAdminCreateur"][data-id="simulation"]'); await page.waitForTimeout(150);
     // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour

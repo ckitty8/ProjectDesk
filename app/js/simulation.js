@@ -141,7 +141,7 @@ Ecrans.adminCreateur = {
   rendre() {
     const onglet = ui('adminCreateur', { onglet: 'simulation' }).onglet;
     const contenus = { simulation: () => Simulation.onglet(), matrice: () => Roles.matrice(),
-      qui: () => `<div class="grille-roles">${Roles.cartesParRole()}</div>` };
+      qui: () => Roles.tableauParRole() };
     const corps = !Simulation.estDisponible() ? `<div class="carte">${C.vide('Écran réservé au créateur.')}</div>`
       : C.onglets(this.ONGLETS, onglet, 'ongletAdminCreateur') + (contenus[onglet] || contenus.simulation)();
     return `<div class="ecran ecran-large">${C.entete('Administration créateur',

@@ -1,7 +1,7 @@
 /* ============================================================
    Rôles : Administration › onglet « Rôles » (administrateurs) : « Utilisateurs et rôles » ;
    Administration créateur (créateur seul, porteur 2026-10-23, maquette matrice-createur/) :
-   onglets « Matrice des droits » et « Qui a quel rôle » (matrice(), cartesParRole()).
+   onglets « Matrice des droits » et « Qui a quel rôle » (matrice(), tableauParRole()).
    (maquettes docs/maquettes/liste-roles/ et affecter-roles/ ; porteur 2026-10-12 et 2026-10-13)
    ------------------------------------------------------------
    - Rôle d'accès de chaque personne, choisi ici (Administrateur, Responsable d'équipe, Membre) :
@@ -17,18 +17,17 @@
 
 const Roles = {
   /* Vue « Qui a quel rôle » (alignée sur la Simulation, porteur 2026-10-22, maquette qui-a-quel-role/) : mêmes
-     cartes que la Simulation (Simulation.ROLES : les 6 rôles d'accès + Compte en attente, sans le Créateur).
+     rôles que la Simulation (Simulation.ROLES : les 6 rôles d'accès + Compte en attente, sans le Créateur).
      Chaque fiche active est rangée sous le rôle choisi dans le tableau « Utilisateurs et rôles » (roleChoisi :
-     prévu s'il y en a un, sinon actuel), avec son équipe et, s'il y a lieu, « prévu » ou « sans compte ». */
+     prévu s'il y en a un, sinon actuel), avec son équipe et l'état de son compte (lié, prévu, sans compte).
+     Présentée en tableau (porteur 2026-10-27). */
   parRole() {
     const groupes = Object.fromEntries(Simulation.ROLES.map(role => [role.cle, []]));
     ressourcesActives().forEach(r => {
-      const role = this.roleChoisi(r), precisions = [equipe(r.equipeId).nom];
-      if (!r.userId) precisions.push('sans compte');
-      else if (rolePrevu(r)) precisions.push('prévu');
-      (groupes[role] || []).push({ nom: r.nom, precision: precisions.join(' · ') });
+      const compte = !r.userId ? 'sans compte' : rolePrevu(r) ? 'rôle prévu' : 'compte lié';
+      (groupes[this.roleChoisi(r)] || []).push({ nom: r.nom, equipe: equipe(r.equipeId).nom, compte });
     });
-    etat.comptesEnAttente.filter(c => !c.invite).forEach(c => groupes.sansEquipe.push({ nom: c.nom || c.email, precision: c.email }));
+    etat.comptesEnAttente.filter(c => !c.invite).forEach(c => groupes.sansEquipe.push({ nom: c.nom || c.email, equipe: '—', compte: c.email }));
     Object.values(groupes).forEach(liste => liste.sort((x, y) => x.nom.localeCompare(y.nom)));
     return groupes;
   },
@@ -69,18 +68,20 @@ const Roles = {
         ${effet ? `<div class="discret texte-12">${effet}</div>` : ''}</td></tr>`;
   },
 
-  // Cartes « par rôle » : qui a chaque rôle (créateur, administrateurs, responsables, rôles de projet, comptes en attente)
-  cartesParRole() {
+  /* Tableau « par rôle » : une ligne de titre par rôle (son nom, le nombre de personnes et les menus qu'il ouvre d'après
+     la matrice), puis une ligne par personne : nom, équipe, état du compte */
+  tableauParRole() {
     const esc = C.esc, groupes = this.parRole();
-    return Simulation.ROLES.map(role => {
+    const lignes = Simulation.ROLES.map(role => {
       const personnes = groupes[role.cle];
-      return `<div class="carte" style="padding:12px 14px;border-top:4px solid ${role.couleur}">
-        <div class="ligne-flex entre"><b style="color:${role.couleur}">${esc(role.libelle)}</b>
-          <span class="discret">${personnes.length}</span></div>
-        <div class="discret" style="font-size:12px;margin:4px 0 8px">${esc(role.description)}</div>
-        ${personnes.map(x => `<div style="padding:2px 0">${esc(x.nom)}${x.precision ? ` <span class="discret">· ${esc(x.precision)}</span>` : ''}</div>`).join('')
-          || '<div class="pale">personne</div>'}</div>`;
+      return `<tr class="groupe"><td colspan="3"><span class="ligne-flex"><b style="color:${role.couleur}">${esc(role.libelle)}</b>
+          <span class="discret poids-normal">${personnes.length} personne(s)</span></span>
+          <div class="discret texte-12 poids-normal">${esc(role.description)}</div></td></tr>`
+        + (personnes.map(x => `<tr><td><span class="ligne-flex">${C.avatar(x.nom)}${esc(x.nom)}</span></td><td>${esc(x.equipe)}</td>
+          <td class="discret">${esc(x.compte)}</td></tr>`).join('') || '<tr><td colspan="3" class="pale">personne</td></tr>');
     }).join('');
+    return `<div class="carte"><table class="tableau tableau-qui-a-quel-role"><thead><tr><th>Personne</th><th>Équipe</th><th>Compte</th></tr></thead>
+      <tbody>${lignes}</tbody></table></div>`;
   },
 
   // Tableau « Utilisateurs et rôles » : filtres (recherche, équipe, rôle) puis une ligne par personne
