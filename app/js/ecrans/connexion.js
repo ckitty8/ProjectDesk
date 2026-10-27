@@ -1,6 +1,6 @@
 /* ============================================================
    Écran « Connexion » (maquette complements/connexion.png)
-   Onglets Connexion / Créer un compte, connexion Google, « Mot de passe oublié ? »
+   Onglets Connexion / Créer un compte (email et mot de passe ; connexion Google retirée le 2026-10-27), « Mot de passe oublié ? »
    (email de réinitialisation, puis choix du nouveau mot de passe au retour du lien).
    Vérification de l'email (maquette docs/maquettes/verification-email/) : code à 6 chiffres
    envoyé par Neon Auth, demandé une seule fois — après la création du compte, à la connexion
@@ -30,8 +30,6 @@ Ecrans.connexion = {
         <button class="btn primaire btn-connexion">${creation ? 'Créer mon compte' : 'Se connecter'}</button>
         ${creation ? '' : '<a data-action="motDePasseOublie" class="centre texte-12-5">Mot de passe oublié ?</a>'}
       </form>
-      <div style="text-align:center;color:var(--pale);margin:14px 0;font-size:12px">ou</div>
-      <button class="btn" style="width:100%;height:38px;justify-content:center" data-action="connexionGoogle">Continuer avec Google</button>
       <p class="discret" style="font-size:12px;text-align:center;margin:18px 0 0">Après la création d’un compte, l’accès aux équipes se fait
         sur invitation d’un administrateur.</p>
       ${C.mentionPropriete(true)}
@@ -106,11 +104,7 @@ function messageConnexion(e) {
     + 'l’administrateur doit l’ajouter aux domaines de confiance (Console Neon › Auth).';
   if (/already exists|already registered|déjà/i.test(m)) return 'Un compte existe déjà avec cet email : utilisez l’onglet Connexion.';
   if (/failed to fetch|networkerror/i.test(m)) return 'Service de connexion injoignable. Vérifiez votre réseau puis réessayez.';
-  if (/access_denied/i.test(m)) return 'Connexion Google annulée.';
   if (/invalid_token/i.test(m)) return 'Lien de réinitialisation expiré ou déjà utilisé : refaites une demande « Mot de passe oublié ? ».';
-  if (/state|oauth|account_not_linked|unable_to_link|email_not_found/i.test(m)) {
-    return `La connexion Google a échoué (code : ${m}). Réessayez ou utilisez email et mot de passe.`;
-  }
   return m;
 }
 
@@ -170,9 +164,5 @@ Object.assign(Actions, {
       const lienPerime = /token|expired|invalid/i.test(e.message || '');
       majUi('connexion', { erreur: lienPerime ? 'Lien expiré ou déjà utilisé : refaites une demande « Mot de passe oublié ? ».' : messageConnexion(e) });
     }
-  },
-
-  async connexionGoogle() {
-    try { await Api.connecterGoogle(); } catch (e) { majUi('connexion', { erreur: messageConnexion(e) }); }
   }
 });

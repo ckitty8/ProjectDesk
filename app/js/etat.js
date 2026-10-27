@@ -170,12 +170,8 @@ async function demarrer() {
       etat.ui.connexion = { onglet: 'nouveau', jeton, erreur: null, envoye: false };
       return versConnexion();
     }
-    const erreurRetour = Api.lireErreurRetour();          // échec de la connexion Google (?error=…)
     const session = await Api.lireSession();
-    if (!session || !session.user) {
-      if (erreurRetour) etat.ui.connexion = { ...(etat.ui.connexion || {}), erreur: messageConnexion({ message: erreurRetour }) };
-      return versConnexion();
-    }
+    if (!session || !session.user) return versConnexion();
     etat.session = session;
     await Api.executer('lier_ma_ressource').catch(() => {});      // lie le compte à sa fiche ressource (même email)
     /* Invitations acceptées d'office par la base (migration 026), avant de lister les équipes :

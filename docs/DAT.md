@@ -170,6 +170,7 @@
 | 2.53    | 2026-10-26 | **Mon dashboard ne disparaît plus quand « Daily · Saisir mes heures » passe à Non ; choix d'équipe revu** (porteur : « j'ai mis Non pour le daily … et tout a disparu » ; « elle a le bouton Changer mais elle ne peut pas … je veux une croix pour fermer la pop-in »). (1) Le droit `mon_dashboard` (« Saisir son daily, ses heures et ses congés ») ne gouverne plus que les menus **Daily** et **Saisir mes heures** ; la section Mon dashboard se ferme seulement en **Lecture seule** (migration 030) ou quand aucun de ses menus n'est ouvert, chaque autre menu suivant ses propres lignes (Projets et Roadmap, Congés, Liste des ressources, Trucs et astuces, Administration) ; un écran fermé affiche « Écran non ouvert à votre rôle ». Conséquence : les rôles dont `mon_dashboard` est « Non » en base (Direction) voient désormais les menus de Mon dashboard que la matrice leur ouvre. Test ajouté : Responsable avec Daily à Non garde Congés, Astuces, Administration. (2) Le lien **Changer** d'équipe (barre latérale) n'apparaît que s'il y a un choix (au moins deux équipes ou une invitation) ; la fenêtre « Choix de l'équipe » a une **croix ✕** qui revient à l'écran précédent (plus de bouton Déconnexion tant qu'une équipe est ouverte ; le lien reste à la première connexion sans équipe ouverte et pour un compte en attente d'accès). Aucune donnée modifiée. 143 contrôles |
 | 2.54    | 2026-10-26 | **Statut du projet modifiable** (porteur : « c'est quoi ce statut Planifié ? » puis choix de le rendre modifiable, et d'en ajouter depuis Administration) : le panneau projet affiche le **statut** (liste déroulante pour qui peut modifier le projet : chef de projet, affecté Membre, responsable ou direction de l'unité, administrateur — règle `peut_editer_projet` + droit « Projets » ; badge en lecture sinon). La liste est celle du référentiel « Statuts projet » (`stp`) : **Administration › Référentiels** permet déjà d'en ajouter, renommer, recolorer, désactiver (les cinq statuts d'origine restent « système », renommables, non supprimables, et pilotent le Dashboard : À risque / En retard remontent dans « Projets à surveiller », Terminé sort des projets actifs ; un statut ajouté est neutre pour ces calculs). Un statut désactivé reste affiché sur les projets qui l'ont. Aucune migration : `projets.statut` est un texte libre sans contrainte. Aucune donnée touchée. 144 contrôles |
 | 2.55    | 2026-10-26 | **Demi-journée de congé posable à la main** (porteur : « dans Mon dashboard > Congés je ne peux pas mettre 0,5 de congés, je peux mettre que 1 ou 0 ») : Congés › Grille mensuelle : deux puces **Journée / Demi-journée** à côté des types d'absence ; un clic pose le type avec la durée choisie (`absences.duree` = 1 ou 0,5, colonne et contrainte de la migration 009), un second clic de même type et même durée retire l'absence, un clic avec l'autre durée la modifie. Le calcul (`Calculs.dureeAbsence`, jours travaillés, timesheet) comptait déjà 0,5 : seul le clic posait toujours 1. Aucune migration, aucune donnée touchée. 145 contrôles |
+| 2.56    | 2026-10-27 | **Connexion Google supprimée** (porteur : « je veux supprimer : connexion avec Google ») : bouton « Continuer avec Google » et séparateur « ou » retirés de l'écran de connexion ; `Api.connecterGoogle`, la lecture du paramètre de retour `neon_auth_session_verifier` et de l'erreur `?error=…`, leurs messages et l'action `connexionGoogle` supprimés ; `lireSession` simplifié ; serveur de test sans Google simulé ; la connexion se fait par email et mot de passe (création de compte, vérification de l'email, mot de passe oublié inchangés). Point O3 des points ouverts (identifiants Google partagés) supprimé. **Aucune donnée touchée** : les comptes déjà créés avec Google, s'il y en a, restent en base ; ils peuvent obtenir un mot de passe par « Mot de passe oublié ? ». Le fournisseur Google reste activé côté console Neon Auth tant qu'on ne l'y désactive pas (réglage hors application). 144 contrôles |
 | 1.44    | 2026-09-27 | Calcul type Scrum : formule déplacée dans une pop-in (bouton « Comment est-ce calculé ? » en haut à droite), avec un exemple chiffré sur CDO (membres, jours ouvrés, absences, cérémonies, focus) (§ 2.1, § 3.3) |
 
 ---
@@ -265,7 +266,7 @@ Captures de l'application : `docs/maquettes/etat-actuel/` (générées par `test
 
 | Écran (`etat.ecran`) | Fichier | Rôle | Capture |
 |------|---------|------|---------|
-| `connexion` | `connexion.js` | Connexion / création de compte (email + mot de passe), Google ; **vérification de l'email** par code à 6 chiffres (création de compte, connexion d'un compte non vérifié quand c'est exigé, ou « Vérifier mon email » depuis le bloc utilisateur) ; mention « © 2026 CIRITEC · Tous droits réservés · logiciel propriétaire » en bas de chaque écran de connexion | `01-connexion.png` |
+| `connexion` | `connexion.js` | Connexion / création de compte (email + mot de passe uniquement, Google retiré en 2.56) ; **vérification de l'email** par code à 6 chiffres (création de compte, connexion d'un compte non vérifié quand c'est exigé, ou « Vérifier mon email » depuis le bloc utilisateur) ; mention « © 2026 CIRITEC · Tous droits réservés · logiciel propriétaire » en bas de chaque écran de connexion | `01-connexion.png` |
 | `choixEquipe` | `choix-equipe.js` | Équipes de l'utilisateur, invitations reçues ; compte sans équipe ni invitation : « Votre compte est créé », demande visible par l'administrateur (Comptes en attente), bouton **Actualiser** ; une invitation reçue sans équipe est acceptée d'office à la connexion, par la base (`accepter_mes_invitations()`, migration 026) | `02-choix-equipe.png` |
 
 ### 3.2 Section « Suivi de mes équipes » (ex-« Général », lecture)
@@ -479,10 +480,6 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 1. **Connexion** → `lier_ma_ressource()` → chargement des organisations, invitations et tables
    → rôles par équipe (`get-full-organization`).
    - Email / mot de passe : `/sign-in/email`, puis `/get-session`.
-   - Google : `/sign-in/social` (retour = page de l'application) → Google → Neon Auth → retour
-     sur l'application avec `?neon_auth_session_verifier=…`, que `/get-session` échange contre la
-     session (même mécanisme que le kit officiel `@neondatabase/neon-js`) ; le paramètre est
-     ensuite retiré de l'adresse. En cas d'échec, `?error=…` est traduit sur l'écran de connexion.
    - Jeton de la Data API : en-tête `set-auth-jwt` de `/get-session`, sinon `/token` ; renouvelé
      une minute avant expiration (15 min).
 2. **Écran d'arrivée** :
@@ -532,8 +529,8 @@ refusée sur `referentiels` et `administrateurs` (usurpation).
 
 | Outil | Contenu |
 |-------|---------|
-| `tests/serveur-simule.js` | Neon Auth (dont Google simulé) + Data API simulés en mémoire, identifiants numérotés (et non aléatoires) pour des captures reproductibles, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout (145 contrôles, dont « Suivi de mes équipes en lecture seule », l'aller-retour Google simulé, le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
+| `tests/serveur-simule.js` | Neon Auth + Data API simulés en mémoire, identifiants numérotés (et non aléatoires) pour des captures reproductibles, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
+| `tests/parcours.js` | Parcours Playwright de bout en bout (144 contrôles, dont « Suivi de mes équipes en lecture seule », le parcours administrateur sans équipe, le daily des équipes, l'export Excel du daily, le plan de charge et le board des ressources) + captures `docs/maquettes/etat-actuel/` |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
@@ -616,7 +613,6 @@ Une correction de la base issue de l'audit passe par une migration montrée au p
 |---|-------|------|
 | O1 | Recherche ⌘K (en-tête) | Affichée, inactive — à concevoir |
 | O2 | Pièces jointes des demandes (stockage de fichiers) | Sans objet depuis le 2026-10-05 (demandes gérées dans Azure DevOps) |
-| O3 | Connexion Google : identifiants partagés de Neon | À remplacer par ceux du projet avant la production |
 | O4 | Vérification de l'email exigée (Neon Auth) | Écran de saisie du code en ligne (1.88) ; réglage à activer après essai sur le compte du porteur (« Vérifier mon email »). Invitations : acceptées par la base à la connexion (migration 026) |
 | O5 | Gestion des administrateurs globaux depuis l'application | Réservée au créateur (migration 025) ; aujourd'hui par SQL, écran prévu avec « Rôles et droits » |
 | O6 | Indicateurs « évolution vs trimestre précédent » de la maquette (+2 vs T3…) | Non calculés (pas d'historique figé) |

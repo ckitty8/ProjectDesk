@@ -82,46 +82,26 @@ const Api = (() => {
   const verifierEmail = (email, code) =>
     appeler(auth('/email-otp/verify-email'), json('POST', { email, otp: code }));
 
-  // Adresse de retour après Google : la page de l'application, sans paramètres
+  // Adresse de retour des liens reçus par email (mot de passe oublié) : la page de l'application, sans paramètres
   const adresseRetour = () => location.origin + location.pathname;
-
-  // Connexion Google : Better Auth renvoie l'URL de Google, on y redirige le navigateur.
-  // Au retour, Neon Auth ajoute ?neon_auth_session_verifier=… (succès) ou ?error=… (échec).
-  async function connecterGoogle() {
-    const retour = adresseRetour();
-    const r = await appeler(auth('/sign-in/social'), json('POST',
-      { provider: 'google', callbackURL: retour, newUserCallbackURL: retour, errorCallbackURL: retour }));
-    if (r && r.url) location.href = r.url;
-  }
 
   async function deconnecter() {
     jetonEnCache = null;
     await appeler(auth('/sign-out'), json('POST', {}));
   }
 
-  /* Session : même mécanisme que le kit officiel @neondatabase/neon-js.
-     - Retour de Google : le « vérificateur de session » présent dans l'adresse est
-       transmis à /get-session, qui ouvre la session ; on le retire ensuite de l'adresse.
-     - La réponse de /get-session porte le jeton JWT dans l'en-tête « set-auth-jwt » :
-       on le garde pour la Data API (évite un appel /token). */
-  const PARAM_VERIFICATEUR = 'neon_auth_session_verifier';
+  /* Session : même mécanisme que le kit officiel @neondatabase/neon-js. La réponse de /get-session porte le
+     jeton JWT dans l'en-tête « set-auth-jwt » : on le garde pour la Data API (évite un appel /token). */
   async function lireSession() {
-    const verificateur = new URLSearchParams(location.search).get(PARAM_VERIFICATEUR);
-    const url = auth('/get-session') + (verificateur ? `?${PARAM_VERIFICATEUR}=${encodeURIComponent(verificateur)}` : '');
     try {
-      const reponse = await fetch(url, { credentials: 'include' });
+      const reponse = await fetch(auth('/get-session'), { credentials: 'include' });
       const texte = await reponse.text();
       const session = reponse.ok && texte ? JSON.parse(texte) : null;
       memoriserJeton(reponse.headers.get('set-auth-jwt'));
-      if (verificateur) {                      // nettoie l'adresse (évite une réutilisation au rechargement)
-        const propre = new URL(location.href); propre.searchParams.delete(PARAM_VERIFICATEUR);
-        history.replaceState(history.state, '', propre.href);
-      }
       return session;
     } catch (e) { return null; }
   }
 
-  // Erreur renvoyée par Neon Auth dans l'adresse après un échec Google (?error=…), puis retirée
   /* Mot de passe oublié (Better Auth) : Neon Auth envoie un email avec un lien ; ce lien
      revient sur l'application avec ?token=… ; l'utilisateur y choisit son nouveau mot de passe.
      Personne d'autre (ni l'administrateur) ne voit ni ne choisit le mot de passe. */
@@ -140,14 +120,6 @@ const Api = (() => {
     adresse.searchParams.delete('token');
     history.replaceState(history.state, '', adresse.href);
     return token;
-  }
-
-  function lireErreurRetour() {
-    const adresse = new URL(location.href), erreur = adresse.searchParams.get('error');
-    if (!erreur) return null;
-    adresse.searchParams.delete('error'); adresse.searchParams.delete('error_description');
-    history.replaceState(history.state, '', adresse.href);
-    return erreur;
   }
 
   // Jeton JWT pour la Data API : valable 15 min, gardé en mémoire et renouvelé 1 min avant la fin
@@ -249,7 +221,7 @@ const Api = (() => {
   }
 
   return {
-    inscrire, connecter, connecterGoogle, envoyerCodeVerification, verifierEmail, deconnecter, lireSession, lireErreurRetour, obtenirJeton,
+    inscrire, connecter, envoyerCodeVerification, verifierEmail, deconnecter, lireSession, obtenirJeton,
     demanderReinitialisation, reinitialiserMotDePasse, lireJetonReinitialisation,
     listerOrganisations, creerOrganisation, activerOrganisation, lireOrganisation, inviterMembre,
     listerMesInvitations, accepterInvitation, refuserInvitation, supprimerOrganisation,

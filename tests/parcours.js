@@ -1013,18 +1013,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => etat.session && etat.session.user.email === 'nonverifie@test.fr' && !etat.chargement);
     verifier('Email non vérifié : bon code → connecté directement', await page.evaluate(() => etat.session.user.emailVerified === true));
 
-    /* --- Connexion Google (aller-retour simulé avec vérificateur de session) --- */
-    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('[data-action="connexionGoogle"]');
-    await page.click('[data-action="connexionGoogle"]');
-    // Attendre la fin de l'aller-retour (et non un délai fixe : la redirection prend un temps variable)
-    await page.waitForFunction(() => typeof etat !== 'undefined' && etat.session && /Gaëlle/.test(etat.session.user.name || '') && !etat.chargement, null, { timeout: 10000 });
-    await page.waitForTimeout(200);
-    verifier('Google : session ouverte au retour, vérificateur retiré de l’adresse',
-      (await texte()).includes('Gaëlle') && !page.url().includes('neon_auth_session_verifier'));
-    await page.goto(BASE + '/app/?error=access_denied'); await page.waitForTimeout(500);
-    await page.click('[data-action="deconnexion"]').catch(() => {});
-    await page.goto(BASE + '/app/?error=access_denied'); await page.waitForSelector('[data-action="connexionGoogle"]');
-    verifier('Google : erreur de retour affichée en clair', (await texte()).includes('Connexion Google annulée'));
+    /* --- Connexion par email et mot de passe uniquement (connexion Google retirée, porteur 2026-10-27) --- */
+    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
+    verifier('Connexion : plus de « Continuer avec Google » (email et mot de passe seulement)',
+      !(await page.$('[data-action="connexionGoogle"]')) && !/google/i.test(await texte()));
 
     verifier('Aucune erreur JavaScript', erreurs.length === 0, erreurs.join(' | '));
   } catch (e) {
