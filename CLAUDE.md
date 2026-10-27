@@ -10,6 +10,8 @@ sauf consigne contraire explicite du porteur du projet.
 
 1. **Code lisible et modifiable par un tech lead humain.**
    - Pas de framework, de build ou de dépendance ajoutés sans nécessité démontrée.
+     **Exception validée par le porteur (2026-10-27)** : la migration vers React + TypeScript
+     (Vite, TanStack Query, React Router, Vitest), dans `web/` ; voir § « Migration React ».
    - Fonctions courtes, noms explicites (en français pour le métier, cohérents avec les tables SQL).
    - Pas d'astuce « clever » : on préfère 5 lignes claires à 1 ligne obscure.
 
@@ -23,6 +25,8 @@ sauf consigne contraire explicite du porteur du projet.
      `docs/maquettes/<nom-de-la-fonctionnalite>/`, montrée au porteur du projet avant le code.
    - Les captures de l'état actuel des écrans sont dans `docs/maquettes/etat-actuel/` et
      doivent être régénérées après chaque changement visuel livré (`node tests/parcours.js`).
+   - Migration React : un écran migré **à l'identique** n'a pas besoin de nouvelle maquette (les
+     captures actuelles en tiennent lieu) ; tout écran nouveau ou modifié reste soumis à cette règle.
 
 4. **Cohérence entre les fonctionnalités** (l'architecture finale n'est pas figée).
    - Listes métier (types, priorités, statuts, rôles, absences) : **en base**, table
@@ -66,6 +70,22 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
 - **Roadmap** (en attente : demandes gérées dans Azure DevOps depuis le 2026-10-05) :
   `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
   déroulante alimentée par Administration).
+
+## Migration React (décision du porteur, 2026-10-27)
+
+Plan et décisions : `docs/specifications/migration-react.md` (à lire avant toute évolution).
+
+- Travail **directement sur `main`**. La nouvelle application vit dans `web/` et est servie sur
+  `/v2/` ; l'ancienne (`app/`, servie sur `/app/`) reste intacte jusqu'à la bascule unique de la
+  dernière phase. Chaque commit doit laisser `/app/` fonctionnel.
+- **Gel de l'ancienne application** : correctifs seulement. Une nouveauté demandée est faite en
+  React si son écran est déjà migré, sinon elle attend (à signaler au porteur).
+- Le Gantt et la roadmap interactifs sont **hors périmètre** (à développer après la migration).
+- Les règles n°2, 4, 5, 7 et 8 s'appliquent telles quelles au code TypeScript (commentaires, un seul
+  endroit pour les calculs, DAT à jour, documents vérifiés, aucune donnée touchée).
+- Pendant la migration, les contrôles de l'ancienne application restent ceux de la check-list
+  ci-dessous ; ceux de `web/` (`npm run verifier` : types, lint, tests unitaires, build) s'y ajoutent
+  dès la phase 1.
 
 ## Check-list avant chaque commit
 
