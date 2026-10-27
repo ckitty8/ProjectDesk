@@ -1,0 +1,448 @@
+/* ============================================================
+   Thème ProjectDesk — jetons repris de la maquette Pilotage_Projet.dc.html
+   (IBM Plex, bleu #003CC8, barre latérale #0A1633, fond #F5F7FA)
+   ============================================================ */
+:root {
+  --fond: #F5F7FA; --carte: #FFFFFF; --texte: #141A26; --discret: #6B7485; --pale: #8A93A3;
+  --bordure: #E3E7EE; --bordure-fine: #EEF1F5; --fond-doux: #F8F9FB; --fond-entete: #FAFBFC;
+  --primaire: #003CC8; --primaire-fonce: #002A8F; --primaire-clair: #E8EEFF; --primaire-texte: #0033AD;
+  --laterale: #0A1633; --laterale-texte: #AEB9D3; --laterale-actif: #17295A;
+  --succes: #0F8A6B; --alerte: #D98A1C; --danger: #A32020;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--fond); color: var(--texte); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; }
+a { color: var(--primaire); text-decoration: none; cursor: pointer; } a:hover { text-decoration: underline; }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.discret { color: var(--discret); } .pale { color: var(--pale); }
+.code { font-family: var(--mono); font-size: 11px; color: var(--discret); white-space: nowrap; }   /* un code projet (DA-08) ne se coupe jamais */
+
+/* ---------- Coquille ---------- */
+.appli { display: flex; height: 100vh; overflow: hidden; }
+.laterale { width: 232px; flex: 0 0 232px; background: var(--laterale); color: var(--laterale-texte); display: flex; flex-direction: column; height: 100vh; }
+.marque { display: flex; align-items: center; gap: 10px; padding: 16px 16px 14px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.logo { width: 28px; height: 28px; border-radius: 7px; background: var(--primaire); display: flex; align-items: flex-end; justify-content: center; gap: 3px; padding: 7px 6px; }
+.logo i { width: 4px; background: #fff; border-radius: 1px; display: block; }
+/* Les trois barres du logo (C.marque) ; la version « grand » sert aux écrans de connexion */
+.logo i:nth-child(1) { height: 8px; } .logo i:nth-child(2) { height: 14px; } .logo i:nth-child(3) { height: 11px; background: #9DB6FF; }
+.logo.grand { width: 32px; height: 32px; } .logo.grand i:nth-child(2) { height: 15px; }
+.marque-nom { color: #fff; font-weight: 600; font-size: 15px; }
+.laterale nav { flex: 1; overflow: auto; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.menu-titre { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6F7C9B; padding: 12px 10px 6px; display: flex; justify-content: space-between; }
+.menu-titre span + span { font-weight: 500; letter-spacing: .02em; text-transform: none; }
+.menu-lien { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 6px; color: var(--laterale-texte); }
+.menu-lien:hover, .sous-lien:hover { text-decoration: none; background: rgba(255,255,255,.05); }
+.menu-lien.actif { background: var(--laterale-actif); color: #fff; font-weight: 500; }
+.sous-menu { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 4px 18px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.1); }
+.sous-lien { min-height: 28px; display: flex; align-items: center; padding: 0 10px; border-radius: 5px; font-size: 12.5px; color: #98A4C0; }
+.sous-lien.actif { background: rgba(255,255,255,.08); color: #fff; }
+.bloc-utilisateur { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-top: 1px solid rgba(255,255,255,.07); }
+.bloc-equipe { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.05); border-radius: 7px; padding: 7px 10px; white-space: nowrap; }
+.bloc-equipe .discret { color: var(--laterale-texte); font-size: 11.5px; } .bloc-equipe b { color: #fff; flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.bloc-equipe a { color: #9DB6FF; font-size: 12px; }
+.bloc-moi { display: flex; align-items: center; gap: 10px; white-space: nowrap; min-width: 0; }
+.moi-nom { color: #fff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; } .moi-sortie { font-size: 11.5px; color: #7F8BA8; }
+.principal { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
+.entete { height: 52px; flex: 0 0 52px; background: #fff; border-bottom: 1px solid var(--bordure); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; gap: 16px; }
+.fil { display: flex; align-items: center; gap: 8px; } .fil .sep { color: #B3BAC7; } .fil .badge { margin-left: 8px; }
+.recherche { white-space: nowrap; overflow: hidden; display: flex; align-items: center; gap: 8px; height: 32px; width: 260px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 7px; background: var(--fond-doux); color: var(--pale); justify-content: space-between; }
+.recherche span { font-family: var(--mono); font-size: 11px; border: 1px solid var(--bordure); border-radius: 4px; padding: 0 5px; background: #fff; }
+.contenu { flex: 1; overflow: auto; }
+.ecran { padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1440px; }
+.entete-ecran { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.sous-titre { color: var(--discret); margin-top: 4px; } .actions-ecran { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- Composants ---------- */
+.carte { background: var(--carte); border: 1px solid var(--bordure); border-radius: 10px; }
+.carte-titre { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--bordure-fine); gap: 12px; }
+.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: inline-block; white-space: nowrap; }
+.pastille { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: 0 0 8px; }
+.avatar { width: 22px; height: 22px; border-radius: 50%; background: #E8EEFF; color: var(--primaire-texte); font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 22px; }
+.avatar.grand { width: 32px; height: 32px; flex-basis: 32px; background: #2B4DB8; color: #fff; font-size: 12px; }
+.barre { display: inline-block; height: 6px; border-radius: 3px; background: #EEF1F5; width: 100%; overflow: hidden; vertical-align: middle; }
+.barre > span { display: block; height: 100%; border-radius: 3px; }
+.btn { height: 32px; padding: 0 12px; border-radius: 7px; border: 1px solid var(--bordure); background: #fff; font-weight: 500; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--fond-doux); }
+.btn.primaire { background: var(--primaire); border-color: var(--primaire); color: #fff; } .btn.primaire:hover { background: var(--primaire-fonce); }
+.btn.succes { background: var(--succes); border-color: var(--succes); color: #fff; }
+.btn.danger { color: var(--danger); } .btn.petit { height: 26px; padding: 0 9px; font-size: 12px; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.separateur-puces { width: 1px; height: 22px; background: var(--bordure); margin: 0 6px; align-self: center; }
+.lien-btn { background: none; border: 0; color: var(--primaire); cursor: pointer; padding: 0; }
+input.champ, select.champ, textarea.champ, .champ { height: 34px; border: 1px solid var(--bordure); border-radius: 7px; background: var(--fond-doux); padding: 0 10px; width: 100%; }
+textarea.champ { height: auto; padding: 8px 10px; resize: vertical; }
+.libelle { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); font-weight: 500; display: block; margin-bottom: 5px; }
+.onglets { display: flex; gap: 20px; border-bottom: 1px solid var(--bordure); }
+.onglet { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 2px; color: var(--discret); cursor: pointer; }
+.onglet.actif { color: var(--texte); border-color: var(--primaire); } .onglet .compte { color: var(--pale); margin-left: 4px; }
+.puces { display: flex; gap: 6px; flex-wrap: wrap; }
+.puce { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 14px; background: #fff; cursor: pointer; }
+.puce.active { background: var(--primaire-clair); color: var(--primaire-texte); border-color: #B7C8F5; }
+.grille-kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.grille-kpi.q3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grille-kpi.q4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kpi { padding: 14px 16px; } .kpi-libelle { color: var(--discret); } .kpi-valeur { font-size: 24px; font-weight: 600; margin-top: 6px; }
+.kpi-complement { font-size: 12px; font-weight: 400; color: var(--discret); margin-left: 8px; }
+.vide { padding: 24px; text-align: center; color: var(--pale); }
+table.tableau { width: 100%; border-collapse: collapse; }
+.tableau th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); font-weight: 500; text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--bordure); background: var(--fond-entete); white-space: nowrap; }
+.tableau td { padding: 9px 12px; border-bottom: 1px solid var(--bordure-fine); vertical-align: middle; }
+.tableau tr.groupe td { background: var(--fond-entete); font-weight: 600; }
+.tableau tr.cliquable { cursor: pointer; } .tableau tr.cliquable:hover td { background: #F7F9FD; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ligne-flex { display: flex; align-items: center; gap: 8px; }
+.deux-colonnes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #141A26; color: #fff; padding: 10px 16px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; max-width: 640px; }
+.notification.visible { opacity: 1; } .notification.erreur { background: var(--danger); }
+
+/* ---------- Plein écran (connexion, choix d'équipe, demandeur) ---------- */
+.plein-ecran { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--laterale); padding: 24px; }
+.boite { width: 420px; padding: 28px 32px; } .boite.large { width: 720px; }
+.boite .marque { padding: 0 0 22px; border: 0; } .boite .marque-nom { color: var(--texte); font-size: 17px; }
+.pile { display: flex; flex-direction: column; gap: 12px; }
+.message-erreur { background: #FDE8E8; color: var(--danger); border-radius: 7px; padding: 8px 10px; }
+.message-info { background: #E3F5EC; color: #0B6B4F; border-radius: 7px; padding: 8px 10px; }
+.chargement { color: #fff; }
+.carte-choix { display: flex; align-items: center; gap: 12px; border: 1px solid var(--bordure); border-radius: 8px; padding: 12px 14px; }
+.carte-choix.invitation { border-color: #F3D9A8; background: #FFF8EC; }
+
+/* ---------- Panneau latéral et modale ---------- */
+.voile { position: fixed; inset: 0; background: rgba(10, 22, 51, .25); z-index: 20; }
+.panneau { position: fixed; top: 0; right: 0; bottom: 0; width: 480px; background: #fff; z-index: 21; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(10,22,51,.12); }
+.panneau-entete { padding: 18px 20px; border-bottom: 1px solid var(--bordure-fine); display: flex; justify-content: space-between; gap: 12px; }
+.panneau-corps { flex: 1; overflow: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+.panneau-pied { padding: 12px 20px; border-top: 1px solid var(--bordure-fine); display: flex; justify-content: flex-end; gap: 8px; }
+.infos { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+.infos > span:nth-child(odd) { color: var(--discret); }
+.modale { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 640px; max-height: 85vh; background: #fff; border-radius: 12px; z-index: 21; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(10,22,51,.25); }
+.fermer { background: none; border: 0; font-size: 18px; color: var(--pale); cursor: pointer; }
+
+/* ---------- Calendriers (congés, ressources) ---------- */
+.calendrier { overflow: auto; }
+.calendrier table { border-collapse: collapse; width: 100%; }
+.calendrier th, .calendrier td { border-bottom: 1px solid var(--bordure-fine); border-left: 1px solid var(--bordure-fine); text-align: center; padding: 0; height: 32px; min-width: 28px; font-size: 11px; }
+.calendrier th { color: var(--discret); font-weight: 500; line-height: 1.2; background: var(--fond-entete); }
+.calendrier th.nom, .calendrier td.nom { text-align: left; padding: 0 12px; min-width: 190px; border-left: 0; font-size: 13px; }
+.calendrier .ferme { background: #F1F3F7; color: var(--pale); }
+.calendrier .aujourdhui { color: var(--primaire); font-weight: 700; }
+.calendrier td.cliquable { cursor: pointer; } .calendrier td.cliquable:hover { background: #F3F6FF; }
+.case-absence { display: inline-block; min-width: 24px; padding: 3px 2px; border-radius: 4px; font-weight: 600; font-size: 10px; }
+.anniversaire { font-size: 12px; line-height: 1; }
+/* Légende du calendrier : chaque entrée sur une ligne, retour à la ligne entre les entrées si la place manque */
+.legende-calendrier { flex: 1 1 0; gap: 6px 14px; flex-wrap: wrap; justify-content: flex-end; }
+.legende-calendrier > span { white-space: nowrap; }
+.calendrier tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; padding: 0 12px; }
+
+/* ---------- Gantt (Mes projets) ---------- */
+.gantt-ligne { display: grid; grid-template-columns: 300px minmax(0, 1fr); border-bottom: 1px solid var(--bordure-fine); min-height: 58px; }
+.gantt-ligne > div:first-child { padding: 10px 16px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.gantt-piste { position: relative; }
+.gantt-titre-col { padding: 9px 16px; margin: 0; }
+/* Planning projet (Suivi › Projets et Roadmap, 2026-10-23) : un bloc par sprint, un repère ▲ par MEP sur la piste du projet */
+.gantt-sprint { position: absolute; top: 18px; height: 22px; border-radius: 3px; background: var(--fond-entete);
+  border: 1px solid var(--bordure); font-size: 10px; line-height: 20px; text-align: center; color: var(--discret); overflow: hidden; white-space: nowrap; }
+.gantt-sprint.en-cours { background: var(--primaire); border-color: var(--primaire); color: #fff; font-weight: 600; }
+.planning-projet .gantt-ligne { min-height: 64px; } .planning-projet .gantt-sprint { top: 9px; }
+.gantt-mep { position: absolute; top: 36px; transform: translateX(-4px); font-size: 10px; font-weight: 600; white-space: nowrap; }
+.couleur-primaire { color: var(--primaire); }
+/* Saisie des MEP (Mon dashboard › Projets et Roadmap › Mises en production), 2026-10-23 */
+.formulaire-mep { gap: 8px; padding: 12px 16px; flex-wrap: wrap; }
+.champ.champ-version { width: 100px; } .champ.champ-nombre { width: 80px; text-align: right; }
+.gantt-jour { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--primaire); opacity: .5; }
+.gantt-mois { display: grid; grid-template-columns: 300px minmax(0, 1fr); border-bottom: 1px solid var(--bordure); background: var(--fond-entete); }
+.gantt-mois .mois { display: flex; } .gantt-mois .mois div { border-left: 1px solid var(--bordure-fine); padding: 9px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); }
+
+/* ---------- Divers ---------- */
+.interrupteur { width: 32px; height: 18px; border-radius: 9px; background: #D5DAE3; position: relative; border: 0; cursor: pointer; flex: 0 0 32px; }
+.interrupteur::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
+.interrupteur.actif { background: var(--primaire); } .interrupteur.actif::after { left: 16px; }
+/* Saisie mensuelle des heures (Mon timesheet › Saisir mes heures) : une colonne par jour de semaine */
+.defilement-x { overflow-x: auto; }
+.grille-mois th, .grille-mois td { padding: 6px 2px; text-align: center; font-size: 12px; }
+.grille-mois .col-projet { text-align: left; padding-left: 12px; min-width: 190px; white-space: nowrap; }
+.grille-mois .debut-semaine { border-left: 1px solid var(--bordure); }
+.saisie-mois { width: 34px; height: 28px; text-align: center; font-size: 12px; border: 1px solid var(--bordure); border-radius: 5px; background: #fff; padding: 0; }
+.saisie-mois:disabled { background: var(--fond-doux); color: var(--discret); }
+.jour-off { display: inline-block; width: 34px; line-height: 28px; border-radius: 5px; background: var(--fond-doux); color: var(--discret); font-size: 10px; }
+.note-daily { width: 100%; min-height: 420px; border: 0; padding: 16px 20px; resize: vertical; font-size: 14px; line-height: 1.6; outline: none; }
+.historique a { display: block; padding: 10px 16px; border-bottom: 1px solid var(--bordure-fine); color: var(--texte); border-left: 3px solid transparent; }
+.historique a.actif { border-left-color: var(--primaire); background: #F3F6FF; } .historique a:hover { text-decoration: none; background: var(--fond-doux); }
+.couleur-choix { width: 28px; height: 28px; padding: 0; border: 1px solid var(--bordure); border-radius: 6px; background: none; }
+
+/* ---------- Tableau « Directions & équipes » (Liste des ressources) ---------- */
+.btn-icone { background: none; border: 0; color: var(--pale); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.btn-icone:hover { color: var(--texte); background: var(--fond-doux); }
+.btn-icone[disabled] { opacity: .35; cursor: default; background: none; }
+.recherche-champ { display: flex; align-items: center; gap: 8px; width: 320px; height: 36px; padding: 0 10px; border: 1px solid var(--bordure); border-radius: 8px; background: #fff; color: var(--pale); }
+.recherche-champ input { border: 0; outline: none; flex: 1; background: none; }
+/* Liste des ressources (maquette liste-ressources-ux/3-navigation-detail.png) : navigation à gauche
+   (équipes, responsable, projets), détail à droite (Product Owners en cartes, membres en tableau) */
+.liste-ressources { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.nav-ressources { padding: 10px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; }
+.nav-ressources .recherche-champ { width: 100%; margin-bottom: 8px; }
+.noeud { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; color: var(--texte); cursor: pointer; }
+.noeud:hover { text-decoration: none; background: var(--fond-doux); }
+.noeud.equipe { font-weight: 600; margin-top: 6px; } .noeud.projet, .noeud.personne { padding-left: 24px; }
+.noeud.actif { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
+.noeud .compte { margin-left: auto; color: var(--pale); font-size: 11.5px; font-weight: 400; }
+.nav-separateur { border-top: 1px solid var(--bordure-fine); margin: 10px 0 6px; }
+.detail-ressources { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.detail-entete { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+.detail-entete.responsable { border-left: 4px solid #8B5CD6; }
+.detail-titre { font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detail-kpi { display: flex; gap: 24px; } .detail-kpi div { text-align: right; } .detail-kpi b { display: block; font-size: 18px; }
+.nom-personne { font-weight: 500; }
+.cartes-po { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 14px 16px; }
+.carte-po { display: flex; align-items: center; gap: 10px; border: 1px solid #F6E7C8; background: #FFFBF2; border-radius: 8px; padding: 10px 12px; }
+.carte-po .avatar { background: #FFE2A8; color: #7A4700; }
+.carte-po.ajout { justify-content: center; border: 1px dashed var(--bordure); background: none; color: var(--primaire); }
+.presence-fin { color: var(--alerte); }
+.section-pliable { color: var(--texte); font-weight: 600; } .section-pliable .pale { font-weight: 400; }
+.tableau tr.inactive td { color: var(--pale); }
+.tableau-personnes td:first-child, .tableau-personnes td:nth-child(3), .tableau-personnes td:nth-child(6), .tableau-personnes td:last-child { white-space: nowrap; }
+.projets-personne { font-size: 12px; color: var(--discret); line-height: 1.5; } .projets-personne div { white-space: nowrap; }
+.projets-fiche { background: var(--fond-doux); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; }
+
+/* Bulle d'information (C.aide) */
+.aide { position: relative; display: inline-flex; margin-left: 4px; color: var(--pale); cursor: help; font-size: 12px; font-weight: 400;
+  text-transform: none; letter-spacing: 0; vertical-align: middle; outline: none; }
+.aide:hover, .aide:focus { color: var(--primaire); }
+/* position: fixed (coordonnées calculées par placerBulle, composants.js) : la bulle n'est jamais
+   coupée par un conteneur qui défile (barre latérale, tableaux) ni par le bord de la fenêtre */
+.aide .bulle { display: none; position: fixed; top: 0; left: 0; z-index: 200; width: 280px;
+  padding: 10px 12px; border-radius: 8px; background: #141A26; color: #fff; font-size: 12px; line-height: 1.45; font-weight: 400;
+  text-align: left; white-space: normal; text-transform: none; letter-spacing: 0; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.aide:hover .bulle, .aide:focus .bulle { display: block; }
+
+/* Bouton et menu Aide (en-tête) */
+.menu-aide { position: relative; }
+.menu-aide-icone { display: inline-flex; width: 18px; justify-content: center; font-weight: 600; color: var(--primaire); }
+.menu-aide-liste { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; width: 260px; padding: 6px; background: #fff;
+  border: 1px solid var(--bordure); border-radius: 10px; box-shadow: 0 10px 30px rgba(20,26,38,.14); }
+.menu-aide-entree { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; color: var(--texte); cursor: pointer; text-decoration: none; }
+.menu-aide-entree:hover { background: var(--fond-doux); }
+.menu-aide-sep { height: 1px; background: var(--bordure-fine); margin: 4px 0; }
+
+/* Calendrier : étiquettes de projets et lignes de synthèse (absents / membres) */
+.calendrier td.nom > .ligne-flex { max-width: 250px; overflow: hidden; }
+.nom-complement { display: flex; gap: 3px; flex-wrap: nowrap; overflow: hidden; max-width: 210px; margin: 1px 0 3px; }
+.etiquette { display: inline-block; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; font-size: 10.5px; color: var(--discret); border: 1px solid var(--bordure); border-radius: 4px; padding: 0 5px; margin-left: 2px; font-weight: 400; }
+.calendrier tr.ligne-synthese td { background: #FAFBFD; font-size: 10.5px; }
+.calendrier tr.ligne-synthese td.nom { color: var(--discret); font-size: 12.5px; }
+.calendrier td.synthese-vide { color: #C9CFD9; }
+.calendrier td.synthese.partiel { background: #FFF4E0; color: #8A4B00; font-weight: 600; }
+.calendrier td.synthese.critique { background: #FDECEC; color: #B42318; font-weight: 600; }
+
+/* Récap annuel : jours travaillés (T) / congés (C) / reste à prendre */
+.recap-travail { border-collapse: collapse; width: 100%; }
+.recap-travail th, .recap-travail td { border-bottom: 1px solid var(--bordure-fine); border-left: 1px solid var(--bordure-fine); text-align: center; font-size: 11.5px; height: 32px; padding: 0 4px; white-space: nowrap; }
+.recap-travail th { background: var(--fond-entete); color: var(--discret); font-weight: 500; }
+.recap-travail th.nom, .recap-travail td.nom { text-align: left; min-width: 170px; border-left: 0; font-size: 13px; padding: 0 12px; }
+.recap-travail .conge { color: #0F8A6B; background: #F4FBF8; }
+.recap-travail .tot { background: #F3F6FF; font-weight: 600; }
+.recap-travail tr.groupe td { background: var(--fond-entete); font-weight: 600; text-align: left; }
+.recap-travail tr.total td { font-weight: 600; background: var(--fond-entete); }
+.recap-travail .objectif-client { width: 76px; height: 28px; text-align: center; font-weight: 600; }
+.reste-negatif { color: #B42318; } .reste-positif { color: #0B6B4F; }
+
+
+/* Trucs et astuces : tableau des KPI et badges d'exemple */
+.tableau-kpi td { white-space: normal; vertical-align: top; font-size: 12.5px; }
+.tableau-kpi td:first-child { width: 170px; } .tableau-kpi td:last-child { width: 32%; }
+.badge-reel, .badge-illustratif { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 0 5px; margin-right: 4px; text-transform: uppercase; letter-spacing: .03em; }
+.badge-reel { color: #0B6B4F; background: #E3F5EC; } .badge-illustratif { color: #6B7485; background: #F1F3F7; }
+.tableau td.nowrap { white-space: nowrap; }
+.champ.champ-date { width: 118px; height: 26px; padding: 0 4px; font-size: 12px; }
+.champ-daily { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px 0; }
+.champ-daily .note-daily { min-height: 110px; border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 10px 12px; }
+.tableau-sprints td { padding: 4px 6px; } .tableau-sprints .champ { height: 28px; }
+.champ.champ-numero { width: 70px; height: 28px; }
+
+/* ---------- Organigramme des rôles Scrum (Trucs et astuces › Rôles Scrum) ----------
+   .org-noeud = une carte (ou un groupe) et ses enfants (.org-branches) : le parent descend un trait
+   vertical (::before de la liste), chaque enfant trace sa part du trait horizontal (::before / ::after
+   de son <li>) — technique classique sans image. Les listes DANS les cartes ne sont pas concernées. */
+.org { padding: 20px 16px; overflow-x: auto; }
+.org-haut { display: grid; grid-template-columns: 1fr 250px 1fr; align-items: center; }
+.org-cote { display: flex; justify-content: flex-end; align-items: center; }
+.org-tirets { width: 40px; border-top: 2px dashed #B8C0CF; }
+.org-trait { width: 2px; height: 20px; background: #B8C0CF; margin: 0 auto; }
+.org-cadre { border: 1px solid var(--bordure); border-radius: 12px; padding: 12px; background: var(--fond-doux); }
+.org-cadre-dev { background: #fff; }
+.org-cadre-titre { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--discret); text-align: center; margin-bottom: 6px; }
+.org-noeud { display: flex; flex-direction: column; align-items: center; }
+.org-groupe { border: 1px solid #B7C8F5; background: var(--primaire-clair); color: var(--primaire-texte); border-radius: 8px; padding: 6px 14px; font-weight: 600; font-size: 13px; }
+.org-branches { display: flex; justify-content: center; align-items: flex-start; padding: 20px 0 0; margin: 0; position: relative; }
+.org-branches::before { content: ''; position: absolute; top: 0; left: 50%; height: 20px; border-left: 2px solid #B8C0CF; }
+.org-branches > li { list-style: none; position: relative; padding: 20px 6px 0; }
+.org-branches > li::before, .org-branches > li::after { content: ''; position: absolute; top: 0; right: 50%; width: 50%; height: 20px; border-top: 2px solid #B8C0CF; }
+.org-branches > li::after { right: auto; left: 50%; border-left: 2px solid #B8C0CF; }
+.org-branches > li:first-child::before, .org-branches > li:last-child::after { border-top: 0 none; }
+.org-branches > li:last-child::before { border-right: 2px solid #B8C0CF; }
+.org-branches > li:last-child::after { border-left: 0 none; }
+.org-carte { width: 250px; text-align: left; background: #fff; border: 1px solid var(--bordure); border-top: 4px solid; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; box-shadow: 0 1px 2px rgba(10,22,51,.05); }
+.org-carte.pointille { border-style: dashed; border-top-style: solid; }
+.org-titre { font-weight: 700; font-size: 14px; }
+.org-sous-titre { color: var(--discret); font-size: 11.5px; }
+.org-mission { margin: 6px 0 4px; font-weight: 500; }
+.org-carte ul { margin: 0; padding-left: 16px; color: #3A4354; list-style: disc; }
+.org-carte li { margin: 1px 0; }
+.org-lien { margin-top: 6px; font-size: 11.5px; color: var(--primaire-texte); background: var(--primaire-clair); border-radius: 5px; padding: 2px 6px; display: inline-block; }
+.org-ceremonies { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.org-ceremonies span { font-size: 10.5px; border: 1px solid var(--bordure); border-radius: 10px; padding: 0 7px; color: var(--discret); }
+.org-pointille-exemple { width: 22px; height: 12px; border: 1.5px dashed var(--discret); border-radius: 3px; display: inline-block; }
+.tableau-roles td { white-space: normal; font-size: 12.5px; }
+.tableau-roles th.num, .tableau-roles td.num { text-align: center; }
+.tableau-roles td:first-child { width: 300px; }
+
+/* Choix de la méthode d'un nouveau projet (panneau « Nouveau projet ») : une carte par méthode */
+.choix-methodes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choix-methode { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--bordure); border-left: 4px solid; border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 12.5px; }
+.choix-methode > span { display: flex; flex-direction: column; gap: 2px; }
+.choix-methode:has(input:checked) { background: var(--primaire-clair); border-color: #B7C8F5; }
+
+/* Pastille rouge d'un menu (ex. comptes en attente d'accès sur Administration) */
+.pastille-alerte { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Badge du rôle Créateur dans le bloc utilisateur (migration 025) */
+.badge-createur { display: block; width: fit-content; margin: 1px 0 2px; font-size: 10.5px; font-weight: 600; color: #E6D9FF; background: rgba(122, 63, 194, .45); border-radius: 4px; padding: 0 5px; white-space: nowrap; }
+
+/* Simulation des rôles (simulation.js) : bandeau violet en haut de l'écran, cartes des rôles */
+.bandeau-simulation { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px; padding: 9px 20px; background: #5B2A9E; color: #fff; font-size: 13px; }
+.bandeau-simulation .champ { background: #fff; color: var(--texte); border: 0; }
+.bandeau-simulation .btn { background: #fff; color: #5B2A9E; border: 0; font-weight: 600; }
+.grille-simulation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+/* ---------- Grilles d'écran (remplacent des styles en ligne, pour pouvoir s'adapter à l'écran) ---------- */
+.ecran-daily { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; max-width: 1280px; }
+.ecran-daily .historique { margin-top: 58px; }
+.bouton-menu { display: none; font-size: 17px; padding: 0 10px; }
+
+/* ---------- Écran étroit : Galaxy Z Fold 7 déplié (≈ 880 px de large), tablette ----------
+   Demande du porteur (2026-10-08 ; maquette docs/maquettes/zfold7/). Sous 1100 px :
+   le menu latéral devient un tiroir ouvert par ☰ (il ne mange plus un quart de l'écran),
+   la recherche (inactive) disparaît, panneaux et fenêtres tiennent dans l'écran. */
+@media (max-width: 1100px) {
+  .bouton-menu { display: inline-flex; }
+  .laterale { position: fixed; top: 0; left: 0; bottom: 0; z-index: 40; transform: translateX(-100%); transition: transform .2s ease; }
+  .laterale.ouverte { transform: none; box-shadow: 8px 0 30px rgba(10, 22, 51, .3); }
+  .voile-menu { z-index: 35; }
+  .entete { padding: 0 16px; }
+  .entete .fil { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .recherche { display: none; }
+  .ecran { padding: 20px 16px; }
+  .panneau { width: min(480px, 100vw); }
+  .modale { width: min(640px, calc(100vw - 24px)); }
+}
+/* Sous 960 px : les écrans à deux colonnes passent sur une seule (historique du daily sous la saisie) */
+@media (max-width: 960px) {
+  .ecran-daily, .liste-ressources { grid-template-columns: minmax(0, 1fr); }
+  .nav-ressources { position: static; }
+  .ecran-daily .historique { margin-top: 0; }
+  .grille-simulation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grille-kpi, .grille-kpi.q4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entete-ecran { flex-wrap: wrap; align-items: flex-start; }
+}
+/* Écran tactile : cibles assez grandes pour le doigt */
+@media (pointer: coarse) {
+  .btn, .puce, .champ, .onglet { min-height: 36px; }
+  .menu-lien, .sous-lien { min-height: 40px; }
+}
+
+/* Code de vérification de l'email (connexion) : 6 chiffres bien espacés, faciles à lire et à taper */
+input.code-verification { height: 52px; text-align: center; font-size: 26px; font-weight: 600; letter-spacing: 12px; font-family: var(--mono); }
+
+/* Administration › ★ Rôles (créateur) : une carte par rôle */
+
+/* Trucs et astuces (maquette astuces-agile-roadmap/) : gros boutons de thème Agile / Roadmap */
+.themes { display: flex; gap: 10px; flex-wrap: wrap; }
+.theme { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border: 1px solid var(--bordure); border-radius: 10px; background: #fff; font: inherit; text-align: left; cursor: pointer; }
+.theme b { font-size: 15px; } .theme .discret { font-size: 12px; }
+.theme.actif { border-color: var(--primaire); background: var(--primaire-clair); box-shadow: inset 0 -3px 0 var(--primaire); }
+.theme-icone { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; color: #fff; }
+/* Fiche Roadmap : chaîne vision → sprint, formats (3 colonnes), bonnes pratiques / pièges (2 colonnes) */
+.chaine { display: flex; flex-wrap: wrap; padding: 0 16px 16px; }
+.chaine-etape { flex: 1; min-width: 150px; padding: 10px 12px; border-radius: 8px; background: #F4F6FA; border-top: 4px solid; }
+.chaine-etape .discret, .grille-formats .discret { font-size: 12px; }
+.chaine-fleche { display: grid; place-items: center; padding: 0 6px; color: var(--discret); font-size: 18px; }
+.grille-formats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.grille-formats .carte { padding: 14px 16px; margin: 0; font-size: 12.5px; }
+.format-exemples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
+.format-exemples div { border-radius: 6px; padding: 6px 8px; font-size: 12px; }
+.grille-conseils { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grille-conseils .carte { margin: 0; }
+.liste-conseils { margin: 6px 0 0; padding: 0 16px 10px; list-style: none; }
+.liste-conseils li { padding: 4px 0; border-bottom: 1px solid #EEF1F5; }
+@media (max-width: 960px) { .grille-formats, .grille-conseils { grid-template-columns: 1fr; } }
+
+/* Mention de propriété « © CIRITEC » (maquette mention-ciritec/) : connexion, bas du menu, menu Aide */
+.mention-propriete { font-size: 11.5px; color: var(--discret); text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bordure-fine); }
+.bloc-utilisateur .mention-propriete { font-size: 10.5px; color: var(--pale); margin: 0; padding: 0; border: 0; }
+.bloc-utilisateur .mention-propriete b { font-weight: 500; }
+.menu-aide-propos { padding: 6px 10px; font-size: 11.5px; color: var(--discret); }
+
+/* ============================================================
+   Utilitaires (revue qualité 2026-10-12) : mises en forme réutilisées par plusieurs écrans.
+   Règle : une mise en forme employée 3 fois ou plus devient une classe ici ; un attribut
+   style="…" n'est gardé que pour un réglage unique ou une valeur calculée (couleur d'une
+   équipe, largeur d'une barre). Placés en fin de fichier pour l'emporter à égalité.
+   ============================================================ */
+/* Texte */
+.texte-11 { font-size: 11px; } .texte-12 { font-size: 12px; } .texte-12-5 { font-size: 12.5px; }
+.poids-normal { font-weight: 400; } .texte-danger { color: var(--danger); }
+.centre, .tableau th.centre { text-align: center; }   /* « .tableau th » aligne à gauche par défaut */ .sans-retour { white-space: nowrap; }
+/* Mise en page */
+.extensible { flex: 1; } .entre { justify-content: space-between; }
+/* Champs : « select. » / « input. » pour l'emporter sur la largeur 100 % de input.champ, select.champ */
+.largeur-auto, input.largeur-auto, select.largeur-auto { width: auto; }
+.colonne { display: flex; flex-direction: column; } .colonne-modale { display: flex; flex-direction: column; min-height: 0; }
+.defilement { overflow: auto; } .ecran-large { max-width: 1500px; }
+.sans-marge { margin: 0; } .marge-bas { margin-bottom: 20px; } .ligne-liste { padding: 5px 0; }
+/* Encarts (cartes d'information) : marges intérieures ; variante orange d'alerte */
+.encart-moyen { padding: 14px 16px; } .encart-compact { padding: 12px 16px; }
+.encart { padding: 16px; } .encart-alerte { background: #FFF8EC; border-color: #F3D9A8; }
+.encart-info { background: #F3F6FF; border-color: #B7C8F5; } .encart-blocages { background: #FFF5F5; border-color: #F3C1C1; }
+/* Ligne ou carte sélectionnée (sprint affiché, référentiel choisi, équipe ouverte) */
+.ligne-courante, .carte-choix.courante { background: #F3F6FF; } .carte-choix.courante { border-color: #B7C8F5; }
+.texte-attention { color: #8A4B00; }
+.pastille-ferie { background: #F1F3F7; border: 1px solid #D5DAE3; }
+/* Liste des référentiels (Administration › Référentiels) */
+.menu-lien.lien-referentiel { color: var(--texte); justify-content: space-between; }
+/* Variante violette des onglets réservés au créateur (★ Rôles, ★ Simulation des rôles) */
+.encart-createur { padding: 12px 16px; background: #F5F0FD; border-color: #D9C7F5; }
+/* Champs et boutons : liste déroulante compacte (en-têtes d'écran), bouton plein des écrans de connexion */
+select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: auto; height: 28px; }
+.btn-connexion { height: 38px; justify-content: center; }
+
+/* Administration › Rôles : un projet par ligne dans la colonne Projet(s) (maquette tableau-roles/) */
+.projet-role { gap: 6px; padding: 1px 0; white-space: nowrap; }
+
+/* Matrice des droits (Administration › Rôles) : couleur de la liste selon le niveau */
+.tableau-matrice td { vertical-align: middle; }
+.tableau-matrice .ligne-onglet { padding-left: 16px; color: var(--discret); }   /* ligne « ↳ Onglet » (migration 038) */
+select.niveau-oui { background: #E3F5EC; color: #0B6B4F; font-weight: 600; }
+select.niveau-lecture { background: #FFF3E0; color: #8A4B00; font-weight: 600; }
+select.niveau-non { color: var(--pale); }
+/* Daily des équipes (maquettes daily-equipes-design/retenu/) : fil, filtres, blocages, synthèse */
+.libelle-semaine { min-width: 240px; text-align: center; }
+.grille-fil { display: grid; grid-template-columns: 210px minmax(0, 1fr) 280px; gap: 14px; align-items: start; margin-top: 14px; }
+.filtres-fil { padding: 12px; } .libelle-filtres { font-size: 11px; text-transform: uppercase; color: var(--discret); margin: 10px 0 4px; }
+.filtre-fil { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 6px; color: var(--texte); cursor: pointer; }
+.filtre-fil span { color: var(--pale); } .filtre-fil.actif { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
+.fil-jour, .bloc-droite, .panneau-lecture { padding: 14px 16px; } .fil-jour { margin-bottom: 14px; } .fil-jour-titre { font-size: 12px; font-weight: 600; color: var(--discret); text-transform: uppercase; letter-spacing: .04em; }
+.fil-entree { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--bordure-fine); margin-top: 8px; }
+.fil-texte { font-size: 13px; line-height: 1.55; margin-top: 4px; }
+.pastille-blocage { display: inline-block; margin: 6px 6px 0 0; padding: 3px 8px; border-radius: 6px; font-size: 12.5px; color: var(--danger); background: #FDECEC; }
+.bloc-droite { margin-bottom: 14px; } .ligne-droite { margin-top: 8px; font-size: 12.5px; }
+.grille-synthese { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; align-items: start; margin: 14px 0; }
+.tableau-synthese td { padding: 4px 6px; } .tableau-synthese th.centre { text-align: center; }
+.case-synthese { height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.case-synthese[data-action] { cursor: pointer; } .case-synthese.active { outline: 2px solid var(--primaire); }
+.case-ok { background: #DDF3E6; } .case-bloc { background: #FBDADA; } .case-manque { background: #FCEBD2; } .case-abs { background: var(--fond-entete); }
+.panneau-lecture.actif { border-color: var(--primaire); } .legende-synthese { padding: 8px 12px; } .lecture-note { margin: 12px 0; }
+@media (max-width: 960px) { .grille-fil, .grille-synthese { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Socle de la migration (page d'accueil provisoire de /v2/) ---------- */
+.boite-socle { max-width: 640px; margin: 80px auto; padding: 32px; background: #fff; border-radius: 12px; border: 1px solid var(--bordure-fine, #e5e7eb); }

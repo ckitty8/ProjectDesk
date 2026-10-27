@@ -1,9 +1,18 @@
 {
+  "framework": null,
+  "buildCommand": "npm --prefix web ci && npm --prefix web run build",
+  "outputDirectory": ".",
   "redirects": [
     {
       "source": "/",
       "destination": "/app/",
       "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/v2/:chemin*",
+      "destination": "/v2/index.html"
     }
   ],
   "headers": [
