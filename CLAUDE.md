@@ -85,7 +85,7 @@ Plan et décisions : `docs/specifications/migration-react.md` (à lire avant tou
   endroit pour les calculs, DAT à jour, documents vérifiés, aucune donnée touchée).
 - Pendant la migration, les contrôles de l'ancienne application restent ceux de la check-list
   ci-dessous ; ceux de `web/` (`npm run verifier` : types, lint, tests unitaires, build) s'y ajoutent
-  dès la phase 1.
+  dès la phase 1, puis `node tests/v2.js` (contrôles Playwright de `/v2/`) dès la phase 3.
 
 ## Check-list avant chaque commit
 
