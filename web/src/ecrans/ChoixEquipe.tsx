@@ -62,7 +62,9 @@ export function ChoixEquipe() {
   const [erreur, setErreur] = useState<string | null>(null);
   if (!compte || !ctx || !donnees) return null;
   const prenom = (compte.session.user.name || '').split(' ')[0] ?? '';
-  const equipes = mesEquipes(ctx);
+  /* Une Direction n'est proposée qu'à ses membres (porteur, 2026-10-31) : le créateur et les administrateurs, qui voient toutes les unités,
+     ne la reçoivent pas dans leur choix d'équipe sans en être membres */
+  const equipes = mesEquipes(ctx).filter(e => e.type !== 'direction' || !!ctx.rolesEquipe[e.id]);
   const retour = () => navigate(state?.retour && routeDe(state.retour) ? cheminDe(state.retour) : '/');
   if (!equipes.length && !compte.invitations.length && !ctx.estAdmin) return <EnAttente prenom={prenom} />;
 
