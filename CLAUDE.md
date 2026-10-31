@@ -30,11 +30,11 @@ sauf consigne contraire explicite du porteur du projet.
 
 4. **Cohérence entre les fonctionnalités** (l'architecture finale n'est pas figée).
    - Listes métier (types, priorités, statuts, rôles, absences) : **en base**, table
-     `valeurs_referentiel` (administrable). Constantes techniques : `app/js/config.js`.
-   - Un seul endroit pour les calculs métier : `app/js/calculs.js` (fonctions pures).
+     `valeurs_referentiel` (administrable). Constantes techniques : `web/src/domaine/config.ts`.
+   - Un seul endroit pour les calculs métier : `web/src/domaine/` (fonctions pures testées).
      Les écrans consomment, ils ne recalculent pas.
    - Droits : toujours en base (règles RLS) ; l'application ne fait que masquer les boutons.
-   - Réutiliser les composants existants (`app/js/composants.js`, panneau, modale, calendrier)
+   - Réutiliser les composants existants (`web/src/composants/` : panneau, fenêtres, calendrier…)
      avant d'en créer de nouveaux.
    - Avant d'ajouter une fonctionnalité, vérifier le § « Points de cohérence » du DAT.
 
@@ -44,7 +44,7 @@ sauf consigne contraire explicite du porteur du projet.
      jour le DAT **dans le même commit**, et ajoute une ligne à son historique.
 
 7. **À la fin de chaque commit, vérifier tous les documents.**
-   - Relire `README.md`, `CLAUDE.md`, `docs/DAT.md`, `app/README.md` et les captures de
+   - Relire `README.md`, `CLAUDE.md`, `docs/DAT.md`, `web/README.md` et les captures de
      `docs/maquettes/` : ils doivent décrire le code tel qu'il est après le commit.
    - Lancer `node scripts/verifier-docs.js` (automatique après chaque commit si le hook est
      activé : `git config core.hooksPath .githooks`).
@@ -61,7 +61,7 @@ sauf consigne contraire explicite du porteur du projet.
    - Après une migration : recharger le cache de la Data API (DAT § 10) puis vérifier que
      l'application affiche toujours les données (ex. nombre d'absences inchangé).
    - Le chargement de l'application ne doit jamais vider l'écran si une lecture échoue
-     (`chargerDonnees()` dans `app/js/etat.js`, DAT § 2).
+     (chargement tolérant de `web/src/donnees/`, DAT § 2).
 
 ## Spécifications validées (fonctionnalités à venir)
 
@@ -71,21 +71,17 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
   `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
   déroulante alimentée par Administration).
 
-## Migration React (décision du porteur, 2026-10-27)
+## Migration React (terminée le 2026-10-31, version 2.68)
 
-Plan et décisions : `docs/specifications/migration-react.md` (à lire avant toute évolution).
+Historique et décisions : `docs/specifications/migration-react.md`.
 
-- Travail **directement sur `main`**. La nouvelle application vit dans `web/` et est servie sur
-  `/v2/` ; l'ancienne (`app/`, servie sur `/app/`) reste intacte jusqu'à la bascule unique de la
-  dernière phase. Chaque commit doit laisser `/app/` fonctionnel.
-- **Gel de l'ancienne application** : correctifs seulement. Une nouveauté demandée est faite en
-  React si son écran est déjà migré, sinon elle attend (à signaler au porteur).
+- L'application est dans `web/` (React + TypeScript, Vite) et servie sur `/app/` : `app/` est le **résultat du build**
+  (ignoré par git, jamais modifié à la main). L'ancienne application JavaScript est supprimée ; retour arrière possible
+  via l'historique git (commit `5f0c7a2`, version 2.67).
+- Travail **directement sur `main`**.
 - Le Gantt et la roadmap interactifs sont **hors périmètre** (à développer après la migration).
-- Les règles n°2, 4, 5, 7 et 8 s'appliquent telles quelles au code TypeScript (commentaires, un seul
-  endroit pour les calculs, DAT à jour, documents vérifiés, aucune donnée touchée).
-- Pendant la migration, les contrôles de l'ancienne application restent ceux de la check-list
-  ci-dessous ; ceux de `web/` (`npm run verifier` : types, lint, tests unitaires, build) s'y ajoutent
-  dès la phase 1, puis `node tests/v2.js` (contrôles Playwright de `/v2/`) dès la phase 3.
+- Les règles n°2, 4, 5, 7 et 8 s'appliquent au code TypeScript (commentaires, un seul endroit pour les calculs :
+  `web/src/domaine/`, DAT à jour, documents vérifiés, aucune donnée touchée).
 
 ## Check-list avant chaque commit
 
@@ -94,9 +90,8 @@ Plan et décisions : `docs/specifications/migration-react.md` (à lire avant tou
 - [ ] Aucune donnée existante modifiée (règle n°8)
 - [ ] Référentiels / calculs centralisés (pas de duplication)
 - [ ] `docs/DAT.md` à jour + ligne d'historique
-- [ ] Version `?v=` des fichiers de `app/index.html` alignée sur la version du DAT (sinon le navigateur garde l'ancien code)
+- [ ] `npm --prefix web run verifier` → types, lint, tests unitaires et build passent
 - [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
-- [ ] `node scripts/audit-code.js` → aucune erreur (pas de code mort, pas de lien cassé)
 
 ## Revue qualité
 

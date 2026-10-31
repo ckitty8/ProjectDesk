@@ -1,7 +1,7 @@
 # Capture prise par tests/parcours.js quand un contrôle échoue (diagnostic local, jamais versionnée)
 tests/echec.png
 
-# Migration React : dossier généré par `npm --prefix web run build` (servi sur /v2/) et dépendances
-v2/
+# Application : dossier généré par `npm --prefix web run build` (servi sur /app/) et dépendances
+app/
 web/node_modules/
 web/dist/

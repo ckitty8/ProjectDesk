@@ -11,16 +11,15 @@ congés, timesheet, daily), sur Neon (Postgres, Auth, Data API) et Vercel.
 
 | Élément | Description |
 |---------|-------------|
-| [`app/`](app/) | **L'application** (HTML/CSS/JS natif, sans build). Lancement, premier administrateur, rôles : [README](app/README.md). |
+| [`web/`](web/) | **L'application** (React + TypeScript, Vite). Lancement, premier administrateur, rôles : [README](web/README.md). Son build est écrit dans `app/` (dossier généré, non versionné). |
 | [`db/migrations/`](db/migrations/) | Scripts SQL de la base Neon, appliqués dans l'ordre (tables, droits RLS, données initiales). |
 | [`docs/DAT.md`](docs/DAT.md) | Document d'Architecture Technique : architecture, menus, modèle de données, règles métier. |
 | [`docs/maquettes/`](docs/maquettes/) | Maquette de référence `pilotage-projet/` (+ compléments) et captures de l'état actuel. |
 | [`tests/`](tests/) | Serveur Neon simulé et parcours de test de bout en bout (Playwright). |
 | [`LICENSE`](LICENSE) | Licence propriétaire : ProjectDesk appartient à CIRITEC, tous droits réservés. |
 | [`CLAUDE.md`](CLAUDE.md) | Règles de travail permanentes du projet. |
-| [`vercel.json`](vercel.json) | Déploiement Vercel (la racine du site ouvre `app/`). |
+| [`vercel.json`](vercel.json) | Déploiement Vercel (construit `web/` ; la racine du site ouvre `/app/`). |
 | [`scripts/verifier-docs.js`](scripts/verifier-docs.js) | Vérification de la cohérence documentation ↔ code, à lancer après chaque commit. |
-| [`scripts/audit-code.js`](scripts/audit-code.js) | Audit du code : liens cassés, code mort, écrans, tables et fonctions SQL, lisibilité. |
 | [`db/audit/verifier-bdd.sql`](db/audit/verifier-bdd.sql) | Audit de la base en lecture seule : droits, liaisons, cohérence des données. |
 | [`.claude/skills/revue-qualite/`](.claude/skills/revue-qualite/SKILL.md) | Skill Claude Code « revue qualité » : la revue complète pas à pas (utilisable aussi à la main). |
 
@@ -29,6 +28,6 @@ congés, timesheet, daily), sur Neon (Postgres, Auth, Data API) et Vercel.
 ```bash
 git config core.hooksPath .githooks   # active la vérification des documents après chaque commit
 node scripts/verifier-docs.js         # lancement manuel
-node scripts/audit-code.js            # audit du code (code mort, liens, cohérence)
-node tests/parcours.js                # tests de bout en bout (Playwright requis)
+npm --prefix web ci && npm --prefix web run verifier   # types, lint, tests unitaires, build
+node tests/parcours.js                # tests de bout en bout (Playwright requis ; build préalable)
 ```

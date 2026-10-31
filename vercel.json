@@ -7,12 +7,17 @@
       "source": "/",
       "destination": "/app/",
       "permanent": false
+    },
+    {
+      "source": "/v2/:chemin*",
+      "destination": "/app/:chemin*",
+      "permanent": false
     }
   ],
   "rewrites": [
     {
-      "source": "/v2/:chemin*",
-      "destination": "/v2/index.html"
+      "source": "/app/:chemin*",
+      "destination": "/app/index.html"
     }
   ],
   "headers": [

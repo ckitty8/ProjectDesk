@@ -1,22 +1,19 @@
 /* ============================================================
-   Parcours de test de bout en bout (Playwright + serveur simulé)
+   Contrôles de bout en bout de l’application (/app/, React — voir docs/specifications/migration-react.md)
    ------------------------------------------------------------
-   1. Démarre tests/serveur-simule.js.
-   2. Ouvre l'application en redirigeant Neon Auth et la Data API
-      vers le serveur simulé (window.CONFIG_SURCHARGE).
-   3. Parcourt tous les écrans, effectue les actions principales,
-      vérifie l'absence d'erreur JavaScript et le résultat attendu.
-   4. Enregistre les captures dans docs/maquettes/etat-actuel/.
-   Usage : node tests/parcours.js
-   Prérequis : Playwright installé globalement (npm root -g).
+   1. Démarre tests/serveur-simule.js (services Neon simulés).
+   2. Ouvre /app/ (construit par `npm --prefix web run build`) en redirigeant Neon Auth et la Data API vers le serveur simulé.
+   3. Vérifie : connexion, jeton, chargement des tables, droits, simulation de rôle, déconnexion, absence d'erreur JavaScript.
+   Usage : node tests/parcours.js   (prérequis : npm --prefix web run build ; Playwright installé globalement)
    ============================================================ */
 'use strict';
 
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
-const PORT = 8124, BASE = `http://localhost:${PORT}`;
+const PORT = 8125, BASE = `http://localhost:${PORT}`;
 const CAPTURES = path.resolve(__dirname, '../docs/maquettes/etat-actuel');
 const resultats = [];
 const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!condition, detail }); };
@@ -25,1008 +22,783 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
   const serveur = spawn('node', [path.join(__dirname, 'serveur-simule.js'), String(PORT)], { stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 800));
   const navigateur = await chromium.launch();
-  const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 900 } });
-  await contexte.addInitScript(base => { window.CONFIG_SURCHARGE = { NEON_AUTH_URL: base + '/auth', DATA_API_URL: base + '/rest/v1' }; }, BASE);
-  await contexte.route('**/fonts.g*/**', r => r.abort());   // pas d'accès réseau aux polices
-  const page = await contexte.newPage();
-  const erreurs = [];
-  page.on('pageerror', e => erreurs.push(e.message));
-  // Les échecs de chargement réseau (polices bloquées, 401 volontaire du test) ne sont pas des erreurs JS
-  page.on('console', m => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) erreurs.push(m.text()); });
-  // Boîtes de dialogue : confirmations acceptées ; réponse des « prompt » modifiable par le test
-  let reponsePrompt = 'Merci de compléter';
-  page.on('dialog', d => d.accept(d.type() === 'prompt' ? reponsePrompt : undefined));
-
-  /* Capture d'un écran. Le message temporaire (notification) est masqué : il disparaît au bout de
-     quelques secondes et rendrait les captures différentes d'un lancement à l'autre. */
-  const capture = async nom => {
-    await page.waitForTimeout(250);
-    await page.evaluate(() => { document.getElementById('notification').style.visibility = 'hidden'; });
-    await page.screenshot({ path: path.join(CAPTURES, nom + '.png') });
-    await page.evaluate(() => { document.getElementById('notification').style.visibility = ''; });
-  };
-  const aller = async ecran => { await page.click(`[data-action="aller"][data-ecran="${ecran}"]`); await page.waitForTimeout(250); };
-  const texte = () => page.textContent('#app');
-
+  let page;
   try {
-    /* --- Connexion --- */
+    const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 900 } });
+    await contexte.addInitScript(base => { window.CONFIG_SURCHARGE = { NEON_AUTH_URL: base + '/auth', DATA_API_URL: base + '/rest/v1' }; }, BASE);
+    page = await contexte.newPage();
+    const erreurs = [];
+    page.on('pageerror', e => erreurs.push(e.message));
+    page.on('console', m => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) erreurs.push(m.text()); });
+
+    const connecter = async (email, motDePasse = 'motdepasse') => {
+      await page.fill('input[type=email]', email);
+      await page.fill('input[type=password]', motDePasse);
+      await page.click('form button.btn-connexion');
+    };
+
+    const VAGUE_A = CAPTURES;
+    fs.mkdirSync(CAPTURES, { recursive: true });
+    const capture = nom => page.screenshot({ path: path.join(VAGUE_A, nom + '.png') });
+    const texte = () => page.textContent('body');
+
+    /* ---------- Connexion (vague A) ---------- */
     await page.goto(BASE + '/app/');
-    await page.waitForSelector('form[data-action-envoi="seConnecter"]');
+    await page.waitForSelector('input[type=email]');
     await capture('01-connexion');
-    verifier('Mention de propriété CIRITEC sur la connexion', (await page.textContent('.mention-propriete')).includes('© 2026 CIRITEC'));
-    await page.fill('input[name=email]', 'camille@test.fr'); await page.fill('input[name=motDePasse]', 'faux-mdp');
-    await page.click('form button'); await page.waitForTimeout(300);
-    verifier('Connexion refusée avec un mauvais mot de passe', (await texte()).includes('incorrect'));
+    verifier('Sans session, la connexion est proposée avec sa mention de propriété', (await page.textContent('.mention-propriete')).includes('© 2026 CIRITEC'));
+    verifier('Connexion : plus de « Continuer avec Google » (email et mot de passe seulement)', !/google/i.test(await texte()));
+    await connecter('camille@test.fr', 'faux-mdp-1');
+    await page.waitForSelector('.message-erreur');
+    verifier('Un mauvais mot de passe affiche une erreur claire et laisse sur la connexion', (await texte()).includes('incorrect') && await page.locator('input[type=email]').count() === 1);
+
     // Mot de passe oublié : demande, lien reçu par email (simulé), nouveau mot de passe, connexion
-    await page.click('[data-action="motDePasseOublie"]');
-    await page.fill('form[data-action-envoi="envoyerReinitialisation"] input[name=email]', 'camille@test.fr');
-    await page.click('form[data-action-envoi="envoyerReinitialisation"] button'); await page.waitForTimeout(300);
+    await page.click('text=Mot de passe oublié ?');
+    await page.fill('input[name=email]', 'camille@test.fr');
+    await page.click('text=Recevoir le lien par email');
+    await page.waitForSelector('.message-info');
     const emailEnvoye = (await texte()).includes('email de réinitialisation');
     const lien = (await (await page.request.get(BASE + '/auth/dernier-lien-simule')).json()).lien;
-    await page.goto(lien); await page.waitForSelector('form[data-action-envoi="choisirMotDePasse"]');
-    const jetonRetire = !page.url().includes('token=');
+    await page.goto(lien);
+    await page.waitForSelector('input[name=confirmation]');
+    await page.waitForFunction(() => !location.search.includes('token='));
+    await page.fill('input[name=motDePasse]', 'motdepasse'); await page.fill('input[name=confirmation]', 'autre-mot-de-passe');
+    await page.click('text=Enregistrer le mot de passe'); await page.waitForSelector('.message-erreur');
+    verifier('Mot de passe oublié : deux saisies différentes refusées', (await texte()).includes('sont différents'));
     await page.fill('input[name=motDePasse]', 'motdepasse'); await page.fill('input[name=confirmation]', 'motdepasse');
-    await page.click('form[data-action-envoi="choisirMotDePasse"] button'); await page.waitForTimeout(300);
-    verifier('Mot de passe oublié : email, lien, nouveau mot de passe enregistré', emailEnvoye && jetonRetire
-      && (await texte()).includes('Mot de passe enregistré') && !!(await page.$('form[data-action-envoi="seConnecter"]')));
-    await page.fill('input[name=email]', 'camille@test.fr');
-    await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('.laterale');
-    verifier('Une seule équipe : ouverture directe de l’outil (dashboard)', (await texte()).includes('Dashboard général'));
-    // Administrateur membre de plusieurs équipes : pas d'écran de choix, ouverture directe (équipe par défaut)
-    verifier('Administrateur avec plusieurs équipes : ouverture directe, sans choix d’équipe', await page.evaluate(async () => {
-      const original = Api.listerOrganisations, memo = localStorage.getItem('pp_equipe');
-      Api.listerOrganisations = async () => etat.d.equipes.slice(0, 2).map(e => ({ id: e.id, name: e.nom }));
-      localStorage.removeItem('pp_equipe'); etat.ecran = 'connexion';
-      await demarrer();
-      const ok = etat.estAdmin && etat.ecran !== 'choixEquipe' && !!etat.equipeCourante;
-      Api.listerOrganisations = original; if (memo) localStorage.setItem('pp_equipe', memo);
-      await demarrer();
-      return ok;
-    }));
-    await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
-    await capture('02-choix-equipe');
-    verifier('Choix d’équipe : invitation reçue affichée', (await texte()).includes('Produit'));
-    // Croix de fermeture à la place de « Déconnexion » (porteur 2026-10-26) : retour à l'écran d'où l'on vient
-    const croix = !!(await page.$('[data-action="fermerChoixEquipe"]')) && !(await page.$('.plein-ecran [data-action="deconnexion"]'));
-    await page.click('[data-action="fermerChoixEquipe"]'); await page.waitForSelector('.laterale');
-    verifier('Choix d’équipe : une croix ferme la fenêtre (retour à l’écran précédent), plus de bouton Déconnexion', croix && await page.evaluate(() => etat.ecran === 'dashboard'));
-    await page.click('[data-action="changerEquipe"]'); await page.waitForSelector('[data-action="ouvrirEquipe"]');
-    await page.click('[data-action="ouvrirEquipe"]');
-    await page.waitForSelector('.laterale');
+    await page.click('text=Enregistrer le mot de passe'); await page.waitForSelector('.message-info');
+    verifier('Mot de passe oublié : email, lien (jeton retiré de l\'adresse), nouveau mot de passe enregistré',
+      emailEnvoye && (await texte()).includes('Mot de passe enregistré') && await page.locator('input[type=password]').count() === 1);
 
-    /* --- Section Suivi de mes équipes (ex-Général, lecture) --- */
-    await capture('03-dashboard');
-    verifier('Mention de propriété CIRITEC en bas du menu', (await page.textContent('.bloc-utilisateur .mention-propriete')).includes('CIRITEC'));
-    // Bulle ⓘ de la barre latérale : affichée en entier, hors de la barre qui défile (signalé le 2026-10-06)
-    await page.hover('.menu-titre .aide >> nth=0'); await page.waitForTimeout(150);
-    verifier('Bulle ⓘ de la barre latérale entière (non coupée)', await page.evaluate(() => {
-      const b = document.querySelector('.menu-titre .aide .bulle').getBoundingClientRect();
-      return b.width >= 270 && b.left >= 0 && b.right <= innerWidth && b.bottom <= innerHeight
-        && document.elementFromPoint(b.right - 10, b.top + 10).closest('.bulle') !== null; }));
-    await page.mouse.move(700, 600);
-    verifier('Dashboard général : indicateurs et projets à surveiller, plus d’objectifs (OKR) ni de trimestres (porteur 2026-10-25)',
-      (await texte()).includes('Projets à surveiller') && !/objectif|OKR|T[1-4]\b/i.test(await page.textContent('.contenu')));
-    await aller('projets'); await capture('04-projets');
-    verifier('Projets : aucune notion de ticket (pilotage de projets uniquement)', !/ticket/i.test(await page.textContent('body'))
-      && !(await page.$('[data-action="deplierProjet"]')));
-    await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
-    verifier('Projets : panneau en lecture seule', (await texte()).includes('Vue « Suivi de mes équipes » en lecture seule'));
-    await page.click('.fermer');
-    /* Projets et Roadmap › Planning projet (2026-10-23) : sprints et mises en production de chaque projet sur une frise de 6 mois */
-    await page.evaluate(() => majUi('planningProjet', { debut: '2026-09-01' }));
-    await page.click('[data-action="ongletProjets"][data-id="planning"]'); await page.waitForTimeout(150);
-    const blocsSprints = await page.$$eval('.planning-projet .gantt-sprint', b => b.map(x => x.textContent.trim()));
-    const reperesMep = await page.$$eval('.planning-projet .gantt-mep', b => b.map(x => x.textContent.trim()));
-    const ongletsProjets = await page.$$eval('[data-action="ongletProjets"]', b => b.map(x => x.textContent.trim()));
-    await page.click('[data-action="planningProjetDecaler"][data-sens="1"]'); await page.waitForTimeout(150);
-    const periodeSuivante = await page.textContent('.encart-compact b');
-    verifier('Projets et Roadmap › Planning projet : sprints S19 / S20 de PF-14 et les 4 MEP (▲), navigation par mois',
-      ongletsProjets.join('|') === 'Projets|Planning projet' && blocsSprints.includes('S19') && blocsSprints.includes('S20')
-      && ['V2.0', 'V1.3', 'V2.1', 'V3.0'].every(v => reperesMep.includes('▲ ' + v)) && periodeSuivante.startsWith('octobre 2026'),
-      blocsSprints.join(' ') + ' / ' + reperesMep.join(' ') + ' / ' + periodeSuivante);
-    await page.evaluate(() => majUi('planningProjet', { debut: '2026-09-01' })); await page.waitForTimeout(150);
-    await capture('04b-planning-projet');
-    await page.click('[data-action="planningProjetAujourdhui"]'); await page.click('[data-action="ongletProjets"][data-id="projets"]');
-    await aller('ressources'); await page.click('[data-action="moisSuivant"]'); await capture('05-ressources');
-    /* Gestion des ressources (2026-10-16) : onglets Calendrier / Liste des ressources, dates de naissance
-       (jour et mois seulement à l'écran ; 🎂 dans le calendrier, rappel des anniversaires du mois) */
-    const ongletsRess = await page.$$eval('[data-action="ongletRessources"]', b => b.map(x => x.textContent.trim()));
-    await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10, mode: 'equipe' })); await page.waitForTimeout(150);
-    const gateauNov = await page.$eval(`tr[data-personne="${await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Maxime Fournier').id)}"]`,
-      tr => tr.querySelectorAll('.anniversaire').length);
-    verifier('Gestion des ressources : onglets Calendrier et Liste des ressources, 🎂 le jour de l’anniversaire',
-      ongletsRess.join('|') === 'Calendrier|Liste des ressources' && gateauNov === 1 && (await texte()).includes('🎂 Anniversaire'));
-    await page.click('[data-action="calendrierAujourdhui"]');
-    await page.click('[data-action="ongletRessources"][data-id="liste"]'); await page.waitForTimeout(150);
-    const annuaireRess = await page.textContent('#annuaire-ressources'), pageRess = await texte();
-    const attendusAnniv = await page.evaluate(() => Calculs.anniversairesDuMois(etat.d.ressources.filter(r => !estInactive(r)),
-      Calculs.depuisIso(Calculs.aujourdhui()).getMonth()).map(r => r.nom));
-    verifier('Gestion des ressources › Liste : colonne Anniversaire (jour et mois, sans l’année) et anniversaires du mois',
-      annuaireRess.includes('Anniversaire') && annuaireRess.includes('28 oct.') && !annuaireRess.includes('1991')
-      && pageRess.includes('Anniversaires') && attendusAnniv.every(n => pageRess.includes(n)), attendusAnniv.join(', '));
-    const lignesVisibles = () => page.$$eval('#annuaire-ressources tbody tr[data-recherche]', t => t.filter(x => !x.hidden).length);
-    const idData = await page.evaluate(() => etat.d.equipes.find(e => e.nom === 'Data').id);
-    await page.selectOption('[data-action-change="filtrerEquipeRessources"]', idData); await page.waitForTimeout(150);
-    const nbData = await lignesVisibles();
-    await page.fill('[data-action-saisie="rechercherRessource"]', 'sar'); await page.waitForTimeout(150);
-    const nbRecherche = await lignesVisibles();
-    await page.selectOption('[data-action-change="filtrerStatutRessources"]', 'inactif'); await page.waitForTimeout(150);
-    const nbInactifs = await lignesVisibles();
-    verifier('Gestion des ressources › Liste : filtres équipe, recherche et statut', nbData === 3 && nbRecherche === 1 && nbInactifs === 0,
-      `${nbData} / ${nbRecherche} / ${nbInactifs}`);
-    await page.evaluate(() => majUi('ressources', { equipeId: '', statut: '', q: '' })); await page.waitForTimeout(150);
-    await capture('05b-ressources-liste');
-    await page.click('[data-action="ongletRessources"][data-id="calendrier"]');
-    // Pas de menu Administration dans Suivi de mes équipes, pour aucun rôle (porteur, 2026-10-22)
-    verifier('Suivi de mes équipes : pas de menu Administration', !(await page.$('.laterale [data-action="aller"][data-ecran="administration"]'))
-      && !!(await page.$('.laterale [data-action="aller"][data-ecran="monAdmin"]')));
-    await aller('timesheet'); await page.click('[data-action="moisTempsPrecedent"]'); await page.click('[data-action="moisTempsSuivant"]');
-    await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(150);   // mois des données simulées
-    verifier('Timesheet (Suivi de mes équipes) : feuilles du mois par personne', (await texte()).includes('septembre 2026') && (await texte()).includes('Saisi / attendu'));
-    await capture('07-timesheet');
-
-    /* --- Règle : la section « Suivi de mes équipes » (ex-« Général ») est en lecture seule ---
-       Aucun champ, formulaire ou action d'écriture (tous onglets), sauf la validation des feuilles de temps. */
-    const ACTIONS_LECTURE = ['aller', 'ouvrirProjet', 'fermer', 'filtrerEquipeProjets', 'deplierProjet',
-      'moisPrecedent', 'moisSuivant', 'calendrierAujourdhui', 'moisTempsPrecedent', 'moisTempsSuivant',
-      'filtrerDailyEquipes', 'dailyEquipesAujourdhui', 'dailyEquipesDecaler', 'filtrerPersonneDaily', 'ongletDailyEquipes',
-      'choisirCaseDaily', 'fermerCaseDaily', 'decalerCaseDaily', 'vueCalendrier', 'projetCalendrier',
-      'ongletRessources', 'filtrerEquipeRessources', 'filtrerStatutRessources', 'rechercherRessource',
-      'ongletProjets', 'planningProjetDecaler', 'planningProjetAujourdhui',
-      'ouvrirExportDaily',    // export Excel : lecture seule (téléchargement de ce qui est affiché)
-      'validerFeuille', 'renvoyerFeuille'];   // seule exception : validation des feuilles par le responsable (Timesheet)
-    const ecritures = async () => page.$$eval('.contenu [data-action-change], .contenu [data-action-saisie], .contenu [data-action-envoi], .contenu [data-action]',
-      (els, permises) => els.map(e => e.dataset.actionChange || e.dataset.actionSaisie || e.dataset.actionEnvoi || e.dataset.action)
-        .filter(a => a && !permises.includes(a)), ACTIONS_LECTURE);
-    const interdites = [];
-    for (const ecran of ['dashboard', 'projets', 'ressources', 'timesheet', 'dailyEquipes']) {
-      await aller(ecran);
-      if (ecran === 'ressources') {
-        for (const onglet of ['calendrier', 'liste']) { await page.click(`[data-action="ongletRessources"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
-      } else if (ecran === 'projets') {
-        for (const onglet of ['planning', 'projets']) { await page.click(`[data-action="ongletProjets"][data-id="${onglet}"]`); await page.waitForTimeout(150); interdites.push(...await ecritures()); }
-
-      } else interdites.push(...await ecritures());
-    }
-    await aller('projets'); await page.click('tr.cliquable[data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
-    interdites.push(...await page.$$eval('.panneau [data-action-change], .panneau [data-action-envoi], .panneau [data-action-saisie]', els => els.map(e => 'panneau:' + (e.dataset.actionChange || e.dataset.actionEnvoi || e.dataset.actionSaisie))));
-    await page.click('.fermer');
-    verifier('Suivi de mes équipes : lecture seule (aucune action d’écriture hors validation des feuilles)', interdites.length === 0, [...new Set(interdites)].join(', '));
-
-    /* --- Administration (Mon dashboard) : référentiels modifiables par l'administratrice --- */
-    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="referentiels"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="ajouterValeur"] input', 'Demande légale');
-    await page.click('form[data-action-envoi="ajouterValeur"] button'); await page.waitForTimeout(300);
-    verifier('Mon admin : valeur de référentiel ajoutée', (await page.$$eval('input[data-action-change="renommerValeur"]', l => l.map(i => i.value))).includes('Demande légale'));
-    // Valeur système renommable : le nouveau libellé est repris par les données et par les calculs
-    await page.click('[data-action="choisirReferentiel"][data-id="role"]'); await page.waitForTimeout(200);
-    const renommerRole = async (ancien, nouveau) => {
-      const champ = `input[data-action-change="renommerValeur"][value="${ancien}"]`;
-      await page.fill(champ, nouveau); await page.press(champ, 'Tab'); await page.waitForTimeout(400);
-    };
-    await renommerRole('Membre', 'Contributeur');
-    verifier('Référentiels : valeur système renommée et propagée', (await page.evaluate(() => ROLES_PROJET.MEMBRE)) === 'Contributeur'
-      && (await page.evaluate(() => etat.d.affectations.some(a => a.role === 'Contributeur') && !etat.d.affectations.some(a => a.role === 'Membre'))));
-    await renommerRole('Contributeur', 'Membre');
-    // Trucs et astuces : menu à part dans Mon dashboard (plus un onglet d'Administration)
-    const ongletAstucesAdmin = !!(await page.$('[data-action="ongletMonAdmin"][data-id="astuces"]'));
-    await aller('astuces'); await capture('19-astuces');
-    verifier('Mon dashboard › Trucs et astuces : menu à part, KPI Scrum et Kanban avec exemples', !ongletAstucesAdmin && await page.$$eval('.tableau-kpi', t => t.map(x => x.textContent).join(' '))
-      .then(txt => ['Vélocité', 'Burndown', 'Lead time', 'Cycle time', 'WIP'].every(k => txt.includes(k)))
-      && (await page.$$('.tableau-kpi .badge-reel')).length > 0 && (await page.$$('.tableau-kpi .badge-illustratif')).length > 0);
-    // Rôles Scrum : organigramme détaillé (PO fonctionnel, PO technique, tech lead, QA) et « qui fait quoi »
-    await page.click('[data-action="ongletAstuces"][data-onglet="roles"]'); await page.waitForTimeout(200);
-    verifier('Trucs et astuces › Rôles Scrum : organigramme détaillé et qui fait quoi', await page.evaluate(() => {
-      const titres = [...document.querySelectorAll('.org-carte .org-titre')].map(t => t.textContent);
-      return ['PO fonctionnel', 'PO technique', 'Scrum Master', 'Tech lead', 'QA / Testeurs', 'Développeurs'].every(t => titres.includes(t))
-        && !!document.querySelector('.tableau-roles') && document.querySelectorAll('.tableau-roles tbody tr').length === QUI_FAIT_QUOI_SCRUM.lignes.length;
-    }));
-    await capture('25-roles-scrum');
-    await page.click('[data-action="ongletAstuces"][data-onglet="kpi"]'); await page.waitForTimeout(150);
-    // Thème Roadmap (maquette astuces-agile-roadmap) : fiche pratique, puis retour au thème Agile
-    await page.click('[data-action="themeAstuces"][data-theme="roadmap"]'); await page.waitForTimeout(200);
-    verifier('Trucs et astuces › Roadmap : chaîne vision → sprint, 2 formats (plus d’OKR), méthodes, bonnes pratiques', await page.evaluate(() =>
-      document.querySelectorAll('.chaine-etape').length === ROADMAP_ASTUCES.chaine.length
-      && document.querySelectorAll('.grille-formats > .carte').length === ROADMAP_ASTUCES.formats.length && ROADMAP_ASTUCES.formats.length === 2
-      && ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'].every(m => document.querySelector('.ecran').textContent.includes(m))
-      && !document.querySelector('.tableau-kpi')));
-    await capture('19b-astuces-roadmap');
-    // Test & Learn (2026-10-15) : méthode des projets IA — boucle, carte d'expérience, phases, indicateurs
-    await page.click('[data-action="themeAstuces"][data-theme="testLearn"]'); await page.waitForTimeout(200);
-    verifier('Trucs et astuces › Test & Learn : boucle, carte d’expérience, phases IA et indicateurs', await page.evaluate(() =>
-      ['La boucle Test & Learn', 'Carte d’expérience', 'Les phases d’un projet IA', 'Hallucinations', 'Pièges à éviter'].every(t => document.body.textContent.includes(t))));
-    await capture('19c-astuces-test-learn');
-    await page.click('[data-action="themeAstuces"][data-theme="agile"]'); await page.waitForTimeout(150);
-    // Menu : Saisir mes heures en menu à part, juste sous Gestion des ressources (porteur, 2026-10-22)
-    verifier('Menu : Saisir mes heures en menu à part sous Gestion des ressources, section « Suivi de mes équipes » renommée', await page.evaluate(() => {
-      const sousMenus = [...document.querySelectorAll('.sous-menu')].map(m => m.textContent);
-      const ids = [...document.querySelectorAll('.laterale [data-action="aller"]')].map(a => a.dataset.ecran);
-      return sousMenus.some(t => t.includes('Congés') && !t.includes('Saisir mes heures'))
-        && ids.indexOf('monTimesheet') === ids.indexOf('listeRessources') + 1
-        && ![...document.querySelectorAll('.menu-lien')].some(a => a.textContent.trim() === 'Mon timesheet')
-        && document.querySelector('.menu-titre').textContent.includes('Suivi de mes équipes');
-    }));
-    // Jours fériés administrables : ajout, renommage, suppression
-    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="feries"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="ajouterFerie"] input[name=jour]', '2026-05-25');
-    await page.fill('form[data-action-envoi="ajouterFerie"] input[name=libelle]', 'Lundi de Pentecôte');
-    await page.click('form[data-action-envoi="ajouterFerie"] button'); await page.waitForTimeout(300);
-    const champFerie = 'input[data-action-change="libelleFerie"][data-jour="2026-05-25"]';
-    await page.fill(champFerie, 'Pentecôte'); await page.press(champFerie, 'Tab'); await page.waitForTimeout(300);
-    const ferieModifie = await page.evaluate(() => (etat.d.joursFeries.find(f => f.jour === '2026-05-25') || {}).libelle);
-    await page.click('[data-action="supprimerFerie"][data-jour="2026-05-25"]'); await page.waitForTimeout(300);
-    verifier('Jours fériés : ajout, renommage et suppression', ferieModifie === 'Pentecôte'
-      && !(await page.evaluate(() => etat.d.joursFeries.some(f => f.jour === '2026-05-25'))));
-    await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]'); await page.click('tr:has-text("Plateforme") [data-action="modifierEquipe"]'); await page.waitForTimeout(400);
-    verifier('Mon admin : fenêtre équipe avec membres et invitation', (await page.textContent('.modale')).includes('Camille Laurent') && !!(await page.$('.modale form[data-action-envoi="inviterDansEquipe"]')));
-    await page.click('.modale .fermer');
-    verifier('Timesheet : pas de NaN', !(await texte()).includes('NaN'));
-
-    // Daily des équipes PAR PROJET (migration 018) : notes du projet, blocages, règle de lecture
-    await aller('dailyEquipes'); await page.waitForTimeout(300); await capture('17-daily-equipes');
-    verifier('Daily des équipes : note d’un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
-    // Fil des dailys (maquettes daily-equipes-design/retenu/) : blocages ouverts à droite, filtre par personne
-    verifier('Daily des équipes : fil groupé par jour et blocages ouverts', (await texte()).includes('Blocages ouverts')
-      && (await texte()).includes('Identifiants de recette expirés') && !!(await page.$('.fil-jour .fil-entree')));
-    await page.click('[data-action="filtrerPersonneDaily"]:has-text("Thomas")'); await page.waitForTimeout(200);
-    verifier('Daily des équipes : filtre par personne', (await texte()).includes('Mapping des rôles applicatifs') && !(await texte()).includes('Finaliser le plan de migration SSO'));
-    await page.click('[data-action="filtrerPersonneDaily"][data-id="tous"]'); await page.waitForTimeout(200);
-    // Synthèse (droit onglet_daily_synthese) : carte membre × jour, clic → panneau de lecture
-    await page.click('[data-action="ongletDailyEquipes"][data-id="synthese"]'); await page.waitForTimeout(200);
-    await page.click('.case-synthese.case-bloc'); await page.waitForTimeout(200);
-    verifier('Daily des équipes › Synthèse : chiffres, carte membre × jour et lecture au clic', (await texte()).includes('Dailys renseignés')
-      && await page.evaluate(() => document.querySelector('.tableau-synthese thead tr').children.length === Ecrans.dailyEquipes.joursSemaine().length + 2)
-      && !!(await page.$('.panneau-lecture.actif')) && (await texte()).includes('Blocages'));
-    await capture('33-daily-synthese');
-    await page.click('[data-action="ongletDailyEquipes"][data-id="fil"]'); await page.waitForTimeout(200);
-    // Droits par onglet (migration 038) : onglet masqué si son droit est « Non » pour mon rôle (créateur écarté le temps du contrôle)
-    verifier('Daily des équipes : onglet Synthèse masqué si son droit est « Non » (matrice par onglet)', await page.evaluate(() => {
-      const c = etat.estCreateur; etat.estCreateur = false;
-      const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'onglet_daily_synthese'), avant = ligne.niveau;
-      ligne.niveau = 'non'; rendre();
-      const masque = !document.querySelector('[data-action="ongletDailyEquipes"]') && document.body.textContent.includes('Mapping des rôles applicatifs');
-      ligne.niveau = avant; etat.estCreateur = c; rendre();
-      return masque && !!document.querySelector('[data-action="ongletDailyEquipes"][data-id="synthese"]');
-    }));
-    await page.click('[data-action="dailyEquipesDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
-    const semainePrecedente = await page.evaluate(() => Calculs.lundi(Ecrans.dailyEquipes.jour()) === Calculs.ajouterJours(Calculs.lundi(Calculs.aujourdhui()), -7)
-      && !document.body.textContent.includes('Mapping des rôles applicatifs'));
-    await page.click('[data-action="dailyEquipesAujourdhui"]'); await page.waitForTimeout(200);
-    verifier('Daily des équipes : semaine précédente puis « Cette semaine »', semainePrecedente && (await texte()).includes('Mapping des rôles applicatifs'));
-    verifier('Daily des équipes : seulement mes projets et ceux des unités (et sous-unités) dont je suis responsable', await page.evaluate(() => {
-      // Camille est administratrice dans les données simulées : on vérifie la règle comme non-administratrice.
-      // Elle est responsable de Plateforme (Data y est rattachée) et affectée à PR-03 ; Mobile et PR-06 ne la concernent pas.
-      const admin = etat.estAdmin; etat.estAdmin = false;
-      const codes = projetsDailyVisibles().map(p => p.code); etat.estAdmin = admin;
-      return ['PF-14', 'DA-08', 'PR-03'].every(c => codes.includes(c)) && !codes.includes('MO-21') && !codes.includes('PR-06');
-    }));
-    await page.click(`[data-action="filtrerDailyEquipes"][data-id="${await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id)}"]`); await page.waitForTimeout(200);
-    verifier('Daily des équipes : filtre par projet', await page.evaluate(() =>
-      [...document.querySelectorAll('.fil-entree .etiquette')].every(c => c.textContent === etat.d.projets.find(p => p.code === 'PF-14').nom) && !!document.querySelector('.filtre-fil.actif')));
-    /* Daily importé d'une personne sans compte (CR Daily Excel, migration 034) : auteur « fiche:<id> », affiché sur sa carte */
-    const sansCompte = await page.evaluate(() => {
-      // Dernier jour de semaine (le samedi et le dimanche ne sont pas affichés par Daily des équipes)
-      let jour = ui('dailyEquipes', {}).jour || Calculs.aujourdhui();
-      while (Calculs.estWeekend(jour)) jour = Calculs.ajouterJours(jour, -1);
-      const p = etat.d.projets.find(x => x.code === 'PF-14');
-      const r = Ecrans.dailyEquipes.membres(p, jour).find(x => !x.userId);
-      if (!r) return null;
-      etat.d.notesProjet.push({ userId: 'fiche:' + r.id, projetId: p.id, jour, texte: 'Aujourd’hui\n- Daily importé du fichier Excel' });
-      rendre(); return r.nom;
-    });
-    verifier('Daily des équipes : daily importé d’une personne sans compte affiché', !!sansCompte && (await texte()).includes('Daily importé du fichier Excel'));
-    await page.evaluate(() => { etat.d.notesProjet = etat.d.notesProjet.filter(n => !n.userId.startsWith('fiche:')); rendre(); });
-
-    // Export du daily en Excel (maquette export-daily-excel) : projet filtré coché, fichier .xlsx téléchargé
-    await page.click('[data-action="ouvrirExportDaily"]'); await page.waitForTimeout(200);
-    verifier('Export daily : fenêtre ouverte avec le seul projet filtré coché', await page.$$eval('.modale input[name=projet]:checked', l => l.length) === 1);
-    await capture('22-export-daily-excel');
-    await page.click('.modale [data-action="periodeExportDaily"][data-periode="jour"]');
-    const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('.modale button.primaire')]);
-    const fichierXlsx = require('fs').readFileSync(await telechargement.path());
-    const contenuXlsx = fichierXlsx.toString('utf8');
-    const jourOuvre = await page.evaluate(() => Calculs.estJourOuvre(Calculs.aujourdhui(), feries()));
-    verifier('Export daily : vrai fichier .xlsx (archive ZIP, onglets Daily et Blocages)', telechargement.suggestedFilename().endsWith('.xlsx')
-      && fichierXlsx.slice(0, 2).toString() === 'PK' && contenuXlsx.includes('name="Daily"') && contenuXlsx.includes('name="Blocages"'));
-    verifier('Export daily : notes du jour et blocages dans le fichier', !jourOuvre
-      || (contenuXlsx.includes('Finaliser le plan de migration SSO') && contenuXlsx.includes('Identifiants de recette expirés') && !contenuXlsx.includes('Aujourd’hui\n-')));
-
-    /* --- Mon dashboard (édition) --- */
-    await aller('daily'); await capture('08-daily');
-    const nbCartes = await page.evaluate(() => mesProjetsDaily().length);
-    verifier('Daily : une carte par projet affecté (Chef de projet, Membre)', nbCartes > 1 && (await page.$$('[data-carte-projet]')).length === nbCartes);
-    await page.click('[data-action="dailyDecaler"][data-sens="-1"]'); await page.waitForTimeout(200);
-    // Trois champs par projet ; un texte par projet et par jour en base, au format des rubriques
-    const idPf14 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
-    await page.fill(`textarea[data-projet="${idPf14}"][data-champ="hier"]`, 'Test automatique\nDeuxième point');
-    await page.fill(`textarea[data-projet="${idPf14}"][data-champ="aujourdhui"]`, 'Revue de code');
-    await page.press(`textarea[data-projet="${idPf14}"][data-champ="aujourdhui"]`, 'Space'); await page.waitForTimeout(1200);
-    const noteVeille = await page.evaluate(id => (noteProjet(etat.session.user.id, id, Ecrans.daily.jour()) || {}).texte || '', idPf14);
-    await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
-    verifier('Daily : note du projet enregistrée (Hier / Aujourd’hui) et rappelée le lendemain', noteVeille.startsWith('Hier\n- Test automatique\n- Deuxième point\n\nAujourd’hui\n- Revue de code')
-      && await page.evaluate(id => document.querySelector(`textarea[data-projet="${id}"][data-champ="hier"]`).value !== '' || document.querySelector(`textarea[data-projet="${id}"][data-champ="hier"]`).placeholder.includes('Revue de code'), idPf14));
-    verifier('Daily personnel : la note d’un coéquipier n’apparaît pas', !(await page.$$eval('.champ-daily textarea', l => l.map(t => t.value).join(' '))).includes('Mapping des rôles'));
-    // Lien avec les congés : un jour d'absence d'une journée → aucun daily attendu, cartes repliées
-    const jourConge = await page.evaluate(() => { const moi = maRessource(); const a = etat.d.absences.find(x => x.ressourceId === moi.id && Calculs.dureeAbsence(x) >= 1 && !Calculs.estWeekend(x.jour)); return a && a.jour; });
-    await page.evaluate(j => majUi('daily', { jour: j }), jourConge); await page.waitForTimeout(200);
-    verifier('Daily : jour de congé → « aucun daily attendu », cartes repliées', !!jourConge && (await texte()).includes('aucun daily attendu') && !(await page.$('textarea[data-champ="hier"]')));
-    await page.click('[data-action="dailyAujourdhui"]'); await page.waitForTimeout(200);
-
-    /* Projets et Roadmap (2026-10-23, maquette menu-projets-roadmap/) : sous-menu Mises en production (Gantt retiré) */
-    await aller('mesProjets'); await capture('09-mes-projets');
-    const sousMenusProjets = await page.$$eval('.laterale [data-ecran="mesProjets"] + .sous-menu .sous-lien', l => l.map(x => x.textContent.trim()));
-    verifier('Mon dashboard › Projets et Roadmap : sous-menus Mises en production et Sprints (plus de Gantt)',
-      sousMenusProjets.join('|') === 'Mises en production|Sprints' && !(await texte()).includes('Gantt'), sousMenusProjets.join('|'));
-    // Panneau projet (édition, section Mon dashboard) : PF-14, projet dont Camille est cheffe
-    await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
-    await capture('10-panneau-projet');
-    verifier('Panneau : ni objectif, ni période, ni avancement, ni tickets (le statut, lui, est modifiable)',
-      !(await page.$('.panneau [data-champ="fin"], .panneau input[type=range], .panneau form[data-action-envoi="ajouterTicket"]'))
-      && !(await page.textContent('.panneau')).includes('Résultat clé') && !!(await page.$('.panneau select[data-champ="statut"]')));
-    // Statut du projet modifiable par le chef de projet ou le responsable ; un statut ajouté dans Administration › Référentiels est proposé
-    await page.evaluate(() => { const f = document.createElement('form'); f.innerHTML = '<input name="libelle" value="En pause">'; Actions.ajouterValeur({ ref: 'stp' }, f); });
-    await page.waitForTimeout(400);
-    await page.evaluate(() => Actions.ouvrirProjet({ id: etat.d.projets.find(p => p.code === 'PF-14').id })); await page.waitForTimeout(200);
-    const statutsPanneau = await page.$$eval('.panneau select[data-champ="statut"] option', o => o.map(x => x.textContent.trim()));
-    await page.selectOption('.panneau select[data-champ="statut"]', 'En pause'); await page.waitForTimeout(400);
-    verifier('Panneau projet : statut modifiable, statut ajouté dans les référentiels proposé et enregistré',
-      statutsPanneau.includes('En pause') && statutsPanneau.includes('Planifié') && await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').statut === 'En pause'),
-      statutsPanneau.join(', '));
-    await page.selectOption('.panneau select[data-champ="statut"]', 'À risque'); await page.waitForTimeout(400);
-    await page.click('.fermer');
-    /* Mon dashboard › Projets et Roadmap › MEP (2026-10-23) : saisie des mises en production des projets modifiables */
-    const nbMep = async () => page.$$eval('[data-action-change="majMep"][data-champ="jour"]', l => l.length);
-    const mepAvant = await nbMep();
-    const idProjetMep = await page.evaluate(() => etat.d.projets.find(p => p.code === 'PF-14').id);
-    await page.selectOption('form[data-action-envoi="ajouterMep"] [name=projet]', idProjetMep);
-    await page.fill('form[data-action-envoi="ajouterMep"] [name=jour]', '2026-12-04');
-    await page.fill('form[data-action-envoi="ajouterMep"] [name=version]', 'V2.2');
-    await page.fill('form[data-action-envoi="ajouterMep"] [name=bugs]', '3');
-    await page.fill('form[data-action-envoi="ajouterMep"] [name=incidents]', '1');
-    await page.fill('form[data-action-envoi="ajouterMep"] [name=us]', '5');
-    await page.click('form[data-action-envoi="ajouterMep"] button'); await page.waitForTimeout(300);
-    const ajoutee = await page.evaluate(() => etat.d.misesEnProduction.find(m => m.version === 'V2.2'));
-    await page.selectOption(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="statut"]`, 'faite'); await page.waitForTimeout(300);
-    const statutModifie = await page.evaluate(id => etat.d.misesEnProduction.find(m => m.id === id).statut, ajoutee.id);
-    // Tickets livrés (migration 044) : à la place du contenu ; un compteur se modifie dans la ligne
-    await page.fill(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="nbUs"]`, '6');
-    await page.press(`[data-action-change="majMep"][data-id="${ajoutee.id}"][data-champ="nbUs"]`, 'Tab'); await page.waitForTimeout(300);
-    const tickets = await page.evaluate(id => { const m = etat.d.misesEnProduction.find(x => x.id === id); return [m.nbBugs, m.nbIncidents, m.nbUs].join('/'); }, ajoutee.id);
-    await capture('09b-saisie-mep');
-    await page.click(`[data-action="supprimerMep"][data-id="${ajoutee.id}"]`); await page.waitForTimeout(300);
-    verifier('Mon dashboard › Projets et Roadmap › MEP : ajout, changement de statut et suppression d’une MEP',
-      mepAvant >= 2 && ajoutee.statut === 'prevue' && statutModifie === 'faite' && await nbMep() === mepAvant, `${mepAvant} / ${statutModifie}`);
-    verifier('MEP : nombre de bugs, d’incidents et d’US livrés (à la place du contenu), modifiable', ajoutee.nbBugs === 3 && ajoutee.nbIncidents === 1
-      && ajoutee.nbUs === 5 && tickets === '3/1/6' && !(await page.$('[data-action-change="majMep"][data-champ="contenu"]')), tickets);
-    verifier('Mon dashboard › Projets et Roadmap : plus de bouton « Objectifs de l’équipe » (porteur 2026-10-25)',
-      !(await page.$('[data-action="ouvrirObjectifs"]')) && !(await texte()).includes('Objectifs de l’équipe'));
-    await page.click('[data-action="nouveauProjet"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="creerProjet"] input[name=nom]', 'Projet de test');
-    verifier('Nouveau projet : ni résultat clé, ni dates, ni statut', !(await page.$('form[data-action-envoi="creerProjet"] [name=resultatCleId], form[data-action-envoi="creerProjet"] [name=debut], form[data-action-envoi="creerProjet"] [name=fin], form[data-action-envoi="creerProjet"] [name=statut]')));
-    // Méthode obligatoire (migration 022) : sans choix, le formulaire ne part pas
-    await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(200);
-    verifier('Nouveau projet : méthode obligatoire (5 choix, dont Test & Learn)', await page.$$eval('input[name=methode]', l => l.length) === 5
-      && !!(await page.$('input[name=methode][value="Test & Learn"]')) && !!(await page.$('form[data-action-envoi="creerProjet"]')));
-    await page.check('input[name=methode][value="Agile Kanban"]');
-    await page.click('form[data-action-envoi="creerProjet"] .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Nouveau projet créé et ouvert', (await page.inputValue('.panneau input[data-champ="nom"]')) === 'Projet de test');
-    verifier('Nouveau projet : méthode enregistrée et modifiable dans la fiche', await page.inputValue('.panneau select[data-champ="methode"]') === 'Agile Kanban'
-      && await page.evaluate(() => etat.d.projets.find(p => p.nom === 'Projet de test').methode === 'Agile Kanban'));
-    await page.click('.fermer');
-
-    // Bouton Aide : menu, guide de l'écran courant, fermeture
-    await aller('dashboard'); await page.click('[data-action="basculerMenuAide"]');
-    await page.click('[data-action="ouvrirAide"][data-sujet="ecran"]'); await page.waitForTimeout(150);
-    verifier('Bouton Aide : guide de l’écran affiché', (await page.textContent('.modale')).includes('Vue d’ensemble') && !(await page.$('.menu-aide-liste')));
-    await page.click('.modale .fermer');
-    await page.click('[data-action="basculerMenuAide"]'); await page.click('[data-action="ouvrirAide"][data-sujet="roles"]'); await page.waitForTimeout(150);
-    verifier('Bouton Aide : guide « Rôles et droits »', (await page.textContent('.modale')).includes('Lecteur'));
-    await page.click('.modale .fermer');
-    // Bulles d'information : présentes et lisibles au survol
-    await aller('dashboard'); await page.hover('.kpi .aide'); await page.waitForTimeout(100);
-    verifier('Bulles d’information : texte affiché au survol', await page.$eval('.kpi .aide .bulle', b => getComputedStyle(b).display !== 'none' && b.textContent.length > 20)
-      && (await page.$$('.aide')).length >= 5);
-    // Bouton « Aujourd'hui » : retour au mois en cours après navigation
-    await aller('conges'); await page.click('[data-action="moisSuivant"]'); await page.click('[data-action="moisSuivant"]');
-    await page.click('[data-action="calendrierAujourdhui"]'); await page.waitForTimeout(150);
-    verifier('Congés : bouton « Aujourd’hui » → mois en cours', await page.evaluate(() => {
-      const j = Calculs.depuisIso(Calculs.aujourdhui()), m = Calendrier.moisCourant(); return m.annee === j.getFullYear() && m.mois === j.getMonth(); }));
-    await page.click('[data-action="moisSuivant"]');
-    await page.click('[data-action="choisirPinceau"][data-id="Congés prévisionnel"]');
-    await page.click('td[data-action="basculerAbsence"] >> nth=3'); await page.waitForTimeout(300);
-    await capture('11-conges');
-    // Vue « Par équipe » : une ligne par personne + synthèse par projet ; vue « Par projet » : ses membres seulement
-    const personnesAffichees = async () => page.$$eval('.calendrier tr[data-personne]', t => t.map(x => x.dataset.personne));
-    const parEquipe = await personnesAffichees();
-    verifier('Congés : chaque personne une seule fois (vue par équipe)', parEquipe.length > 0 && new Set(parEquipe).size === parEquipe.length);
-    verifier('Congés : synthèse des absents par projet', (await page.$$('.calendrier tr.ligne-synthese')).length > 0);
-    await page.click('[data-action="vueCalendrier"][data-mode="projet"]'); await page.waitForTimeout(200);
-    const parProjet = await personnesAffichees();
-    const attendus = await page.evaluate(() => { const p = Calendrier.projetChoisi(); return etat.d.affectations.filter(a => a.projetId === p.id).map(a => a.ressourceId); });
-    verifier('Congés : vue par projet = ses membres, une fois chacun', parProjet.length === attendus.length && parProjet.every(id => attendus.includes(id))
-      && (await page.$$('.calendrier tr.ligne-synthese')).length === 1);
-    await page.click('[data-action="vueCalendrier"][data-mode="equipe"]'); await page.waitForTimeout(150);
-    await page.click('[data-action="ongletConges"][data-id="recap"]'); await page.waitForTimeout(200);
-    // Récap annuel : T / C par mois et reste à prendre = total travaillé − objectif client de l'équipe
-    verifier('Congés : récap annuel (travaillés, congés, reste à prendre)', (await texte()).includes('Reste à') && !(await page.$('td[data-action="basculerAbsence"]'))
-      && await page.evaluate(() => { const r = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218); return r.travailles === 261 && r.reste === 43; }));
-    await page.fill('input.objectif-client >> nth=0', '220'); await page.press('input.objectif-client >> nth=0', 'Tab'); await page.waitForTimeout(400);
-    verifier('Congés : objectif client modifiable par équipe et par année', await page.evaluate(() => etat.d.objectifsTravail.some(o => Number(o.jours) === 220 && Number(o.annee) === 2026))
-      && (await page.inputValue('input.objectif-client >> nth=0')) === '220');
-    // Colonne C = congés seuls : novembre 2026 a 2 fériés en semaine (le 11 ; le 1er est un dimanche → 1)
-    // et une demi-journée le 13 → C = 0,5, fériés comptés à part, T = 21 − 1 − 0,5
-    verifier('Récap : les jours fériés ne sont pas comptés comme congés', await page.evaluate(() => {
-      const m = Calculs.joursTravaillesMois('x', 2026, 10, [{ ressourceId: 'x', jour: '2026-11-13', type: 'Congés validé', duree: 0.5 }], new Set(['2026-11-01', '2026-11-11']));
-      return m.conges === 0.5 && m.feries === 1 && m.travailles === 19.5;
-    }));
-    // Arrivée le 1er avril 2026 : janvier à mars hors présence, objectif 218 proratisé (197 / 261 jours de semaine)
-    verifier('Récap : date d’arrivée — mois hors présence et objectif proratisé', await page.evaluate(() => {
-      const rc = Calculs.recapJoursTravailles('x', 2026, [], new Set(), 218, { dateArrivee: '2026-04-01' });
-      const cap = Calculs.capacitePeriode([{ id: 'x', capacite: 100, dateDepart: '2026-03-31' }], '2026-04-01', '2026-04-30', [], new Set());
-      return rc.mois[2].ouvres === 0 && rc.mois[3].ouvres === 22 && rc.objectif === 164.5 && cap.theorique === 0;
-    }));
-    // Sprints : sans sprint saisi au départ ; ils se saisissent dans Mon dashboard › Projets et Roadmap › Sprints (2026-10-23)
-    const projetEditable = await page.evaluate(() => (Calendrier.projetsAvecMembres().find(x => peutEditerProjet(x)) || {}).id);
-    const sansSprint = await page.evaluate(id => sprintsDuProjet(id).length === 0, projetEditable);
-    // 4 sprints de 2 semaines autour d'aujourd'hui (le 3e est le sprint en cours), saisis dans Projets et Roadmap › Sprints
-    const dates = await page.evaluate(() => { const l = Calculs.lundi(Calculs.aujourdhui());
-      return [-4, -2, 0, 2].map(k => [Calculs.ajouterJours(l, k * 7), Calculs.ajouterJours(l, k * 7 + 11)]); });
-    await aller('mesSprints'); await page.waitForTimeout(250);   // Projets et Roadmap › Sprints
-    await page.selectOption('select[data-action-change="projetSprints"]', projetEditable); await page.waitForTimeout(200);
-    for (let i = 0; i < dates.length; i++) {
-      await page.fill('input[form="ajout-sprint"][name=nom]', 'V' + (i + 1));
-      await page.fill('input[form="ajout-sprint"][name=debut]', dates[i][0]); await page.fill('input[form="ajout-sprint"][name=fin]', dates[i][1]);
-      await page.click('button[form="ajout-sprint"]'); await page.waitForTimeout(300);
-    }
-    // Numéro (« Sprint 1 ») et année pré-remplis ; affichage par année (puces)
-    const anneeCourante = Number(dates[2][0].slice(0, 4));
-    await page.click(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`).catch(() => {});
-    const autreAnneeVide = await page.evaluate(() => !document.querySelector('input[data-action-change="majSprint"][data-champ="numeroSprint"]'));
-    await page.evaluate(a => majUi('sprints', { anneeSprints: a }), anneeCourante); await page.waitForTimeout(150);
-    await capture('09c-sprints');
-    verifier('Projets et Roadmap › Sprints : numéro « Sprint N », année, version, début, fin ; affichage par année ; plus d’onglet dans Administration', sansSprint
-      && await page.evaluate(id => sprintsDuProjet(id).map(s => `${s.numeroSprint}/${s.nom}`).join() === '1/V1,2/V2,3/V3,4/V4', projetEditable)
-      && await page.evaluate(id => sprintsDuProjet(id).every(s => anneeSprint(s) === Number(s.debut.slice(0, 4))), projetEditable)
-      && (await page.$$('input[data-action-change="majSprint"][data-champ="numeroSprint"]')).length === 4
-      && (!(await page.$(`[data-action="anneeSprints"][data-annee="${anneeCourante + 1}"]`)) || autreAnneeVide)
-      && await page.evaluate(() => etat.ecran === 'mesSprints' && !!document.querySelector('.laterale .sous-lien.actif[data-ecran="mesSprints"]'))
-      && await page.evaluate(() => { allerA('monAdmin'); return !document.querySelector('[data-action="ongletMonAdmin"][data-id="sprints"]'); }));
-    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="grille"]');
-    // Novembre 2026 (Armistice, demi-journée de Léa le 13) : indépendant de la date du jour
-    await page.evaluate(() => majUi('calendrier', { annee: 2026, mois: 10 })); await page.waitForTimeout(150);
-    verifier('Congés : jours fériés affichés par défaut avec le type « Jours férié »', !!(await page.$('td.ferme .case-absence[title="Armistice"], td.ferme .case-absence')) && (await page.textContent('td.ferme .case-absence')).includes('JF'));
-    verifier('Congés : demi-journée affichée « ½ »', (await page.textContent('tr:has-text("Léa Moreau")')).includes('½'));
-    verifier('Calculs : demi-journée comptée 0,5', await page.evaluate(() => {
-      const lea = etat.d.ressources.find(r => r.nom === 'Léa Moreau');
-      return Calculs.joursTravaillesMois(lea.id, 2026, 10, [{ ressourceId: lea.id, jour: '2026-11-13', type: ABSENCES.CP, duree: 0.5 }], new Set()).conges === 0.5
-        && Calculs.heuresAttendues(lea, '2026-11-09', [{ ressourceId: lea.id, jour: '2026-11-13', duree: 0.5 }], new Set(['2026-11-11'])) === 3.5 * CONFIG.HEURES_PAR_JOUR * (lea.capacite ?? 100) / 100;
-    }));
-    // Changement fait « ailleurs » (écriture directe, sans rechargement) : visible au changement d'écran, sans F5
-    await page.evaluate(() => { const r = etat.d.ressources[0]; return Api.creer('absences', { ressourceId: r.id, jour: '2026-11-20', type: ABSENCES.CP, duree: 1 }, 'ressource_id,jour'); });
-    const avantNavigation = await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20'));
-    await aller('ressources'); await page.waitForTimeout(400); await aller('conges'); await page.waitForTimeout(400);
-    verifier('Données rafraîchies au changement d’écran (sans F5)', !avantNavigation && await page.evaluate(() => etat.d.absences.some(a => a.jour === '2026-11-20')));
-    verifier('Lecture paginée : plus de 50 absences chargées malgré le plafond de 50 lignes par réponse', await page.evaluate(() => etat.d.absences.length > 50));
-    verifier('Congés : absence posée', (await page.$$('td[data-action="basculerAbsence"] .case-absence')).length > 0);
-    // Demi-journée (porteur 2026-10-26) : durée choisie avec le type ; même type et même durée = retrait ; autre durée = changement
-    const cibleConges = await page.evaluate(() => { const td = [...document.querySelectorAll('td[data-action="basculerAbsence"]')].find(t => !t.querySelector('.case-absence'));
-      return td ? { ressource: td.dataset.ressource, jour: td.dataset.jour } : null; });
-    const celluleConges = `td[data-action="basculerAbsence"][data-ressource="${cibleConges.ressource}"][data-jour="${cibleConges.jour}"]`;
-    const dureeDe = () => page.evaluate(c => { const a = etat.d.absences.find(x => x.ressourceId === c.ressource && x.jour === c.jour); return a ? Number(a.duree) : null; }, cibleConges);
-    await page.click('[data-action="choisirDuree"][data-duree="0.5"]'); await page.waitForTimeout(150);
-    await page.click(celluleConges); await page.waitForTimeout(350); const apresDemi = await dureeDe();
-    await page.click('[data-action="choisirDuree"][data-duree="1"]'); await page.waitForTimeout(150);
-    await page.click(celluleConges); await page.waitForTimeout(350); const apresChangement = await dureeDe();
-    await page.click(celluleConges); await page.waitForTimeout(350); const apresRetrait = await dureeDe();
-    verifier('Congés : demi-journée posable (0,5), durée modifiable, retrait au clic suivant', apresDemi === 0.5 && apresChangement === 1 && apresRetrait === null,
-      `${apresDemi} / ${apresChangement} / ${apresRetrait}`);
-
-    await aller('listeRessources');
-    /* Liste des ressources (piste 3, 2026-10-09) : navigation à gauche, détail à droite.
-       Projet PF-12 : Product Owner (rôle Chef de projet) puis membres. */
-    const noeud = (type, nom) => `#nav-ressources .noeud.${type}:has-text("${nom}")`;
-    verifier('Liste des ressources : navigation (équipes, projets) et détail de l’équipe ouverte', !!(await page.$(noeud('equipe', 'Data')))
-      && !!(await page.$(noeud('projet', 'Migration Kubernetes'))) && (await page.textContent('#detail-ressources')).includes('Responsable de l’équipe'));
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
-    const [poPf12, membresPf12] = await page.$$eval('#detail-ressources .carte', c => [c[1].textContent, c[2].textContent]);
-    verifier('Liste des ressources : projet → Product Owners puis membres', poPf12.includes('Product Owners') && poPf12.includes('Julien Dubois')
-      && membresPf12.includes('Thomas Bernard') && membresPf12.includes('Membre') && !membresPf12.includes('Julien Dubois'));
-    // Date de fin saisie dans la fiche : la personne reste affichée « Inactif » (masquable avec le bouton)
-    const idFin = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
-    const ligneFin = `#detail-ressources tr[data-ressource="${idFin}"]`;
-    const poserFin = async jour => {
-      await page.click(`${ligneFin} [data-action="modifierRessource"]`);
-      await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateDepart]', jour);
-      await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
-    };
-    // Date de naissance (migration 036) : champ facultatif de la fiche, date complète conservée
-    await page.click(`${ligneFin} [data-action="modifierRessource"]`);
-    const naissanceLue = await page.inputValue('form[data-action-envoi="enregistrerRessource"] input[name=dateNaissance]');
-    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=dateNaissance]', '1991-10-29');
-    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Fiche : date de naissance lue et enregistrée', naissanceLue === '1991-10-28'
-      && await page.evaluate(id => ressource(id).dateNaissance === '1991-10-29', idFin));
-    await poserFin('2026-09-30');
-    const revue = (await page.textContent(ligneFin)).includes('Inactif') && (await page.textContent(ligneFin)).includes('partie le 30 sept. 2026');
-    // Sections Actifs / Inactifs repliables (demande du porteur, 2026-10-12)
-    const dansInactifs = await page.$eval(ligneFin, tr => { let x = tr.previousElementSibling; while (x && !x.classList.contains('groupe')) x = x.previousElementSibling; return !!x && x.textContent.includes('Inactifs'); });
-    const sectionInactifs = '#detail-ressources [data-action="replierSection"][data-id$=":inactifs"]';
-    await page.click(sectionInactifs); await page.waitForTimeout(150);
-    const masquee = !(await page.$(ligneFin)) && !!(await page.$('#detail-ressources tr[data-ressource]'));
-    await page.click(sectionInactifs); await page.waitForTimeout(150);
-    verifier('Liste des ressources : date de fin (fiche) → section « Inactifs » repliable, présence en clair',
-      masquee && revue && dansInactifs && await page.evaluate(id => ressource(id).dateDepart === '2026-09-30', idFin));
-    // Statut cliquable : « Inactif » → réactive (date de fin retirée) ; « Actif » → inactive (date de fin = aujourd'hui)
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
-    const reactivee = await page.evaluate(id => !ressource(id).dateDepart, idFin);
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);
-    const inactivee = await page.evaluate(id => ressource(id).dateDepart === Calculs.aujourdhui(), idFin);
-    verifier('Liste des ressources : statut Actif / Inactif cliquable', reactivee && inactivee);
-    // Menus liés (signalé le 2026-10-06) : une personne partie le 30/09 disparaît des périodes APRÈS son
-    // départ (octobre : grille, timesheet, suivi, annuaire) mais reste visible AVANT (septembre)
-    await poserFin('2026-09-30');
-    const nomFin = await page.evaluate(id => ressource(id).nom, idFin);
-    const visibleDans = [];
-    await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 9 }); majUi('moisTemps', { annee: 2026, mois: 9 }); });
-    // Texte de la zone d'écran seulement (le nom de la personne connectée figure aussi dans la barre latérale)
-    const contenu = () => page.textContent('.contenu');
-    for (const ecran of ['conges', 'timesheet']) { await aller(ecran); if ((await contenu()).includes(nomFin)) visibleDans.push(ecran); }
-    // Gestion des ressources : absent du calendrier d'octobre, présent « Inactif » dans l'annuaire
-    await aller('ressources');
-    const [dansCalendrier, ligneAnnuaire] = await page.evaluate(nom => {
-      const cartes = [...document.querySelectorAll('.contenu .carte')];
-      const annuaire = cartes.find(c => c.textContent.includes('Liste des ressources'));
-      const ligne = annuaire && [...annuaire.querySelectorAll('tbody tr')].find(tr => tr.textContent.includes(nom));
-      return [cartes[0].textContent.includes(nom), ligne ? ligne.textContent : ''];
-    }, nomFin);
-    if (dansCalendrier) visibleDans.push('calendrier ressources');
-    if (!ligneAnnuaire.includes('Inactif')) visibleDans.push('annuaire sans « Inactif »');
-    await page.evaluate(() => { majUi('calendrier', { annee: 2026, mois: 8 }); majUi('moisTemps', { annee: 2026, mois: 8 }); });
-    await aller('conges'); const avantDepart = (await contenu()).includes(nomFin);
-    await aller('timesheet'); const avantDepartTs = (await contenu()).includes(nomFin);
-    await aller('conges'); await page.click('[data-action="ongletConges"][data-id="recap"]').catch(() => {}); await page.waitForTimeout(150);
-    const recapAnnee = (await contenu()).includes(nomFin);   // présente une partie de l'année → dans le récap annuel
-    await page.click('[data-action="ongletConges"][data-id="grille"]').catch(() => {});
-    verifier('Personne partie le 30/09 : absente des écrans d’octobre, présente en septembre et dans le récap annuel',
-      visibleDans.length === 0 && avantDepart && avantDepartTs && recapAnnee, 'visible en octobre dans : ' + visibleDans.join(', ') + ' · fin = ' + await page.evaluate(id => ressource(id).dateDepart, idFin) + ' · ' + nomFin);
-    await page.evaluate(() => { const d = new Date(); majUi('calendrier', { annee: d.getFullYear(), mois: d.getMonth() }); });
-    await aller('listeRessources');   // inactifs toujours affichés (bouton cliqué plus haut)
-    await page.click(`[data-action="basculerActifRessource"][data-id="${idFin}"]`); await page.waitForTimeout(400);   // réactivée pour la suite
-    verifier('Personne réactivée : date de fin retirée', await page.evaluate(id => !ressource(id).dateDepart, idFin));
-    /* Rôle d'accès (maquette affecter-roles/, 2026-10-13) : colonne « Accès » de la Liste des ressources,
-       fiche en lecture (lien vers Administration › Rôles), choix dans Administration › Rôles par un
-       administrateur (Camille, administratrice non créatrice). */
-    await page.click(noeud('equipe', 'Plateforme')); await page.waitForTimeout(200);
-    const idThomas = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Thomas Bernard').id);
-    const idLea = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Léa Moreau').id);
-    const accesThomas = async () => (await page.$eval(`#detail-ressources tr[data-ressource="${idThomas}"] td:nth-child(3)`, td => td.textContent.trim()));
-    const accesInitial = await accesThomas();
-    await page.click(`#detail-ressources tr[data-ressource="${idThomas}"] [data-action="modifierRessource"]`);
-    const ficheEnLecture = !(await page.$('.modale input[name=roleAcces]')) && !!(await page.$('.modale [data-action="ouvrirRoles"]'));
-    await page.click('.modale [data-action="ouvrirRoles"]'); await page.waitForTimeout(300);
-    const ongletRoles = await page.evaluate(() => etat.ecran === 'monAdmin' && !etat.modale && !!document.querySelector('.tableau-roles-acces'));
-    const choisirRole = async (id, role) => {
-      await page.selectOption(`select[data-action-change="affecterRole"][data-id="${id}"]`, role); await page.waitForTimeout(500);
-    };
-    await choisirRole(idThomas, 'responsable');
-    const thomasResponsable = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'admin'
-      && responsablesDe(ressource(id).equipeId).some(r => r.id === id) && roleAcces(ressource(id)) === 'responsable', idThomas);
-    await choisirRole(idThomas, 'utilisateur');
-    const thomasMembre = await page.evaluate(id => membreOrganisation(ressource(id)).role === 'member'
-      && !responsablesDe(ressource(id).equipeId).some(r => r.id === id), idThomas);
-    await choisirRole(idLea, 'admin');
-    const leaPrevue = await page.evaluate(id => rolePrevu(ressource(id)) === 'admin' && !estAdministrateur(ressource(id))
-      && document.querySelector(`select[data-id="${id}"]`).closest('td').textContent.includes('rôle prévu'), idLea);
-    await capture('31-roles-administration');
-    verifier('Rôles : fiche en lecture, choix dans Administration › Rôles par un administrateur (responsable, membre, rôle prévu sans compte)',
-      accesInitial === 'Utilisateur' && ficheEnLecture && ongletRoles && thomasResponsable && thomasMembre && leaPrevue,
-      JSON.stringify({ accesInitial, ficheEnLecture, ongletRoles, thomasResponsable, thomasMembre, leaPrevue }));
-    /* Les six rôles de « Rôles et droits » (migration 030) : Direction = responsable de l'unité parente
-       (Data → Plateforme) ; Lecture seule s'applique tout de suite, même sans compte (rôle qui restreint) */
-    const optionsRoles = await page.$$eval(`select[data-action-change="affecterRole"][data-id="${idThomas}"] option`, o => o.map(x => x.value).join(','));
-    const idHugo = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Hugo Martin').id);
-    await choisirRole(idLea, 'lecture');
-    const leaLecture = await page.evaluate(id => roleDeclare(ressource(id)) === 'lecture' && !rolePrevu(ressource(id)), idLea);
-    await choisirRole(idThomas, 'direction');
-    const thomasDirection = await page.evaluate(id => roleDeclare(ressource(id)) === 'direction'
-      && responsablesDe(ressource(id).equipeId).some(r => r.id === id) && membreOrganisation(ressource(id)).role === 'admin', idThomas);
-    verifier('Rôles : les six rôles (Administrateur, Direction, Responsable, Projet, Utilisateur, Lecture seule) ; Lecture seule appliquée sans compte',
-      optionsRoles === 'admin,direction,responsable,projet,utilisateur,lecture' && leaLecture && thomasDirection,
-      JSON.stringify({ optionsRoles, leaLecture, thomasDirection, idHugo: !!idHugo }));
-    await choisirRole(idThomas, 'utilisateur');
-    await choisirRole(idLea, 'utilisateur');
-    await aller('listeRessources');
-    // Niveau « direction » masqué (« on oublie la direction DSI ») : une direction qui ne regroupe que des
-    // équipes disparaît de la navigation, ses équipes sont listées directement ; vide, elle reste (supprimable)
-    const creerUnite = async (nom, prefixe, type, parent) => {
-      await page.click('[data-action="nouvelleUnite"]');
-      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', nom);
-      await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', prefixe);
-      await page.selectOption('select[name=type]', type);
-      if (parent) await page.selectOption('select[name=parentId]', { label: parent });
-      await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(400);
-    };
-    const supprimerUnite = async nom => { await page.click(noeud('equipe', nom)); await page.click('#detail-ressources [data-action="supprimerEquipe"]'); await page.waitForTimeout(400); };
-    await creerUnite('Direction Test', 'DT', 'direction');
-    const directionVideVisible = !!(await page.$(noeud('equipe', 'Direction Test')));
-    await creerUnite('Équipe Test', 'ET', 'equipe', 'Direction Test');
-    verifier('Liste des ressources : direction masquée, ses équipes listées directement', directionVideVisible
-      && !(await page.$(noeud('equipe', 'Direction Test'))) && !!(await page.$(noeud('equipe', 'Équipe Test'))));
-    await supprimerUnite('Équipe Test'); await supprimerUnite('Direction Test');
-    verifier('Liste des ressources : unités vides supprimées', !(await page.$(noeud('equipe', 'Équipe Test'))) && !(await page.$(noeud('equipe', 'Direction Test'))));
-    await page.click(noeud('equipe', 'Data')); await page.waitForTimeout(150);
-    /* Personnes proposées pour un projet (chef, membre) : toutes les personnes présentes, celles de l'équipe
-       d'abord, avec équipe et poste — même liste pour Nouveau projet, panneau projet et affectation (2026-10-13) */
-    verifier('Projet : toutes les personnes proposées (équipe d’abord, avec équipe et poste), même pour une équipe sans personne', await page.evaluate(() => {
-      const data = etat.d.equipes.find(e => e.nom === 'Data'), liste = personnesProposees(data.id);
-      const premiers = liste.slice(0, 3).map(x => ressource(x.valeur).equipeId);
-      return liste.length === ressourcesActives().length && premiers.every(id => id === data.id)
-        && liste.some(x => x.libelle.startsWith('Inès Roux — Mobile · Lead mobile'))
-        && personnesProposees('equipe-sans-personne').length === ressourcesActives().length;
-    }));
-    /* Équipe › « + Personne existante » (maquette membres-equipe/, 2026-10-13) : dans une équipe SANS projet (IA),
-       Julien (Plateforme) est rattaché : il s'affiche avec son équipe d'origine, qui ne change pas ; « Retirer » l'enlève */
-    await page.evaluate(() => executer(() => Api.creer('equipes', { id: '00000000-0000-4000-8000-000000000033', nom: 'IA', prefixe: 'IA',
-      couleur: etat.d.equipes[0].couleur, type: 'equipe', parentId: null, actif: true }), 'equipes'));
-    await page.waitForTimeout(300);
-    await page.click(noeud('equipe', 'IA')); await page.waitForTimeout(200);
-    await page.click('#detail-ressources [data-action="rattacherPersonne"]'); await page.waitForTimeout(250);
-    const idJulien = await page.evaluate(() => etat.d.ressources.find(r => r.nom === 'Julien Dubois').id);
-    await page.selectOption('.modale select[name=ressource]', idJulien);
-    await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
-    const ligneJulien = await page.$eval(`#detail-ressources tr[data-rattachee][data-ressource="${idJulien}"]`, tr => tr.textContent).catch(() => '');
-    verifier('Équipe sans projet › + Personne existante : rattachée, équipe d’origine inchangée', ligneJulien.includes('Équipe d’origine : Plateforme')
-      && await page.evaluate(id => equipe(ressource(id).equipeId).nom === 'Plateforme', idJulien));
-    await page.click(`#detail-ressources [data-action="retirerRattachement"][data-id="${idJulien}"]`); await page.waitForTimeout(400);
-    verifier('Équipe › Retirer : le rattachement seul est supprimé', !(await page.$('#detail-ressources tr[data-rattachee]'))
-      && await page.evaluate(id => !!ressource(id) && !etat.d.rattachements.length, idJulien));
-    await page.evaluate(() => executer(() => Api.supprimer('equipes', { id: 'eq.00000000-0000-4000-8000-000000000033' }), 'equipes'));
-    await page.waitForTimeout(300);
-    await page.click(noeud('equipe', 'Mobile')); await page.waitForTimeout(200);
-    verifier('Liste des ressources : suppression impossible d’une unité non vide', !!(await page.$('#detail-ressources button.btn-icone[disabled][title^="Équipe non vide"]')));
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
-    await capture('12-liste-ressources');
-    // Recherche : une personne → son équipe et ses projets seulement
-    await page.fill('#nav-ressources input', 'sarah'); await page.waitForTimeout(150);
-    const visibles = await page.$$eval('#nav-ressources [data-recherche]', l => l.filter(n => n.offsetParent).map(n => n.textContent.trim()));
-    verifier('Liste des ressources : recherche d’une personne (son équipe et ses projets)', visibles.some(t => t.startsWith('Data'))
-      && visibles.some(t => t.startsWith('Entrepôt')) && !visibles.some(t => t.startsWith('Mobile') || t.startsWith('Hugo')));
-    await page.fill('#nav-ressources input', ''); await page.waitForTimeout(150);
-    await page.click('#nav-ressources [data-action="choisirNoeud"][data-type="postes"]'); await page.waitForTimeout(200);
-    await capture('18-postes');
-    reponsePrompt = 'Développeur back-end';
-    await page.click('tr:has-text("Dév. back-end") [data-action="renommerValeurListe"]'); await page.waitForTimeout(400);
-    reponsePrompt = 'Merci de compléter';
-    await page.click(noeud('projet', 'Migration Kubernetes')); await page.waitForTimeout(200);
-    verifier('Postes : renommage propagé aux fiches ressources', (await texte()).includes('Développeur back-end'));
-    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
-    await page.selectOption('select[name=ressource]', { index: 3 }); await page.waitForTimeout(200);
-    await page.check('input[name=projet] >> nth=0');
-    await page.click('.modale .btn.primaire'); await page.waitForTimeout(300);
-    verifier('Affectation enregistrée (modale fermée)', !(await page.$('.modale')));
-    // « + Membre » → « + Nouveau membre » → retour à l'affectation, personne sélectionnée
-    await page.click(noeud('projet', 'Portail développeurs')); await page.waitForTimeout(200);
-    await page.click('#detail-ressources [data-action="assigner"][data-projet]:not([data-role])'); await page.waitForTimeout(200);
-    await page.click('[data-action="nouvellePersonneAffectation"]'); await page.waitForTimeout(200);
-    await page.fill('form[data-action-envoi="enregistrerRessource"] input[name=nom]', 'Nina Test');
-    await page.click('form[data-action-envoi="enregistrerRessource"] .btn.primaire'); await page.waitForTimeout(400);
-    const choisie = await page.$eval('select[name=ressource]', s => s.options[s.selectedIndex].text);
-    const pf17Coche = await page.$eval('label:has-text("Portail développeurs") input[name=projet]', c => c.checked);
-    await page.click('.modale .btn.primaire'); await page.waitForTimeout(400);
-    verifier('Affectation : personne créée depuis « + Membre » puis affectée', choisie.startsWith('Nina Test') && pf17Coche
-      && await page.evaluate(() => etat.d.affectations.some(a => a.ressourceId === etat.d.ressources.find(r => r.nom === 'Nina Test').id)));
-    // Projet modifiable depuis la Liste des ressources : nom, dates
-    await page.click('#detail-ressources [data-action="ouvrirProjet"]'); await page.waitForTimeout(200);
-    await page.fill('.panneau input[data-champ="nom"]', 'Portail développeurs v2'); await page.press('.panneau input[data-champ="nom"]', 'Tab'); await page.waitForTimeout(300);
-    verifier('Projet : nom modifié depuis Liste des ressources',
-      await page.evaluate(() => { const p = etat.d.projets.find(x => x.code === 'PF-17'); return p.nom === 'Portail développeurs v2'; }));
-    await page.click('.panneau .fermer');
-
-    // Saisie MENSUELLE : une colonne par jour de semaine du mois (septembre 2026 : 22 jours)
-    await aller('monTimesheet'); await page.click('[data-action="moisTempsSuivant"]'); await page.waitForTimeout(200);
-    await page.evaluate(() => majUi('moisTemps', { annee: 2026, mois: 8 })); await page.waitForTimeout(200);
-    verifier('Saisir mes heures : grille du mois (22 jours de semaine, absences repérées)',
-      (await page.$$('.grille-mois thead th')).length === 22 + 2 && (await page.$$('.grille-mois .jour-off')).length > 0);
-    const saisie = await page.$('input.saisie-mois:not([disabled])');
-    if (saisie) { await saisie.fill('3,5'); await saisie.press('Tab'); await page.waitForTimeout(300); }
-    verifier('Mon timesheet : heure saisie', !!saisie && (await texte()).includes('3,5'));
-    await capture('13-mon-timesheet');
-    verifier('Saisir mes heures : plus de bloc « À valider »', !(await page.$('[data-action="validerFeuille"]')));
-    await page.click('[data-action="soumettreMois"]'); await page.waitForTimeout(300);
-    verifier('Mon timesheet : mois soumis (feuille au 1er du mois)', (await texte()).includes('Soumise')
-      && await page.evaluate(() => etat.d.feuilles.some(f => f.ressourceId === maRessource().id && f.semaine === '2026-09-01' && f.statut === 'soumise')));
-    // Validation des feuilles : dans Suivi de mes équipes › Timesheet (ex-Général), boutons pour MES équipes seulement
-    verifier('Menu : Mon timesheet ne garde que « Saisir mes heures »', !(await page.$('[data-ecran="suiviEquipes"]')));
-    await aller('timesheet'); await page.waitForTimeout(250);
-    verifier('Timesheet : validation réservée aux équipes dont je suis responsable', (await texte()).includes('Feuilles à valider')
-      && await page.evaluate(() => [...document.querySelectorAll('[data-action="validerFeuille"]')]
-        .every(b => estResponsableDe(ressource(b.dataset.ressource).equipeId))));
-    await capture('20-timesheet-validation');
-    const avant = (await page.$$('[data-action="validerFeuille"]')).length;
-    await page.click('[data-action="validerFeuille"] >> nth=0'); await page.waitForTimeout(300);
-    verifier('Timesheet : feuille validée par le responsable', avant > 0 && (await page.$$('[data-action="validerFeuille"]')).length === avant - 1);
-
-    await aller('monAdmin'); await capture('14-mon-admin');
-    // Envoi du daily PAR PROJET (migration 019) : réglage par projet, mise en place Power Automate
-    await page.click('[data-action="ongletMonAdmin"][data-id="envoiDaily"]'); await page.waitForTimeout(200);
-    const idDa08 = await page.evaluate(() => etat.d.projets.find(p => p.code === 'DA-08').id);
-    await page.selectOption(`select[data-action-change="majEnvoiDaily"][data-projet="${idDa08}"]`, 'power_automate'); await page.waitForTimeout(300);
-    await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="5"]`); await page.waitForTimeout(300);
-    verifier('Envoi du daily : mode et jours enregistrés par projet', await page.evaluate(id => {
-      const r = etat.d.envoisDaily.find(x => x.projetId === id); return r && r.mode === 'power_automate' && r.jours === '1,2,3,4' && r.heure === '09:30'; }, idDa08));
-    // Liste vide et aucun jour : enregistrés tels quels (bug du 2026-10-06 : '' envoyé en null, refusé par la base)
-    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
-    verifier('Envoi du daily : destinataires vides et aucun jour acceptés', await page.evaluate(id => {
-      const r = etat.d.envoisDaily.find(x => x.projetId === id); return r && r.jours === '' && r.destinataires === ''; }, idDa08)
-      && !(await page.textContent('body')).includes('violates not-null'));
-    for (const j of ['1', '2', '3', '4']) { await page.click(`[data-action="basculerJourEnvoi"][data-projet="${idDa08}"][data-jour="${j}"]`); await page.waitForTimeout(250); }
-    verifier('Envoi du daily : une ligne par projet en cours (pas de projet terminé)', await page.evaluate(() => {
-      const lignes = [...document.querySelectorAll('select[data-action-change="majEnvoiDaily"]')].map(x => projet(x.dataset.projet));
-      return lignes.length > 0 && lignes.every(p => p && p.statut !== STATUTS_PROJET.TERMINE)
-        && etat.d.projets.some(p => p.statut === STATUTS_PROJET.TERMINE); }));
-    await capture('21-envoi-daily');
-    await page.click(`[data-action="configurerPowerAutomate"][data-projet="${idDa08}"]`); await page.waitForTimeout(400);
-    const corpsFlux = await page.evaluate(() => etat.modale && etat.modale.type === 'envoiPowerAutomate' && JSON.stringify({ p_projet: etat.modale.projetId, p_cle: etat.modale.cle }));
-    verifier('Envoi du daily : fenêtre Power Automate du projet (URI, corps avec clé, aperçu)', !!corpsFlux && corpsFlux.includes('p_cle')
-      && await page.evaluate(() => { const m = document.querySelector('.modale'); return !!m && m.innerHTML.includes('/rpc/daily_projet') && m.textContent.includes('Blocages du jour'); }));
-    await page.click('.modale .fermer'); await page.waitForTimeout(150);
-    // Demandes gérées dans Azure DevOps (retrait du 2026-10-05) : ni demandes entrantes, ni formulaire, ni espace demandeur
-    verifier('Administration : plus de demandes entrantes ni de formulaire de demande', !(await page.$('[data-action="ongletMonAdmin"][data-id="demandes"], [data-action="ongletMonAdmin"][data-id="formulaire"]'))
-      && !(await texte()).includes('Formulaire de demande') && (await texte()).includes('Envoi du daily'));
-
-
-    /* --- Compte sans équipe (migration 024) : en attente, accès donné par l'administratrice, entrée directe --- */
-    const connecter = async email => {
-      await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
-      await page.fill('input[name=email]', email); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-      // Connexion terminée : session du bon compte et chargement fini (invitations acceptées comprises)
-      await page.waitForFunction(adresse => etat.session && etat.session.user.email === adresse && !etat.chargement, email);
-      await page.waitForTimeout(200);
-    };
-    // Lecture seule (migration 030) : Thomas consulte « Suivi de mes équipes », Mon dashboard est fermé
-    const roleThomas = r => page.evaluate(role => Api.executer('affecter_role',
-      { p_ressource: etat.d.ressources.find(x => x.nom === 'Thomas Bernard').id, p_role: role }), r);
-    await roleThomas('lecture');
-    await connecter('thomas@test.fr');
-    const lectureSeule = await page.evaluate(() => estLectureSeule() && ![...document.querySelectorAll('.menu-titre')].some(t => t.textContent.includes('Mon dashboard'))
-      && !document.querySelector('.laterale [data-ecran="daily"]'));
-    await page.evaluate(() => allerA('daily')); await page.waitForTimeout(200);
-    verifier('Lecture seule : Mon dashboard masqué et fermé, Suivi de mes équipes consultable', lectureSeule && (await texte()).includes('Votre rôle permet de consulter'));
-    await connecter('camille@test.fr');
-    await roleThomas('utilisateur');
-    await connecter('elodie@test.fr');
-    verifier('Compte sans équipe : « compte créé, en attente d’accès » avec Actualiser', (await texte()).includes('Votre compte est créé')
-      && !!(await page.$('[data-action="reessayer"]')) && !(await page.$('form[data-action-envoi="deposerDemande"]')));
-    await connecter('camille@test.fr');
-    verifier('Comptes en attente : pastille sur Administration et compte listé', await page.evaluate(() =>
-      !!document.querySelector('.menu-lien .pastille-alerte') && etat.comptesEnAttente.some(c => c.email === 'elodie@test.fr')));
-    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="comptes"]'); await page.waitForTimeout(200);
-    const ligneElodie = 'tr:has-text("elodie@test.fr")';
-    await page.selectOption(`${ligneElodie} select[data-champ="equipe"]`, { label: 'Plateforme' }); await page.waitForTimeout(150);
-    await page.selectOption(`${ligneElodie} select[data-champ="fiche"]`, 'nouvelle'); await page.waitForTimeout(150);
-    await capture('26-comptes-en-attente');
-    await page.click(`${ligneElodie} [data-action="donnerAcces"]`); await page.waitForTimeout(400);
-    verifier('Comptes en attente : accès donné (fiche créée avec son email, invitation envoyée)', await page.evaluate(() =>
-      etat.d.ressources.some(r => r.email === 'elodie@test.fr') && etat.comptesEnAttente.find(c => c.email === 'elodie@test.fr').invite
-      && Number((document.querySelector('.menu-lien .pastille-alerte') || { textContent: 0 }).textContent) === etat.comptesEnAttente.filter(c => !c.invite).length));
-    await connecter('elodie@test.fr');
-    verifier('Compte sans équipe : entre directement après l’accès donné (invitation acceptée d’office)', await page.evaluate(() =>
-      mesEquipes().length === 1 && etat.ecran !== 'choixEquipe' && !!maRessource()));
-    verifier('Une seule équipe et aucune invitation : pas de bouton « Changer » d’équipe', await page.evaluate(() =>
-      etat.invitations.length === 0 && !document.querySelector('.laterale [data-action="changerEquipe"]')));
-
-    /* --- Administratrice sans équipe : entrée directe dans l'outil, création d'équipe --- */
-    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
-    await page.fill('input[name=email]', 'admin@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('.laterale');
-    verifier('Admin sans équipe : arrive dans l’outil', (await texte()).includes('Dashboard général'));
-    await page.click('[data-action="aller"][data-ecran="daily"]'); await page.waitForTimeout(200);
-    verifier('Admin sans équipe : Mon dashboard invite à ouvrir une équipe', (await texte()).includes('Aucune équipe ouverte'));
-    await page.click('[data-action="aller"][data-ecran="listeRessources"]'); await page.waitForTimeout(200);
-    verifier('Admin sans équipe : Liste des ressources ouverte (navigation par équipe)', !(await texte()).includes('Aucune équipe ouverte') && !!(await page.$('#nav-ressources')));
-    await page.click('[data-action="aller"][data-ecran="monAdmin"]'); await page.click('[data-action="ongletMonAdmin"][data-id="equipes"]');
-    await page.click('[data-action="nouvelleEquipe"]');
-    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=nom]', 'Direction Digitale');
-    await page.fill('form[data-action-envoi="enregistrerEquipe"] input[name=prefixe]', 'dd');
-    await page.click('form[data-action-envoi="enregistrerEquipe"] .btn.primaire'); await page.waitForTimeout(500);
-    verifier('Admin : équipe créée et ouverte automatiquement', (await page.textContent('.bloc-equipe')).includes('Direction Digitale'));
-    verifier('Admin (non créateur) : onglet Rôles disponible', !!(await page.$('[data-action="ongletMonAdmin"][data-id="roles"]')));
-
-    /* --- Rôle Créateur (migration 025) : invitée d'office dans l'équipe créée, voit toutes les équipes --- */
-    await connecter('createur@test.fr');
-    verifier('Créateur : toutes les équipes, badge, invitation d’une nouvelle équipe acceptée d’office', await page.evaluate(() =>
-      etat.estCreateur && etat.estAdmin && mesEquipes().length === etat.d.equipes.length && etat.ecran !== 'choixEquipe'
-      && etat.organisations.some(o => o.name === 'Direction Digitale') && !!document.querySelector('.badge-createur')));
-    await capture('27-createur');
-    // Onglet Rôles (maquettes liste-roles, affecter-roles) : rôle d'accès de chaque personne, puis qui a quel rôle
-    await aller('monAdmin'); await page.click('[data-action="ongletMonAdmin"][data-id="roles"]'); await page.waitForTimeout(200);
-    verifier('Créateur : onglet Rôles, tableau Utilisateurs et rôles (colonnes demandées)', await page.evaluate(() =>
-      [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard') && tr.querySelector('select'))
-      // Colonnes demandées (maquette tableau-roles) : utilisateur, équipe, projet(s), compte relié, poste, rôle
-      && [...document.querySelectorAll('.tableau-roles-acces thead th')].map(th => th.childNodes[0].textContent.trim()).join('|')
-        === 'Utilisateur|Équipe|Projet(s)|Compte relié|Poste|Rôle'
-      && [...document.querySelectorAll('.tableau-roles-acces tbody tr')].some(tr => tr.textContent.includes('Thomas Bernard')
-        && tr.textContent.includes(etat.d.ressources.find(r => r.nom === 'Thomas Bernard').poste) && tr.textContent.includes('Migration Kubernetes'))));
-    await capture('27b-roles');
-    // Matrice des droits et Qui a quel rôle : créateur seul, dans Administration créateur (2026-10-23, migration 041)
-    const rolesSansVues = !(await page.$('[data-action="vueRoles"]')) && !(await page.$('.tableau-matrice'));
-    verifier('Administration › Rôles : ni matrice des droits ni « qui a quel rôle » (réservés au créateur)', rolesSansVues);
-    // Matrice des droits (migration 031) : une ligne par droit, Administrateur × Rôles verrouillé, niveau modifié et enregistré
-    await aller('adminCreateur'); await page.click('[data-action="ongletAdminCreateur"][data-id="matrice"]'); await page.waitForTimeout(200);
-    const cellule = (role, droit) => `select[data-action-change="majDroit"][data-role="${role}"][data-droit="${droit}"]`;
-    const matrice = await page.evaluate(() => document.querySelectorAll('.tableau-matrice tbody tr').length === DROITS.length + 1 + SECTIONS_DROITS.length + MENUS_SANS_DROIT.length);
-    const verrou = await page.$eval(cellule('admin', 'roles'), el => el.disabled);
-    await page.selectOption(cellule('utilisateur', 'projets'), 'oui'); await page.waitForTimeout(400);
-    const enregistre = await page.evaluate(() => etat.d.droitsRoles.find(d => d.role === 'utilisateur' && d.droit === 'projets').niveau === 'oui');
-    const sectionsMatrice = await page.$$eval('.tableau-matrice tbody tr.groupe', t => t.map(x => x.textContent.trim()));
-    verifier('Matrice des droits : sections Suivi de mes équipes / Mon dashboard, une ligne par onglet modifiable',
-      sectionsMatrice.includes('Suivi de mes équipes') && sectionsMatrice.includes('Mon dashboard') && await page.evaluate(() =>
-        document.querySelectorAll('.tableau-matrice .ligne-onglet').length === DROITS.filter(d => d.onglet).length
-        && document.querySelector('.tableau-matrice').textContent.includes('↳ Onglet « Synthèse de l’équipe »')
-        && !document.querySelector('select[data-role="responsable"][data-droit="onglet_daily_synthese"]').disabled), sectionsMatrice.join(' | '));
-    await capture('32-matrice-droits');
-    await page.selectOption(cellule('utilisateur', 'projets'), 'non'); await page.waitForTimeout(400);   // valeur de départ du rôle Utilisateur (2026-10-25)
-    await page.click('[data-action="ongletAdminCreateur"][data-id="qui"]'); await page.waitForTimeout(200);
-    verifier('Matrice des droits : une ligne par droit, garde-fou Administrateur × Rôles, niveau enregistré ; vue « qui a quel rôle » sur les 6 rôles',
-      matrice && verrou && enregistre && await page.evaluate(() => [...document.querySelectorAll('.tableau-qui-a-quel-role tr.groupe b')].map(b => b.textContent.trim()).join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente'),
-      JSON.stringify({ matrice, verrou, enregistre }));
-    await page.click('[data-action="ongletAdminCreateur"][data-id="simulation"]'); await page.waitForTimeout(150);
-    // Simulation des rôles : en tant que Thomas (membre), lecture seule, changement de rôle, retour
-    // Administration créateur (2026-10-23) : menu à part, la simulation n'est plus un onglet d'Administration
-    await aller('monAdmin');
-    const plusOngletSimulation = !(await page.$('[data-action="ongletMonAdmin"][data-id="simulation"]'));
-    await aller('adminCreateur'); await page.waitForTimeout(200);
-    verifier('Administration créateur : menu à part avec la Simulation des rôles (plus d’onglet dans Administration)',
-      plusOngletSimulation && (await texte()).includes('Voir l’application en tant que'));
-    await capture('28-simulation-roles');
-    // Cartes = les 6 rôles d'accès de la matrice + Compte en attente (2026-10-22)
-    const cartesSimulation = await page.$$eval('.grille-simulation > .carte b', b => b.map(x => x.textContent.trim()));
-    verifier('Simulation : une carte par rôle d’accès (Administrateur … Lecture seule) et Compte en attente',
-      cartesSimulation.join('|') === 'Administrateur|Direction|Responsable d’équipe|Projet|Utilisateur|Lecture seule|Compte en attente', cartesSimulation.join(', '));
-    // Phase de recette (2026-10-23) : fiches sans compte proposées, marquées « (sans compte) »
-    const simulationSansCompte = await page.evaluate(() => {
-      const option = [...document.querySelectorAll('select[name="personne-responsable"] option')].find(o => o.textContent.includes('(sans compte)'));
-      if (!option) return null;
-      Simulation.demarrer('responsable', option.value);
-      const ok = !!document.querySelector('.bandeau-simulation') && maRessource().id === option.value && !maRessource().userId;
-      Simulation.arreter(); return ok;
-    });
-    verifier('Simulation : fiches sans compte proposées (« sans compte ») et simulables', simulationSansCompte === true, String(simulationSansCompte));
-    await page.evaluate(() => { const liste = document.querySelector('select[name="personne-utilisateur"]');
-      liste.value = [...liste.options].find(o => o.textContent.startsWith('Thomas Bernard')).value; });
-    await page.click('[data-action="demarrerSimulation"][data-role="utilisateur"]'); await page.waitForTimeout(300);
-    verifier('Simulation : vu comme Thomas (membre), sans droits d’administrateur, bandeau affiché', await page.evaluate(() =>
-      !!document.querySelector('.bandeau-simulation') && maRessource().nom === 'Thomas Bernard' && !etat.estAdmin && !etat.estCreateur
-      && document.querySelector('.moi-nom').textContent === 'Thomas Bernard'));
-    verifier('Simulation : le rôle Utilisateur n’a pas le menu Projets et Roadmap de Mon dashboard',
-      !(await page.$('.laterale [data-ecran="mesProjets"]')) && !(await page.$('.laterale [data-ecran="mesSprints"]')));
-    // Cohérence matrice ↔ affichage : pour chaque rôle, les menus de la barre latérale sont exactement ceux que la matrice ouvre
-    const incoherences = await page.evaluate(() => {
-      const ecarts = [], niveau = (role, droit) => niveauDuRole(role, droit);
-      const personne = etat.simulation.ressourceId;
-      ROLES_CHOISISSABLES.forEach(role => {
-        Simulation.demarrer(role, personne);
-        const affiche = new Set([...document.querySelectorAll('.laterale .menu-lien > span:first-of-type, .laterale .sous-lien')].map(e => e.textContent.trim()));
-        // Lecture seule : Mon dashboard fermé ; sinon chaque menu suit ses propres lignes de la matrice
-        const dashboard = role !== 'lecture', ouvert = d => niveau(role, d) !== 'non';
-        const attendu = { 'Dashboard général': ouvert('suivi_dashboard'), 'Daily des équipes': ouvert('daily_equipes'), 'Timesheet': ouvert('suivi_timesheet'),
-          'Mises en production': dashboard && ouvert('projets'), 'Sprints': dashboard && ouvert('onglet_admin_sprints'),
-          'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')), 'Saisir mes heures': dashboard && ouvert('mon_dashboard'),
-          'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')), 'Daily': dashboard && ouvert('mon_dashboard') };
-        Object.entries(attendu).forEach(([menu, doitEtre]) => { if (affiche.has(menu) !== doitEtre) ecarts.push(`${role} : « ${menu} » ${doitEtre ? 'manque' : 'affiché à tort'}`); });
-        // Le menu parent « Projets et Roadmap » de Mon dashboard n'existe que si l'un de ses sous-menus est ouvert
-        const parent = !!document.querySelector('.laterale .menu-lien[data-ecran="mesProjets"]');
-        if (parent !== (attendu['Mises en production'] || attendu['Sprints'])) ecarts.push(`${role} : menu parent Projets et Roadmap incohérent`);
-      });
-      // Cas du porteur (2026-10-26) : « Daily · Saisir mes heures » à Non pour le rôle Responsable ne ferme que Daily et Saisir mes heures
-      const ligne = etat.d.droitsRoles.find(d => d.role === 'responsable' && d.droit === 'mon_dashboard'), avant = ligne.niveau;
-      ligne.niveau = 'non'; Simulation.demarrer('responsable', personne);
-      const liens = new Set([...document.querySelectorAll('.laterale .menu-lien > span:first-of-type, .laterale .sous-lien')].map(e => e.textContent.trim()));
-      if (liens.has('Daily') || liens.has('Saisir mes heures')) ecarts.push('responsable : Daily / Saisir mes heures encore affichés');
-      ['Gestion des ressources', 'Congés', 'Trucs et astuces', 'Administration'].forEach(m => { if (!liens.has(m)) ecarts.push(`responsable (Daily à Non) : « ${m} » a disparu`); });
-      ligne.niveau = avant;
-      Simulation.demarrer('utilisateur', personne);
-      return ecarts;
-    });
-    verifier('Matrice des droits ↔ affichage : pour chaque rôle, menus et sous-menus de la barre latérale = ce que la matrice ouvre', incoherences.length === 0, incoherences.join(' ; '));
-    verifier('Cartes des rôles : la description est calculée d’après la matrice (le rôle Utilisateur n’a plus Projets et Roadmap)',
-      await page.evaluate(() => { const u = Simulation.ROLES.find(r => r.cle === 'utilisateur').description;
-        return u.includes('Mon dashboard : Daily') && !u.includes('Projets et Roadmap (Mises'); }));
-    // Droits par menu de Suivi de mes équipes (migration 037) : menu masqué si « Non » ; avant la migration, repli sur « general »
-    const parMenu = await page.evaluate(() => {
-      const ligne = etat.d.droitsRoles.find(d => d.role === monRole() && d.droit === 'suivi_projets'), avant = ligne.niveau;
-      ligne.niveau = 'non'; rendre();
-      const masque = !document.querySelector('.laterale [data-ecran="projets"]') && !!document.querySelector('.laterale [data-ecran="dashboard"]');
-      ligne.niveau = avant;
-      const sauvegarde = etat.d.droitsRoles;
-      etat.d.droitsRoles = sauvegarde.filter(d => d.droit !== 'suivi_projets');
-      const repli = niveauDroit('suivi_projets') === niveauDroit('general');
-      etat.d.droitsRoles = sauvegarde; rendre();
-      return { masque, repli };
-    });
-    verifier('Matrice par menu : menu de Suivi masqué si « Non », repli sur l’ancien droit avant la migration 037',
-      parMenu.masque && parMenu.repli, JSON.stringify(parMenu));
-    verifier('Simulation : pas de menu Administration dans Suivi de mes équipes (membre)', !(await page.$('.laterale [data-ecran="administration"]')));
-    await aller('daily'); await page.waitForTimeout(300);
-    // Sa note du dernier jour de semaine : dans le texte, ou en « Rappel d'hier » (attribut placeholder) un samedi ou un dimanche
-    verifier('Simulation : écrans de la personne (son daily par projet)', (await texte()).includes('SSO & gestion des droits')
-      && (await page.innerHTML('#app')).includes('Mapping des rôles applicatifs'));
-    await capture('29-simulation-en-cours');
-    verifier('Simulation : lecture seule (écriture refusée)', await page.evaluate(() =>
-      Api.creer('absences', { ressourceId: maRessource().id, jour: '2026-12-01', type: 'Congés validé' }).then(() => false, e => e.message.includes('lecture seule'))));
-    // Périmètre (migration 042, porteur 2026-10-23) : un utilisateur ne voit ni ne modifie que ses projets, même ceux de son équipe
-    const perimetreUtilisateur = await page.evaluate(() => {
-      const moi = maRessource(), brut = etat.brut, miens = new Set(brut.affectations.filter(a => a.ressourceId === moi.id).map(a => a.projetId));
-      const caches = brut.projets.filter(p => !miens.has(p.id) && p.chefId !== moi.id);
-      return { vus: etat.d.projets.length, attendus: brut.projets.length - caches.length, total: brut.projets.length,
-        cachesMemeEquipe: caches.filter(p => p.equipeId === moi.equipeId).length, modifiables: caches.filter(peutEditerProjet).length,
-        sprintsAutres: etat.d.sprintsProjet.filter(x => caches.some(p => p.id === x.projetId)).length };
-    });
-    verifier('Simulation : un utilisateur ne voit et ne modifie que ses projets (pas ceux de son équipe où il n’est pas affecté)',
-      perimetreUtilisateur.vus === perimetreUtilisateur.attendus && perimetreUtilisateur.vus < perimetreUtilisateur.total
-      && perimetreUtilisateur.cachesMemeEquipe > 0 && perimetreUtilisateur.modifiables === 0 && perimetreUtilisateur.sprintsAutres === 0, JSON.stringify(perimetreUtilisateur));
-    await page.selectOption('.bandeau-simulation select', 'sansEquipe|'); await page.waitForTimeout(300);
-    verifier('Simulation : compte sans équipe (écran d’attente avec bandeau)', (await texte()).includes('Votre compte est créé') && !!(await page.$('.bandeau-simulation')));
-    await page.click('[data-action="arreterSimulation"]'); await page.waitForTimeout(300);
-    verifier('Simulation : retour au rôle de créateur', await page.evaluate(() =>
-      etat.estCreateur && etat.estAdmin && !etat.simulation && !document.querySelector('.bandeau-simulation') && etat.ecran === 'adminCreateur'));
-    // Un responsable ne voit pas les projets d'une autre équipe, sauf ceux où il est lui-même affecté (qu'il peut alors modifier)
-    const perimetreResponsable = await page.evaluate(() => {
-      const camille = etat.d.ressources.find(r => r.nom === 'Camille Laurent');
-      Simulation.demarrer('responsable', camille.id);
-      const gerees = equipesGerees(), brut = etat.brut, miens = new Set(brut.affectations.filter(a => a.ressourceId === camille.id).map(a => a.projetId));
-      const autres = brut.projets.filter(p => !gerees.has(p.equipeId) && !miens.has(p.id));
-      const resultat = { cachesExistent: autres.length, cachesVus: etat.d.projets.filter(p => autres.some(x => x.id === p.id)).length,
-        cachesModifiables: autres.filter(peutEditerProjet).length, sprintsCaches: etat.d.sprintsProjet.filter(x => autres.some(p => p.id === x.projetId)).length,
-        propresVus: etat.d.projets.filter(p => gerees.has(p.equipeId)).length === brut.projets.filter(p => gerees.has(p.equipeId)).length };
-      Simulation.arreter(); return resultat;
-    });
-    verifier('Simulation : un responsable ne voit ni ne modifie les projets d’une autre équipe où il n’est pas affecté',
-      perimetreResponsable.cachesExistent > 0 && perimetreResponsable.cachesVus === 0 && perimetreResponsable.cachesModifiables === 0
-      && perimetreResponsable.sprintsCaches === 0 && perimetreResponsable.propresVus, JSON.stringify(perimetreResponsable));
-
-    /* --- Écran étroit : Galaxy Z Fold 7 déplié (≈ 884 px) — menu en tiroir, écrans sur toute la largeur --- */
-    await page.setViewportSize({ width: 884, height: 1000 });
-    await page.evaluate(() => allerA('daily')); await page.waitForTimeout(300);   // menu masqué : navigation directe
-    const largeurContenu = await page.evaluate(() => document.querySelector('.contenu').getBoundingClientRect().width);
-    verifier('Z Fold déplié : menu latéral masqué, bouton ☰, contenu sur toute la largeur, pas de débordement',
-      await page.isVisible('[data-action="basculerMenuLateral"]') && largeurContenu > 860
-      && await page.evaluate(() => document.querySelector('.laterale').getBoundingClientRect().right <= 0 && document.documentElement.scrollWidth <= 884));
-    await page.click('[data-action="basculerMenuLateral"]'); await page.waitForTimeout(300);
-    const menuOuvert = await page.evaluate(() => document.querySelector('.laterale').getBoundingClientRect().left === 0);
-    await page.click('.laterale [data-action="aller"][data-ecran="dashboard"]'); await page.waitForTimeout(400);
-    verifier('Z Fold déplié : le menu s’ouvre par ☰ et se referme après le choix d’un écran', menuOuvert
-      && await page.evaluate(() => etat.ecran === 'dashboard' && !document.querySelector('.laterale.ouverte')));
-    await capture('30-zfold-deplie');
-    await page.setViewportSize({ width: 1440, height: 900 });
-
-    /* --- Vérification de l'email (maquette verification-email) : code demandé, refusé si faux, accepté sinon --- */
-    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
-    await page.fill('input[name=email]', 'nonverifie@test.fr'); await page.fill('input[name=motDePasse]', 'motdepasse'); await page.click('form button');
-    await page.waitForSelector('form[data-action-envoi="validerCodeEmail"]');
+    // Email non vérifié : code demandé, refusé si faux, accepté sinon
+    await connecter('nonverifie@test.fr');
+    await page.waitForSelector('input[name=code]');
     verifier('Email non vérifié : saisie du code à la connexion', (await texte()).includes('Vérifiez votre adresse email') && (await texte()).includes('nonverifie@test.fr'));
-    await capture('31-verification-email');
-    await page.fill('input[name=code]', '000000'); await page.click('form[data-action-envoi="validerCodeEmail"] button'); await page.waitForTimeout(300);
+    await capture('01b-verification-email');
+    await page.fill('input[name=code]', '000000'); await page.click('text=Valider et me connecter'); await page.waitForSelector('.message-erreur');
     verifier('Email non vérifié : code faux refusé avec un message clair', (await texte()).includes('Code incorrect ou expiré'));
-    await page.fill('input[name=code]', '123456'); await page.click('form[data-action-envoi="validerCodeEmail"] button');
-    await page.waitForFunction(() => etat.session && etat.session.user.email === 'nonverifie@test.fr' && !etat.chargement);
-    verifier('Email non vérifié : bon code → connecté directement', await page.evaluate(() => etat.session.user.emailVerified === true));
+    await page.fill('input[name=code]', '123456'); await page.click('text=Valider et me connecter');
+    // « nonverifie » n'a pas d'équipe : une fois le code validé, il arrive directement sur l'écran d'attente d'accès
+    await page.waitForSelector('text=Bonjour Victor');
+    verifier('Email non vérifié : bon code → connecté directement', true);
+    verifier('Compte sans équipe : message « votre compte est créé » et bouton Actualiser', (await texte()).includes('Votre compte est créé') && await page.getByRole('button', { name: 'Actualiser' }).count() === 1);
+    await capture('02b-choix-equipe-en-attente');
+    await page.click('text=Déconnexion');
+    await page.waitForSelector('input[type=email]');
 
-    /* --- Connexion par email et mot de passe uniquement (connexion Google retirée, porteur 2026-10-27) --- */
-    await page.click('[data-action="deconnexion"]'); await page.waitForSelector('form[data-action-envoi="seConnecter"]');
-    verifier('Connexion : plus de « Continuer avec Google » (email et mot de passe seulement)',
-      !(await page.$('[data-action="connexionGoogle"]')) && !/google/i.test(await texte()));
+    /* ---------- Connexion de Camille : ouverture directe du dashboard ---------- */
+    await connecter('camille@test.fr');
+    await page.waitForSelector('.laterale');
+    verifier('Une seule équipe : ouverture directe du dashboard général', page.url().endsWith('/app/dashboard') && (await texte()).includes('Vue consolidée des équipes'));
+    await capture('03-dashboard');
+    verifier('Dashboard : 4 indicateurs', await page.locator('.grille-kpi .kpi').count() === 4);
+    verifier('Dashboard : projets à surveiller', await page.locator('.carte-titre', { hasText: 'Projets à surveiller' }).count() === 1);
+    verifier('Barre latérale : sections Suivi de mes équipes et Mon dashboard, lien actif', (await page.textContent('.laterale')).includes('Suivi de mes équipes')
+      && (await page.textContent('.laterale')).includes('Mon dashboard') && await page.locator('.menu-lien.actif', { hasText: 'Dashboard général' }).count() === 1);
+    verifier('En-tête : fil d\'Ariane et badge Lecture seule', (await page.textContent('.fil')).includes('Suivi de mes équipes') && (await page.textContent('.fil')).includes('Lecture seule'));
+    verifier('Barre latérale : bloc utilisateur (équipe, nom, mention)', (await page.textContent('.bloc-utilisateur')).includes('Plateforme') && (await page.textContent('.bloc-utilisateur')).includes('Camille Laurent')
+      && (await page.textContent('.bloc-utilisateur')).includes('CIRITEC'));
+    verifier('Titre de l\'onglet du navigateur', (await page.title()) === 'Dashboard général · ProjectDesk');
+
+    // Menu Aide : guide de l'écran, puis premiers pas
+    await page.click('text=Aide');
+    await page.click('text=Aide sur cet écran');
+    verifier('Aide : guide de l\'écran ouvert dans une fenêtre', (await page.textContent('.modale')).includes('Aide · Dashboard général'));
+    await page.click('.modale [aria-label=Fermer]');
+    await page.click('text=Aide'); await page.click('text=Premiers pas');
+    verifier('Aide : page « Premiers pas »', (await page.textContent('.modale')).includes('Mon dashboard › Liste des ressources'));
+    await page.keyboard.press('Escape');
+
+    /* ---------- Choix d'équipe (équipe déjà ouverte : croix, invitation reçue) ---------- */
+    await page.click('.bloc-equipe >> text=Changer');
+    await page.waitForSelector('.carte-choix');
+    await capture('02-choix-equipe');
+    verifier('Choix d\'équipe : invitation reçue affichée', (await texte()).includes('Invitations reçues') && (await texte()).includes('Produit'));
+    verifier('Choix d\'équipe : équipe courante marquée, avec effectifs et rôle', await page.locator('.carte-choix.courante', { hasText: 'Plateforme' }).count() === 1
+      && (await page.textContent('.carte-choix.courante')).includes('personnes'));
+    await page.click('[aria-label=Fermer]');
+    await page.waitForSelector('.laterale');
+    verifier('Choix d\'équipe : la croix revient à l\'écran précédent', page.url().endsWith('/app/dashboard'));
+    await page.click('.bloc-equipe >> text=Changer');
+    await page.click('.carte-choix.courante >> text=Ouvrir');
+    await page.waitForSelector('.laterale');
+    verifier('Choix d\'équipe : « Ouvrir » entre dans l\'équipe (mémorisée sur le poste)', page.url().endsWith('/app/dashboard')
+      && await page.evaluate(() => !!localStorage.getItem('pp_equipe')));
+
+    /* ---------- Trucs et astuces ---------- */
+    await page.click('.menu-lien >> text=Trucs et astuces');
+    await page.waitForSelector('.themes');
+    await capture('19-astuces');
+    verifier('Trucs et astuces : adresse, 3 thèmes, KPI Scrum et Kanban avec exemples', page.url().endsWith('/app/trucs-et-astuces') && await page.locator('.theme').count() === 3
+      && await page.locator('.tableau-kpi').count() >= 2 && await page.locator('.badge-reel').count() > 1 && await page.locator('.badge-illustratif').count() > 5);
+    verifier('Trucs et astuces : capacité réelle du sprint en gras', (await page.locator('.tableau-kpi td b', { hasText: / j$/ }).count()) >= 1);
+    await page.selectOption('select[aria-label="Projet d’exemple"]', { index: 1 });
+    verifier('Trucs et astuces : changer de projet recalcule les exemples', (await page.locator('.tableau-kpi th', { hasText: 'Exemple ·' }).first().textContent()).length > 10);
+    await page.click('text=Rôles Scrum (organigramme)');
+    await capture('25-roles-scrum');
+    verifier('Trucs et astuces › Rôles Scrum : organigramme détaillé et qui fait quoi', await page.locator('.org-carte').count() >= 9 && await page.locator('.tableau-roles tbody tr').count() >= 8);
+    await page.click('.theme >> text=Roadmap');
+    await capture('19b-astuces-roadmap');
+    verifier('Trucs et astuces › Roadmap : chaîne vision → sprint, 2 formats, méthodes, bonnes pratiques', (await texte()).includes('De la vision au sprint')
+      && await page.locator('.grille-formats .carte').count() === 2 && (await texte()).includes('Selon la méthode du projet') && (await texte()).includes('Pièges à éviter'));
+    await page.click('.theme >> text=Test & Learn');
+    await capture('19c-astuces-test-learn');
+    verifier('Trucs et astuces › Test & Learn : boucle, carte d\'expérience, phases IA et indicateurs', (await texte()).includes('La boucle Test & Learn')
+      && (await texte()).includes('Carte d’expérience') && (await texte()).includes('Les phases d’un projet IA') && (await texte()).includes('Ce que l’on mesure'));
+
+    /* ---------- Vague B : Projets et Roadmap, Timesheet, Daily des équipes, Gestion des ressources ---------- */
+    const VAGUE_B = CAPTURES;
+    const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
+    const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
+
+    // Dashboard : un projet à surveiller ouvre le panneau du projet (lecture seule)
+    await menu('/dashboard');
+    await page.click('tr.cliquable:has-text("App terrain hors-ligne")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Dashboard : un projet à surveiller ouvre son panneau en lecture seule', (await page.textContent('.panneau')).includes('Mobile')
+      && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
+    await page.keyboard.press('Escape');
+
+    // Projets et Roadmap
+    await menu('/projets');
+    await page.waitForSelector('.tableau');
+    await captureB('02-projets');
+    verifier('Projets et Roadmap : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
+      && await page.locator('tr.groupe').count() >= 3 && await page.locator('.tableau .barre').count() === 9 && await page.locator('.tableau .badge').count() >= 9);
+    await page.click('.puces >> text=Mobile');
+    verifier('Projets et Roadmap : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
+    await page.click('.puces >> text=Toutes les équipes');
+    await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Projets et Roadmap : un clic ouvre le panneau (équipe, statut, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
+      && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Projets et Roadmap : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
+    await page.click('[role=tab]:has-text("Planning projet")');
+    await page.waitForSelector('.planning-projet');
+    await captureB('04b-planning-projet');
+    verifier('Planning projet : frise de 6 mois, sprints, mises en production et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
+      && await page.locator('.gantt-sprint').count() >= 2 && await page.locator('.gantt-mep').count() >= 3 && await page.locator('.gantt-jour').count() >= 1);
+    verifier('Planning projet : sprint en cours mis en avant, détail en infobulle', await page.locator('.gantt-mep').first().getAttribute('title') !== null
+      && (await page.locator('.gantt-sprint').first().getAttribute('title')).includes('Sprint'));
+    const periode = await page.textContent('.encart-compact b');
+    await page.click('[aria-label="Période suivante"]');
+    verifier('Planning projet : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
+    await page.click('text=Aujourd’hui');
+    verifier('Planning projet : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
+
+    // Timesheet : validation des feuilles par la responsable
+    await menu('/timesheet');
+    await page.waitForSelector('.tableau');
+    await page.click('[aria-label="Mois précédent"]');
+    await page.waitForSelector('text=septembre 2026');
+    await captureB('07-timesheet');
+    verifier('Timesheet : feuilles du mois par personne, 4 indicateurs (validation possible)', (await texte()).includes('Saisi / attendu') && await page.locator('.grille-kpi .kpi').count() === 4
+      && !(await texte()).includes('NaN'));
+    const avant = await page.locator('button:has-text("Valider")').count();
+    verifier('Timesheet : feuilles soumises à valider pour mes équipes seulement', avant === 1);
+    await page.locator('button:has-text("Renvoyer")').first().click();
+    await page.waitForSelector('.modale');
+    await page.fill('.modale textarea', 'Merci de compléter septembre');
+    await page.click('.modale button:has-text("Renvoyer la feuille")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    await page.waitForSelector('.badge:has-text("À compléter")');
+    verifier('Timesheet : « Renvoyer » demande un motif et renvoie la feuille à compléter', await page.locator('.badge:has-text("À compléter")').count() >= 1);
+
+    // Daily des équipes
+    await menu('/daily-des-equipes');
+    await page.waitForSelector('.grille-fil');
+    await captureB('17-daily-equipes');
+    verifier('Daily des équipes : note d\'un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
+    verifier('Daily des équipes : fil groupé par jour et blocages ouverts', await page.locator('.fil-jour').count() >= 1 && (await texte()).includes('Blocages ouverts · 2')
+      && (await texte()).includes('Identifiants de recette expirés'));
+    await page.click('.filtres-fil >> text=Thomas Bernard');
+    verifier('Daily des équipes : filtre par personne', (await texte()).includes('Mapping des rôles applicatifs') && !(await texte()).includes('Finaliser le plan de migration SSO'));
+    await page.click('.filtres-fil >> text=Toutes');
+    await page.click('[role=tab]:has-text("Synthèse")');
+    await page.waitForSelector('.tableau-synthese');
+    await captureB('33-daily-synthese');
+    verifier('Daily des équipes › Synthèse : chiffres clés et carte membre × jour', (await texte()).includes('Dailys renseignés')
+      && await page.locator('.tableau-synthese thead th').count() === 7 && await page.locator('.case-synthese.case-bloc').count() >= 1);
+    await page.locator('.case-synthese.case-bloc').first().click();
+    verifier('Daily des équipes › Synthèse : un clic ouvre le daily à droite', (await page.textContent('.panneau-lecture')).includes('Blocages'));
+    const titreAvant = await page.textContent('.panneau-lecture .discret');
+    await page.click('text=‹ Jour précédent');
+    verifier('Daily des équipes : jour précédent dans le panneau de lecture', (await page.textContent('.panneau-lecture .discret')) !== titreAvant);
+    await page.click('text=Cette semaine');
+    const semaine = await page.textContent('.libelle-semaine');
+    await page.click('[aria-label="Semaine précédente"]');
+    verifier('Daily des équipes : semaine précédente', (await page.textContent('.libelle-semaine')) !== semaine);
+    await page.click('text=Cette semaine');
+    verifier('Daily des équipes : « Cette semaine » revient à la semaine courante', (await page.textContent('.libelle-semaine')) === semaine);
+    // Export Excel
+    await page.click('text=Exporter en Excel');
+    await page.waitForSelector('.modale');
+    await captureB('22-export-daily-excel');
+    verifier('Export Excel : période, projets et contenu du fichier', (await page.textContent('.modale')).includes('Projets (ceux dont vous pouvez lire le daily)')
+      && (await page.textContent('.modale')).includes('Ajouter l’onglet « Blocages »'));
+    const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('.modale >> text=Télécharger le fichier Excel')]);
+    const fichierXlsx = path.join(VAGUE_B, 'export-test.xlsx');
+    await telechargement.saveAs(fichierXlsx);
+    const octets = fs.readFileSync(fichierXlsx);
+    fs.unlinkSync(fichierXlsx);
+    verifier('Export Excel : fichier .xlsx téléchargé (archive valide avec feuille Daily et Blocages)', /^Daily_.*\.xlsx$/.test(telechargement.suggestedFilename())
+      && octets.readUInt32LE(0) === 0x04034B50 && octets.includes('sheet2.xml') && octets.toString('utf8').includes('Mapping des rôles applicatifs'));
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+
+    // Gestion des ressources
+    await menu('/ressources');
+    await page.waitForSelector('.calendrier');
+    await captureB('05-ressources');
+    verifier('Gestion des ressources : calendrier par équipe, légende, synthèse des absents par projet', (await page.textContent('.carte-titre')).includes('Congés')
+      && await page.locator('.calendrier tr.groupe').count() >= 3 && await page.locator('.calendrier tr.ligne-synthese').count() >= 3 && await page.locator('.calendrier tr[data-personne]').count() >= 10);
+    verifier('Gestion des ressources : lecture seule (aucune case cliquable)', await page.locator('.calendrier td.cliquable').count() === 0);
+    await page.click('[aria-label="Mois suivant"]');
+    verifier('Gestion des ressources : navigation de mois', (await page.textContent('.carte-titre b')).includes('novembre 2026') && await page.locator('.calendrier th').count() === 31);
+    await page.click('.puce >> text=Par projet');
+    verifier('Gestion des ressources : vue par projet (membres et synthèse)', await page.locator('.calendrier tr[data-personne]').count() >= 1 && await page.locator('.calendrier tr.ligne-synthese').count() === 1);
+    await page.click('.puce >> text=Par équipe');
+    await page.click('[role=tab]:has-text("Liste des ressources")');
+    await page.waitForSelector('#annuaire-ressources');
+    await captureB('05b-ressources-liste');
+    verifier('Gestion des ressources › Liste : annuaire des 12 personnes avec projets et statut', await page.locator('#annuaire-ressources tbody tr').count() === 12
+      && (await texte()).includes(' · PO') && (await texte()).includes('Anniversaires d’octobre'));
+    await page.fill('input[placeholder="Rechercher une personne"]', 'thomas');
+    verifier('Gestion des ressources › Liste : recherche par nom', await page.locator('#annuaire-ressources tbody tr').count() === 1);
+    await page.fill('input[placeholder="Rechercher une personne"]', '');
+    await page.selectOption('select[aria-label="Statut"]', 'inactif');
+    verifier('Gestion des ressources › Liste : filtre par statut', (await texte()).includes('Aucune ressource.'));
+    await page.selectOption('select[aria-label="Statut"]', '');
+    await page.selectOption('select[aria-label="Équipe"]', { label: 'Mobile' });
+    verifier('Gestion des ressources › Liste : filtre par équipe', await page.locator('#annuaire-ressources tbody tr').count() === 3);
+
+    /* ---------- Vague C : Daily, Saisir mes heures, Congés, Sprints, Mises en production (édition) ---------- */
+    const VAGUE_C = CAPTURES;
+    const captureC = nom => page.screenshot({ path: path.join(VAGUE_C, nom + '.png') });
+    let reponsePrompt = '';
+    page.on('dialog', d => d.accept(d.type() === 'prompt' ? reponsePrompt : undefined));      // confirmations acceptées ; réponse aux « prompt » réglable
+    const toast = () => page.textContent('.notification');
+
+    // Daily : un daily par projet, enregistrement automatique
+    await menu('/daily');
+    await page.waitForSelector('.ecran-daily');
+    await captureC('08-daily');
+    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 9
+      && (await texte()).includes('0 / 3 projets renseignés') && await page.locator('.historique a').count() === 12);
+    const zone = page.locator('textarea.note-daily').nth(1);       // « Aujourd'hui » du premier projet
+    await zone.fill('Revue de la roadmap SSO');
+    await page.waitForSelector('text=enregistré');
+    await page.waitForSelector('text=1 / 3 projets renseignés');
+    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 3 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
+    await page.reload();
+    await page.waitForSelector('.ecran-daily');
+    verifier('Daily : la note survit au rechargement (écrite en base)', await page.locator('textarea.note-daily').nth(1).inputValue() === 'Revue de la roadmap SSO');
+    const jourAffiche = await page.textContent('.ecran-daily h2');
+    await page.click('[aria-label="Jour précédent"]');
+    verifier('Daily : jour précédent (week-ends sautés)', (await page.textContent('.ecran-daily h2')) !== jourAffiche); 
+    await page.locator('.historique a').nth(3).click();
+    verifier('Daily : l\'historique ouvre le jour choisi', await page.locator('.historique a.actif').count() === 1);
+    await page.click('text=Aujourd’hui >> nth=0');
+
+    // Saisir mes heures
+    await menu('/saisir-mes-heures');
+    await page.waitForSelector('.grille-mois');
+    await captureC('13-mon-timesheet');
+    const cellule = page.locator('input.saisie-mois[aria-label="2026-10-05"]').first();
+    await cellule.fill('7,5');
+    await cellule.blur();
+    await page.waitForSelector('td.num b:has-text("7,5 h")');
+    verifier('Saisir mes heures : une saisie (virgule acceptée) met à jour les totaux', (await texte()).includes('7,5 h') && (await texte()).includes('sur 1'));
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().fill('30');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().blur();
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Saisir mes heures : heures invalides refusées (0 à 24) avec message', (await toast()).includes('Heures invalides') && await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().inputValue() === '7,5');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().fill('');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().blur();
+    await page.waitForFunction(() => !document.body.textContent.includes('7,5 h'));
+    verifier('Saisir mes heures : une case vidée supprime la saisie', true);
+    await page.locator('input.saisie-mois[aria-label="2026-10-06"]').first().fill('8');
+    await page.locator('input.saisie-mois[aria-label="2026-10-06"]').first().blur();
+    await page.waitForSelector('td.num b:has-text("8 h")');
+    await page.click('text=Soumettre le mois');
+    await page.waitForSelector('.badge:has-text("Soumise")');
+    verifier('Saisir mes heures : « Soumettre le mois » verrouille la feuille', await page.locator('input.saisie-mois[disabled]').count() > 10 && await page.locator('text=Soumettre le mois').count() === 0);
+
+    // Congés
+    await menu('/conges');
+    await page.waitForSelector('.calendrier');
+    await captureC('11-conges');
+    await page.click('.puce:has-text("Congés validé")');
+    const ligneCamille = page.locator('tr[data-personne]', { hasText: 'Camille Laurent' });
+    await ligneCamille.locator('td').nth(12).click();                                  // lundi 12 octobre
+    await page.waitForSelector('tr[data-personne]:has-text("Camille Laurent") .case-absence');
+    verifier('Congés : un clic pose l\'absence du type choisi et met à jour le total', await ligneCamille.locator('.case-absence').count() === 1 && (await ligneCamille.textContent()).includes('1 j'));
+    await ligneCamille.locator('td').nth(12).click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr[data-personne]')].some(r => r.textContent.includes('Camille Laurent') && r.querySelector('.case-absence')));
+    verifier('Congés : un second clic retire l\'absence', await ligneCamille.locator('.case-absence').count() === 0);
+    await page.click('.puce:has-text("Demi-journée")');
+    await ligneCamille.locator('td').nth(13).click();
+    await page.waitForSelector('tr[data-personne]:has-text("Camille Laurent") .case-absence');
+    verifier('Congés : une demi-journée est marquée « ½ » et compte 0,5', (await ligneCamille.textContent()).includes('CV½') && (await ligneCamille.textContent()).includes('0,5 j'));
+    await page.click('.puce:has-text("Effacer")');
+    await ligneCamille.locator('td').nth(13).click();
+    await page.waitForFunction(() => document.querySelectorAll('tr[data-personne]').length > 0 && ![...document.querySelectorAll('tr[data-personne]')].some(r => r.textContent.includes('Camille Laurent') && r.textContent.includes('CV½')));
+    verifier('Congés : « Effacer » retire l\'absence', await ligneCamille.locator('.case-absence').count() === 0);
+    verifier('Congés : les cases des personnes de mes équipes sont cliquables', await page.locator('.calendrier td.cliquable').count() > 20);
+    await page.click('[role=tab]:has-text("Récap annuel")');
+    await page.waitForSelector('.recap-travail');
+    await captureC('11b-recap-annuel');
+    verifier('Congés › Récap annuel : 12 mois, jours travaillés et congés, reste à prendre', await page.locator('.recap-travail thead th:has-text("Sept.")').count() === 1
+      && (await texte()).includes('Jours de semaine du mois') && (await texte()).includes('Reste à') && await page.locator('.recap-travail tr.total').count() >= 3);
+    const objectif = page.locator('input.objectif-client').first();
+    verifier('Congés › Récap annuel : objectif client modifiable par le responsable de l\'équipe', await objectif.count() === 1);
+    await objectif.fill('200');
+    await objectif.blur();
+    await page.waitForFunction(() => document.querySelector('input.objectif-client').value === '200');
+    await page.reload();
+    await page.click('[role=tab]:has-text("Récap annuel")');
+    await page.waitForSelector('.recap-travail');
+    verifier('Congés › Récap annuel : l\'objectif saisi est enregistré en base', await page.locator('input.objectif-client').first().inputValue() === '200');
+
+    // Sprints
+    await menu('/sprints');
+    await page.waitForSelector('.tableau-sprints');
+    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    await captureC('09c-sprints');
+    const lignesSprint = () => page.locator('.tableau-sprints tbody tr:not(.ligne-ajout)').count();
+    verifier('Sprints : les sprints du projet par année, modifiables, avec ligne d\'ajout', await lignesSprint() === 2 && await page.locator('tr.ligne-ajout').count() === 1
+      && (await texte()).includes('en cours') === (await texte()).includes('en cours'));
+    await page.fill('input[aria-label="Nouveau sprint : numéro"]', '21');
+    await page.fill('input[aria-label="Nouveau sprint : version"]', 'V2.2');
+    await page.fill('input[aria-label="Nouveau sprint : début"]', '2026-10-12');
+    await page.fill('input[aria-label="Nouveau sprint : fin"]', '2026-10-23');
+    await page.click('button[title="Ajouter le sprint"]');
+    await page.waitForFunction(() => document.querySelectorAll('.tableau-sprints tbody tr:not(.ligne-ajout)').length === 3);
+    verifier('Sprints : ajout d\'un sprint', await lignesSprint() === 3);
+    await page.fill('input[aria-label="Nouveau sprint : numéro"]', '21');
+    await page.fill('input[aria-label="Nouveau sprint : début"]', '2026-11-02');
+    await page.fill('input[aria-label="Nouveau sprint : fin"]', '2026-11-13');
+    await page.click('button[title="Ajouter le sprint"]');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Sprints : « Sprint N » unique par année et par projet', (await toast()).includes('existe déjà en 2026') && await lignesSprint() === 3);
+    const finDernier = page.locator('input[aria-label="Fin"]').last();
+    await finDernier.fill('2026-10-01');
+    await finDernier.blur();
+    await page.waitForSelector('.notification.visible.erreur >> text=précède');
+    verifier('Sprints : date de fin avant la date de début refusée, ancienne valeur remise', await page.locator('input[aria-label="Fin"]').last().inputValue() === '2026-10-23');
+    const versionDernier = page.locator('input[aria-label="Version"]').last();
+    await versionDernier.fill('V2.2-corrigée');
+    await versionDernier.blur();
+    await page.waitForFunction(() => [...document.querySelectorAll('input[aria-label="Version"]')].some(i => i.value === 'V2.2-corrigée'));
+    await page.reload();
+    await page.waitForSelector('.tableau-sprints');
+    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    verifier('Sprints : la modification d\'un champ est enregistrée', await page.locator('input[aria-label="Version"]').last().inputValue() === 'V2.2-corrigée');
+    await page.locator('button[title="Supprimer ce sprint"]').last().click();
+    await page.waitForFunction(() => document.querySelectorAll('.tableau-sprints tbody tr:not(.ligne-ajout)').length === 2);
+    verifier('Sprints : suppression d\'un sprint (après confirmation)', await lignesSprint() === 2);
+
+    // Mises en production
+    await menu('/mes-projets');
+    await page.waitForSelector('.formulaire-mep');
+    await captureC('09-mes-projets');
+    const nbMep = await page.locator('.tableau-sprints tbody tr').count();
+    await page.fill('.formulaire-mep input[type=date]', '2026-12-01');
+    await page.fill('.formulaire-mep input[name=version]', 'V9.9');
+    await page.fill('.formulaire-mep input[name=bugs]', '2');
+    await page.click('.formulaire-mep >> text=Ajouter');
+    await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n + 1, nbMep);
+    verifier('Mises en production : ajout (date, version, tickets livrés, statut)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 1);
+    const ligneMep = page.locator('.tableau-sprints tbody tr', { has: page.locator('input[value="V9.9"]') });
+    await ligneMep.locator('select').selectOption('faite');
+    await page.waitForFunction(() => [...document.querySelectorAll('.tableau-sprints tr')].some(r => r.querySelector('input[value="V9.9"]') && r.querySelector('select').value === 'faite'));
+    verifier('Mises en production : le statut se modifie sur place', await ligneMep.locator('select').inputValue() === 'faite');
+    await ligneMep.locator('button[title="Supprimer cette mise en production"]').click();
+    await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n, nbMep);
+    verifier('Mises en production : suppression (après confirmation)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 0);
+
+    // Nouveau projet, puis panneau modifiable
+    await page.click('text=+ Nouveau projet');
+    await page.waitForSelector('#nouveau-projet');
+    await captureC('10-nouveau-projet');
+    verifier('Nouveau projet : formulaire (code proposé, méthode à choisir)', (await page.inputValue('input[name=code]')).startsWith('PF-') && await page.locator('.choix-methode').count() >= 4);
+    await page.fill('input[name=nom]', 'Projet vague C');
+    await page.click('.choix-methode:has-text("Agile Scrum")');
+    await page.click('text=Créer le projet');
+    await page.waitForSelector('input[aria-label="Nom du projet"]');
+    await captureC('11-panneau-projet');
+    verifier('Nouveau projet : créé, puis panneau modifiable (nom, statut, méthode, chef)', await page.inputValue('input[aria-label="Nom du projet"]') === 'Projet vague C'
+      && await page.locator('.panneau select[aria-label="Statut"]').count() === 1 && await page.locator('.panneau select[aria-label="Méthode"]').inputValue() === 'Agile Scrum'
+      && (await page.inputValue('.panneau select[aria-label="Chef de projet"]')) !== '');
+    await page.fill('input[aria-label="Nom du projet"]', 'Projet vague C (renommé)');
+    await page.locator('input[aria-label="Nom du projet"]').blur();
+    await page.selectOption('.panneau select[aria-label="Statut"]', { index: 1 });
+    await page.waitForFunction(() => document.querySelector('input[aria-label="Nom du projet"]').value.includes('renommé'));
+    await page.keyboard.press('Escape');
+    await menu('/projets');
+    await page.waitForSelector('.tableau');
+    await page.waitForSelector('tr.cliquable');
+    verifier('Panneau projet : le nom modifié est enregistré (visible dans Projets et Roadmap)', await page.locator('tr.cliquable:has-text("Projet vague C (renommé)")').count() === 1
+      && await page.locator('tr.cliquable').count() === 10);
+    await menu('/mes-projets');
+    await page.click('text=+ Nouveau projet');
+    await page.fill('input[name=nom]', 'Autre projet');
+    await page.click('.choix-methode:has-text("Cascade")');
+    await page.click('text=Créer le projet');
+    await page.waitForSelector('input[aria-label="Nom du projet"]');
+    await page.click('text=Supprimer le projet');
+    await page.waitForFunction(() => !document.querySelector('.panneau'));
+    verifier('Panneau projet : suppression du projet (après confirmation), panneau fermé', await page.locator('.panneau').count() === 0);
+
+    /* ---------- Vague D (1/2) : Liste des ressources et fenêtres ---------- */
+    const VAGUE_D = CAPTURES;
+    const captureD = nom => page.screenshot({ path: path.join(VAGUE_D, nom + '.png') });
+    await menu('/liste-des-ressources');
+    await page.waitForSelector('.nav-ressources');
+    await captureD('12-liste-ressources');
+    verifier('Liste des ressources : navigation par équipe (responsable, projets), Postes et Types de contrat', await page.locator('.noeud.equipe').count() >= 4
+      && await page.locator('.noeud.projet').count() >= 9 && (await page.textContent('.nav-ressources')).includes('Types de contrat'));
+    verifier('Liste des ressources : l\'équipe ouverte est choisie, avec son responsable et ses personnes', (await page.textContent('.detail-ressources')).includes('Plateforme')
+      && (await page.textContent('.detail-ressources')).includes('Responsable de l’équipe') && await page.locator('.tableau-personnes tr[data-ressource]').count() === 4);
+    await page.fill('.nav-ressources input', 'hugo');
+    verifier('Liste des ressources : recherche dans la navigation (l\'équipe de la personne reste visible)', await page.locator('.noeud-groupe').count() === 1 && (await page.textContent('.nav-ressources')).includes('Data'));
+    await page.fill('.nav-ressources input', '');
+    await page.click('.noeud.projet:has-text("SSO & gestion des droits")');
+    await captureD('12b-liste-projet');
+    verifier('Liste des ressources : détail d\'un projet (Product Owners, membres, indicateurs)', (await page.textContent('.detail-ressources')).includes('Product Owners')
+      && await page.locator('.carte-po:not(.ajout)').count() >= 1 && await page.locator('.detail-kpi b').count() === 3);
+    await page.click('text=+ Ajouter un Product Owner');
+    await page.waitForSelector('.modale[role=dialog]');
+    await captureD('11b-affectation');
+    verifier('Fenêtre d\'affectation : projet d\'origine coché, rôle « Chef de projet » préchoisi', (await page.textContent('.modale h2')).includes('SSO & gestion des droits')
+      && await page.locator('.modale input[type=checkbox]:checked').count() >= 1);
+    await page.selectOption('.modale select[name=ressource]', { label: 'Julien Dubois — Plateforme · DevOps' }).catch(async () => {
+      await page.selectOption('.modale select[name=ressource]', { index: 1 });
+    });
+    await page.click('.modale button:has-text("Enregistrer les affectations")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    verifier('Fenêtre d\'affectation : enregistrée, la personne apparaît dans le projet', await page.locator('.tableau-personnes tr[data-ressource], .carte-po:not(.ajout)').count() >= 2);
+
+    // Fiche ressource
+    await page.click('.noeud.equipe:has-text("Plateforme")');
+    await page.locator('tr[data-ressource]', { hasText: 'Thomas Bernard' }).locator('text=Fiche').click();
+    await page.waitForSelector('.modale[role=dialog]');
+    await captureD('11c-fiche-ressource');
+    verifier('Fiche ressource : champs, rôle d\'accès en lecture, projets de la personne', (await page.textContent('.modale h2')) === 'Fiche de Thomas Bernard'
+      && (await page.textContent('.modale')).includes('Rôle d’accès') && (await page.textContent('.modale')).includes('Modifier ses projets'));
+    await page.fill('.modale input[name=dateArrivee]', '2026-06-01');
+    await page.fill('.modale input[name=dateDepart]', '2026-05-01');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Fiche ressource : date de départ avant la date d\'arrivée refusée', (await toast()).includes('date de départ précède'));
+    await page.fill('.modale input[name=dateDepart]', '');
+    await page.fill('.modale input[name=dateArrivee]', '');
+    await page.fill('.modale input[name=capacite]', '90');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    await page.locator('tr[data-ressource]', { hasText: 'Thomas Bernard' }).locator('text=Fiche').click();
+    verifier('Fiche ressource : la modification est enregistrée', await page.inputValue('.modale input[name=capacite]') === '90');
+    await page.keyboard.press('Escape');
+
+    // Statut actif / inactif
+    await page.locator('tr[data-ressource]', { hasText: 'Julien Dubois' }).locator('button:has(.badge)').click();
+    await page.waitForSelector('.section-pliable:has-text("Inactifs")');
+    verifier('Liste des ressources : « Actif » rend la personne inactive (date de fin = aujourd\'hui), section Inactifs', await page.locator('tr.inactive').count() === 1);
+    await page.locator('tr.inactive button:has(.badge)').click();
+    await page.waitForFunction(() => !document.querySelector('tr.inactive'));
+    verifier('Liste des ressources : « Inactif » réactive la personne', await page.locator('tr.inactive').count() === 0);
+
+    // Nouvelle personne puis suppression
+    await page.click('text=+ Personne >> nth=-1');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.fill('.modale input[name=nom]', 'Nouvelle Recrue');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForSelector('tr[data-ressource]:has-text("Nouvelle Recrue")');
+    verifier('Nouvelle personne : créée dans l\'équipe et visible dans le tableau', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 1);
+    await page.locator('tr[data-ressource]', { hasText: 'Nouvelle Recrue' }).locator('text=Fiche').click();
+    await page.click('.modale button:has-text("Supprimer")');
+    await page.waitForFunction(() => !document.querySelector('tr[data-ressource]') || ![...document.querySelectorAll('tr[data-ressource]')].some(r => r.textContent.includes('Nouvelle Recrue')));
+    verifier('Fiche ressource : suppression de la personne (après confirmation)', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 0);
+
+    // Rattachement d'une personne d'une autre équipe
+    await page.click('text=+ Personne existante');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.selectOption('.modale select[name=ressource]', { index: 1 });
+    await page.click('.modale button:has-text("Ajouter à l’équipe")');
+    await page.waitForSelector('tr[data-rattachee]');
+    verifier('Rattachement : la personne s\'affiche dans « Rattachées depuis une autre équipe » avec son équipe d\'origine', (await page.textContent('tr[data-rattachee]')).includes('Équipe d’origine'));
+    await page.click('tr[data-rattachee] >> text=Retirer');
+    await page.waitForFunction(() => !document.querySelector('tr[data-rattachee]'));
+    verifier('Rattachement : « Retirer » supprime le rattachement seulement', await page.locator('tr[data-rattachee]').count() === 0);
+
+    // Postes et types de contrat
+    await page.click('.noeud:has-text("Postes")');
+    await page.waitForSelector('.detail-ressources .tableau');
+    const nbPostes = await page.locator('.detail-ressources tbody tr').count();
+    reponsePrompt = 'Poste de test';
+    await page.click('.detail-ressources button:has-text("+ Ajouter")');
+    await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n + 1, nbPostes);
+    verifier('Postes : ajout d\'une valeur (administrateur)', (await page.textContent('.detail-ressources')).includes('Poste de test'));
+    reponsePrompt = 'Poste de test renommé';
+    await page.locator('tr:has-text("Poste de test") button[title^="Renommer"]').click();
+    await page.waitForSelector('text=Poste de test renommé');
+    await page.locator('tr:has-text("Poste de test renommé") button[title="Supprimer"]').click();
+    await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n, nbPostes);
+    verifier('Postes : renommer puis supprimer une valeur inutilisée', !(await page.textContent('.detail-ressources')).includes('Poste de test'));
+
+    // Équipe : modification, membres et invitation, création puis suppression
+    await page.click('.noeud.equipe:has-text("Plateforme")');
+    await page.click('text=Modifier l’équipe');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.waitForSelector('.modale >> text=camille@test.fr');
+    await captureD('11d-equipe');
+    verifier('Fenêtre équipe : nom, préfixe, type, membres (comptes de connexion)', (await page.inputValue('.modale input[name=nom]')) === 'Plateforme'
+      && (await page.textContent('.modale')).includes('camille@test.fr'));
+    await page.fill('.modale input[type=email]', 'nouveau.compte@test.fr');
+    await page.click('.modale button:has-text("Inviter")');
+    await page.waitForSelector('.modale >> text=invitation en attente');
+    verifier('Fenêtre équipe : invitation par email, affichée « en attente »', (await page.textContent('.modale')).includes('nouveau.compte@test.fr'));
+    await page.keyboard.press('Escape');
+    await page.click('text=+ Ajouter une équipe');
+    await page.fill('.modale input[name=nom]', 'Équipe Test');
+    await page.fill('.modale input[name=prefixe]', 'et');
+    await page.click('.modale button:has-text("Créer")');
+    await page.waitForSelector('.noeud.equipe:has-text("Équipe Test")');
+    verifier('Nouvelle équipe : créée (organisation et ligne equipes), visible dans la navigation', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 1);
+    await page.click('.noeud.equipe:has-text("Équipe Test")');
+    await page.click('.detail-entete button[title="Supprimer l’équipe"]');
+    await page.waitForFunction(() => ![...document.querySelectorAll('.noeud.equipe')].some(n => n.textContent.includes('Équipe Test')));
+    verifier('Équipe vide : suppression possible (après confirmation)', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 0);
+
+    /* ---------- Vague D (2/2) : Administration (administrateur) ---------- */
+    await menu('/administration');
+    await page.waitForSelector('.onglets');
+    await captureD('14-mon-admin');
+    verifier('Administration : onglets de l\'administrateur (comptes, équipes, référentiels, jours fériés, rôles) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
+      && (await page.textContent('.onglets')).includes('Rôles') && (await page.textContent('.onglets')).includes('Référentiels'));
+    verifier('Administration : l\'onglet « Comptes en attente » s\'ouvre d\'abord quand il y en a', await page.locator('[role=tab][aria-selected=true]:has-text("Comptes en attente")').count() === 1);
+    await captureD('26-comptes-en-attente');
+    const nbAttente = await page.locator('.tableau tbody tr').count();
+    await page.locator('.tableau tbody tr').first().locator('select[aria-label="Équipe"]').selectOption({ label: 'Mobile' });
+    await page.locator('.tableau tbody tr').first().locator('select[aria-label="Fiche ressource"]').selectOption('nouvelle');
+    await page.locator('.tableau tbody tr').first().locator('button:has-text("Donner l’accès")').click();
+    await page.waitForSelector('text=Accès donné à');
+    verifier('Comptes en attente : « Donner l\'accès » crée la fiche et invite dans l\'équipe', (await toast()).includes('Accès donné à'));
+
+    await page.click('[role=tab]:has-text("Équipes")');
+    verifier('Administration › Équipes : tableau avec responsables, membres, projets, « Modifier »', await page.locator('.tableau tbody tr').count() >= 4 && await page.locator('button:has-text("Modifier")').count() >= 4);
+    await page.locator('button:has-text("Modifier")').first().click();
+    await page.waitForSelector('.modale[role=dialog]');
+    verifier('Administration › Équipes : la fenêtre équipe s\'ouvre', await page.locator('.modale input[name=nom]').count() === 1);
+    await page.keyboard.press('Escape');
+
+    await page.click('[role=tab]:has-text("Référentiels")');
+    await page.waitForSelector('.lien-referentiel');
+    await captureD('10b-referentiels');
+    verifier('Administration › Référentiels : liste des référentiels et leurs valeurs', await page.locator('.lien-referentiel').count() >= 6 && await page.locator('input[aria-label="Valeur 1"]').count() === 1);
+    await page.click('.lien-referentiel:has-text("Statuts projet")');
+    const nomValeur = await page.inputValue('input[aria-label="Valeur 1"]');
+    await page.fill('.encart-compact input[name=libelle]', 'Statut de test');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('input[value="Statut de test"]');
+    verifier('Administration › Référentiels : ajout d\'une valeur (visible dans les listes)', await page.locator('input[value="Statut de test"]').count() === 1);
+    const champValeur = await page.locator('input[value="Statut de test"]').elementHandle();
+    await champValeur.fill('Statut de test renommé');
+    await champValeur.evaluate(el => el.blur());
+    await page.waitForSelector('input[value="Statut de test renommé"]');
+    const interrupteur = page.locator('tr:has(input[value="Statut de test renommé"]) .interrupteur');
+    await interrupteur.click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr')].find(r => r.querySelector('input[value="Statut de test renommé"]'))?.querySelector('.interrupteur')?.classList.contains('actif'));
+    verifier('Administration › Référentiels : renommer et désactiver une valeur', (await interrupteur.getAttribute('class')).includes('actif') === false && nomValeur.length > 0);
+
+    await page.click('[role=tab]:has-text("Jours fériés")');
+    await page.waitForSelector('input[aria-label="Nouvelle date"]');
+    await page.fill('input[aria-label="Nouvelle date"]', '2026-12-26');
+    await page.fill('input[aria-label="Nouveau libellé"]', 'Noël de test');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('input[value="Noël de test"]');
+    await page.fill('input[aria-label="Nouvelle date"]', '2026-12-26');
+    await page.fill('input[aria-label="Nouveau libellé"]', 'Doublon');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Administration › Jours fériés : ajout, doublon refusé', (await toast()).includes('déjà férié') && await page.locator('input[value="Noël de test"]').count() === 1);
+    await page.locator('tr:has(input[value="Noël de test"]) button[title="Supprimer ce jour férié"]').click();
+    await page.waitForFunction(() => !document.querySelector('input[value="Noël de test"]'));
+    verifier('Administration › Jours fériés : suppression (après confirmation)', await page.locator('input[value="Noël de test"]').count() === 0);
+
+    await page.click('[role=tab]:has-text("Envoi du daily")');
+    await page.waitForSelector('select[aria-label^="Mode"]');
+    await captureD('21-envoi-daily');
+    await page.locator('select[aria-label^="Mode"]').first().selectOption('power_automate');
+    await page.waitForSelector('button:has-text("Configurer le flux")');
+    await page.locator('input[aria-label^="Destinataires"]').first().fill('equipe@test.fr');
+    await page.locator('input[aria-label^="Destinataires"]').first().blur();
+    await page.locator('button:has-text("Configurer le flux")').first().click();
+    await page.waitForSelector('.modale[role=dialog]');
+    verifier('Envoi du daily : mode Power Automate, fenêtre de mise en place (URI, corps avec la clé du projet)', (await page.inputValue('.modale input[aria-label="URI"]')).includes('/rpc/daily_projet')
+      && (await page.inputValue('.modale input[aria-label^="Corps"]')).includes('p_cle'));
+    await page.keyboard.press('Escape');
+    await page.locator('select[aria-label^="Mode"]').first().selectOption('aucun');
+
+    await page.click('[role=tab]:has-text("Rôles")');
+    await page.waitForSelector('.tableau-roles-acces');
+    await captureD('31-roles-administration');
+    verifier('Administration › Rôles : utilisateurs et rôles (équipe, projets, compte relié, poste)', await page.locator('.tableau-roles-acces tbody tr').count() >= 12);
+    await page.selectOption('select[aria-label="Rôle"]', 'lecture');
+    verifier('Administration › Rôles : filtre par rôle', await page.locator('.tableau-roles-acces tbody tr').count() < 12);
+    await page.selectOption('select[aria-label="Rôle"]', '');
+    await page.fill('input[aria-label="Rechercher une personne"]', 'thomas');
+    verifier('Administration › Rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
+    await page.fill('input[aria-label="Rechercher une personne"]', '');
+    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
+    await page.waitForSelector('.notification.visible:has-text("Rôle")');
+    verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
+    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
+
+    /* ---------- Responsable : adresse non permise → redirection ---------- */
+    // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
+    await page.evaluate(() => { history.pushState({}, '', '/app/introuvable'); dispatchEvent(new PopStateEvent('popstate')); });
+    await page.waitForFunction(() => location.pathname.endsWith('/dashboard'));
+    verifier('Adresse inconnue : retour à l\'écran d\'arrivée', page.url().endsWith('/app/dashboard'));
+
+    // Déconnexion depuis la barre latérale
+    await page.click('text=Se déconnecter');
+    await page.waitForSelector('input[type=email]');
+    verifier('Déconnexion : retour à la connexion', true);
+    await connecter('camille@test.fr');
+    await page.waitForSelector('.laterale');
+
+    /* ---------- Session conservée au rechargement, déconnexion ---------- */
+    await page.reload();
+    await page.waitForSelector('.laterale');
+    verifier('La session survit au rechargement de la page', await page.locator('.bloc-moi').count() === 1);
+    await page.click('text=Se déconnecter');
+    await page.waitForSelector('input[type=email]');
+
+    /* ---------- Créateur : simulation de rôle ---------- */
+    await connecter('createur@test.fr');
+    await page.waitForSelector('.laterale');
+    // Nombre de projets actifs du dashboard : toutes les équipes pour le créateur, le périmètre de la personne en simulation
+    const projetsActifs = async () => {
+      await menu('/dashboard');
+      await page.waitForSelector('.grille-kpi');
+      return parseInt(await page.locator('.kpi:has-text("Projets actifs") .kpi-valeur >> nth=0').textContent(), 10);
+    };
+    verifier('Le créateur est reconnu (badge) et voit toutes les équipes', (await page.textContent('.bloc-utilisateur')).includes('Créateur'));
+    const projetsReels = await projetsActifs();
+    await menu('/administration-createur');
+    await page.waitForSelector('.grille-simulation');
+    await page.selectOption('select[aria-label="Personne pour Utilisateur"]', { label: 'Thomas Bernard · aujourd’hui Projet' }).catch(async () => {
+      const id = await page.locator('select[aria-label="Personne pour Utilisateur"] option', { hasText: 'Thomas Bernard' }).getAttribute('value');
+      await page.selectOption('select[aria-label="Personne pour Utilisateur"]', id);
+    });
+    await page.click('button:has-text("Voir l’application en tant que utilisateur")');
+    await page.waitForSelector('.bandeau-simulation');
+    verifier('Simulation : le rôle simulé remplace celui du créateur', !(await page.textContent('.bloc-utilisateur')).includes('★ Créateur')
+      && (await page.textContent('.laterale')).includes('simulation'));
+    verifier('Simulation : les données sont limitées au périmètre de la personne', await projetsActifs() < projetsReels);
+    await captureD('29-simulation-en-cours');
+    verifier('Simulation : le bandeau violet est affiché en haut des écrans', (await page.textContent('.bandeau-simulation')).includes('lecture seule'));
+    await page.selectOption('.bandeau-simulation select', { index: 1 });
+    verifier('Simulation : changer de rôle depuis le bandeau', (await page.textContent('.bandeau-simulation')).includes('Administrateur'));
+    await page.click('text=Revenir à mon rôle de créateur');
+    await page.waitForFunction(() => !document.querySelector('.bandeau-simulation'));
+    verifier('Fin de simulation : le bandeau disparaît', true);
+    verifier('Fin de simulation : données complètes de nouveau', await projetsActifs() === projetsReels);
+
+    // Le créateur valide les feuilles de toutes les équipes
+    await page.goto(BASE + '/app/timesheet');
+    await page.waitForSelector('.tableau');
+    await page.click('[aria-label="Mois précédent"]');
+    await page.waitForSelector('text=septembre 2026');
+    const aValider = await page.locator('button:has-text("Valider")').count();
+    verifier('Timesheet : le créateur peut valider les feuilles soumises de toutes les équipes', aValider >= 3);
+    await page.locator('button:has-text("Valider")').first().click();
+    await page.waitForFunction(n => document.querySelectorAll('.tableau button.succes').length < n, aValider);
+    verifier('Timesheet : « Valider » fige la feuille et met à jour l\'écran', await page.locator('button:has-text("Valider")').count() === aValider - 1
+      && await page.locator('.badge:has-text("Validée")').count() >= 1);
+
+    /* ---------- Vague D (2/2) : Administration créateur ---------- */
+    await page.goto(BASE + '/app/administration-createur');
+    await page.waitForSelector('.grille-simulation');
+    await captureD('28-simulation-roles');
+    verifier('Administration créateur : une carte par rôle (6 rôles d\'accès puis compte en attente)', await page.locator('.grille-simulation .carte').count() === 7
+      && (await page.textContent('.grille-simulation')).includes('Suivi :'));
+    await page.selectOption('select[aria-label="Personne pour Projet"]', { label: 'Thomas Bernard · a ce rôle' }).catch(async () => {
+      await page.selectOption('select[aria-label="Personne pour Projet"]', { index: 0 });
+    });
+    await page.click('button:has-text("Voir l’application en tant que projet")');
+    await page.waitForSelector('.bandeau-simulation');
+    verifier('Simulation depuis Administration créateur : le bandeau s\'affiche et l\'application suit le rôle simulé', (await page.textContent('.bandeau-simulation')).includes('Projet')
+      && await page.locator('.laterale .badge-createur', { hasText: 'simulation' }).count() === 1);
+    await page.click('text=Revenir à mon rôle de créateur');
+    await page.waitForSelector('.grille-simulation');
+    verifier('Fin de simulation : retour à Administration créateur', page.url().endsWith('/app/administration-createur') && await page.locator('.bandeau-simulation').count() === 0);
+    await page.click('button:has-text("Voir l’application en tant que compte en attente")');
+    await page.waitForSelector('.bandeau-simulation');
+    verifier('Simulation « Compte en attente » : écran d\'attente d\'accès', (await texte()).includes('Votre compte est créé'));
+    await page.click('text=Revenir à mon rôle de créateur');
+    await page.waitForSelector('.grille-simulation');
+    await page.click('[role=tab]:has-text("Matrice des droits")');
+    await page.waitForSelector('.tableau-matrice');
+    await captureD('32-matrice-droits');
+    verifier('Matrice des droits : une colonne par rôle, périmètres, sections et onglets', await page.locator('.tableau-matrice thead th').count() === 9
+      && (await texte()).includes('Périmètre') && await page.locator('.tableau-matrice .ligne-onglet').count() >= 5 && await page.locator('.tableau-matrice select').count() > 100);
+    const celluleDroit = page.locator('select[aria-label="onglet_astuces_agile · utilisateur"]');
+    const avantNiveau = await celluleDroit.inputValue();
+    await celluleDroit.selectOption(avantNiveau === 'oui' ? 'lecture' : 'oui');
+    await page.waitForFunction(v => document.querySelector('select[aria-label="onglet_astuces_agile · utilisateur"]').value !== v, avantNiveau);
+    verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
+    await celluleDroit.selectOption(avantNiveau);
+    verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
+    await page.click('[role=tab]:has-text("Qui a quel rôle")');
+    await page.waitForSelector('.tableau-qui-a-quel-role');
+    await captureD('27b-roles');
+    verifier('Qui a quel rôle : tableau par rôle avec description, personnes, équipe et compte', await page.locator('.tableau-qui-a-quel-role tr.groupe').count() === 7
+      && (await texte()).includes('personne(s)'));
+
+    /* ---------- Catalogue des composants (/app/composants) ---------- */
+    await page.goto(BASE + '/app/composants');
+    await page.waitForSelector('section[aria-label="Boutons"]');
+    const section = nom => page.locator(`section[aria-label="${nom}"]`);
+    verifier('Catalogue : toutes les sections sont présentes', await page.locator('.section-catalogue').count() === 9);
+    await section('Onglets').getByRole('tab', { name: /Équipe/ }).click();
+    verifier('Onglets : le clic change l\'onglet actif', (await page.textContent('[data-testid=onglet-actif]')).includes('b'));
+    await section('Tableau').locator('tr.cliquable', { hasText: 'Thomas Bernard' }).click();
+    verifier('Tableau : le clic sur une ligne l\'ouvre', (await page.textContent('[data-testid=ligne-ouverte]')).includes('Thomas Bernard'));
+    verifier('Tableau : une ligne inactive est grisée', await section('Tableau').locator('tr.inactive').count() === 1);
+    await page.click('text=Ouvrir le panneau');
+    verifier('Panneau : s\'ouvre avec son titre', await page.locator('.panneau[role=dialog] h2').textContent() === 'Projet VISTA');
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Panneau : la croix le ferme', await page.locator('.panneau').count() === 0);
+    await page.click('text=Ouvrir la fenêtre');
+    await page.keyboard.press('Escape');
+    verifier('Fenêtre modale : Échap la ferme', await page.locator('.modale').count() === 0);
+    await page.click('text=Ouvrir la fenêtre');
+    await page.click('[data-testid=voile]', { position: { x: 5, y: 5 } });
+    verifier('Fenêtre modale : un clic sur le voile la ferme', await page.locator('.modale').count() === 0);
+    const calendrier = section('Calendrier');
+    verifier('Calendrier : novembre 2026 affiché (30 jours)', (await calendrier.textContent('b')).includes('novembre 2026') && await calendrier.locator('thead th').count() === 30 + 2);
+    verifier('Calendrier : congé, demi-journée et jour férié affichés', await calendrier.locator('.case-absence').count() >= 3 && (await calendrier.textContent('.calendrier')).includes('CP½'));
+    await calendrier.locator('td.cliquable').first().click();
+    verifier('Calendrier : le clic sur une case est transmis à l\'écran', (await page.textContent('[data-testid=ligne-ouverte]')).startsWith('Ligne ouverte : absence'));
+    await calendrier.getByRole('button', { name: 'Mois suivant' }).click();
+    verifier('Calendrier : navigation vers décembre 2026', (await calendrier.textContent('b')).includes('décembre 2026'));
+    await calendrier.getByRole('button', { name: 'Mois précédent' }).click();
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.screenshot({ path: path.join(CAPTURES, '34-catalogue-composants.png'), fullPage: true });
 
     verifier('Aucune erreur JavaScript', erreurs.length === 0, erreurs.join(' | '));
   } catch (e) {
-    verifier('Parcours complet sans exception', false, e.message);
-    await page.screenshot({ path: path.join(__dirname, 'echec.png') });
+    console.error('Échec à', page && page.url(), '\n', page && (await page.textContent('body')).slice(0, 600));
+    throw e;
   } finally {
-    await navigateur.close(); serveur.kill();
+    await navigateur.close();
+    serveur.kill();
   }
-  resultats.forEach(r => console.log(`${r.ok ? '✔' : '✘'} ${r.nom}${r.detail ? ' — ' + r.detail : ''}`));
+
+  resultats.forEach(r => console.log(`${r.ok ? '✔' : '✘'} ${r.nom}${r.ok ? '' : r.detail ? ' — ' + r.detail : ''}`));
   const echecs = resultats.filter(r => !r.ok).length;
-  console.log(echecs ? `\n${echecs} échec(s)` : `\nTous les contrôles passent (${resultats.length}).`);
+  console.log(echecs ? `\n${echecs} contrôle(s) en échec` : `\n✔ ${resultats.length} contrôles passés`);
   process.exit(echecs ? 1 : 0);
-})();
+})().catch(e => { console.error(e); process.exit(1); });

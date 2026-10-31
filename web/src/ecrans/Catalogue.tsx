@@ -2,7 +2,7 @@
    Catalogue des composants (phase 4 de la migration) — adresse /composants
    ------------------------------------------------------------
    Page de référence pour les développeurs : chaque composant de base de src/composants/ avec ses variantes, sur des données
-   d'exemple (aucune lecture en base). Elle sert aussi de contrôle visuel (capture dans docs/maquettes/catalogue-composants/).
+   d'exemple (aucune lecture en base). Elle sert aussi de contrôle visuel (capture dans docs/maquettes/etat-actuel/34-catalogue-composants.png).
    ============================================================ */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -67,8 +67,8 @@ export function Catalogue() {
 
   return (
     <main className="catalogue">
-      <EnteteEcran titre="Catalogue des composants" sousTitre="Briques de base de la nouvelle application (phase 4 de la migration)"
-        actions={<a href="/v2/session">Retour à la session</a>} />
+      <EnteteEcran titre="Catalogue des composants" sousTitre="Briques de base de l’application"
+        actions={<a href="/app/">Retour à l’application</a>} />
 
       <Section titre="Boutons" note="Bouton (normal, primaire, succès, danger, petit) et BoutonIcone (le titre sert d'infobulle et de nom accessible).">
         <div className="ligne-flex">

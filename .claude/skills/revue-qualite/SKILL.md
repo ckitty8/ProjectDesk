@@ -16,28 +16,22 @@ code et de la documentation, on **propose** (sans l'appliquer) ce qui touche à 
 ## 1. Code : contrôle automatique
 
 ```bash
-node scripts/audit-code.js
+npm --prefix web run verifier
 ```
 
-Résultat attendu : « ✔ Code vérifié : aucune erreur, 0 avertissement ». Il signale en **erreur** :
+Résultat attendu : aucune erreur. Il enchaîne :
 
 | Contrôle | Règle |
 |---|---|
-| Fichiers et versions | chaque fichier JS chargé par `app/index.html` ; `?v=` = dernière version du DAT |
-| Liens cassés | `data-action…` vers une action inexistante ; menu sans écran, écran inaccessible ou sans guide d'aide |
-| Code mort | action, fonction, constante, méthode d'écran ou d'objet, fonction `Calculs.…`, composant `C.…`, classe CSS **jamais utilisés** |
-| Base | table chargée ou fonction SQL appelée par l'application absente des migrations |
-| Restes de mise au point | `console.log`, `debugger`, `TODO` / `FIXME` (y compris en commentaire) |
-| En-tête | chaque fichier commence par un bloc `/* ==== … ==== */` qui dit à quoi il sert |
-| Longueur | ligne > **180** caractères ; fonction > **60** lignes (la découper en méthodes nommées) |
-| Commentaires | fonction ou méthode de **10 lignes ou plus** sans commentaire juste au-dessus (sauf `rendre()` d'un écran, décrit par l'en-tête) |
-| Doublons | même ligne de code (≥ 70 caractères) à deux endroits : la mettre dans une fonction partagée |
-| Couleurs | `#RRGGBB` en dur hors de `config.js` (palette `COULEURS`, tons de badge `TONS`) et de `theme.css` |
-| Styles | même `style="…"` écrit 3 fois ou plus : en faire une classe (section « Utilitaires » de `theme.css`) |
+| Types (`tsc`, mode strict) | aucune erreur de type, pas d'index non vérifié |
+| ESLint | variables et imports inutilisés (code mort), longueur de ligne, règles React |
+| Vitest | logique métier (`web/src/domaine/`) et composants testés |
+| Build | l'application se construit dans `app/` |
 
-Et en **avertissement** (à juger) : ligne de commentaire qui ressemble à du code mis de côté.
+À relire à la main (le linter ne les voit pas) : `console.log` / `debugger` / `TODO` oubliés, fonctions de plus de 60 lignes,
+fonctions de 10 lignes ou plus sans commentaire, couleurs `#RRGGBB` hors de `domaine/config.ts` / `theme.css`, code en double.
 
-Pour chaque erreur de code mort : vérifier avec `grep -rn "<nom>" app/` puis **supprimer** le
+Pour chaque erreur de code mort : vérifier avec `grep -rn "<nom>" web/src/` puis **supprimer** le
 code (et son commentaire). Ne jamais construire un nom d'action ou de fonction par concaténation :
 le contrôle ne le verrait pas, et un développeur non plus.
 
@@ -75,7 +69,7 @@ reproductibles (identifiants numérotés dans le serveur simulé, notifications 
 
 - `node tests/parcours.js` → tous les contrôles passent (parcours de bout en bout, captures).
 - Une **règle = un seul endroit** (règle n°4) :
-  - calculs dans `app/js/calculs.js` : chercher dans `app/js/ecrans/` des calculs refaits
+  - calculs dans `web/src/domaine/` : chercher dans `web/src/ecrans/` des calculs refaits
     (`HEURES_PAR_JOUR`, `* capacite`, sommes de jours, filtres de présence…) ;
   - listes de personnes : `ressourcesPresentes` / `ressourcesActives` (DAT § 2, menus liés) ;
   - droits d'affichage : fonctions de `etat.js` (`peutPiloterProjet`, `peutGererEquipe`, `peutLireDailyProjet`…), miroir
@@ -91,7 +85,7 @@ Exécuter `db/audit/verifier-bdd.sql` sur la branche `production` (outil Neon `r
 `dark-lake-97562553`). La requête est **en lecture seule** ; chaque ligne est un écart :
 - structure et sécurité : table sans RLS, sans règle, sans clé primaire, droit au rôle `anonymous`,
   fonction `SECURITY DEFINER` sans `search_path`, clé étrangère sans index ;
-- **fonction non référencée en base** : chercher son appel dans `app/` (`Api.executer('<nom>')`) et
+- **fonction non référencée en base** : chercher son appel dans `web/src/` (`executer('<nom>')`) et
   dans les flux externes (ex. `daily_projet` appelé par Power Automate) ; sinon c'est du code mort ;
 - données : valeurs hors référentiel, doublons d'email, dates incohérentes, heures ou absences hors
   présence, sprints sans dates, plan de charge > 100 %, etc.
@@ -108,10 +102,10 @@ Neon avant **seulement si le porteur le demande** (décision du 2026-10-18 : plu
 ## 5. Documents
 
 - `node scripts/verifier-docs.js` → « ✔ Documents vérifiés ».
-- Relire et mettre à jour : `README.md`, `app/README.md`, `CLAUDE.md`, `docs/DAT.md` (dont § 2.1
+- Relire et mettre à jour : `README.md`, `web/README.md`, `CLAUDE.md`, `docs/DAT.md` (dont § 2.1
   fichiers, § 3 écrans, § 4 tables, § 6 règles de calcul, § 9 nombre de contrôles des tests,
   § 11 outillage, § 12 points ouverts). Ils doivent décrire le code **tel qu'il est**.
-- Ligne d'historique dans le DAT et version `?v=` de `app/index.html` alignée.
+- Ligne d'historique dans le DAT.
 
 ## 6. Rapport au porteur
 
@@ -121,6 +115,6 @@ qui reste à juger (avertissements gardés et pourquoi). Puis livraison selon `C
 
 ## Ajouter une vérification
 
-Un nouveau besoin de contrôle s'ajoute **dans le script** (`scripts/audit-code.js` ou
+Un nouveau besoin de contrôle s'ajoute **dans les contrôles**  (`web/eslint.config.js`, un test Vitest ou
 `db/audit/verifier-bdd.sql`), avec un commentaire qui dit pourquoi, plutôt que dans cette liste :
 un contrôle automatique ne s'oublie pas.

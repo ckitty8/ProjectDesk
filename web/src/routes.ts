@@ -30,8 +30,7 @@ export const ROUTES: readonly Route[] = [
   { id: 'monAdmin', chemin: '/administration', titre: 'Administration', section: 'moi' },
   { id: 'adminCreateur', chemin: '/administration-createur', titre: 'Administration créateur', section: 'moi' },
   { id: 'choixEquipe', chemin: '/choix-equipe', titre: 'Choix de l’équipe', section: 'plein' },
-  { id: 'composants', chemin: '/composants', titre: 'Catalogue des composants', section: 'plein' },
-  { id: 'session', chemin: '/session', titre: 'Session', section: 'plein' }
+  { id: 'composants', chemin: '/composants', titre: 'Catalogue des composants', section: 'plein' }
 ];
 
 export const routeDe = (id: string): Route | undefined => ROUTES.find(r => r.id === id);

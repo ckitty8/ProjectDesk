@@ -10,7 +10,6 @@ import { Bouton } from './composants/Bouton';
 import { Catalogue } from './ecrans/Catalogue';
 import { ChoixEquipe } from './ecrans/ChoixEquipe';
 import { Connexion, VerifierMonEmail } from './ecrans/Connexion';
-import { Diagnostic } from './ecrans/Diagnostic';
 import { ECRANS } from './ecrans';
 import { SessionProvider, useSession } from './donnees/SessionProvider';
 import { ecranDArrivee } from './donnees/compte';
@@ -43,7 +42,6 @@ function Contenu() {
       <Route path="/verifier-email" element={<VerifierMonEmail />} />
       <Route path="/choix-equipe" element={<ChoixEquipe />} />
       <Route path="/composants" element={<Catalogue />} />
-      <Route path="/session" element={<Diagnostic />} />
       {ROUTES.filter(r => r.section !== 'plein').map(r => {
         const Ecran = ECRANS[r.id];
         return Ecran ? <Route key={r.id} path={r.chemin} element={<Page route={r}><Ecran /></Page>} /> : null;

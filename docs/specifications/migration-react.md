@@ -1,5 +1,7 @@
 # Migration vers React et TypeScript
 
+> **Terminée** (phase 6, 2026-10-31). Le texte ci-dessous est conservé comme historique : les mentions de `/v2/`, de l'ancienne application et de `scripts/audit-code.js` décrivent l'état pendant la migration.
+
 Décision du porteur du projet : **2026-10-27**. Travail direct sur `main`.
 Ce document est la référence de la migration ; chaque phase terminée y est cochée et ajoute une ligne à l'historique du DAT.
 
@@ -71,7 +73,7 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - Vague C livrée : Daily, Saisir mes heures, Congés (grille et récap), Sprints, Mises en production, création de projet et panneau Projet modifiable. Reste pour la vague D : « + Membre » du panneau Projet (fenêtre d'affectation).
 - Vague D livrée : Liste des ressources et fenêtres (affectation, rattachement, fiche, équipe), Administration (6 onglets), Administration créateur (simulation, matrice, qui a quel rôle). Tous les écrans existent sur `/v2/` ; reste la phase 6.
 - Pour migrer un écran : composant dans `web/src/ecrans/`, entrée dans `web/src/ecrans/index.ts` et dans `routes.ts`,
-  contrôles dans `tests/v2.js`, captures comparées à `docs/maquettes/etat-actuel/`.
+  contrôles dans `tests/parcours.js`, captures comparées à `docs/maquettes/etat-actuel/`.
 
 ## Avancement
 
@@ -81,4 +83,4 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 3 — Données et session (2026-10-27)
 - [x] Phase 4 — Composants de base (2026-10-27)
 - [x] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [x] D (2026-10-31)
-- [ ] Phase 6 — Bascule et nettoyage
+- [x] Phase 6 — Bascule et nettoyage (2026-10-31, version 2.68) : application sur `/app/`, ancien code, `parite.test.ts`, écran `/session` et `scripts/audit-code.js` supprimés ; `tests/v2.js` devenu `tests/parcours.js`
