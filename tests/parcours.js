@@ -179,7 +179,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.puces >> text=Toutes les équipes');
     await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
     await page.waitForSelector('.panneau[role=dialog]');
-    verifier('Projets et Roadmap : un clic ouvre le panneau (équipe, statut, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
+    verifier('Projets et Roadmap : un clic ouvre le panneau (équipe, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
       && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.click('.panneau [aria-label=Fermer]');
     verifier('Projets et Roadmap : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
@@ -436,12 +436,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('text=Créer le projet');
     await page.waitForSelector('input[aria-label="Nom du projet"]');
     await captureC('11-panneau-projet');
-    verifier('Nouveau projet : créé, puis panneau modifiable (nom, statut, méthode, chef)', await page.inputValue('input[aria-label="Nom du projet"]') === 'Projet vague C'
-      && await page.locator('.panneau select[aria-label="Statut"]').count() === 1 && await page.locator('.panneau select[aria-label="Méthode"]').inputValue() === 'Agile Scrum'
+    verifier('Nouveau projet : créé, puis panneau modifiable (nom, méthode, chef), sans statut', await page.inputValue('input[aria-label="Nom du projet"]') === 'Projet vague C'
+      && await page.locator('.panneau select[aria-label="Statut"]').count() === 0 && await page.locator('.panneau select[aria-label="Méthode"]').inputValue() === 'Agile Scrum'
       && (await page.inputValue('.panneau select[aria-label="Chef de projet"]')) !== '');
     await page.fill('input[aria-label="Nom du projet"]', 'Projet vague C (renommé)');
     await page.locator('input[aria-label="Nom du projet"]').blur();
-    await page.selectOption('.panneau select[aria-label="Statut"]', { index: 1 });
     await page.waitForFunction(() => document.querySelector('input[aria-label="Nom du projet"]').value.includes('renommé'));
     await page.keyboard.press('Escape');
     await menu('/projets');

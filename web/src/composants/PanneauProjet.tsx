@@ -1,8 +1,8 @@
 /* ============================================================
    Panneau latéral « Projet » (maquette 11-panneau-projet.png ; portage de app/js/panneau-projet.js — phase 5, vagues B et C)
    ------------------------------------------------------------
-   Détail réduit à la demande du porteur (2026-09-25) : nom, description, chef de projet, équipe projet (membres et rôles) ; + statut
-   (2026-10-26, liste « Statuts projet » d'Administration › Référentiels) et méthode. Modifiable si l'écran d'origine est de « Mon dashboard » et
+   Détail réduit à la demande du porteur (2026-09-25) : nom, description, chef de projet, équipe projet (membres et rôles) ; + méthode.
+   Le statut n'y figure plus (porteur, 2026-10-31 : « je ne veux pas du statut »). Modifiable si l'écran d'origine est de « Mon dashboard » et
    que je peux modifier le projet (peutEditerProjet) ; sinon lecture seule. Depuis « Suivi de mes équipes », le panneau reste en lecture.
    Suppression du projet par un membre de son équipe (règle RLS). L'ajout de membres (« + Membre ») arrive avec la fenêtre d'affectation (vague D).
    ============================================================ */
@@ -16,7 +16,6 @@ import { estPresent } from '../domaine/calculs';
 import { aujourdhui } from '../domaine/dates';
 import { peutEditerProjet } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
-import type { Projet } from '../domaine/types';
 import { personnesProposees } from '../domaine/vues';
 
 interface Props {
@@ -26,12 +25,6 @@ interface Props {
   section?: 'general' | 'moi';
   /** « + Membre » : ouvre la fenêtre d'affectation sur ce projet (écrans de Mon dashboard) */
   onAssigner?: (projetId: string) => void;
-}
-
-/** Statuts proposés pour un projet : les valeurs actives du référentiel « stp » (Administration › Référentiels, où l'on en ajoute), plus le
- *  statut actuel du projet s'il a été désactivé depuis, pour ne pas le perdre à l'affichage */
-export function statutsProposes(libellesActifs: readonly string[], p: Pick<Projet, 'statut'>): string[] {
-  return !p.statut || libellesActifs.includes(p.statut) ? [...libellesActifs] : [p.statut, ...libellesActifs];
 }
 
 export function PanneauProjet({ projetId, onFermer, section = 'general', onAssigner }: Props) {
@@ -67,13 +60,6 @@ export function PanneauProjet({ projetId, onFermer, section = 'general', onAssig
         ? <textarea className="champ" rows={2} placeholder="Description" defaultValue={projet.description ?? ''} aria-label="Description" onBlur={e => void majChamp('description', e.target.value, projet.description)} />
         : projet.description && <div>{projet.description}</div>}
       <div className="infos">
-        <span>Statut</span>
-        <span>
-          {modifiable
-            ? <Liste className="champ largeur-auto" aria-label="Statut" valeur={projet.statut} onChoisir={v => void majChamp('statut', v, projet.statut)}
-              options={statutsProposes(valeursDe(donnees.valeurs, 'stp').map(v => v.libelle), projet)} />
-            : <BadgeRef valeurs={donnees.valeurs} referentielId="stp" libelle={projet.statut} />}
-        </span>
         <span>Méthode</span>
         <span>
           {modifiable
