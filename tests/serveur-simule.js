@@ -67,7 +67,7 @@ function amorcer() {
     return { id, equipe_id: idEq[eq], nom, poste, capacite, email: cle + '@test.fr', user_id: userId || null }; });
   bd.equipes.forEach((e, i) => { e.responsable_id = idP[['cl', 'hm', 'ir', 'nb'][i]]; e.actif = true; });
   // Unités (migration 006) : Plateforme est une direction (espace de travail) qui regroupe Data
-  bd.equipes.forEach((e, i) => { e.type = i === 0 ? 'direction' : 'equipe'; e.parent_id = i === 1 ? bd.equipes[0].id : null; });
+  bd.equipes.forEach((e, i) => { e.type = i === 0 ? 'direction' : 'equipe'; e.parent_id = i > 0 ? bd.equipes[0].id : null; });
   bd.ressources.forEach((r, i) => { r.type_contrat = ['CDI', 'CDI', 'Prestataire', 'CDD'][i % 4]; });
   // Dates de naissance (migration 036), dans l'ordre de PERS : Thomas et Sarah fêtent en octobre
   const NAISSANCES = ['1988-06-04', '1991-10-28', '1994-07-14', '1990-05-03', '1985-09-09', '1993-10-31',

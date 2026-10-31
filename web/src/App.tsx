@@ -22,7 +22,9 @@ function Racine() {
   return <Navigate to={cheminDe(ecranDArrivee(ctx, equipeCourante))} replace />;
 }
 
-const ECRANS_DE_L_EQUIPE = ['daily', 'mesProjets', 'mesSprints', 'conges', 'monTimesheet'];
+/* Écrans qui suivent l'équipe active (porteur, 2026-10-31) : tout Suivi de mes équipes et les écrans de saisie de Mon dashboard ;
+   Administration, Liste des ressources et Trucs et astuces gardent leur portée habituelle */
+const ECRANS_DE_L_EQUIPE = ['dashboard', 'dailyEquipes', 'projets', 'ressources', 'timesheet', 'daily', 'mesProjets', 'mesSprints', 'conges', 'monTimesheet'];
 
 /** Écrans de l'application, selon l'état de la session : chargement, erreur, connexion, ou les adresses de routes.ts */
 function Contenu() {
@@ -46,8 +48,7 @@ function Contenu() {
       <Route path="/composants" element={<Catalogue />} />
       {ROUTES.filter(r => r.section !== 'plein').map(r => {
         const Ecran = ECRANS[r.id];
-        // Écrans de Mon dashboard qui suivent l'équipe active (les autres, comme Administration, gardent leur portée habituelle)
-        if (!Ecran) return null;
+                if (!Ecran) return null;
         const contenu = ECRANS_DE_L_EQUIPE.includes(r.id) ? <PorteeEquipe><Ecran /></PorteeEquipe> : <Ecran />;
         return <Route key={r.id} path={r.chemin} element={<Page route={r}>{contenu}</Page>} />;
       })}

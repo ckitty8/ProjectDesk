@@ -283,13 +283,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/daily');
     await page.waitForSelector('.ecran-daily');
     await captureC('08-daily');
-    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 6
-      && (await texte()).includes('0 / 2 projets renseignés') && await page.locator('.historique a').count() === 12);
+    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 9
+      && (await texte()).includes('0 / 3 projets renseignés') && await page.locator('.historique a').count() === 12);
     const zone = page.locator('textarea.note-daily').nth(1);       // « Aujourd'hui » du premier projet
     await zone.fill('Revue de la roadmap SSO');
     await page.waitForSelector('text=enregistré');
-    await page.waitForSelector('text=1 / 2 projets renseignés');
-    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 2 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
+    await page.waitForSelector('text=1 / 3 projets renseignés');
+    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 3 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
     await page.reload();
     await page.waitForSelector('.ecran-daily');
     verifier('Daily : la note survit au rechargement (écrite en base)', await page.locator('textarea.note-daily').nth(1).inputValue() === 'Revue de la roadmap SSO');
@@ -349,7 +349,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.recap-travail');
     await captureC('11b-recap-annuel');
     verifier('Congés › Récap annuel : 12 mois, jours travaillés et congés, reste à prendre', await page.locator('.recap-travail thead th:has-text("Sept.")').count() === 1
-      && (await texte()).includes('Jours de semaine du mois') && (await texte()).includes('Reste à') && await page.locator('.recap-travail tr.total').count() >= 2);
+      && (await texte()).includes('Jours de semaine du mois') && (await texte()).includes('Reste à') && await page.locator('.recap-travail tr.total').count() >= 3);
     const objectif = page.locator('input.objectif-client').first();
     verifier('Congés › Récap annuel : objectif client modifiable par le responsable de l\'équipe', await objectif.count() === 1);
     await objectif.fill('200');
