@@ -66,10 +66,11 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 ## Notes de la phase 5
 
 - Vague A livrée : Connexion, Choix d'équipe, Dashboard général, Trucs et astuces, avec la coquille (barre latérale, en-tête, Aide).
-  Les adresses sont dans `web/src/routes.ts` ; un écran non migré affiche « pas encore migré » (`migre: false`).
+  Les adresses sont dans `web/src/routes.ts` ; les écrans sont enregistrés dans `web/src/ecrans/index.ts`.
 - Vague B livrée : Projets et Planning projet, Timesheet (validation), Daily des équipes (export Excel), Gestion des ressources (calendrier). Le panneau Projet est en lecture seule ; sa modification arrive avec la vague C (Mon dashboard › Projets et Roadmap).
 - Vague C livrée : Daily, Saisir mes heures, Congés (grille et récap), Sprints, Mises en production, création de projet et panneau Projet modifiable. Reste pour la vague D : « + Membre » du panneau Projet (fenêtre d'affectation).
-- Pour migrer un écran : composant dans `web/src/ecrans/`, entrée dans `web/src/ecrans/index.ts`, `migre: true` dans `routes.ts`,
+- Vague D livrée : Liste des ressources et fenêtres (affectation, rattachement, fiche, équipe), Administration (6 onglets), Administration créateur (simulation, matrice, qui a quel rôle). Tous les écrans existent sur `/v2/` ; reste la phase 6.
+- Pour migrer un écran : composant dans `web/src/ecrans/`, entrée dans `web/src/ecrans/index.ts` et dans `routes.ts`,
   contrôles dans `tests/v2.js`, captures comparées à `docs/maquettes/etat-actuel/`.
 
 ## Avancement
@@ -79,5 +80,5 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 2 — Logique métier typée (2026-10-27)
 - [x] Phase 3 — Données et session (2026-10-27)
 - [x] Phase 4 — Composants de base (2026-10-27)
-- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [ ] D (1/2 : Liste des ressources et fenêtres, 2026-10-31)
+- [x] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [x] D (2026-10-31)
 - [ ] Phase 6 — Bascule et nettoyage

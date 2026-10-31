@@ -6,6 +6,7 @@
    ============================================================ */
 import { COULEURS, DROITS, ENVOI_DAILY_DEFAUT, ROLES_ACCES, ROLES_CHOISISSABLES, SECTIONS_DROITS, MENUS_SANS_DROIT } from './config';
 import type { Droit } from './config';
+import { aujourdhui } from './dates';
 import { ressourcesPresentes } from './vues';
 import { estResponsableDe, mesEquipes, ongletPermis, peutPiloterProjet } from './droits';
 import { resumeDuRole as resumeRoleDe } from './menus';
@@ -24,22 +25,21 @@ export interface OngletAdmin { id: string; libelle: string; compte?: number }
 
 /** Onglets : d'abord le périmètre (comptes et rôles : administrateurs ; équipes : administrateurs et responsables ; envoi du daily : projets que
  *  je pilote), puis le droit de chaque onglet (matrice, migration 038). Les compteurs sont ceux de l'ancien écran. */
-export function ongletsAdministration(ctx: ContexteDroits, enAttente: number, nbFeries: number, nbEnvoisActifs: number): OngletAdmin[] {
+export interface CompteursAdmin { enAttente: number; referentiels: number; feries: number; envoisActifs: number }
+
+export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): OngletAdmin[] {
   const gereEquipes = ctx.estAdmin || mesEquipes(ctx).some(e => estResponsableDe(ctx, e.id));
   const regleEnvois = ctx.projets.some(p => projetEnCours(p) && peutPiloterProjet(ctx, p));
   const liste: OngletAdmin[] = [
-    ...(ctx.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: enAttente }] : []),
+    ...(ctx.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: n.enAttente }] : []),
     ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: ctx.equipes.length }] : []),
-    { id: 'referentiels', libelle: 'Référentiels' },
-    { id: 'feries', libelle: 'Jours fériés', compte: nbFeries },
-    ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: nbEnvoisActifs }] : []),
-    ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhuiPourListe()).length }] : [])
+    { id: 'referentiels', libelle: 'Référentiels', compte: n.referentiels },
+    { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
+    ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
+    ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhui()).length }] : [])
   ];
   return liste.filter(o => ongletPermis(ctx, 'monAdmin', o.id));
 }
-// Les compteurs d'onglet comptent les personnes présentes aujourd'hui
-const aujourdhuiPourListe = (): Iso => new Date().toISOString().slice(0, 10);
-
 /* ---------- Comptes en attente ---------- */
 
 /** Choix en cours pour un compte : équipe, fiche ressource et rôle dans l'équipe */
@@ -72,9 +72,11 @@ export function rolesAffiches(ctx: ContexteDroits): RoleAffiche[] {
 
 /** Chaque fiche active est rangée sous le rôle choisi dans « Utilisateurs et rôles » (prévu s'il y en a un, sinon actuel), avec son équipe et l'état de
  *  son compte (lié, prévu, sans compte) ; les comptes en attente forment le dernier groupe. Présenté en tableau (porteur 2026-10-27). */
-export function parRole(ctx: ContexteDroits, aujourdhui: Iso, enAttente: readonly CompteEnAttente[]): Record<string, { nom: string; equipe: string; compte: string }[]> {
-  const groupes: Record<string, { nom: string; equipe: string; compte: string }[]> = Object.fromEntries([...ROLES_CHOISISSABLES, 'sansEquipe'].map(c => [c, []]));
-  ressourcesPresentes(ctx, aujourdhui).forEach(r => {
+export type GroupesParRole = Record<string, { nom: string; equipe: string; compte: string }[]>;
+
+export function parRole(ctx: ContexteDroits, jour: Iso, enAttente: readonly CompteEnAttente[]): GroupesParRole {
+  const groupes: GroupesParRole = Object.fromEntries([...ROLES_CHOISISSABLES, 'sansEquipe'].map(c => [c, []]));
+  ressourcesPresentes(ctx, jour).forEach(r => {
     const compte = !r.userId ? 'sans compte' : ctx.rolesPrevus.some(x => x.ressourceId === r.id) ? 'rôle prévu' : 'compte lié';
     groupes[roleChoisi(ctx, r)]?.push({ nom: r.nom, equipe: ctx.equipes.find(e => e.id === r.equipeId)?.nom ?? '—', compte });
   });

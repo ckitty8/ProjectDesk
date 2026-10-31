@@ -2,8 +2,7 @@
    Table des écrans de la nouvelle application : une adresse par écran (React Router)
    ------------------------------------------------------------
    « id » est l'identifiant d'écran de l'application actuelle (celui des menus, des droits et du DAT) : il relie les menus de
-   domaine/menus.ts aux adresses. « migre » passe à vrai quand l'écran existe en React (vagues A à D de la phase 5) ; en
-   attendant, la nouvelle application affiche une page qui renvoie vers l'écran de l'ancienne.
+   domaine/menus.ts aux adresses et au registre des écrans (ecrans/index.ts). Tous les écrans sont migrés (phase 5, vagues A à D).
    « section » : general = Suivi de mes équipes (lecture), moi = Mon dashboard (édition), plein = écran sans menu.
    ============================================================ */
 export type SectionEcran = 'general' | 'moi' | 'plein';
@@ -13,27 +12,26 @@ export interface Route {
   chemin: string;
   titre: string;
   section: SectionEcran;
-  migre: boolean;
 }
 
 export const ROUTES: readonly Route[] = [
-  { id: 'dashboard', chemin: '/dashboard', titre: 'Dashboard général', section: 'general', migre: true },
-  { id: 'dailyEquipes', chemin: '/daily-des-equipes', titre: 'Daily des équipes', section: 'general', migre: true },
-  { id: 'projets', chemin: '/projets', titre: 'Projets et Roadmap', section: 'general', migre: true },
-  { id: 'ressources', chemin: '/ressources', titre: 'Gestion des ressources', section: 'general', migre: true },
-  { id: 'timesheet', chemin: '/timesheet', titre: 'Timesheet', section: 'general', migre: true },
-  { id: 'daily', chemin: '/daily', titre: 'Daily', section: 'moi', migre: true },
-  { id: 'mesProjets', chemin: '/mes-projets', titre: 'Projets et Roadmap', section: 'moi', migre: true },
-  { id: 'mesSprints', chemin: '/sprints', titre: 'Projets et Roadmap', section: 'moi', migre: true },
-  { id: 'conges', chemin: '/conges', titre: 'Gestion des ressources · Congés', section: 'moi', migre: true },
-  { id: 'listeRessources', chemin: '/liste-des-ressources', titre: 'Gestion des ressources · Liste des ressources', section: 'moi', migre: true },
-  { id: 'monTimesheet', chemin: '/saisir-mes-heures', titre: 'Saisir mes heures', section: 'moi', migre: true },
-  { id: 'astuces', chemin: '/trucs-et-astuces', titre: 'Trucs et astuces', section: 'moi', migre: true },
-  { id: 'monAdmin', chemin: '/administration', titre: 'Administration', section: 'moi', migre: false },
-  { id: 'adminCreateur', chemin: '/administration-createur', titre: 'Administration créateur', section: 'moi', migre: false },
-  { id: 'choixEquipe', chemin: '/choix-equipe', titre: 'Choix de l’équipe', section: 'plein', migre: true },
-  { id: 'composants', chemin: '/composants', titre: 'Catalogue des composants', section: 'plein', migre: true },
-  { id: 'session', chemin: '/session', titre: 'Session', section: 'plein', migre: true }
+  { id: 'dashboard', chemin: '/dashboard', titre: 'Dashboard général', section: 'general' },
+  { id: 'dailyEquipes', chemin: '/daily-des-equipes', titre: 'Daily des équipes', section: 'general' },
+  { id: 'projets', chemin: '/projets', titre: 'Projets et Roadmap', section: 'general' },
+  { id: 'ressources', chemin: '/ressources', titre: 'Gestion des ressources', section: 'general' },
+  { id: 'timesheet', chemin: '/timesheet', titre: 'Timesheet', section: 'general' },
+  { id: 'daily', chemin: '/daily', titre: 'Daily', section: 'moi' },
+  { id: 'mesProjets', chemin: '/mes-projets', titre: 'Projets et Roadmap', section: 'moi' },
+  { id: 'mesSprints', chemin: '/sprints', titre: 'Projets et Roadmap', section: 'moi' },
+  { id: 'conges', chemin: '/conges', titre: 'Gestion des ressources · Congés', section: 'moi' },
+  { id: 'listeRessources', chemin: '/liste-des-ressources', titre: 'Gestion des ressources · Liste des ressources', section: 'moi' },
+  { id: 'monTimesheet', chemin: '/saisir-mes-heures', titre: 'Saisir mes heures', section: 'moi' },
+  { id: 'astuces', chemin: '/trucs-et-astuces', titre: 'Trucs et astuces', section: 'moi' },
+  { id: 'monAdmin', chemin: '/administration', titre: 'Administration', section: 'moi' },
+  { id: 'adminCreateur', chemin: '/administration-createur', titre: 'Administration créateur', section: 'moi' },
+  { id: 'choixEquipe', chemin: '/choix-equipe', titre: 'Choix de l’équipe', section: 'plein' },
+  { id: 'composants', chemin: '/composants', titre: 'Catalogue des composants', section: 'plein' },
+  { id: 'session', chemin: '/session', titre: 'Session', section: 'plein' }
 ];
 
 export const routeDe = (id: string): Route | undefined => ROUTES.find(r => r.id === id);

@@ -1,8 +1,10 @@
 /* ============================================================
    Registre des écrans migrés : identifiant d'écran (routes.ts) → composant
-   Un écran absent d'ici (et marqué « migre: false » dans routes.ts) affiche la page « pas encore migré ».
+   Chaque écran de « Suivi de mes équipes » et de « Mon dashboard » (routes.ts) y figure ; les pages plein écran (connexion, choix d'équipe) sont dans App.tsx.
    ============================================================ */
 import type { ComponentType } from 'react';
+import { AdminCreateur } from './AdminCreateur';
+import { Administration } from './Administration';
 import { Astuces } from './Astuces';
 import { Conges } from './Conges';
 import { Daily } from './Daily';
@@ -28,5 +30,7 @@ export const ECRANS: Record<string, ComponentType> = {
   conges: Conges,
   listeRessources: ListeRessources,
   monTimesheet: SaisirHeures,
+  monAdmin: Administration,
+  adminCreateur: AdminCreateur,
   astuces: Astuces
 };

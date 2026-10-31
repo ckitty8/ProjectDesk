@@ -575,11 +575,90 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => ![...document.querySelectorAll('.noeud.equipe')].some(n => n.textContent.includes('Équipe Test')));
     verifier('Équipe vide : suppression possible (après confirmation)', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 0);
 
-    /* ---------- Écran pas encore migré ---------- */
+    /* ---------- Vague D (2/2) : Administration (administrateur) ---------- */
     await menu('/administration');
-    await page.waitForSelector('text=pas encore migré');
-    verifier('Écran pas encore migré : page explicative avec lien vers l\'application actuelle', (await texte()).includes('pas encore migré') && await page.locator('a[href="/app/"]').count() >= 1
-      && page.url().endsWith('/v2/administration'));
+    await page.waitForSelector('.onglets');
+    await captureD('14-mon-admin');
+    verifier('Administration : onglets de l\'administrateur (comptes, équipes, référentiels, jours fériés, rôles) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
+      && (await page.textContent('.onglets')).includes('Rôles') && (await page.textContent('.onglets')).includes('Référentiels'));
+    verifier('Administration : l\'onglet « Comptes en attente » s\'ouvre d\'abord quand il y en a', await page.locator('[role=tab][aria-selected=true]:has-text("Comptes en attente")').count() === 1);
+    await captureD('26-comptes-en-attente');
+    const nbAttente = await page.locator('.tableau tbody tr').count();
+    await page.locator('.tableau tbody tr').first().locator('select[aria-label="Équipe"]').selectOption({ label: 'Mobile' });
+    await page.locator('.tableau tbody tr').first().locator('select[aria-label="Fiche ressource"]').selectOption('nouvelle');
+    await page.locator('.tableau tbody tr').first().locator('button:has-text("Donner l’accès")').click();
+    await page.waitForSelector('text=Accès donné à');
+    verifier('Comptes en attente : « Donner l\'accès » crée la fiche et invite dans l\'équipe', (await toast()).includes('Accès donné à'));
+
+    await page.click('[role=tab]:has-text("Équipes")');
+    verifier('Administration › Équipes : tableau avec responsables, membres, projets, « Modifier »', await page.locator('.tableau tbody tr').count() >= 4 && await page.locator('button:has-text("Modifier")').count() >= 4);
+    await page.locator('button:has-text("Modifier")').first().click();
+    await page.waitForSelector('.modale[role=dialog]');
+    verifier('Administration › Équipes : la fenêtre équipe s\'ouvre', await page.locator('.modale input[name=nom]').count() === 1);
+    await page.keyboard.press('Escape');
+
+    await page.click('[role=tab]:has-text("Référentiels")');
+    await page.waitForSelector('.lien-referentiel');
+    await captureD('10b-referentiels');
+    verifier('Administration › Référentiels : liste des référentiels et leurs valeurs', await page.locator('.lien-referentiel').count() >= 6 && await page.locator('input[aria-label="Valeur 1"]').count() === 1);
+    await page.click('.lien-referentiel:has-text("Statuts projet")');
+    const nomValeur = await page.inputValue('input[aria-label="Valeur 1"]');
+    await page.fill('.encart-compact input[name=libelle]', 'Statut de test');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('input[value="Statut de test"]');
+    verifier('Administration › Référentiels : ajout d\'une valeur (visible dans les listes)', await page.locator('input[value="Statut de test"]').count() === 1);
+    const champValeur = await page.locator('input[value="Statut de test"]').elementHandle();
+    await champValeur.fill('Statut de test renommé');
+    await champValeur.evaluate(el => el.blur());
+    await page.waitForSelector('input[value="Statut de test renommé"]');
+    const interrupteur = page.locator('tr:has(input[value="Statut de test renommé"]) .interrupteur');
+    await interrupteur.click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr')].find(r => r.querySelector('input[value="Statut de test renommé"]'))?.querySelector('.interrupteur')?.classList.contains('actif'));
+    verifier('Administration › Référentiels : renommer et désactiver une valeur', (await interrupteur.getAttribute('class')).includes('actif') === false && nomValeur.length > 0);
+
+    await page.click('[role=tab]:has-text("Jours fériés")');
+    await page.waitForSelector('input[aria-label="Nouvelle date"]');
+    await page.fill('input[aria-label="Nouvelle date"]', '2026-12-26');
+    await page.fill('input[aria-label="Nouveau libellé"]', 'Noël de test');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('input[value="Noël de test"]');
+    await page.fill('input[aria-label="Nouvelle date"]', '2026-12-26');
+    await page.fill('input[aria-label="Nouveau libellé"]', 'Doublon');
+    await page.click('.encart-compact >> text=Ajouter');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Administration › Jours fériés : ajout, doublon refusé', (await toast()).includes('déjà férié') && await page.locator('input[value="Noël de test"]').count() === 1);
+    await page.locator('tr:has(input[value="Noël de test"]) button[title="Supprimer ce jour férié"]').click();
+    await page.waitForFunction(() => !document.querySelector('input[value="Noël de test"]'));
+    verifier('Administration › Jours fériés : suppression (après confirmation)', await page.locator('input[value="Noël de test"]').count() === 0);
+
+    await page.click('[role=tab]:has-text("Envoi du daily")');
+    await page.waitForSelector('select[aria-label^="Mode"]');
+    await captureD('21-envoi-daily');
+    await page.locator('select[aria-label^="Mode"]').first().selectOption('power_automate');
+    await page.waitForSelector('button:has-text("Configurer le flux")');
+    await page.locator('input[aria-label^="Destinataires"]').first().fill('equipe@test.fr');
+    await page.locator('input[aria-label^="Destinataires"]').first().blur();
+    await page.locator('button:has-text("Configurer le flux")').first().click();
+    await page.waitForSelector('.modale[role=dialog]');
+    verifier('Envoi du daily : mode Power Automate, fenêtre de mise en place (URI, corps avec la clé du projet)', (await page.inputValue('.modale input[aria-label="URI"]')).includes('/rpc/daily_projet')
+      && (await page.inputValue('.modale input[aria-label^="Corps"]')).includes('p_cle'));
+    await page.keyboard.press('Escape');
+    await page.locator('select[aria-label^="Mode"]').first().selectOption('aucun');
+
+    await page.click('[role=tab]:has-text("Rôles")');
+    await page.waitForSelector('.tableau-roles-acces');
+    await captureD('31-roles-administration');
+    verifier('Administration › Rôles : utilisateurs et rôles (équipe, projets, compte relié, poste)', await page.locator('.tableau-roles-acces tbody tr').count() >= 12);
+    await page.selectOption('select[aria-label="Rôle"]', 'lecture');
+    verifier('Administration › Rôles : filtre par rôle', await page.locator('.tableau-roles-acces tbody tr').count() < 12);
+    await page.selectOption('select[aria-label="Rôle"]', '');
+    await page.fill('input[aria-label="Rechercher une personne"]', 'thomas');
+    verifier('Administration › Rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
+    await page.fill('input[aria-label="Rechercher une personne"]', '');
+    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
+    await page.waitForSelector('.notification.visible:has-text("Rôle")');
+    verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
+    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
@@ -599,7 +678,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('[data-testid=compte]');
     verifier('Session : le compte est affiché', (await page.textContent('[data-testid=compte]')).includes('Camille Laurent'));
     verifier('Les équipes sont chargées (4)', await lignes('equipes') === 4);
-    verifier('Les ressources sont chargées (12)', await lignes('ressources') === 12);
+    verifier('Les ressources sont chargées (12 au départ, plus celles créées par les contrôles précédents)', await lignes('ressources') >= 12);
     verifier('Les projets sont chargés', await lignes('projets') > 0);
     verifier('La matrice des droits est chargée', await lignes('droits_roles') > 0);
     verifier('Aucune table en échec', await page.locator('.erreur-socle').count() === 0);
@@ -652,6 +731,45 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(n => document.querySelectorAll('.tableau button.succes').length < n, aValider);
     verifier('Timesheet : « Valider » fige la feuille et met à jour l\'écran', await page.locator('button:has-text("Valider")').count() === aValider - 1
       && await page.locator('.badge:has-text("Validée")').count() >= 1);
+
+    /* ---------- Vague D (2/2) : Administration créateur ---------- */
+    await page.goto(BASE + '/v2/administration-createur');
+    await page.waitForSelector('.grille-simulation');
+    await captureD('28-simulation-roles');
+    verifier('Administration créateur : une carte par rôle (6 rôles d\'accès puis compte en attente)', await page.locator('.grille-simulation .carte').count() === 7
+      && (await page.textContent('.grille-simulation')).includes('Suivi :'));
+    await page.selectOption('select[aria-label="Personne pour Projet"]', { label: 'Thomas Bernard · a ce rôle' }).catch(async () => {
+      await page.selectOption('select[aria-label="Personne pour Projet"]', { index: 0 });
+    });
+    await page.click('button:has-text("Voir l’application en tant que projet")');
+    await page.waitForSelector('.bandeau-simulation');
+    verifier('Simulation depuis Administration créateur : le bandeau s\'affiche et l\'application suit le rôle simulé', (await page.textContent('.bandeau-simulation')).includes('Projet')
+      && await page.locator('.laterale .badge-createur', { hasText: 'simulation' }).count() === 1);
+    await page.click('text=Revenir à mon rôle de créateur');
+    await page.waitForSelector('.grille-simulation');
+    verifier('Fin de simulation : retour à Administration créateur', page.url().endsWith('/v2/administration-createur') && await page.locator('.bandeau-simulation').count() === 0);
+    await page.click('button:has-text("Voir l’application en tant que compte en attente")');
+    await page.waitForSelector('.bandeau-simulation');
+    verifier('Simulation « Compte en attente » : écran d\'attente d\'accès', (await texte()).includes('Votre compte est créé'));
+    await page.click('text=Revenir à mon rôle de créateur');
+    await page.waitForSelector('.grille-simulation');
+    await page.click('[role=tab]:has-text("Matrice des droits")');
+    await page.waitForSelector('.tableau-matrice');
+    await captureD('32-matrice-droits');
+    verifier('Matrice des droits : une colonne par rôle, périmètres, sections et onglets', await page.locator('.tableau-matrice thead th').count() === 9
+      && (await texte()).includes('Périmètre') && await page.locator('.tableau-matrice .ligne-onglet').count() >= 5 && await page.locator('.tableau-matrice select').count() > 100);
+    const celluleDroit = page.locator('select[aria-label="onglet_astuces_agile · utilisateur"]');
+    const avantNiveau = await celluleDroit.inputValue();
+    await celluleDroit.selectOption(avantNiveau === 'oui' ? 'lecture' : 'oui');
+    await page.waitForFunction(v => document.querySelector('select[aria-label="onglet_astuces_agile · utilisateur"]').value !== v, avantNiveau);
+    verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
+    await celluleDroit.selectOption(avantNiveau);
+    verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
+    await page.click('[role=tab]:has-text("Qui a quel rôle")');
+    await page.waitForSelector('.tableau-qui-a-quel-role');
+    await captureD('27b-roles');
+    verifier('Qui a quel rôle : tableau par rôle avec description, personnes, équipe et compte', await page.locator('.tableau-qui-a-quel-role tr.groupe').count() === 7
+      && (await texte()).includes('personne(s)'));
 
     /* ---------- Catalogue des composants (/v2/composants) ---------- */
     await page.goto(BASE + '/v2/composants');

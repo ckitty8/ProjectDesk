@@ -22,6 +22,11 @@ describe('table des écrans', () => {
     ids.forEach(id => expect(ROUTES.some(r => r.id === id), id).toBe(true));
   });
 
+  it('a un écran dans le registre pour chaque route avec coquille', async () => {
+    const { ECRANS } = await import('./ecrans');
+    ROUTES.filter(r => r.section !== 'plein').forEach(r => expect(ECRANS[r.id], r.id).toBeDefined());
+  });
+
   it('retrouve la route d\'une adresse, sous-adresses comprises', () => {
     expect(routePour('/sprints/2')?.id).toBe('mesSprints');
     expect(cheminDe('astuces')).toBe('/trucs-et-astuces');

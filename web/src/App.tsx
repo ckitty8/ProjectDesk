@@ -1,6 +1,6 @@
 /* ============================================================
    Racine de la nouvelle application
-   Phase 5 (vague A) : connexion, choix d'équipe, dashboard général, trucs et astuces ; les autres écrans affichent « pas encore migré ».
+   Phase 5 : tous les écrans de l'application actuelle sont migrés (vagues A à D).
    Adresses : routes.ts (une par écran). Sans session, la connexion s'affiche quelle que soit l'adresse, puis on y revient.
    ============================================================ */
 import { useEffect } from 'react';
@@ -11,7 +11,6 @@ import { Catalogue } from './ecrans/Catalogue';
 import { ChoixEquipe } from './ecrans/ChoixEquipe';
 import { Connexion, VerifierMonEmail } from './ecrans/Connexion';
 import { Diagnostic } from './ecrans/Diagnostic';
-import { EcranAMigrer } from './ecrans/EcranAMigrer';
 import { ECRANS } from './ecrans';
 import { SessionProvider, useSession } from './donnees/SessionProvider';
 import { ecranDArrivee } from './donnees/compte';
@@ -47,7 +46,7 @@ function Contenu() {
       <Route path="/session" element={<Diagnostic />} />
       {ROUTES.filter(r => r.section !== 'plein').map(r => {
         const Ecran = ECRANS[r.id];
-        return <Route key={r.id} path={r.chemin} element={<Page route={r}>{Ecran ? <Ecran /> : <EcranAMigrer route={r} />}</Page>} />;
+        return Ecran ? <Route key={r.id} path={r.chemin} element={<Page route={r}><Ecran /></Page>} /> : null;
       })}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

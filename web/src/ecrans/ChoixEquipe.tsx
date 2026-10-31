@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BadgeActif, Pastille } from '../composants/Badge';
+import { BandeauConnecte } from '../Coquille';
 import { Bouton } from '../composants/Bouton';
 import { Carte, Vide } from '../composants/Carte';
 import { accepterInvitation, refuserInvitation } from '../donnees/api';
@@ -34,7 +35,7 @@ function Bonjour({ prenom, fermable, onFermer }: { prenom: string; fermable: boo
 function EnAttente({ prenom }: { prenom: string }) {
   const { compte, actualiser } = useSession();
   return (
-    <div className="plein-ecran"><Carte classe="boite large">
+    <><BandeauConnecte /><div className="plein-ecran"><Carte classe="boite large">
       <Bonjour prenom={prenom} fermable={false} onFermer={() => undefined} />
       <Carte classe="encart-moyen encart-info"><div style={{ margin: '14px 0' }}>
         <b>Votre compte est créé.</b> Il reste une étape : un administrateur doit vous donner accès à votre équipe.
@@ -50,7 +51,7 @@ function EnAttente({ prenom }: { prenom: string }) {
         Ce n’est pas le bon compte ? Si vous en avez créé plusieurs (email personnel et professionnel), connectez-vous avec celui donné à
         votre responsable.
       </div>
-    </Carte></div>
+    </Carte></div></>
   );
 }
 
@@ -72,7 +73,7 @@ export function ChoixEquipe() {
   }
 
   return (
-    <div className="plein-ecran"><Carte classe="boite large">
+    <><BandeauConnecte /><div className="plein-ecran"><Carte classe="boite large">
       <Bonjour prenom={prenom} fermable={!!equipeCourante} onFermer={retour} />
       <div className="sous-titre marge-bas">Choisissez l’équipe dans laquelle vous travaillez. Vous pourrez en changer à tout moment.</div>
       {erreur && <div className="message-erreur" role="alert">{erreur}</div>}
@@ -113,6 +114,6 @@ export function ChoixEquipe() {
       {ctx.estAdmin && !equipes.length && (
         <div className="discret texte-12-5">Les équipes sont créées dans l’Administration. <Link to={cheminDe('monAdmin')}>Ouvrir l’administration</Link></div>
       )}
-    </Carte></div>
+    </Carte></div></>
   );
 }

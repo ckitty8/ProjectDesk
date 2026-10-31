@@ -8,7 +8,7 @@
    ============================================================ */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Aide } from './composants/Aide';
 import { Avatar, BadgeTon, Pastille } from './composants/Badge';
 import { BandeauSimulation } from './composants/BandeauSimulation';
@@ -145,13 +145,15 @@ function MenuAide({ route }: { route: Route }) {
 
 /* ---------- Bandeau de simulation (en haut de chaque écran pendant la simulation) ---------- */
 
-function BandeauConnecte() {
+export function BandeauConnecte() {
   const { simulation, ctx, choixSimulation, demarrerSimulation, arreterSimulation } = useSession();
+  const navigate = useNavigate();
   if (!simulation || !ctx) return null;
   const fiche = ctx.ressources.find(r => r.id === simulation.ressourceId);
   return (
     <BandeauSimulation libelleRole={libelleRoleSimule(simulation.cle)} nomPersonne={fiche?.nom} choix={choixSimulation}
-      onChanger={v => demarrerSimulation(decoderChoixSimulation(v))} onArreter={arreterSimulation} />
+      onChanger={v => demarrerSimulation(decoderChoixSimulation(v))}
+      onArreter={() => { arreterSimulation(); navigate(cheminDe('adminCreateur')); }} />
   );
 }
 
