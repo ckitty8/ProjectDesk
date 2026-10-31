@@ -154,7 +154,8 @@ export function Conges() {
   if (!onglet) return <div className="ecran"><EnteteEcran titre="Congés" /><AucunOnglet /></div>;
   const moi = maRessource(ctx);
   /* Hors administrateur, seule ma fiche est affichée (grille et récap) ; sans fiche reliée, rien à restreindre ni à saisir */
-  const vue = ctx.estAdmin || !moi ? donnees : { ...donnees, ressources: donnees.ressources.filter(r => r.id === moi.id) };
+  const soiSeul = !ctx.estAdmin && !!moi;
+  const vue = soiSeul ? { ...donnees, ressources: donnees.ressources.filter(r => r.id === moi?.id), projets: [] } : donnees;
 
   /* Une case est modifiable : sur ma ligne, si mon rôle a le droit « Mon dashboard » ou l'onglet Grille mensuelle (la Direction n'a que ce dernier) ;
      sur celle des autres, seulement pour l'administrateur (droit « congés des autres ») */
@@ -198,7 +199,7 @@ export function Conges() {
       {onglet === 'recap'
         ? <RecapAnnuel vue={vue} annee={mois.annee} onAnnee={annee => setMois(m => ({ ...m, annee }))} />
         : (
-          <CalendrierAbsences ctx={ctx} donnees={vue} mois={mois} onMois={setMois} editable modifiable={modifiable}
+          <CalendrierAbsences ctx={ctx} donnees={vue} soiSeul={soiSeul} mois={mois} onMois={setMois} editable modifiable={modifiable}
             onBasculer={(r, jour) => void basculer(r, jour)} droite={choixPinceau} />
         )}
     </div>

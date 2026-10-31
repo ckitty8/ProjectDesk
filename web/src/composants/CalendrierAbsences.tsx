@@ -68,11 +68,13 @@ interface Props {
   /** Case modifiable pour cette personne (droit de la matrice) ; en lecture, toujours faux */
   modifiable?: (ressourceId: string) => boolean;
   onBasculer?: (ressourceId: string, jour: string) => void;
+  /** Vue personnelle (Mon dashboard › Congés hors administrateur) : pas de bascule « Par projet » ; les données reçues ne contiennent déjà que la personne */
+  soiSeul?: boolean;
   /** À droite de la barre : légende (lecture) ou choix du pinceau (édition) */
   droite: ReactNode;
 }
 
-export function CalendrierAbsences({ ctx, donnees, mois, onMois, editable = false, modifiable = () => false, onBasculer, droite }: Props) {
+export function CalendrierAbsences({ ctx, donnees, mois, onMois, editable = false, modifiable = () => false, onBasculer, droite, soiSeul = false }: Props) {
   const [vue, setVue] = useState<'equipe' | 'projet'>('equipe');
   const [projetId, setProjetId] = useState<string | null>(null);
   const types = valeursDe(donnees.valeurs, 'abs', true);
@@ -80,7 +82,7 @@ export function CalendrierAbsences({ ctx, donnees, mois, onMois, editable = fals
   const debut = mc.jours[0] ?? '', fin = mc.jours[mc.jours.length - 1] ?? debut;
   const proposes = projetsAvecMembres(donnees);
   const projet = proposes.find(p => p.id === projetId) ?? proposes[0];
-  const elements = vue === 'projet'
+  const elements = vue === 'projet' && !soiSeul
     ? (projet ? modeleParProjet(donnees, debut, fin, projet) : [])
     : unitesRacines(donnees.equipes).flatMap(e => modeleParEquipe(ctx, donnees, debut, fin, e));
   return (
@@ -91,7 +93,7 @@ export function CalendrierAbsences({ ctx, donnees, mois, onMois, editable = fals
           <div className="ligne-flex" style={{ marginLeft: 14 }}>
             <div className="puces">
               <button type="button" className={'puce' + (vue === 'equipe' ? ' active' : '')} onClick={() => setVue('equipe')}>Par équipe</button>
-              <button type="button" className={'puce' + (vue === 'projet' ? ' active' : '')} onClick={() => setVue('projet')}>Par projet</button>
+              {!soiSeul && <button type="button" className={'puce' + (vue === 'projet' ? ' active' : '')} onClick={() => setVue('projet')}>Par projet</button>}
             </div>
             {vue === 'projet' && (
               <Liste className="champ champ-compact" aria-label="Projet" valeur={projet?.id} onChoisir={setProjetId} options={proposes.map(p => ({ valeur: p.id, libelle: p.nom }))} />

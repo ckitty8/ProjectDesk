@@ -698,6 +698,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.textContent('.laterale')).includes('simulation'));
     verifier('Simulation : les données sont limitées au périmètre de la personne', await projetsActifs() < projetsReels);
     await captureD('29-simulation-en-cours');
+    // Mon dashboard › Congés : hors administrateur, seule la fiche de la personne simulée est affichée (aucune autre, pas de bascule « Par projet »)
+    await menu('/conges');
+    await page.waitForSelector('.carte');
+    verifier('Congés (non administrateur) : une seule personne est affichée, sans bascule « Par projet »',
+      await page.locator('tr[data-personne]').count() === 1
+      && await page.locator('button.puce:has-text("Par projet")').count() === 0);
     verifier('Simulation : le bandeau violet est affiché en haut des écrans', (await page.textContent('.bandeau-simulation')).includes('lecture seule'));
     await page.selectOption('.bandeau-simulation select', { index: 1 });
     verifier('Simulation : changer de rôle depuis le bandeau', (await page.textContent('.bandeau-simulation')).includes('Administrateur'));
