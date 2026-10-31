@@ -18,7 +18,11 @@ describe('feuilles de temps', () => {
     const s = suiviFeuilles(contexte(), d, EQUIPES, 2026, 10, new Set());
     expect(s.saisi).toBe(7.5);
     expect(s.attendu).toBeGreaterThan(7.5);
-    expect(s.aCompleter).toBe(RESSOURCES.length);
+    // Les personnes dont le rôle n'a pas « Saisir mes heures » (responsable, direction, lecture) ne sont pas suivies : pas de feuille à remplir
+    const suivies = s.groupes.flatMap(g => g.lignes);
+    expect(s.aCompleter).toBe(suivies.length);
+    expect(suivies.length).toBeLessThan(RESSOURCES.length);
+    expect(suivies.some(l => l.ressource.id === 'r-thomas')).toBe(true);
     expect(s.groupes.length).toBeGreaterThan(0);
   });
 

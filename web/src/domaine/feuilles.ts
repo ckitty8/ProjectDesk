@@ -9,7 +9,8 @@
 
 import { debutMois, heuresAttenduesMois, heuresMois } from './calculs';
 import { joursDuMois } from './dates';
-import { peutValiderEquipe } from './droits';
+import { roleChoisi } from './annuaire';
+import { niveauDuRole, peutValiderEquipe } from './droits';
 import type { ContexteDroits } from './droits';
 import type { Equipe, FeuilleTemps, Iso, Projet, Ressource, TempsSaisi, Absence } from './types';
 import { projetsDe, ressourcesPresentes } from './vues';
@@ -44,6 +45,10 @@ export interface SuiviFeuilles {
   aValider: number;
 }
 
+/** Cohérence des menus (porteur, 2026-10-31) : une personne n'est suivie ici que si son rôle lui donne « Saisir mes heures »
+ *  (droit « mon_dashboard » de la matrice) ; sinon elle n'a pas de feuille à remplir ni à valider. */
+const saisitSesHeures = (ctx: ContexteDroits, r: Ressource): boolean => niveauDuRole(ctx, roleChoisi(ctx, r), 'mon_dashboard') !== 'non';
+
 export function suiviFeuilles(ctx: ContexteDroits, d: DonneesVues & { temps: readonly TempsSaisi[]; absences: readonly Absence[];
   feuilles: readonly FeuilleTemps[] }, equipes: readonly Equipe[], annee: number, mois: number, feries: ReadonlySet<Iso>): SuiviFeuilles {
   const cle = debutMois(annee, mois);
@@ -51,7 +56,7 @@ export function suiviFeuilles(ctx: ContexteDroits, d: DonneesVues & { temps: rea
   const resultat: SuiviFeuilles = { groupes: [], saisi: 0, attendu: 0, aCompleter: 0, aValider: 0 };
   equipes.forEach(equipe => {
     // Par équipe : les personnes présentes au moins un jour du mois (arrivée / date de fin)
-    const personnes = ressourcesPresentes(d, jours[0] ?? cle, jours[jours.length - 1] ?? cle).filter(r => r.equipeId === equipe.id);
+    const personnes = ressourcesPresentes(d, jours[0] ?? cle, jours[jours.length - 1] ?? cle).filter(r => r.equipeId === equipe.id && saisitSesHeures(ctx, r));
     if (!personnes.length) return;
     const lignes = personnes.map((ressource): LigneFeuille => {
       const saisi = heuresMois(ressource.id, annee, mois, d.temps).total;
