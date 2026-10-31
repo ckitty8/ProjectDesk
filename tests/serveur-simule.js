@@ -363,6 +363,17 @@ async function donnees(req, res, table, url) {
   if (!moi) return envoyer(res, 401, { message: 'JWT manquant' });
   if (table.startsWith('rpc/')) {
     if (table === 'rpc/lier_ma_ressource') bd.ressources.filter(r => !r.user_id && r.email === moi.email).forEach(r => { r.user_id = moi.id; });
+    // Ma ressource créée automatiquement (migration 045) : membre d'une équipe sans fiche -> fiche dans sa plus ancienne équipe (une équipe avant une Direction)
+    if (table === 'rpc/creer_ma_ressource') {
+      const equipe = membres.filter(m => m.userId === moi.id).map(m => bd.equipes.find(e => e.id === m.organizationId)).filter(Boolean)
+        .sort((a, b) => Number(a.type === 'direction') - Number(b.type === 'direction'))[0];
+      if (equipe && !bd.ressources.some(r => r.user_id === moi.id)) {
+        const fiche = { id: uuid(), equipe_id: equipe.id, nom: moi.name || moi.email.split('@')[0], email: moi.email, user_id: moi.id, capacite: 100 };
+        bd.ressources.push(fiche);
+        return envoyer(res, 200, fiche.id);
+      }
+      return envoyer(res, 200, null);
+    }
     // Acceptation des invitations par la base (migration 026) : compte sans équipe, ou créateur
     if (table === 'rpc/accepter_mes_invitations') {
       const idsEquipes = new Set(bd.equipes.map(e => e.id));

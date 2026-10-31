@@ -15,15 +15,16 @@ export interface Compte {
   invitations: Invitation[];
 }
 
-/* Ouvre le compte : session, puis les trois fonctions SQL de rattachement, puis les équipes. Renvoie null si personne
+/* Ouvre le compte : session, puis les fonctions SQL de rattachement, puis les équipes. Renvoie null si personne
    n'est connecté. Les fonctions SQL sont tolérantes (une erreur ne bloque pas la connexion) :
    - lier_ma_ressource : lie le compte à sa fiche ressource (même email) ;
    - accepter_mes_invitations (migration 026) : invitations acceptées d'office, avant de lister les équipes ;
-   - appliquer_mes_roles_prevus (migration 029) : rôle prévu par un administrateur avant ma première connexion. */
+   - appliquer_mes_roles_prevus (migration 029) : rôle prévu par un administrateur avant ma première connexion ;
+   - creer_ma_ressource (migration 045) : membre d'une équipe sans fiche ressource, la fiche est créée (après lier_ma_ressource : jamais de doublon). */
 export async function ouvrirCompte(): Promise<Compte | null> {
   const session = await lireSession();
   if (!session?.user) return null;
-  for (const fonction of ['lier_ma_ressource', 'accepter_mes_invitations', 'appliquer_mes_roles_prevus']) {
+  for (const fonction of ['lier_ma_ressource', 'accepter_mes_invitations', 'creer_ma_ressource', 'appliquer_mes_roles_prevus']) {
     await executer(fonction).catch(() => undefined);
   }
   const [organisations, invitations] = await Promise.all([listerOrganisations(), listerMesInvitations().catch(() => [])]);
