@@ -85,6 +85,12 @@ function Simulation() {
 function Matrice() {
   const { ctx, executer } = useSession();
   if (!ctx) return null;
+  /* Enregistre un niveau de droit. La Data API répond « succès » avec zéro ligne quand la base refuse en silence (règle RLS) :
+     ce cas est signalé comme une erreur, sinon le niveau reprendrait son ancienne valeur sans explication. */
+  const enregistrer = (role: string, droit: string, niveau: Niveau) => executer(async () => {
+    const lignes = await modifier('droits_roles', { role: 'eq.' + role, droit: 'eq.' + droit }, { niveau });
+    if (!lignes.length) throw new Error('Droit non enregistré : la base l’a refusé (vérifiez que vous êtes connecté en tant que créateur).');
+  }, 'droitsRoles');
   const modifiable = ctx.estCreateur, nbColonnes = 3 + ROLES_CHOISISSABLES.length;
   const createur = (contenu: React.ReactNode) => <td className="centre">{contenu}</td>;
   const cellule = (role: string, droit: string) => {
@@ -94,7 +100,7 @@ function Matrice() {
     return (
       <td key={role} className="centre">
         <select className={`champ champ-mini ${NIVEAUX_DROIT[niveau].classe}`} aria-label={`${droit} · ${role}`} value={niveau} disabled={fixe}
-          onChange={e => void executer(() => modifier('droits_roles', { role: 'eq.' + role, droit: 'eq.' + droit }, { niveau: e.target.value as Niveau }), 'droitsRoles')}>
+          onChange={e => void enregistrer(role, droit, e.target.value as Niveau)}>
           {Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => <option key={valeur} value={valeur}>{n.libelle}</option>)}
         </select>
       </td>
