@@ -11,7 +11,7 @@ import { Catalogue } from './ecrans/Catalogue';
 import { ChoixEquipe } from './ecrans/ChoixEquipe';
 import { Connexion, VerifierMonEmail } from './ecrans/Connexion';
 import { ECRANS } from './ecrans';
-import { SessionProvider, useSession } from './donnees/SessionProvider';
+import { PorteeEquipe, SessionProvider, useSession } from './donnees/SessionProvider';
 import { ecranDArrivee } from './donnees/compte';
 import { ROUTES, cheminDe, titrePage } from './routes';
 
@@ -21,6 +21,8 @@ function Racine() {
   if (!ctx) return null;
   return <Navigate to={cheminDe(ecranDArrivee(ctx, equipeCourante))} replace />;
 }
+
+const ECRANS_DE_L_EQUIPE = ['daily', 'mesProjets', 'mesSprints', 'conges', 'monTimesheet'];
 
 /** Écrans de l'application, selon l'état de la session : chargement, erreur, connexion, ou les adresses de routes.ts */
 function Contenu() {
@@ -44,7 +46,10 @@ function Contenu() {
       <Route path="/composants" element={<Catalogue />} />
       {ROUTES.filter(r => r.section !== 'plein').map(r => {
         const Ecran = ECRANS[r.id];
-        return Ecran ? <Route key={r.id} path={r.chemin} element={<Page route={r}><Ecran /></Page>} /> : null;
+        // Écrans de Mon dashboard qui suivent l'équipe active (les autres, comme Administration, gardent leur portée habituelle)
+        if (!Ecran) return null;
+        const contenu = ECRANS_DE_L_EQUIPE.includes(r.id) ? <PorteeEquipe><Ecran /></PorteeEquipe> : <Ecran />;
+        return <Route key={r.id} path={r.chemin} element={<Page route={r}>{contenu}</Page>} />;
       })}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

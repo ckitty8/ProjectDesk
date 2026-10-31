@@ -66,3 +66,38 @@ export function appliquerPerimetre(ctx: ContexteDroits, brut: DonneesPerimetre):
     objectifsTravail: brut.objectifsTravail.filter(o => voitEquipe(o.equipeId))
   };
 }
+
+/* ---------- Équipe active (Mon dashboard) ---------- */
+
+/** Données d'une seule équipe (porteur, 2026-10-31 : « dans AMOA, je ne dois voir que les projets liés à AMOA ») : l'équipe choisie et ses
+ *  sous-unités, avec leurs personnes (ou rattachées), leurs projets et ce qui s'y rapporte. Sert à Mon dashboard ; « Suivi de mes équipes » reste
+ *  global. Ne donne aucun droit de plus : ne fait que réduire ce que la personne voit déjà. */
+export function restreindreEquipe<T extends DonneesPerimetre & { equipes: readonly { id: string; parentId?: string | null }[] }>(brut: T, equipeId: string): T {
+  const unites = new Set([equipeId]);
+  // Sous-unités : on ajoute les unités dont le parent est déjà retenu, jusqu'à ce qu'il n'y en ait plus
+  for (let ajout = true; ajout; ) {
+    ajout = false;
+    brut.equipes.forEach(e => { if (e.parentId && unites.has(e.parentId) && !unites.has(e.id)) { unites.add(e.id); ajout = true; } });
+  }
+  const rattaches = new Set(brut.rattachements.filter(x => unites.has(x.equipeId)).map(x => x.ressourceId));
+  const personnes = new Set(brut.ressources.filter(r => unites.has(r.equipeId) || rattaches.has(r.id)).map(r => r.id));
+  const projets = new Set(brut.projets.filter(p => unites.has(p.equipeId)).map(p => p.id));
+  const parPersonne = <L extends { ressourceId: string }>(lignes: readonly L[]): L[] => lignes.filter(x => personnes.has(x.ressourceId));
+  const parProjet = <L extends { projetId: string }>(lignes: readonly L[]): L[] => lignes.filter(x => projets.has(x.projetId));
+  return {
+    ...brut,
+    equipes: brut.equipes.filter(e => unites.has(e.id)),
+    ressources: brut.ressources.filter(r => personnes.has(r.id)),
+    projets: brut.projets.filter(p => projets.has(p.id)),
+    affectations: parProjet(brut.affectations).filter(a => personnes.has(a.ressourceId)),
+    absences: parPersonne(brut.absences),
+    temps: parPersonne(brut.temps),
+    feuilles: parPersonne(brut.feuilles),
+    sprintsProjet: parProjet(brut.sprintsProjet),
+    repartitionsSprint: parProjet(brut.repartitionsSprint),
+    misesEnProduction: parProjet(brut.misesEnProduction),
+    envoisDaily: parProjet(brut.envoisDaily),
+    objectifsTravail: brut.objectifsTravail.filter(o => unites.has(o.equipeId)),
+    rattachements: brut.rattachements.filter(x => unites.has(x.equipeId))
+  };
+}

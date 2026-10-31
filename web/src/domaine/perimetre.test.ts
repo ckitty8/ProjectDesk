@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DONNEES, contexte } from './__fixtures__/donnees';
-import { appliquerPerimetre } from './perimetre';
+import { DONNEES, EQUIPES, contexte } from './__fixtures__/donnees';
+import { appliquerPerimetre, restreindreEquipe } from './perimetre';
 
 const ids = <T extends { id: string }>(lignes: readonly T[]) => lignes.map(l => l.id).sort();
 
@@ -63,5 +63,17 @@ describe('périmètre de lecture en simulation (migration 042)', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'utilisateur', ressourceId: null } }), DONNEES);
     expect(v.projets).toEqual([]);
     expect(v.ressources).toEqual([]);
+  });
+});
+
+describe('équipe active (Mon dashboard)', () => {
+  it('ne garde que les projets, personnes et lignes de l’équipe choisie', () => {
+    const v = restreindreEquipe({ ...DONNEES, equipes: EQUIPES }, 'app');
+    expect(v.projets.every(p => p.equipeId === 'app')).toBe(true);
+    expect(v.ressources.every(r => r.equipeId === 'app')).toBe(true);
+    expect(v.projets.length).toBeLessThan(DONNEES.projets.length);
+    const projets = new Set(v.projets.map(p => p.id));
+    expect(v.affectations.every(a => projets.has(a.projetId))).toBe(true);
+    expect(v.equipes.map(e => e.id)).toContain('app');
   });
 });

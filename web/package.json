@@ -1,7 +1,7 @@
 {
   "name": "projectdesk-web",
   "private": true,
-  "version": "2.71",
+  "version": "2.72",
   "description": "ProjectDesk — nouvelle application React + TypeScript (migration, voir docs/specifications/migration-react.md)",
   "type": "module",
   "engines": {

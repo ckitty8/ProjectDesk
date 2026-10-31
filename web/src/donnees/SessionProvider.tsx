@@ -15,6 +15,7 @@ import { activerOrganisation, connecter, deconnecter, definirSimulationActive } 
 import { chargerComptesEnAttente, chargerRoles, equipeAOuvrir, lireEquipeMemorisee, memoriserEquipe, ouvrirCompte } from './compte';
 import type { Compte, CompteEnAttente, RolesEquipes } from './compte';
 import { chargerDonnees } from './chargement';
+import { restreindreEquipe } from '../domaine/perimetre';
 import { lireTable } from './chargement';
 import type { ResultatChargement } from './chargement';
 import { construireVue, identiteReelle } from './contexte';
@@ -201,4 +202,16 @@ export function SessionProvider({ children, client }: { children: ReactNode; cli
       <Interne>{children}</Interne>
     </QueryClientProvider>
   );
+}
+
+/** Réduit les écrans enfants à l'équipe active (Mon dashboard) : mêmes données et mêmes droits, limités à l'équipe choisie et à ses sous-unités */
+export function PorteeEquipe({ children }: { children: ReactNode }) {
+  const valeur = useSession();
+  const { ctx, donnees, equipeCourante } = valeur;
+  const reduit = useMemo(() => {
+    if (!ctx || !donnees || !equipeCourante) return null;
+    return restreindreEquipe(donnees, equipeCourante);
+  }, [ctx, donnees, equipeCourante]);
+  if (!ctx || !donnees || !reduit) return <>{children}</>;
+  return <Contexte.Provider value={{ ...valeur, ctx: { ...ctx, ...reduit }, donnees: reduit }}>{children}</Contexte.Provider>;
 }
