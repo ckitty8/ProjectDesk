@@ -1,6 +1,6 @@
 /* ============================================================
    Point d'entrée de la nouvelle application ProjectDesk (React + TypeScript)
-   Servie sur /app/ (voir docs/specifications/migration-react.md pour l'historique de la migration depuis l'ancienne application).
+   Servie sur /app/.
    ============================================================ */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

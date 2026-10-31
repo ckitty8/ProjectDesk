@@ -7,11 +7,6 @@
       "source": "/",
       "destination": "/app/",
       "permanent": false
-    },
-    {
-      "source": "/v2/:chemin*",
-      "destination": "/app/:chemin*",
-      "permanent": false
     }
   ],
   "rewrites": [

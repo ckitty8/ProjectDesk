@@ -3,8 +3,7 @@
    (portage de CONFIG.NEON_AUTH_URL / DATA_API_URL de app/js/config.js — phase 3 de la migration)
    ------------------------------------------------------------
    Ce sont des adresses publiques (pas des secrets) : la sécurité repose sur le jeton de connexion et les règles RLS en base.
-   Les tests de bout en bout les redirigent vers le serveur simulé (tests/serveur-simule.js) avec window.CONFIG_SURCHARGE,
-   comme pour l'ancienne application.
+   Les tests de bout en bout les redirigent vers le serveur simulé (tests/serveur-simule.js) avec window.CONFIG_SURCHARGE.
    ============================================================ */
 
 export interface Adresses {

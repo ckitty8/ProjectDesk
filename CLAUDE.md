@@ -76,8 +76,7 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
 Historique et décisions : `docs/specifications/migration-react.md`.
 
 - L'application est dans `web/` (React + TypeScript, Vite) et servie sur `/app/` : `app/` est le **résultat du build**
-  (ignoré par git, jamais modifié à la main). L'ancienne application JavaScript est supprimée ; retour arrière possible
-  via l'historique git (commit `5f0c7a2`, version 2.67).
+  (ignoré par git, jamais modifié à la main).
 - Travail **directement sur `main`**.
 - Le Gantt et la roadmap interactifs sont **hors périmètre** (à développer après la migration).
 - Les règles n°2, 4, 5, 7 et 8 s'appliquent au code TypeScript (commentaires, un seul endroit pour les calculs :
