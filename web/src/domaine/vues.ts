@@ -181,3 +181,14 @@ export function modeleParProjet(d: DonneesVues, debut: Iso, fin: Iso, projet: Pr
 
 /** Projets proposés en vue « Par projet » : ceux qui ont des membres */
 export const projetsAvecMembres = (d: DonneesVues): Projet[] => d.projets.filter(p => d.affectations.some(a => a.projetId === p.id));
+
+/* ---------- Personnes proposées pour un projet ---------- */
+
+/** Personnes proposées pour un projet de l'équipe « equipeId » (chef de projet, membre, lecteur) : TOUTES les personnes présentes — une
+ *  personne travaille sur des projets de plusieurs équipes (porteur, 2026-10-13 : « les chefs de projet ne sont pas dans la liste »). Les
+ *  personnes de l'équipe d'abord ; libellé « Nom — Équipe · Poste » pour retrouver un chef de projet par son poste. */
+export function personnesProposees(d: Pick<DonneesVues, 'equipes' | 'ressources'>, equipeId: string, aujourdhui: Iso): { valeur: string; libelle: string }[] {
+  const deLEquipe = (r: Ressource) => (r.equipeId === equipeId ? 0 : 1);
+  return ressourcesPresentes(d, aujourdhui).sort((a, b) => deLEquipe(a) - deLEquipe(b) || a.nom.localeCompare(b.nom))
+    .map(r => ({ valeur: r.id, libelle: `${r.nom} — ${d.equipes.find(e => e.id === r.equipeId)?.nom ?? '—'}${r.poste ? ' · ' + r.poste : ''}` }));
+}

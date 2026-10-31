@@ -20,7 +20,7 @@ interface PropsFenetre {
 }
 
 /** Ferme la fenêtre avec la touche Échap tant qu'elle est ouverte */
-function useFermerAvecEchap(onFermer: () => void): void {
+export function useFermerAvecEchap(onFermer: () => void): void {
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => { if (e.key === 'Escape') onFermer(); };
     document.addEventListener('keydown', surTouche);
@@ -28,7 +28,7 @@ function useFermerAvecEchap(onFermer: () => void): void {
   }, [onFermer]);
 }
 
-function Cadre({ classe, titre, surtitre, onFermer, children, pied }: PropsFenetre & { classe: 'panneau' | 'modale' }) {
+export function Cadre({ classe, titre, surtitre, onFermer, children, pied }: PropsFenetre & { classe: 'panneau' | 'modale' }) {
   useFermerAvecEchap(onFermer);
   return (
     <>

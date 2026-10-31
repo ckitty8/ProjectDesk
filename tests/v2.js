@@ -152,7 +152,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const VAGUE_B = path.resolve(__dirname, '../docs/maquettes/v2-vague-b');
     fs.mkdirSync(VAGUE_B, { recursive: true });
     const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
-    const menu = fin => page.click(`a.menu-lien[href$="${fin}"]`);
+    const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
 
     // Dashboard : un projet à surveiller ouvre le panneau du projet (lecture seule)
     await menu('/dashboard');
@@ -275,11 +275,189 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption('select[aria-label="Équipe"]', { label: 'Mobile' });
     verifier('Gestion des ressources › Liste : filtre par équipe', await page.locator('#annuaire-ressources tbody tr').count() === 3);
 
+    /* ---------- Vague C : Daily, Saisir mes heures, Congés, Sprints, Mises en production (édition) ---------- */
+    const VAGUE_C = path.resolve(__dirname, '../docs/maquettes/v2-vague-c');
+    fs.mkdirSync(VAGUE_C, { recursive: true });
+    const captureC = nom => page.screenshot({ path: path.join(VAGUE_C, nom + '.png') });
+    page.on('dialog', d => d.accept());                      // confirmations de suppression acceptées
+    const toast = () => page.textContent('.notification');
+
+    // Daily : un daily par projet, enregistrement automatique
+    await menu('/daily');
+    await page.waitForSelector('.ecran-daily');
+    await captureC('08-daily');
+    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 9
+      && (await texte()).includes('0 / 3 projets renseignés') && await page.locator('.historique a').count() === 12);
+    const zone = page.locator('textarea.note-daily').nth(1);       // « Aujourd'hui » du premier projet
+    await zone.fill('Revue de la roadmap SSO');
+    await page.waitForSelector('text=enregistré');
+    await page.waitForSelector('text=1 / 3 projets renseignés');
+    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 3 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
+    await page.reload();
+    await page.waitForSelector('.ecran-daily');
+    verifier('Daily : la note survit au rechargement (écrite en base)', await page.locator('textarea.note-daily').nth(1).inputValue() === 'Revue de la roadmap SSO');
+    const jourAffiche = await page.textContent('.ecran-daily h2');
+    await page.click('[aria-label="Jour précédent"]');
+    verifier('Daily : jour précédent (week-ends sautés)', (await page.textContent('.ecran-daily h2')) !== jourAffiche); 
+    await page.locator('.historique a').nth(3).click();
+    verifier('Daily : l\'historique ouvre le jour choisi', await page.locator('.historique a.actif').count() === 1);
+    await page.click('text=Aujourd’hui >> nth=0');
+
+    // Saisir mes heures
+    await menu('/saisir-mes-heures');
+    await page.waitForSelector('.grille-mois');
+    await captureC('13-mon-timesheet');
+    const cellule = page.locator('input.saisie-mois[aria-label="2026-10-05"]').first();
+    await cellule.fill('7,5');
+    await cellule.blur();
+    await page.waitForSelector('td.num b:has-text("7,5 h")');
+    verifier('Saisir mes heures : une saisie (virgule acceptée) met à jour les totaux', (await texte()).includes('7,5 h') && (await texte()).includes('sur 1'));
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().fill('30');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().blur();
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Saisir mes heures : heures invalides refusées (0 à 24) avec message', (await toast()).includes('Heures invalides') && await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().inputValue() === '7,5');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().fill('');
+    await page.locator('input.saisie-mois[aria-label="2026-10-05"]').first().blur();
+    await page.waitForFunction(() => !document.body.textContent.includes('7,5 h'));
+    verifier('Saisir mes heures : une case vidée supprime la saisie', true);
+    await page.locator('input.saisie-mois[aria-label="2026-10-06"]').first().fill('8');
+    await page.locator('input.saisie-mois[aria-label="2026-10-06"]').first().blur();
+    await page.waitForSelector('td.num b:has-text("8 h")');
+    await page.click('text=Soumettre le mois');
+    await page.waitForSelector('.badge:has-text("Soumise")');
+    verifier('Saisir mes heures : « Soumettre le mois » verrouille la feuille', await page.locator('input.saisie-mois[disabled]').count() > 10 && await page.locator('text=Soumettre le mois').count() === 0);
+
+    // Congés
+    await menu('/conges');
+    await page.waitForSelector('.calendrier');
+    await captureC('11-conges');
+    await page.click('.puce:has-text("Congés validé")');
+    const ligneCamille = page.locator('tr[data-personne]', { hasText: 'Camille Laurent' });
+    await ligneCamille.locator('td').nth(12).click();                                  // lundi 12 octobre
+    await page.waitForSelector('tr[data-personne]:has-text("Camille Laurent") .case-absence');
+    verifier('Congés : un clic pose l\'absence du type choisi et met à jour le total', await ligneCamille.locator('.case-absence').count() === 1 && (await ligneCamille.textContent()).includes('1 j'));
+    await ligneCamille.locator('td').nth(12).click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr[data-personne]')].some(r => r.textContent.includes('Camille Laurent') && r.querySelector('.case-absence')));
+    verifier('Congés : un second clic retire l\'absence', await ligneCamille.locator('.case-absence').count() === 0);
+    await page.click('.puce:has-text("Demi-journée")');
+    await ligneCamille.locator('td').nth(13).click();
+    await page.waitForSelector('tr[data-personne]:has-text("Camille Laurent") .case-absence');
+    verifier('Congés : une demi-journée est marquée « ½ » et compte 0,5', (await ligneCamille.textContent()).includes('CV½') && (await ligneCamille.textContent()).includes('0,5 j'));
+    await page.click('.puce:has-text("Effacer")');
+    await ligneCamille.locator('td').nth(13).click();
+    await page.waitForFunction(() => document.querySelectorAll('tr[data-personne]').length > 0 && ![...document.querySelectorAll('tr[data-personne]')].some(r => r.textContent.includes('Camille Laurent') && r.textContent.includes('CV½')));
+    verifier('Congés : « Effacer » retire l\'absence', await ligneCamille.locator('.case-absence').count() === 0);
+    verifier('Congés : les cases des personnes de mes équipes sont cliquables', await page.locator('.calendrier td.cliquable').count() > 20);
+    await page.click('[role=tab]:has-text("Récap annuel")');
+    await page.waitForSelector('.recap-travail');
+    await captureC('11b-recap-annuel');
+    verifier('Congés › Récap annuel : 12 mois, jours travaillés et congés, reste à prendre', await page.locator('.recap-travail thead th:has-text("Sept.")').count() === 1
+      && (await texte()).includes('Jours de semaine du mois') && (await texte()).includes('Reste à') && await page.locator('.recap-travail tr.total').count() >= 3);
+    const objectif = page.locator('input.objectif-client').first();
+    verifier('Congés › Récap annuel : objectif client modifiable par le responsable de l\'équipe', await objectif.count() === 1);
+    await objectif.fill('200');
+    await objectif.blur();
+    await page.waitForFunction(() => document.querySelector('input.objectif-client').value === '200');
+    await page.reload();
+    await page.click('[role=tab]:has-text("Récap annuel")');
+    await page.waitForSelector('.recap-travail');
+    verifier('Congés › Récap annuel : l\'objectif saisi est enregistré en base', await page.locator('input.objectif-client').first().inputValue() === '200');
+
+    // Sprints
+    await menu('/sprints');
+    await page.waitForSelector('.tableau-sprints');
+    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    await captureC('09c-sprints');
+    const lignesSprint = () => page.locator('.tableau-sprints tbody tr:not(.ligne-ajout)').count();
+    verifier('Sprints : les sprints du projet par année, modifiables, avec ligne d\'ajout', await lignesSprint() === 2 && await page.locator('tr.ligne-ajout').count() === 1
+      && (await texte()).includes('en cours') === (await texte()).includes('en cours'));
+    await page.fill('input[aria-label="Nouveau sprint : numéro"]', '21');
+    await page.fill('input[aria-label="Nouveau sprint : version"]', 'V2.2');
+    await page.fill('input[aria-label="Nouveau sprint : début"]', '2026-10-12');
+    await page.fill('input[aria-label="Nouveau sprint : fin"]', '2026-10-23');
+    await page.click('button[title="Ajouter le sprint"]');
+    await page.waitForFunction(() => document.querySelectorAll('.tableau-sprints tbody tr:not(.ligne-ajout)').length === 3);
+    verifier('Sprints : ajout d\'un sprint', await lignesSprint() === 3);
+    await page.fill('input[aria-label="Nouveau sprint : numéro"]', '21');
+    await page.fill('input[aria-label="Nouveau sprint : début"]', '2026-11-02');
+    await page.fill('input[aria-label="Nouveau sprint : fin"]', '2026-11-13');
+    await page.click('button[title="Ajouter le sprint"]');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Sprints : « Sprint N » unique par année et par projet', (await toast()).includes('existe déjà en 2026') && await lignesSprint() === 3);
+    const finDernier = page.locator('input[aria-label="Fin"]').last();
+    await finDernier.fill('2026-10-01');
+    await finDernier.blur();
+    await page.waitForSelector('.notification.visible.erreur >> text=précède');
+    verifier('Sprints : date de fin avant la date de début refusée, ancienne valeur remise', await page.locator('input[aria-label="Fin"]').last().inputValue() === '2026-10-23');
+    const versionDernier = page.locator('input[aria-label="Version"]').last();
+    await versionDernier.fill('V2.2-corrigée');
+    await versionDernier.blur();
+    await page.waitForFunction(() => [...document.querySelectorAll('input[aria-label="Version"]')].some(i => i.value === 'V2.2-corrigée'));
+    await page.reload();
+    await page.waitForSelector('.tableau-sprints');
+    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    verifier('Sprints : la modification d\'un champ est enregistrée', await page.locator('input[aria-label="Version"]').last().inputValue() === 'V2.2-corrigée');
+    await page.locator('button[title="Supprimer ce sprint"]').last().click();
+    await page.waitForFunction(() => document.querySelectorAll('.tableau-sprints tbody tr:not(.ligne-ajout)').length === 2);
+    verifier('Sprints : suppression d\'un sprint (après confirmation)', await lignesSprint() === 2);
+
+    // Mises en production
+    await menu('/mes-projets');
+    await page.waitForSelector('.formulaire-mep');
+    await captureC('09-mes-projets');
+    const nbMep = await page.locator('.tableau-sprints tbody tr').count();
+    await page.fill('.formulaire-mep input[type=date]', '2026-12-01');
+    await page.fill('.formulaire-mep input[name=version]', 'V9.9');
+    await page.fill('.formulaire-mep input[name=bugs]', '2');
+    await page.click('.formulaire-mep >> text=Ajouter');
+    await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n + 1, nbMep);
+    verifier('Mises en production : ajout (date, version, tickets livrés, statut)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 1);
+    const ligneMep = page.locator('.tableau-sprints tbody tr', { has: page.locator('input[value="V9.9"]') });
+    await ligneMep.locator('select').selectOption('faite');
+    await page.waitForFunction(() => [...document.querySelectorAll('.tableau-sprints tr')].some(r => r.querySelector('input[value="V9.9"]') && r.querySelector('select').value === 'faite'));
+    verifier('Mises en production : le statut se modifie sur place', await ligneMep.locator('select').inputValue() === 'faite');
+    await ligneMep.locator('button[title="Supprimer cette mise en production"]').click();
+    await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n, nbMep);
+    verifier('Mises en production : suppression (après confirmation)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 0);
+
+    // Nouveau projet, puis panneau modifiable
+    await page.click('text=+ Nouveau projet');
+    await page.waitForSelector('#nouveau-projet');
+    await captureC('10-nouveau-projet');
+    verifier('Nouveau projet : formulaire (code proposé, méthode à choisir)', (await page.inputValue('input[name=code]')).startsWith('PF-') && await page.locator('.choix-methode').count() >= 4);
+    await page.fill('input[name=nom]', 'Projet vague C');
+    await page.click('.choix-methode:has-text("Agile Scrum")');
+    await page.click('text=Créer le projet');
+    await page.waitForSelector('input[aria-label="Nom du projet"]');
+    await captureC('11-panneau-projet');
+    verifier('Nouveau projet : créé, puis panneau modifiable (nom, statut, méthode, chef)', await page.inputValue('input[aria-label="Nom du projet"]') === 'Projet vague C'
+      && await page.locator('.panneau select[aria-label="Statut"]').count() === 1 && await page.locator('.panneau select[aria-label="Méthode"]').inputValue() === 'Agile Scrum'
+      && (await page.inputValue('.panneau select[aria-label="Chef de projet"]')) !== '');
+    await page.fill('input[aria-label="Nom du projet"]', 'Projet vague C (renommé)');
+    await page.locator('input[aria-label="Nom du projet"]').blur();
+    await page.selectOption('.panneau select[aria-label="Statut"]', { index: 1 });
+    await page.waitForFunction(() => document.querySelector('input[aria-label="Nom du projet"]').value.includes('renommé'));
+    await page.keyboard.press('Escape');
+    await menu('/projets');
+    await page.waitForSelector('.tableau');
+    await page.waitForSelector('tr.cliquable');
+    verifier('Panneau projet : le nom modifié est enregistré (visible dans Projets et Roadmap)', await page.locator('tr.cliquable:has-text("Projet vague C (renommé)")').count() === 1
+      && await page.locator('tr.cliquable').count() === 10);
+    await menu('/mes-projets');
+    await page.click('text=+ Nouveau projet');
+    await page.fill('input[name=nom]', 'Autre projet');
+    await page.click('.choix-methode:has-text("Cascade")');
+    await page.click('text=Créer le projet');
+    await page.waitForSelector('input[aria-label="Nom du projet"]');
+    await page.click('text=Supprimer le projet');
+    await page.waitForFunction(() => !document.querySelector('.panneau'));
+    verifier('Panneau projet : suppression du projet (après confirmation), panneau fermé', await page.locator('.panneau').count() === 0);
+
     /* ---------- Écran pas encore migré ---------- */
-    await page.click('a.menu-lien[href$="/daily"]');
+    await menu('/liste-des-ressources');
     await page.waitForSelector('text=pas encore migré');
     verifier('Écran pas encore migré : page explicative avec lien vers l\'application actuelle', (await texte()).includes('pas encore migré') && await page.locator('a[href="/app/"]').count() >= 1
-      && page.url().endsWith('/v2/daily'));
+      && page.url().endsWith('/v2/liste-des-ressources'));
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même

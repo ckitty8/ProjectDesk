@@ -4,10 +4,15 @@
    ============================================================ */
 import type { ComponentType } from 'react';
 import { Astuces } from './Astuces';
+import { Conges } from './Conges';
+import { Daily } from './Daily';
 import { DailyEquipes } from './DailyEquipes';
 import { Dashboard } from './Dashboard';
+import { MesProjets } from './MesProjets';
 import { Projets } from './Projets';
 import { Ressources } from './Ressources';
+import { SaisirHeures } from './SaisirHeures';
+import { Sprints } from './Sprints';
 import { Timesheet } from './Timesheet';
 
 export const ECRANS: Record<string, ComponentType> = {
@@ -16,5 +21,10 @@ export const ECRANS: Record<string, ComponentType> = {
   projets: Projets,
   ressources: Ressources,
   timesheet: Timesheet,
+  daily: Daily,
+  mesProjets: MesProjets,
+  mesSprints: Sprints,
+  conges: Conges,
+  monTimesheet: SaisirHeures,
   astuces: Astuces
 };

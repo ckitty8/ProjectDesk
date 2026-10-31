@@ -68,6 +68,7 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - Vague A livrée : Connexion, Choix d'équipe, Dashboard général, Trucs et astuces, avec la coquille (barre latérale, en-tête, Aide).
   Les adresses sont dans `web/src/routes.ts` ; un écran non migré affiche « pas encore migré » (`migre: false`).
 - Vague B livrée : Projets et Planning projet, Timesheet (validation), Daily des équipes (export Excel), Gestion des ressources (calendrier). Le panneau Projet est en lecture seule ; sa modification arrive avec la vague C (Mon dashboard › Projets et Roadmap).
+- Vague C livrée : Daily, Saisir mes heures, Congés (grille et récap), Sprints, Mises en production, création de projet et panneau Projet modifiable. Reste pour la vague D : « + Membre » du panneau Projet (fenêtre d'affectation).
 - Pour migrer un écran : composant dans `web/src/ecrans/`, entrée dans `web/src/ecrans/index.ts`, `migre: true` dans `routes.ts`,
   contrôles dans `tests/v2.js`, captures comparées à `docs/maquettes/etat-actuel/`.
 
@@ -78,5 +79,5 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 2 — Logique métier typée (2026-10-27)
 - [x] Phase 3 — Données et session (2026-10-27)
 - [x] Phase 4 — Composants de base (2026-10-27)
-- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [ ] C, [ ] D
+- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [ ] D
 - [ ] Phase 6 — Bascule et nettoyage

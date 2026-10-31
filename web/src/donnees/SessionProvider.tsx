@@ -7,7 +7,7 @@
    Le chargement est tolérant (chargement.ts) : on ne vide jamais l'écran si une lecture échoue.
    La simulation de rôle (créateur seul) est un état local : elle ne relit rien, elle filtre les données déjà lues.
    ============================================================ */
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -50,6 +50,10 @@ export interface ValeurSession {
   recharger: () => Promise<void>;
   /** Relit seulement certaines tables (après une écriture) et met à jour l'affichage ; une table illisible garde ses données */
   rechargerTables: (...cles: CleTable[]) => Promise<void>;
+  /** Message temporaire en bas d'écran (4,5 s) : « erreur » en rouge */
+  notifier: (message: string, type?: 'info' | 'erreur') => void;
+  /** Exécute une écriture, relit les tables touchées et affiche l'erreur éventuelle (ex. refus de la base : droits). Renvoie true si l'écriture a réussi. */
+  executer: (action: () => Promise<unknown>, ...tables: CleTable[]) => Promise<boolean>;
   /** Relit tout : compte, équipes, invitations, données (après une connexion, une invitation acceptée…) */
   actualiser: () => Promise<void>;
 }
@@ -71,6 +75,13 @@ function Interne({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [simulation, setSimulation] = useState<Simulation | null>(null);
   const [equipeChoisie, setEquipeChoisie] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'info' | 'erreur' } | null>(null);
+  const notifier = useCallback((message: string, type: 'info' | 'erreur' = 'info') => setNotification({ message, type }), []);
+  useEffect(() => {
+    if (!notification) return undefined;
+    const minuteur = setTimeout(() => setNotification(null), 4500);
+    return () => clearTimeout(minuteur);
+  }, [notification]);
 
   const compteQ = useQuery({ queryKey: ['compte'], queryFn: ouvrirCompte });
   const compte = compteQ.data ?? null;
@@ -125,6 +136,14 @@ function Interne({ children }: { children: ReactNode }) {
 
   const choixPourBandeau = useMemo(() => (brutes ? choixSimulation(brutes.ressources) : []), [brutes]);
 
+  // Relit certaines tables et met à jour le cache : une table illisible garde ses données
+  const rechargerTables = useCallback(async (...cles: CleTable[]) => {
+    const lues = await Promise.all(cles.map(async cle => ({ cle, lignes: await lireTable(cle) })));
+    client.setQueryData<ResultatChargement>(['donnees'], ancien => (ancien
+      ? { ...ancien, donnees: { ...ancien.donnees, ...Object.fromEntries(lues.map(l => [l.cle, l.lignes])) } as unknown as Donnees }
+      : ancien));
+  }, [client]);
+
   const valeur: ValeurSession = {
     etat,
     erreur: erreurBrute ? (erreurBrute as Error).message : null,
@@ -155,16 +174,23 @@ function Interne({ children }: { children: ReactNode }) {
       navigate('/', { replace: true });      // la prochaine connexion repart de l'écran d'arrivée, pas de l'écran quitté
     },
     recharger: async () => { await client.invalidateQueries({ queryKey: ['donnees'] }); },
-    rechargerTables: async (...cles) => {
-      const lues = await Promise.all(cles.map(async cle => ({ cle, lignes: await lireTable(cle) })));
-      client.setQueryData<ResultatChargement>(['donnees'], ancien => (ancien
-        ? { ...ancien, donnees: { ...ancien.donnees, ...Object.fromEntries(lues.map(l => [l.cle, l.lignes])) } as unknown as Donnees }
-        : ancien));
+    notifier,
+    executer: async (action, ...tables) => {
+      let reussi = true;
+      try { await action(); } catch (e) { reussi = false; notifier((e as Error).message, 'erreur'); }
+      if (tables.length) await rechargerTables(...tables).catch(() => undefined);
+      return reussi;
     },
+    rechargerTables,
     actualiser: async () => { await client.invalidateQueries(); }
   };
 
-  return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
+  return (
+    <Contexte.Provider value={valeur}>
+      {children}
+      <div className={'notification' + (notification ? ' visible' : '') + (notification?.type === 'erreur' ? ' erreur' : '')} role="status">{notification?.message}</div>
+    </Contexte.Provider>
+  );
 }
 
 /** Fournisseur à placer à la racine de l'application (sous le routeur) */

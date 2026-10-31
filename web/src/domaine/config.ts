@@ -183,3 +183,17 @@ export const STATUTS_FEUILLE = {
   a_completer: { libelle: 'À compléter', fond: '#FFF1DC', texte: '#8A4B00' }
 } as const;
 export type StatutFeuille = keyof typeof STATUTS_FEUILLE;
+
+/* ---------- Méthodes de gestion de projet ---------- */
+
+/** Libellés système des méthodes (référentiel « methode »), choisies à la création du projet ; renommables en Administration › Référentiels */
+export const METHODES_PROJET = { SCRUM: 'Agile Scrum', KANBAN: 'Agile Kanban', CASCADE: 'Cascade', CYCLE_V: 'Cycle en V', TEST_LEARN: 'Test & Learn' };
+
+/** Description affichée sous chaque méthode dans le formulaire de création (clé technique → texte) */
+export const DESCRIPTIONS_METHODES: Record<string, string> = {
+  scrum: 'Sprints de 2 semaines, backlog priorisé, vélocité.',
+  kanban: 'Flux continu, limites de travail en cours, lead time.',
+  cascade: 'Phases successives : besoin, conception, réalisation, recette.',
+  cycle_v: 'Cascade avec une phase de test en miroir de chaque phase de conception.',
+  test_learn: 'Projets IA : expériences courtes, hypothèse et critère de succès fixés avant, puis décision.'
+};

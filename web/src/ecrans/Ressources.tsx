@@ -5,10 +5,8 @@
    Calendrier : vue « Par équipe » (chaque personne une fois, étiquettes de projets, synthèse des absents par projet) ou « Par projet ».
    ============================================================ */
 import { useState } from 'react';
-import { Aide } from '../composants/Aide';
 import { Avatar, BadgeActif, BadgeTon, Pastille } from '../composants/Badge';
-import { Calendrier, NavigationMois } from '../composants/Calendrier';
-import type { LigneCalendrier } from '../composants/Calendrier';
+import { CalendrierAbsences } from '../composants/CalendrierAbsences';
 import { AucunOnglet, Carte, EnteteEcran, Vide } from '../composants/Carte';
 import { Icone } from '../composants/Icone';
 import { Liste } from '../composants/Liste';
@@ -16,96 +14,32 @@ import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
 import type { Donnees } from '../donnees/tables';
 import { anniversairesDuMois } from '../domaine/calculs';
-import { contexteMois } from '../domaine/calendrier';
 import { COULEURS } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
 import { aujourdhui, depuisIso, formatAvecAnnee, formatCourt, nomMois } from '../domaine/dates';
 import { ongletPermis } from '../domaine/droits';
 import type { ContexteDroits } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
-import { AIDES } from '../domaine/textes';
 import type { Ressource } from '../domaine/types';
-import { estInactive, modeleParEquipe, modeleParProjet, projetsAvecMembres, projetsPourAnnuaire, unitesRacines } from '../domaine/vues';
-import type { ElementCalendrier } from '../domaine/vues';
+import { estInactive, projetsPourAnnuaire } from '../domaine/vues';
 
-const MAX_ETIQUETTES = 3;
-
-/** Projets d'une personne en étiquettes (vue « Par équipe ») : 3 au plus, puis « +N » ; liste complète en infobulle */
-function Etiquettes({ noms }: { noms: readonly string[] }) {
-  return (
-    <>
-      {noms.slice(0, MAX_ETIQUETTES).map(n => <span key={n} className="etiquette" title={n}>{n}</span>)}
-      {noms.length > MAX_ETIQUETTES && <span className="etiquette" title={noms.slice(MAX_ETIQUETTES).join(', ')}>+{noms.length - MAX_ETIQUETTES}</span>}
-    </>
-  );
-}
-
-/** Éléments du modèle (domaine/vues.ts) → lignes du composant Calendrier */
-function lignesCalendrier(elements: readonly ElementCalendrier[]): LigneCalendrier[] {
-  return elements.map((el, i): LigneCalendrier => {
-    switch (el.genre) {
-      case 'unite':
-        return { genre: 'groupe', id: 'u' + el.equipe.id, niveau: el.niveau, contenu: (
-          <><Icone nom={el.equipe.type === 'direction' ? 'direction' : 'equipe'} taille={14} /><Pastille couleur={el.equipe.couleur ?? COULEURS.pale} />{el.equipe.nom}</>
-        ) };
-      case 'intertitre':
-        return { genre: 'groupe', id: 'i' + i, niveau: el.niveau, secondaire: true, contenu: <>Projets — absents / membres par jour <Aide texte={AIDES.syntheseProjets} /></> };
-      case 'projet':
-        return { genre: 'groupe', id: 'p' + el.projet.id, niveau: el.niveau, contenu: (
-          <><Icone nom="projet" taille={14} />{el.projet.nom} <span className="discret poids-normal">{el.nbMembres} membres</span></>
-        ) };
-      case 'synthese':
-        return { genre: 'synthese', id: 's' + el.projet.id, niveau: el.niveau, ids: el.ids, contenu: <><Icone nom="projet" taille={14} />{el.projet.nom}</> };
-      case 'personne':
-        return { genre: 'personne', ressource: el.ressource, niveau: el.niveau, complement: (
-          <>{el.responsable && <span className="discret texte-11">responsable</span>}<Etiquettes noms={el.projets} /></>
-        ) };
-    }
-  });
-}
-
-/** Onglet Calendrier : le composant Calendrier partagé, en lecture */
+/** Onglet Calendrier : le calendrier partagé, en lecture, avec la légende des types d'absence */
 function OngletCalendrier({ ctx, donnees }: { ctx: ContexteDroits; donnees: Donnees }) {
   const j = depuisIso(aujourdhui());
   const [mois, setMois] = useState({ annee: j.getFullYear(), mois: j.getMonth() });
-  const [vue, setVue] = useState<'equipe' | 'projet'>('equipe');
-  const [projetId, setProjetId] = useState<string | null>(null);
-  const types = valeursDe(donnees.valeurs, 'abs', true);
-  const mc = contexteMois(mois.annee, mois.mois, donnees.joursFeries, types, donnees.absences, false);
-  const debut = mc.jours[0] ?? aujourdhui(), fin = mc.jours[mc.jours.length - 1] ?? debut;
-  const proposes = projetsAvecMembres(donnees);
-  const projet = proposes.find(p => p.id === projetId) ?? proposes[0];
-  const elements = vue === 'projet'
-    ? (projet ? modeleParProjet(donnees, debut, fin, projet) : [])
-    : unitesRacines(donnees.equipes).flatMap(e => modeleParEquipe(ctx, donnees, debut, fin, e));
   const naissance = donnees.ressources.some(r => 'dateNaissance' in r);
   return (
-    <Carte>
-      <div className="carte-titre">
-        <div className="ligne-flex">
-          <NavigationMois annee={mois.annee} mois={mois.mois} onChanger={(annee, m) => setMois({ annee, mois: m })} />
-          <div className="ligne-flex" style={{ marginLeft: 14 }}>
-            <div className="puces">
-              <button type="button" className={'puce' + (vue === 'equipe' ? ' active' : '')} onClick={() => setVue('equipe')}>Par équipe</button>
-              <button type="button" className={'puce' + (vue === 'projet' ? ' active' : '')} onClick={() => setVue('projet')}>Par projet</button>
-            </div>
-            {vue === 'projet' && (
-              <Liste className="champ champ-compact" aria-label="Projet" valeur={projet?.id} onChoisir={setProjetId} options={proposes.map(p => ({ valeur: p.id, libelle: p.nom }))} />
-            )}
-          </div>
-        </div>
-        <div className="ligne-flex discret legende-calendrier">
-          {valeursDe(donnees.valeurs, 'abs').map(t => (
-            <span key={t.libelle} className="ligne-flex">
-              <span className="pastille" style={{ background: teinte(t.couleur, 0.2), border: `1px solid ${t.couleur}` }} />{t.libelle}
-            </span>
-          ))}
-          <span className="ligne-flex"><span className="pastille pastille-ferie" />Férié / week-end</span>
-          {naissance && <span className="ligne-flex">🎂 Anniversaire</span>}
-        </div>
+    <CalendrierAbsences ctx={ctx} donnees={donnees} mois={mois} onMois={setMois} droite={(
+      <div className="ligne-flex discret legende-calendrier">
+        {valeursDe(donnees.valeurs, 'abs').map(t => (
+          <span key={t.libelle} className="ligne-flex">
+            <span className="pastille" style={{ background: teinte(t.couleur, 0.2), border: `1px solid ${t.couleur}` }} />{t.libelle}
+          </span>
+        ))}
+        <span className="ligne-flex"><span className="pastille pastille-ferie" />Férié / week-end</span>
+        {naissance && <span className="ligne-flex">🎂 Anniversaire</span>}
       </div>
-      {elements.length === 0 ? <Vide texte="Aucune ressource." /> : <Calendrier ctx={mc} lignes={lignesCalendrier(elements)} />}
-    </Carte>
+    )} />
   );
 }
 

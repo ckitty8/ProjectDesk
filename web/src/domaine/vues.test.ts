@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ABSENCES, AFFECTATIONS, EQUIPES, PROJETS, RESSOURCES, contexte } from './__fixtures__/donnees';
 import { absenceDe, auteurDaily, decalerJourOuvre, estInactive, membresDuDaily, misesEnProductionDe, modeleParEquipe, modeleParProjet,
-  noteNonVide, projetsAvecMembres, projetsAvecRoleDe, projetsDailyVisibles, projetsPourAnnuaire, ressourcesPresentes, sprintsDuProjet,
+  noteNonVide, personnesProposees, projetsAvecMembres, projetsAvecRoleDe, projetsDailyVisibles, projetsPourAnnuaire, ressourcesPresentes, sprintsDuProjet,
   unitesRacines } from './vues';
 
 const d = { equipes: EQUIPES, ressources: RESSOURCES, projets: PROJETS, affectations: AFFECTATIONS };
@@ -112,5 +112,13 @@ describe('modèle du calendrier', () => {
     const m = modeleParProjet(d, '2026-11-01', '2026-11-30', projet ?? PROJETS[0]!);
     expect(m.map(e => e.genre)).toEqual(['projet', 'personne', 'personne', 'synthese']);
     expect(projetsAvecMembres(d).map(p => p.id)).toEqual(expect.arrayContaining(['p-ia2', 'p-app2']));
+  });
+});
+
+describe('personnes proposées', () => {
+  it('toutes les personnes présentes, celles de l\'équipe d\'abord, avec équipe et poste', () => {
+    const p = personnesProposees({ equipes: EQUIPES, ressources: [
+      { id: 'a', nom: 'Zoé', equipeId: 'ia', poste: 'Dév' }, { id: 'b', nom: 'Alain', equipeId: 'app' }, { id: 'c', nom: 'Parti', equipeId: 'ia', dateDepart: '2026-01-01' }] }, 'ia', '2026-11-04');
+    expect(p).toEqual([{ valeur: 'a', libelle: 'Zoé — IA · Dév' }, { valeur: 'b', libelle: 'Alain — Applications' }]);
   });
 });
