@@ -99,6 +99,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Barre latérale : bloc utilisateur (équipe, nom, mention)', (await page.textContent('.bloc-utilisateur')).includes('Plateforme') && (await page.textContent('.bloc-utilisateur')).includes('Camille Laurent')
       && (await page.textContent('.bloc-utilisateur')).includes('CIRITEC'));
     verifier('Titre de l\'onglet du navigateur', (await page.title()) === 'Dashboard général · ProjectDesk');
+    // Mon profil : un clic sur l'avatar du bloc utilisateur ouvre la page (consultation seule : compte, fiche, accès)
+    await page.click('.bloc-moi .avatar');
+    await page.waitForSelector('.grille-profil');
+    await page.screenshot({ path: path.join(CAPTURES, '35-mon-profil.png') });
+    verifier('Mon profil : compte, fiche ressource et accès affichés, sans bouton de modification',
+      page.url().endsWith('/app/mon-profil') && (await texte()).includes('Camille Laurent') && (await texte()).includes('Ma fiche ressource')
+      && (await texte()).includes('Mon accès') && await page.locator('.ecran button:has-text("Modifier")').count() === 0);
+    await page.goBack();
+    await page.waitForSelector('.laterale');
 
     // Menu Aide : guide de l'écran, puis premiers pas
     await page.click('text=Aide');

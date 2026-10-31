@@ -81,9 +81,9 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
           {unChoix && <Link to={cheminDe('choixEquipe')} state={{ retour: idActif }}>Changer</Link>}
         </div>
         <div className="bloc-moi">
-          <Avatar nom={nom} grand />
+          <Link className="moi-profil" to={cheminDe('profil')} title="Voir mon profil"><Avatar nom={nom} grand /></Link>
           <div>
-            <div className="moi-nom">{nom}</div>
+            <Link className="moi-nom moi-profil" to={cheminDe('profil')} title="Voir mon profil">{nom}</Link>
             {ctx.estCreateur && !simulation && <span className="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>}
             {simulation && <span className="badge-createur" title="Simulation des rôles en cours">simulation</span>}
             {compte.session.user.emailVerified === false && !simulation && <><Link className="moi-sortie" to="/verifier-email">Vérifier mon email</Link> · </>}
@@ -160,12 +160,12 @@ export function BandeauConnecte() {
 /* ---------- Page : coquille + contenu de l'écran ---------- */
 
 /** Écran de « Mon dashboard » ouvert sans équipe, alors qu'il en demande une (sauf écran permis sans équipe) */
-const SANS_EQUIPE_PERMIS = ['astuces'];
+const SANS_EQUIPE_PERMIS = ['astuces', 'profil'];
 // … et pour un administrateur : la vue d'organisation (Liste des ressources) et l'Administration, pour créer la première équipe
 const SANS_EQUIPE_ADMIN = ['listeRessources', 'monAdmin', 'adminCreateur'];
 
 /** L'écran fait-il partie de ceux que le rôle voit dans la barre latérale (menus de Mon dashboard) ? */
-const ecranPermis = (route: Route, menus: ReturnType<typeof menusDuRole>): boolean => route.section === 'general'
+const ecranPermis = (route: Route, menus: ReturnType<typeof menusDuRole>): boolean => route.id === 'profil' ? true : route.section === 'general'
   ? menus.suivi.some(m => m.id === route.id)
   : menus.moi.some(m => m.id === route.id || (m.enfants ?? []).some(e => e.id === route.id));
 
@@ -203,8 +203,12 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
         <header className="entete">
           <Bouton className="bouton-menu" aria-label="Menu" title="Menu" onClick={() => setMenuOuvert(!menuOuvert)}>☰</Bouton>
           <div className="fil">
-            <span className="discret">{general ? 'Suivi de mes équipes' : 'Mon dashboard'}</span><span className="sep">/</span><b>{route.titre}</b>
-            {general ? <BadgeTon texte="Lecture seule" ton="neutre" /> : <BadgeTon texte="Édition" ton="info" />}
+            {route.id === 'profil' ? <b>{route.titre}</b> : (
+              <>
+                <span className="discret">{general ? 'Suivi de mes équipes' : 'Mon dashboard'}</span><span className="sep">/</span><b>{route.titre}</b>
+                {general ? <BadgeTon texte="Lecture seule" ton="neutre" /> : <BadgeTon texte="Édition" ton="info" />}
+              </>
+            )}
           </div>
           <div className="ligne-flex">
             <div className="recherche" title="Recherche : prévue dans une prochaine version">Rechercher un projet, une personne…<span>⌘K</span></div>

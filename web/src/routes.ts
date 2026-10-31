@@ -29,6 +29,7 @@ export const ROUTES: readonly Route[] = [
   { id: 'astuces', chemin: '/trucs-et-astuces', titre: 'Trucs et astuces', section: 'moi' },
   { id: 'monAdmin', chemin: '/administration', titre: 'Administration', section: 'moi' },
   { id: 'adminCreateur', chemin: '/administration-createur', titre: 'Administration créateur', section: 'moi' },
+  { id: 'profil', chemin: '/mon-profil', titre: 'Mon profil', section: 'moi' },
   { id: 'choixEquipe', chemin: '/choix-equipe', titre: 'Choix de l’équipe', section: 'plein' },
   { id: 'composants', chemin: '/composants', titre: 'Catalogue des composants', section: 'plein' }
 ];

@@ -455,3 +455,12 @@ select.niveau-non { color: var(--pale); }
 /* Cartes d'information d'un écran (aucune équipe, écran non ouvert) */
 .encart-info-ecran { padding: 20px; max-width: 640px; }
 .lien-btn.moi-sortie { color: #7F8BA8; font: inherit; font-size: 11.5px; }
+
+/* ---------- Mon profil (clic sur l'avatar ou le nom du bloc utilisateur) ---------- */
+.moi-profil { text-decoration: none; color: inherit; } a.moi-nom { display: block; } a.moi-nom:hover { text-decoration: underline; }
+.carte-profil { padding: 16px 20px; }
+.profil-entete { gap: 20px; align-items: center; }
+.grille-profil { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.ligne-profil { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--bordure-fine, #e5e7eb); font-size: 14px; }
+.alerte-texte { color: #B25E09; }
+@media (max-width: 960px) { .grille-profil { grid-template-columns: minmax(0, 1fr); } }

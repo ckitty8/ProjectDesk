@@ -12,6 +12,7 @@ import { DailyEquipes } from './DailyEquipes';
 import { Dashboard } from './Dashboard';
 import { ListeRessources } from './ListeRessources';
 import { MesProjets } from './MesProjets';
+import { Profil } from './Profil';
 import { Projets } from './Projets';
 import { Ressources } from './Ressources';
 import { SaisirHeures } from './SaisirHeures';
@@ -32,5 +33,6 @@ export const ECRANS: Record<string, ComponentType> = {
   monTimesheet: SaisirHeures,
   monAdmin: Administration,
   adminCreateur: AdminCreateur,
-  astuces: Astuces
+  astuces: Astuces,
+  profil: Profil
 };
