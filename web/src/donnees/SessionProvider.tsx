@@ -35,6 +35,9 @@ export interface ValeurSession {
   ctx: ContexteDroits | null;
   /** Données à afficher (filtrées par le périmètre pendant une simulation) */
   donnees: Donnees | null;
+  /** Contexte et données SANS la réduction à l'équipe active (PorteeEquipe) : pour les fenêtres qui proposent des personnes ou des projets d'autres équipes */
+  ctxComplet: ContexteDroits | null;
+  donneesCompletes: Donnees | null;
   /** Tables dont la dernière lecture a échoué (données précédentes conservées) */
   tablesEnEchec: string[];
   comptesEnAttente: CompteEnAttente[];
@@ -130,9 +133,12 @@ function Interne({ children }: { children: ReactNode }) {
     return equipeAOuvrir(equipes, lireEquipeMemorisee(), vue.ctx.estAdmin)?.id ?? null;
   }, [vue, equipeChoisie]);
 
-  const etat: EtatSession = compteQ.isPending || (!!compte && donneesQ.isPending) ? 'chargement'
-    : compteQ.isError || donneesQ.isError ? 'erreur'
-    : !compte ? 'deconnecte' : 'pret';
+  // Sans compte, on est déconnecté même si une lecture de données en vol échoue juste après la déconnexion (« Non connecté » n'est pas une erreur)
+  const etat: EtatSession = compteQ.isPending ? 'chargement'
+    : compteQ.isError ? 'erreur'
+    : !compte ? 'deconnecte'
+    : donneesQ.isPending ? 'chargement'
+    : donneesQ.isError ? 'erreur' : 'pret';
   const erreurBrute = compteQ.error ?? donneesQ.error;
 
   const choixPourBandeau = useMemo(() => (brutes ? choixSimulation(brutes.ressources) : []), [brutes]);
@@ -151,6 +157,8 @@ function Interne({ children }: { children: ReactNode }) {
     compte,
     ctx: vue?.ctx ?? null,
     donnees: vue?.donnees ?? null,
+    ctxComplet: vue?.ctx ?? null,
+    donneesCompletes: vue?.donnees ?? null,
     tablesEnEchec: donneesQ.data?.echecs ?? [],
     comptesEnAttente: simulation && !vue?.ctx.estAdmin ? [] : comptesQ.data ?? [],
     equipeCourante,
@@ -167,6 +175,7 @@ function Interne({ children }: { children: ReactNode }) {
     seDeconnecter: async () => {
       setSimulation(null);
       definirSimulationActive(false);
+      await client.cancelQueries();            // une lecture en vol échouerait (« Non connecté ») une fois la session fermée
       await deconnecter();
       client.setQueryData(['compte'], null);
       client.removeQueries({ queryKey: ['donnees'] });

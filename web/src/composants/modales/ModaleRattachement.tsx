@@ -14,7 +14,8 @@ import { rattachesA } from '../../domaine/annuaire';
 import { personnesProposees } from '../../domaine/vues';
 
 export function ModaleRattachement({ equipeId, onFermer }: { equipeId: string; onFermer: () => void }) {
-  const { ctx, donnees, executer } = useSession();
+  /* Données complètes : on propose les personnes de toute l'application, pas seulement celles de l'équipe active */
+  const { ctxComplet: ctx, donneesCompletes: donnees, executer } = useSession();
   if (!ctx || !donnees) return null;
   const equipe = donnees.equipes.find(e => e.id === equipeId);
   const dejaLa = new Set(rattachesA(ctx, equipeId).map(x => x.r.id));

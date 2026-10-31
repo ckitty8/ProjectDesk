@@ -27,7 +27,8 @@ interface Props {
 }
 
 export function ModaleAffectation({ ressourceId, projetId, role, onFermer, onNouvellePersonne }: Props) {
-  const { ctx, donnees, equipeCourante, executer } = useSession();
+  /* Données complètes : on propose les personnes et les projets de toute l'application, pas seulement ceux de l'équipe active */
+  const { ctxComplet: ctx, donneesCompletes: donnees, equipeCourante, executer } = useSession();
   const [choisie, setChoisie] = useState(ressourceId ?? '');
   if (!ctx || !donnees) return null;
   const projetOrigine = donnees.projets.find(p => p.id === projetId);
