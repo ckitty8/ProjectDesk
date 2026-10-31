@@ -8,7 +8,7 @@
    ============================================================ */
 import { DROITS, ROLES_CHOISISSABLES, ROLES_PROJET } from './config';
 import type { Niveau, RoleAcces } from './config';
-import type { Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Ressource, ResponsableEquipe, RoleDeclare } from './types';
+import type { Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
 
 /** Simulation de rôle (créateur seul) : le rôle de la carte s'applique à la fiche choisie */
 export interface Simulation {
@@ -34,6 +34,8 @@ export interface ContexteDroits {
   ressources: readonly Ressource[];
   projets: readonly Projet[];
   affectations: readonly Affectation[];
+  /** Personnes rattachées à une autre équipe que la leur (migration 033) */
+  rattachements: readonly Rattachement[];
   responsablesEquipe: readonly ResponsableEquipe[];
   rolesAcces: readonly RoleDeclare[];
   rolesPrevus: readonly RoleDeclare[];
@@ -132,7 +134,7 @@ export function monRole(ctx: ContexteDroits): string {
 /* ---------- Matrice des droits ---------- */
 
 /** Le droit existe-t-il dans la table droits_roles ? (droits par menu : migration 037) */
-const droitEnBase = (ctx: ContexteDroits, droit: string): boolean => ctx.droitsRoles.some(d => d.droit === droit);
+export const droitEnBase = (ctx: ContexteDroits, droit: string): boolean => ctx.droitsRoles.some(d => d.droit === droit);
 
 /** Niveau d'un droit pour un rôle, d'après la matrice (« non » s'il manque). Filet de sécurité : un droit absent de la
  *  table (base sans la migration 037) reprend le niveau de son droit de repli, pour que les menus ne disparaissent pas. */

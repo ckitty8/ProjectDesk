@@ -9,6 +9,7 @@ import type { FormEvent } from 'react';
 import { Bouton, BoutonIcone } from '../composants/Bouton';
 import { Carte, EnteteEcran } from '../composants/Carte';
 import { Liste } from '../composants/Liste';
+import { ModaleAffectation } from '../composants/modales/ModaleAffectation';
 import { NouveauProjet } from '../composants/NouveauProjet';
 import { PanneauProjet } from '../composants/PanneauProjet';
 import { creer, modifier, supprimer } from '../donnees/api';
@@ -19,7 +20,7 @@ import { COMPTEURS_MEP, nombreEntier } from '../domaine/saisies';
 import type { MiseEnProduction } from '../domaine/types';
 import { misesEnProductionDe } from '../domaine/vues';
 
-type Panneau = { genre: 'nouveau' } | { genre: 'projet'; id: string } | null;
+type Panneau = { genre: 'nouveau' } | { genre: 'projet'; id: string } | { genre: 'affectation'; projetId: string } | null;
 
 export function MesProjets() {
   const { ctx, donnees, executer, notifier } = useSession();
@@ -103,7 +104,13 @@ export function MesProjets() {
           </>
         )}
       {panneau?.genre === 'nouveau' && <NouveauProjet equipeId={null} onFermer={() => setPanneau(null)} onCree={id => setPanneau({ genre: 'projet', id })} />}
-      {panneau?.genre === 'projet' && <PanneauProjet projetId={panneau.id} section="moi" onFermer={() => setPanneau(null)} />}
+      {panneau?.genre === 'projet' && (
+        <PanneauProjet projetId={panneau.id} section="moi" onFermer={() => setPanneau(null)}
+          onAssigner={id => setPanneau({ genre: 'affectation', projetId: id })} />
+      )}
+      {panneau?.genre === 'affectation' && (
+        <ModaleAffectation ressourceId={null} projetId={panneau.projetId} role={null} onFermer={() => setPanneau(null)} />
+      )}
     </div>
   );
 }

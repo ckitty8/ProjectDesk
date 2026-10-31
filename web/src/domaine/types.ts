@@ -32,6 +32,7 @@ export interface Ressource {
   dateArrivee?: Iso | null;
   dateDepart?: Iso | null;
   dateNaissance?: Iso | null;
+  typeContrat?: string | null;
 }
 
 export interface Projet {
@@ -112,8 +113,15 @@ export interface NoteDaily {
   modifieLe?: string | null;
 }
 
+/** Réglage d'envoi du daily d'un projet (table envois_daily_projet, migration 019) */
 export interface EnvoiDaily {
   projetId: string;
+  mode?: string;
+  heure?: string;
+  /** Numéros de jours (1 = lundi) séparés par des virgules */
+  jours?: string;
+  sansFeries?: boolean;
+  destinataires?: string;
 }
 
 export interface ObjectifJoursTravail {
@@ -131,6 +139,8 @@ export interface ResponsableEquipe {
 export interface Rattachement {
   equipeId: string;
   ressourceId: string;
+  /** Horodatage du rattachement */
+  creeLe?: string | null;
 }
 
 /** Rôle d'accès déclaré d'une fiche (table roles_acces, migration 030) */
@@ -153,6 +163,7 @@ export interface CompteAdmin {
 
 /** Valeur d'une liste métier (table valeurs_referentiel) : type, priorité, statut, rôle, absence… ; la liste est désignée par « referentielId » */
 export interface ValeurReferentiel {
+  id?: string;
   referentielId: string;
   libelle: string;
   couleur: string;
@@ -161,4 +172,12 @@ export interface ValeurReferentiel {
   cle?: string | null;
   abrege?: string | null;
   ordre?: number | null;
+  /** Valeur « système » : utilisée par les calculs, renommable mais non supprimable */
+  systeme?: boolean;
+}
+
+/** Liste métier (table referentiels) : stp, role, abs, methode, poste, contrat… */
+export interface Referentiel {
+  id: string;
+  nom: string;
 }

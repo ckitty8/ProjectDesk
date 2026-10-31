@@ -159,6 +159,8 @@ function BandeauConnecte() {
 
 /** Écran de « Mon dashboard » ouvert sans équipe, alors qu'il en demande une (sauf écran permis sans équipe) */
 const SANS_EQUIPE_PERMIS = ['astuces'];
+// … et pour un administrateur : la vue d'organisation (Liste des ressources) et l'Administration, pour créer la première équipe
+const SANS_EQUIPE_ADMIN = ['listeRessources', 'monAdmin', 'adminCreateur'];
 
 /** L'écran fait-il partie de ceux que le rôle voit dans la barre latérale (menus de Mon dashboard) ? */
 const ecranPermis = (route: Route, menus: ReturnType<typeof menusDuRole>): boolean => route.section === 'general'
@@ -180,7 +182,7 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
         <Link className="btn primaire" to={cheminDe(menus.suivi[0]?.id ?? menus.moi[0]?.id ?? 'choixEquipe')}>Ouvrir un écran disponible</Link>
       </Carte></div>
     );
-  } else if (route.section === 'moi' && !equipeCourante && !SANS_EQUIPE_PERMIS.includes(route.id)) {
+  } else if (route.section === 'moi' && !equipeCourante && !SANS_EQUIPE_PERMIS.includes(route.id) && !(ctx.estAdmin && SANS_EQUIPE_ADMIN.includes(route.id))) {
     contenu = (
       <div className="ecran"><Carte classe="encart-info-ecran">
         <h2>Aucune équipe ouverte</h2>

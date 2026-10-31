@@ -63,6 +63,7 @@ export function contexte(surcharge: Partial<ContexteDroits> = {}): ContexteDroit
     ressources: RESSOURCES,
     projets: PROJETS,
     affectations: AFFECTATIONS,
+    rattachements: [],
     responsablesEquipe: [{ equipeId: 'ia', ressourceId: 'r-anne' }],
     rolesAcces: [],
     rolesPrevus: [],

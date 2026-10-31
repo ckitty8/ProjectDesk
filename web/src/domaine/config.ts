@@ -197,3 +197,32 @@ export const DESCRIPTIONS_METHODES: Record<string, string> = {
   cycle_v: 'Cascade avec une phase de test en miroir de chaque phase de conception.',
   test_learn: 'Projets IA : expériences courtes, hypothèse et critère de succès fixés avant, puis décision.'
 };
+
+/* ---------- Rôles d'accès : affichage, niveaux de la matrice, envoi du daily ---------- */
+
+/** Affichage des rôles d’accès (couleurs des badges) ; « chef » et « sansCompte » sont des états d’affichage, pas des rôles choisissables */
+export const ROLES_ACCES = {
+  admin: { libelle: 'Administrateur', texte: '#0033AD', fond: '#E8EEFF' },
+  direction: { libelle: 'Direction', texte: '#3B2A8C', fond: '#E9E6FA' },
+  responsable: { libelle: 'Responsable d’équipe', texte: '#5B2DA0', fond: '#EDE6FA' },
+  projet: { libelle: 'Projet', texte: '#0B6B4F', fond: '#E3F5EC' },
+  utilisateur: { libelle: 'Utilisateur', texte: '#4A5363', fond: '#F1F3F7' },
+  lecture: { libelle: 'Lecture seule', texte: '#6B7485', fond: '#F4F5F7' },
+  chef: { libelle: 'Chef de projet', texte: '#8A5300', fond: '#FFF1D6' },
+  sansCompte: { libelle: 'Pas encore de compte', texte: '#A32020', fond: '#FDECEC' }
+} as const;
+
+/** Niveaux d'un droit dans la matrice : libellé et classe de couleur de la liste */
+export const NIVEAUX_DROIT: Record<Niveau, { libelle: string; classe: string }> = {
+  oui: { libelle: 'Oui', classe: 'niveau-oui' }, lecture: { libelle: 'Lecture', classe: 'niveau-lecture' }, non: { libelle: 'Non', classe: 'niveau-non' }
+};
+
+/** Modes d'envoi du daily d'un projet (porteur 2026-10-07, maquette envoi-daily-projet/) */
+export const MODES_ENVOI_DAILY = [
+  { valeur: 'aucun', libelle: 'Désactivé' },
+  { valeur: 'power_automate', libelle: 'Power Automate' },
+  { valeur: 'direct', libelle: 'Envoi direct' }
+] as const;
+
+/** Réglage d'envoi par défaut d'un projet qui n'a encore aucune ligne dans envois_daily_projet */
+export const ENVOI_DAILY_DEFAUT = { mode: 'aucun', heure: '09:30', jours: '1,2,3,4,5', sansFeries: true, destinataires: '' };

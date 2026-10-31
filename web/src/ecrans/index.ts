@@ -8,6 +8,7 @@ import { Conges } from './Conges';
 import { Daily } from './Daily';
 import { DailyEquipes } from './DailyEquipes';
 import { Dashboard } from './Dashboard';
+import { ListeRessources } from './ListeRessources';
 import { MesProjets } from './MesProjets';
 import { Projets } from './Projets';
 import { Ressources } from './Ressources';
@@ -25,6 +26,7 @@ export const ECRANS: Record<string, ComponentType> = {
   mesProjets: MesProjets,
   mesSprints: Sprints,
   conges: Conges,
+  listeRessources: ListeRessources,
   monTimesheet: SaisirHeures,
   astuces: Astuces
 };

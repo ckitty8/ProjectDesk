@@ -8,9 +8,8 @@
    ============================================================ */
 import { ajouterJours } from '../domaine/dates';
 import type { Absence, Affectation, CompteAdmin, Equipe, EnvoiDaily, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, ObjectifJoursTravail, Projet,
-  Rattachement, NoteDaily, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
+  Rattachement, NoteDaily, Referentiel, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
 import type { JourFerie } from '../domaine/calendrier';
-import type { Ligne } from './api';
 
 /** Données chargées, par clé applicative (mêmes clés que etat.d dans l'application actuelle) */
 export interface Donnees {
@@ -33,7 +32,7 @@ export interface Donnees {
   droitsRoles: readonly LigneDroit[];
   administrateurs: readonly CompteAdmin[];
   createur: readonly CompteAdmin[];
-  referentiels: readonly Ligne[];
+  referentiels: readonly Referentiel[];
   valeurs: readonly ValeurReferentiel[];
   joursFeries: readonly JourFerie[];
   notesProjet: readonly NoteDaily[];

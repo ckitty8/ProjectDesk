@@ -24,6 +24,8 @@ interface Props {
   onFermer: () => void;
   /** Écran d'origine : « general » = Suivi de mes équipes (toujours en lecture), « moi » = Mon dashboard (modifiable si j'ai le droit) */
   section?: 'general' | 'moi';
+  /** « + Membre » : ouvre la fenêtre d'affectation sur ce projet (écrans de Mon dashboard) */
+  onAssigner?: (projetId: string) => void;
 }
 
 /** Statuts proposés pour un projet : les valeurs actives du référentiel « stp » (Administration › Référentiels, où l'on en ajoute), plus le
@@ -32,7 +34,7 @@ export function statutsProposes(libellesActifs: readonly string[], p: Pick<Proje
   return !p.statut || libellesActifs.includes(p.statut) ? [...libellesActifs] : [p.statut, ...libellesActifs];
 }
 
-export function PanneauProjet({ projetId, onFermer, section = 'general' }: Props) {
+export function PanneauProjet({ projetId, onFermer, section = 'general', onAssigner }: Props) {
   const { ctx, donnees, executer, notifier } = useSession();
   useFermerAvecEchap(onFermer);
   const projet = donnees?.projets.find(p => p.id === projetId);
@@ -96,7 +98,7 @@ export function PanneauProjet({ projetId, onFermer, section = 'general' }: Props
             <Avatar nom={r.nom} /><span className="extensible">{r.nom}</span><BadgeRef valeurs={donnees.valeurs} referentielId="role" libelle={role} />
           </div>
         ))}
-        {modifiable && <div className="discret texte-12">Ajout de membres : disponible dans l’application actuelle (fenêtre d’affectation, vague D).</div>}
+        {modifiable && onAssigner && <button type="button" className="lien-btn" onClick={() => onAssigner(projetId)}>+ Membre</button>}
       </div>
       {modifiable && (
         <div style={{ borderTop: '1px solid var(--bordure-fine)', paddingTop: 12 }}>

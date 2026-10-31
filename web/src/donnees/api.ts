@@ -157,12 +157,19 @@ export async function obtenirJeton(): Promise<string> {
 /* ---------- 2. Équipes = organisations Neon Auth ---------- */
 export interface Organisation { id: string; name: string; slug?: string }
 export interface MembreOrganisation { id: string; userId: string; role: string; user?: { name?: string; email?: string } }
-export interface OrganisationDetaillee extends Organisation { members?: MembreOrganisation[] }
+export interface InvitationEquipe { id: string; email: string; role: string; status: string }
+export interface OrganisationDetaillee extends Organisation { members?: MembreOrganisation[]; invitations?: InvitationEquipe[] }
 export interface Invitation { id: string; status: string; organizationId?: string; organizationName?: string; role?: string; email?: string }
 
 export const listerOrganisations = () => appeler<Organisation[] | null>(auth('/organization/list'));
 export const lireOrganisation = (organizationId: string) =>
   appeler<OrganisationDetaillee>(auth('/organization/get-full-organization?organizationId=' + encodeURIComponent(organizationId)));
+export const creerOrganisation = (nom: string, slug: string) =>
+  appeler<Organisation>(auth('/organization/create'), json('POST', { name: nom, slug, keepCurrentActiveOrganization: true }));
+export const inviterMembre = (organizationId: string, email: string, role: string) =>
+  appeler(auth('/organization/invite-member'), json('POST', { organizationId, email, role }));
+/** Suppression d'une équipe côté Neon Auth (réservée au propriétaire de l'organisation) */
+export const supprimerOrganisation = (organizationId: string) => appeler(auth('/organization/delete'), json('POST', { organizationId }));
 export const activerOrganisation = (organizationId: string) => appeler(auth('/organization/set-active'), json('POST', { organizationId }));
 export const accepterInvitation = (invitationId: string) => appeler(auth('/organization/accept-invitation'), json('POST', { invitationId }));
 export const refuserInvitation = (invitationId: string) => appeler(auth('/organization/reject-invitation'), json('POST', { invitationId }));

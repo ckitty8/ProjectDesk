@@ -79,5 +79,5 @@ Total estimé : 24 à 26 sessions (à réviser après la phase 1).
 - [x] Phase 2 — Logique métier typée (2026-10-27)
 - [x] Phase 3 — Données et session (2026-10-27)
 - [x] Phase 4 — Composants de base (2026-10-27)
-- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [ ] D
+- [ ] Phase 5 — Écrans : [x] vague A (2026-10-27), [x] B (2026-10-31), [x] C (2026-10-31), [ ] D (1/2 : Liste des ressources et fenêtres, 2026-10-31)
 - [ ] Phase 6 — Bascule et nettoyage

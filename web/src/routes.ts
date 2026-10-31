@@ -26,7 +26,7 @@ export const ROUTES: readonly Route[] = [
   { id: 'mesProjets', chemin: '/mes-projets', titre: 'Projets et Roadmap', section: 'moi', migre: true },
   { id: 'mesSprints', chemin: '/sprints', titre: 'Projets et Roadmap', section: 'moi', migre: true },
   { id: 'conges', chemin: '/conges', titre: 'Gestion des ressources · Congés', section: 'moi', migre: true },
-  { id: 'listeRessources', chemin: '/liste-des-ressources', titre: 'Gestion des ressources · Liste des ressources', section: 'moi', migre: false },
+  { id: 'listeRessources', chemin: '/liste-des-ressources', titre: 'Gestion des ressources · Liste des ressources', section: 'moi', migre: true },
   { id: 'monTimesheet', chemin: '/saisir-mes-heures', titre: 'Saisir mes heures', section: 'moi', migre: true },
   { id: 'astuces', chemin: '/trucs-et-astuces', titre: 'Trucs et astuces', section: 'moi', migre: true },
   { id: 'monAdmin', chemin: '/administration', titre: 'Administration', section: 'moi', migre: false },

@@ -279,7 +279,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const VAGUE_C = path.resolve(__dirname, '../docs/maquettes/v2-vague-c');
     fs.mkdirSync(VAGUE_C, { recursive: true });
     const captureC = nom => page.screenshot({ path: path.join(VAGUE_C, nom + '.png') });
-    page.on('dialog', d => d.accept());                      // confirmations de suppression acceptées
+    let reponsePrompt = '';
+    page.on('dialog', d => d.accept(d.type() === 'prompt' ? reponsePrompt : undefined));      // confirmations acceptées ; réponse aux « prompt » réglable
     const toast = () => page.textContent('.notification');
 
     // Daily : un daily par projet, enregistrement automatique
@@ -453,11 +454,132 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => !document.querySelector('.panneau'));
     verifier('Panneau projet : suppression du projet (après confirmation), panneau fermé', await page.locator('.panneau').count() === 0);
 
-    /* ---------- Écran pas encore migré ---------- */
+    /* ---------- Vague D (1/2) : Liste des ressources et fenêtres ---------- */
+    const VAGUE_D = path.resolve(__dirname, '../docs/maquettes/v2-vague-d');
+    fs.mkdirSync(VAGUE_D, { recursive: true });
+    const captureD = nom => page.screenshot({ path: path.join(VAGUE_D, nom + '.png') });
     await menu('/liste-des-ressources');
+    await page.waitForSelector('.nav-ressources');
+    await captureD('12-liste-ressources');
+    verifier('Liste des ressources : navigation par équipe (responsable, projets), Postes et Types de contrat', await page.locator('.noeud.equipe').count() >= 4
+      && await page.locator('.noeud.projet').count() >= 9 && (await page.textContent('.nav-ressources')).includes('Types de contrat'));
+    verifier('Liste des ressources : l\'équipe ouverte est choisie, avec son responsable et ses personnes', (await page.textContent('.detail-ressources')).includes('Plateforme')
+      && (await page.textContent('.detail-ressources')).includes('Responsable de l’équipe') && await page.locator('.tableau-personnes tr[data-ressource]').count() === 4);
+    await page.fill('.nav-ressources input', 'hugo');
+    verifier('Liste des ressources : recherche dans la navigation (l\'équipe de la personne reste visible)', await page.locator('.noeud-groupe').count() === 1 && (await page.textContent('.nav-ressources')).includes('Data'));
+    await page.fill('.nav-ressources input', '');
+    await page.click('.noeud.projet:has-text("SSO & gestion des droits")');
+    await captureD('12b-liste-projet');
+    verifier('Liste des ressources : détail d\'un projet (Product Owners, membres, indicateurs)', (await page.textContent('.detail-ressources')).includes('Product Owners')
+      && await page.locator('.carte-po:not(.ajout)').count() >= 1 && await page.locator('.detail-kpi b').count() === 3);
+    await page.click('text=+ Ajouter un Product Owner');
+    await page.waitForSelector('.modale[role=dialog]');
+    await captureD('11b-affectation');
+    verifier('Fenêtre d\'affectation : projet d\'origine coché, rôle « Chef de projet » préchoisi', (await page.textContent('.modale h2')).includes('SSO & gestion des droits')
+      && await page.locator('.modale input[type=checkbox]:checked').count() >= 1);
+    await page.selectOption('.modale select[name=ressource]', { label: 'Julien Dubois — Plateforme · DevOps' }).catch(async () => {
+      await page.selectOption('.modale select[name=ressource]', { index: 1 });
+    });
+    await page.click('.modale button:has-text("Enregistrer les affectations")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    verifier('Fenêtre d\'affectation : enregistrée, la personne apparaît dans le projet', await page.locator('.tableau-personnes tr[data-ressource], .carte-po:not(.ajout)').count() >= 2);
+
+    // Fiche ressource
+    await page.click('.noeud.equipe:has-text("Plateforme")');
+    await page.locator('tr[data-ressource]', { hasText: 'Thomas Bernard' }).locator('text=Fiche').click();
+    await page.waitForSelector('.modale[role=dialog]');
+    await captureD('11c-fiche-ressource');
+    verifier('Fiche ressource : champs, rôle d\'accès en lecture, projets de la personne', (await page.textContent('.modale h2')) === 'Fiche de Thomas Bernard'
+      && (await page.textContent('.modale')).includes('Rôle d’accès') && (await page.textContent('.modale')).includes('Modifier ses projets'));
+    await page.fill('.modale input[name=dateArrivee]', '2026-06-01');
+    await page.fill('.modale input[name=dateDepart]', '2026-05-01');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForSelector('.notification.visible.erreur');
+    verifier('Fiche ressource : date de départ avant la date d\'arrivée refusée', (await toast()).includes('date de départ précède'));
+    await page.fill('.modale input[name=dateDepart]', '');
+    await page.fill('.modale input[name=dateArrivee]', '');
+    await page.fill('.modale input[name=capacite]', '90');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    await page.locator('tr[data-ressource]', { hasText: 'Thomas Bernard' }).locator('text=Fiche').click();
+    verifier('Fiche ressource : la modification est enregistrée', await page.inputValue('.modale input[name=capacite]') === '90');
+    await page.keyboard.press('Escape');
+
+    // Statut actif / inactif
+    await page.locator('tr[data-ressource]', { hasText: 'Julien Dubois' }).locator('button:has(.badge)').click();
+    await page.waitForSelector('.section-pliable:has-text("Inactifs")');
+    verifier('Liste des ressources : « Actif » rend la personne inactive (date de fin = aujourd\'hui), section Inactifs', await page.locator('tr.inactive').count() === 1);
+    await page.locator('tr.inactive button:has(.badge)').click();
+    await page.waitForFunction(() => !document.querySelector('tr.inactive'));
+    verifier('Liste des ressources : « Inactif » réactive la personne', await page.locator('tr.inactive').count() === 0);
+
+    // Nouvelle personne puis suppression
+    await page.click('text=+ Personne >> nth=-1');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.fill('.modale input[name=nom]', 'Nouvelle Recrue');
+    await page.click('.modale button:has-text("Enregistrer")');
+    await page.waitForSelector('tr[data-ressource]:has-text("Nouvelle Recrue")');
+    verifier('Nouvelle personne : créée dans l\'équipe et visible dans le tableau', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 1);
+    await page.locator('tr[data-ressource]', { hasText: 'Nouvelle Recrue' }).locator('text=Fiche').click();
+    await page.click('.modale button:has-text("Supprimer")');
+    await page.waitForFunction(() => !document.querySelector('tr[data-ressource]') || ![...document.querySelectorAll('tr[data-ressource]')].some(r => r.textContent.includes('Nouvelle Recrue')));
+    verifier('Fiche ressource : suppression de la personne (après confirmation)', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 0);
+
+    // Rattachement d'une personne d'une autre équipe
+    await page.click('text=+ Personne existante');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.selectOption('.modale select[name=ressource]', { index: 1 });
+    await page.click('.modale button:has-text("Ajouter à l’équipe")');
+    await page.waitForSelector('tr[data-rattachee]');
+    verifier('Rattachement : la personne s\'affiche dans « Rattachées depuis une autre équipe » avec son équipe d\'origine', (await page.textContent('tr[data-rattachee]')).includes('Équipe d’origine'));
+    await page.click('tr[data-rattachee] >> text=Retirer');
+    await page.waitForFunction(() => !document.querySelector('tr[data-rattachee]'));
+    verifier('Rattachement : « Retirer » supprime le rattachement seulement', await page.locator('tr[data-rattachee]').count() === 0);
+
+    // Postes et types de contrat
+    await page.click('.noeud:has-text("Postes")');
+    await page.waitForSelector('.detail-ressources .tableau');
+    const nbPostes = await page.locator('.detail-ressources tbody tr').count();
+    reponsePrompt = 'Poste de test';
+    await page.click('.detail-ressources button:has-text("+ Ajouter")');
+    await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n + 1, nbPostes);
+    verifier('Postes : ajout d\'une valeur (administrateur)', (await page.textContent('.detail-ressources')).includes('Poste de test'));
+    reponsePrompt = 'Poste de test renommé';
+    await page.locator('tr:has-text("Poste de test") button[title^="Renommer"]').click();
+    await page.waitForSelector('text=Poste de test renommé');
+    await page.locator('tr:has-text("Poste de test renommé") button[title="Supprimer"]').click();
+    await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n, nbPostes);
+    verifier('Postes : renommer puis supprimer une valeur inutilisée', !(await page.textContent('.detail-ressources')).includes('Poste de test'));
+
+    // Équipe : modification, membres et invitation, création puis suppression
+    await page.click('.noeud.equipe:has-text("Plateforme")');
+    await page.click('text=Modifier l’équipe');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.waitForSelector('.modale >> text=camille@test.fr');
+    await captureD('11d-equipe');
+    verifier('Fenêtre équipe : nom, préfixe, type, membres (comptes de connexion)', (await page.inputValue('.modale input[name=nom]')) === 'Plateforme'
+      && (await page.textContent('.modale')).includes('camille@test.fr'));
+    await page.fill('.modale input[type=email]', 'nouveau.compte@test.fr');
+    await page.click('.modale button:has-text("Inviter")');
+    await page.waitForSelector('.modale >> text=invitation en attente');
+    verifier('Fenêtre équipe : invitation par email, affichée « en attente »', (await page.textContent('.modale')).includes('nouveau.compte@test.fr'));
+    await page.keyboard.press('Escape');
+    await page.click('text=+ Ajouter une équipe');
+    await page.fill('.modale input[name=nom]', 'Équipe Test');
+    await page.fill('.modale input[name=prefixe]', 'et');
+    await page.click('.modale button:has-text("Créer")');
+    await page.waitForSelector('.noeud.equipe:has-text("Équipe Test")');
+    verifier('Nouvelle équipe : créée (organisation et ligne equipes), visible dans la navigation', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 1);
+    await page.click('.noeud.equipe:has-text("Équipe Test")');
+    await page.click('.detail-entete button[title="Supprimer l’équipe"]');
+    await page.waitForFunction(() => ![...document.querySelectorAll('.noeud.equipe')].some(n => n.textContent.includes('Équipe Test')));
+    verifier('Équipe vide : suppression possible (après confirmation)', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 0);
+
+    /* ---------- Écran pas encore migré ---------- */
+    await menu('/administration');
     await page.waitForSelector('text=pas encore migré');
     verifier('Écran pas encore migré : page explicative avec lien vers l\'application actuelle', (await texte()).includes('pas encore migré') && await page.locator('a[href="/app/"]').count() >= 1
-      && page.url().endsWith('/v2/liste-des-ressources'));
+      && page.url().endsWith('/v2/administration'));
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
