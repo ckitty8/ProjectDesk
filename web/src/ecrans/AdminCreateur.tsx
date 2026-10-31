@@ -1,31 +1,27 @@
 /* ============================================================
    Mon dashboard › Administration créateur (créateur seul, porteur 2026-10-23 ; maquettes simulation-roles/, simulation-six-roles/, matrice-createur/,
    qui-a-quel-role/ ; portage de app/js/simulation.js et roles.js — phase 5, vague D)
-   Onglets : Simulation des rôles, Matrice des droits, Qui a quel rôle.
+   Onglets : Simulation des rôles, Qui a quel rôle (la Matrice des droits est dans Administration, depuis 2.77).
    - Simulation : voir l'application exactement comme une personne d'un rôle donné, en LECTURE SEULE (l'écriture est refusée par le client API : la base
      appliquerait les droits réels du créateur). Une carte par rôle (les 6 rôles d'accès puis « Compte en attente »), avec la personne à simuler.
-   - Matrice des droits : une colonne par rôle ; modifiable par le créateur seul (migration 041) : chaque changement est enregistré aussitôt (droits_roles).
    - Qui a quel rôle : tableau par rôle (porteur 2026-10-27), calculé d'après les données.
    ============================================================ */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, BadgeTon } from '../composants/Badge';
+import { Avatar } from '../composants/Badge';
 import { Bouton } from '../composants/Bouton';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
 import { Onglets } from '../composants/Onglets';
-import { modifier } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { ROLE_SANS_EQUIPE } from '../donnees/simulation';
-import { lignesSection, parRole, rolesAffiches, sectionsMatrice } from '../domaine/admin';
+import { parRole, rolesAffiches } from '../domaine/admin';
 import { roleChoisi } from '../domaine/annuaire';
-import { NIVEAUX_DROIT, PERIMETRES, ROLES_ACCES, ROLES_CHOISISSABLES } from '../domaine/config';
-import type { Niveau } from '../domaine/config';
+import { ROLES_ACCES } from '../domaine/config';
 import { aujourdhui } from '../domaine/dates';
-import { droitEnBase, niveauDuRole } from '../domaine/droits';
 import { ressourcesPresentes } from '../domaine/vues';
 import { cheminDe } from '../routes';
 
-const ONGLETS = [{ id: 'simulation', libelle: 'Simulation des rôles' }, { id: 'matrice', libelle: 'Matrice des droits' }, { id: 'qui', libelle: 'Qui a quel rôle' }];
+const ONGLETS = [{ id: 'simulation', libelle: 'Simulation des rôles' }, { id: 'qui', libelle: 'Qui a quel rôle' }];
 
 /** Onglet Simulation : une carte par rôle, choix de la personne (toutes les fiches actives, celles qui ont déjà ce rôle en tête) */
 function Simulation() {
@@ -81,86 +77,6 @@ function Simulation() {
   );
 }
 
-/** Onglet Matrice des droits : une colonne par rôle, la ligne « Périmètre », puis les menus en deux sections (Suivi de mes équipes, Mon dashboard) */
-function Matrice() {
-  const { ctx, executer } = useSession();
-  if (!ctx) return null;
-  /* Enregistre un niveau de droit. La Data API répond « succès » avec zéro ligne quand la base refuse en silence (règle RLS) :
-     ce cas est signalé comme une erreur, sinon le niveau reprendrait son ancienne valeur sans explication. */
-  const enregistrer = (role: string, droit: string, niveau: Niveau) => executer(async () => {
-    const lignes = await modifier('droits_roles', { role: 'eq.' + role, droit: 'eq.' + droit }, { niveau });
-    if (!lignes.length) throw new Error('Droit non enregistré : la base l’a refusé (vérifiez que vous êtes connecté en tant que créateur).');
-  }, 'droitsRoles');
-  const modifiable = ctx.estCreateur, nbColonnes = 3 + ROLES_CHOISISSABLES.length;
-  const createur = (contenu: React.ReactNode) => <td className="centre">{contenu}</td>;
-  const cellule = (role: string, droit: string) => {
-    const niveau = niveauDuRole(ctx, role, droit);
-    // Figée hors créateur, pour Administrateur × Rôles (garde-fou de la base, migration 031), et pour un droit absent de la table droits_roles
-    const fixe = !modifiable || (role === 'admin' && droit === 'roles') || !droitEnBase(ctx, droit);
-    return (
-      <td key={role} className="centre">
-        <select className={`champ champ-mini ${NIVEAUX_DROIT[niveau].classe}`} aria-label={`${droit} · ${role}`} value={niveau} disabled={fixe}
-          onChange={e => void enregistrer(role, droit, e.target.value as Niveau)}>
-          {Object.entries(NIVEAUX_DROIT).map(([valeur, n]) => <option key={valeur} value={valeur}>{n.libelle}</option>)}
-        </select>
-      </td>
-    );
-  };
-  return (
-    <>
-      <Carte>
-        <div className="carte-titre">
-          <h2>Matrice des droits</h2>
-          <span className="discret">Oui = modifie · Lecture = voit · Non = ni l’un ni l’autre — sur le périmètre du rôle{modifiable ? '' : ' · consultation'}</span>
-        </div>
-        <div className="defilement-x">
-          <table className="tableau tableau-matrice">
-            <thead>
-              <tr><th>Menu / onglet</th><th>Ce qu’on peut y faire</th><th className="centre">Créateur</th>{ROLES_CHOISISSABLES.map(r => <th key={r} className="centre">{ROLES_ACCES[r].libelle}</th>)}</tr>
-            </thead>
-            <tbody>
-              <tr className="groupe">
-                <td><b>Périmètre</b></td><td className="discret">ce que couvre le rôle</td>
-                {createur(<span className="discret texte-12">{PERIMETRES.createur}</span>)}
-                {ROLES_CHOISISSABLES.map(r => <td key={r} className="centre discret texte-12">{PERIMETRES[r]}</td>)}
-              </tr>
-              {sectionsMatrice.map(sec => (
-                <MatriceSection key={sec.cle} cle={sec.cle} libelle={sec.libelle} colonnes={nbColonnes} cellule={cellule} createur={createur} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Carte>
-      <div className="discret texte-12">
-        Les droits de menu et d’onglet règlent l’affichage ; ce qu’on peut modifier est appliqué par la base. Un onglet « Non » disparaît de la
-        page ; si tous ses onglets sont « Non », le menu disparaît aussi. Un rôle se donne dans Mon dashboard › Administration › Rôles.
-      </div>
-    </>
-  );
-}
-
-function MatriceSection({ cle, libelle, colonnes, cellule, createur }: {
-  cle: string; libelle: string; colonnes: number; cellule: (role: string, droit: string) => React.ReactNode; createur: (c: React.ReactNode) => React.ReactNode;
-}) {
-  const lignes = lignesSection(cle);
-  /* Première colonne : « ↳ Onglet « … » » pour un droit d'onglet (migration 038), sinon le nom du menu, écrit seulement sur la première ligne du menu */
-  const nom = (d: (typeof lignes)[number], i: number) => (d.onglet ? <span className="ligne-onglet">↳ Onglet « {d.onglet} »</span>
-    : i && lignes[i - 1]?.menu === d.menu ? null : <b>{d.menu}</b>);
-  return (
-    <>
-      <tr className="groupe"><td colSpan={colonnes}><b>{libelle}</b></td></tr>
-      {lignes.map((d, i) => (
-        <tr key={(d.cle ?? 'tous') + d.menu + i}>
-          <td>{nom(d, i)}</td><td>{d.libelle}</td>
-          {d.cle
-            ? <>{createur(<BadgeTon texte="Oui · fixe" ton="violet" />)}{ROLES_CHOISISSABLES.map(r => cellule(r, d.cle ?? ''))}</>
-            : <>{createur(<BadgeTon texte="Tous" ton="neutre" />)}{ROLES_CHOISISSABLES.map(r => <td key={r} className="centre"><BadgeTon texte="Tous" ton="neutre" /></td>)}</>}
-        </tr>
-      ))}
-    </>
-  );
-}
-
 /** Onglet Qui a quel rôle : tableau par rôle (nom, nombre de personnes, menus qu'il ouvre), puis une ligne par personne */
 function QuiARole() {
   const { ctx, comptesEnAttente } = useSession();
@@ -204,13 +120,13 @@ export function AdminCreateur() {
   if (!ctx) return null;
   return (
     <div className="ecran ecran-large">
-      <EnteteEcran titre="Administration créateur" sousTitre="Réservée au créateur · simulation des rôles, matrice des droits, qui a quel rôle" />
+      <EnteteEcran titre="Administration créateur" sousTitre="Réservée au créateur · simulation des rôles, qui a quel rôle" />
       {!ctx.estCreateur
         ? <Carte><Vide texte="Écran réservé au créateur." /></Carte>
         : (
           <>
             <Onglets liste={ONGLETS} actif={onglet} onChoisir={setOnglet} />
-            {onglet === 'matrice' ? <Matrice /> : onglet === 'qui' ? <QuiARole /> : <Simulation />}
+            {onglet === 'qui' ? <QuiARole /> : <Simulation />}
           </>
         )}
     </div>

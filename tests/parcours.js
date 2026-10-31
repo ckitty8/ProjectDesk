@@ -749,6 +749,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Simulation « Compte en attente » : écran d\'attente d\'accès', (await texte()).includes('Votre compte est créé'));
     await page.click('text=Revenir à mon rôle de créateur');
     await page.waitForSelector('.grille-simulation');
+    verifier('Administration créateur : plus d\'onglet « Matrice des droits » (déplacée dans Administration)', await page.locator('[role=tab]:has-text("Matrice des droits")').count() === 0);
+    await menu('/administration');
+    await page.waitForSelector('.onglets');
     await page.click('[role=tab]:has-text("Matrice des droits")');
     await page.waitForSelector('.tableau-matrice');
     await captureD('32-matrice-droits');
@@ -761,6 +764,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
     await celluleDroit.selectOption(avantNiveau);
     verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
+    await menu('/administration-createur');
+    await page.waitForSelector('.grille-simulation');
     await page.click('[role=tab]:has-text("Qui a quel rôle")');
     await page.waitForSelector('.tableau-qui-a-quel-role');
     await captureD('27b-roles');

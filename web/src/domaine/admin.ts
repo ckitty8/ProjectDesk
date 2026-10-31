@@ -36,7 +36,9 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
     { id: 'referentiels', libelle: 'Référentiels', compte: n.referentiels },
     { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
-    ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhui()).length }] : [])
+    ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhui()).length }] : []),
+    // Matrice des droits : créateur seul (elle règle les droits de tous les rôles) ; pas de droit d'onglet dans la matrice
+    ...(ctx.estCreateur ? [{ id: 'matrice', libelle: 'Matrice des droits', compte: undefined }] : [])
   ];
   return liste.filter(o => ongletPermis(ctx, 'monAdmin', o.id));
 }

@@ -13,6 +13,7 @@ import { Referentiels } from './administration/Referentiels';
 import { Roles } from './administration/Roles';
 import { Equipes } from './administration/Equipes';
 import { AucunOnglet, EnteteEcran } from '../composants/Carte';
+import { MatriceDroits } from './administration/MatriceDroits';
 import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
 import { ongletsAdministration } from '../domaine/admin';
@@ -42,6 +43,7 @@ export function Administration() {
           {onglet === 'feries' && <JoursFeries modifiable={modifieReferentiels} />}
           {onglet === 'envoiDaily' && <EnvoiDaily />}
           {onglet === 'roles' && <Roles />}
+          {onglet === 'matrice' && <MatriceDroits />}
         </>
       )}
     </div>
