@@ -6,6 +6,8 @@ import { STATUTS_FEUILLE, TONS } from '../domaine/config';
 import type { StatutFeuille, Ton } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
 import { initiales } from '../domaine/calculs';
+import { couleurDe } from '../domaine/referentiels';
+import type { ValeurReferentiel } from '../domaine/types';
 
 /** Badge (statut, rôle…) : couleur du texte et fond teinté (par défaut, mélange de la couleur avec du blanc) */
 export function Badge({ texte, couleur, fond }: { texte: string; couleur: string; fond?: string }) {
@@ -35,3 +37,8 @@ export const Avatar = ({ nom, grand = false }: { nom: string; grand?: boolean })
   <span className={'avatar' + (grand ? ' grand' : '')}>{initiales(nom)}</span>;
 
 export const Code = ({ texte }: { texte: string }) => <span className="code">{texte}</span>;
+
+/** Badge d'une valeur de liste métier (référentiel) : sa couleur est celle administrée en base ; rien si le libellé est vide */
+export function BadgeRef({ valeurs, referentielId, libelle }: { valeurs: readonly ValeurReferentiel[]; referentielId: string; libelle?: string | null }) {
+  return libelle ? <Badge texte={libelle} couleur={couleurDe(valeurs, referentielId, libelle)} /> : null;
+}

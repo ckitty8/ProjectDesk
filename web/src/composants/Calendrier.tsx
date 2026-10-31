@@ -10,6 +10,7 @@ import { Avatar } from './Badge';
 import { Bouton } from './Bouton';
 import { abregeAbsence, caseJour, totalAbsences } from '../domaine/calendrier';
 import type { CaseJour, ContexteMois } from '../domaine/calendrier';
+import { absentsDuJour } from '../domaine/calculs';
 import { aujourdhui, depuisIso, JOURS_INITIALES, libelleMois, nombre } from '../domaine/dates';
 import { teinte } from '../domaine/couleurs';
 import type { Ressource } from '../domaine/types';
@@ -17,6 +18,8 @@ import type { Ressource } from '../domaine/types';
 /** Ligne du calendrier : titre de groupe (unité, projet) ou personne ; « niveau » = retrait */
 export type LigneCalendrier =
   | { genre: 'groupe'; id: string; contenu: ReactNode; niveau: number; secondaire?: boolean }
+  /** Synthèse d'un projet : absents / membres pour chaque jour ouvré */
+  | { genre: 'synthese'; id: string; contenu: ReactNode; niveau: number; ids: readonly string[] }
   | { genre: 'personne'; ressource: Pick<Ressource, 'id' | 'nom' | 'dateNaissance'>; niveau: number; complement?: ReactNode;
       /** Case modifiable par la personne connectée (droit de la matrice) */
       modifiable?: boolean };
@@ -83,7 +86,21 @@ export function Calendrier({ ctx, lignes, onBasculer }: PropsCalendrier) {
           </tr>
         </thead>
         <tbody>
-          {lignes.map(ligne => ligne.genre === 'groupe'
+          {lignes.map(ligne => ligne.genre === 'synthese'
+            ? (
+              <tr key={ligne.id} className="ligne-synthese">
+                <td className="nom"><span className="ligne-flex" style={{ paddingLeft: ligne.niveau * 16 }}>{ligne.contenu}</span></td>
+                {ctx.jours.map(j => {
+                  if (caseJour(ctx, { id: '', dateNaissance: null }, j).ferme) return <td key={j} className="ferme" />;
+                  const s = absentsDuJour(ligne.ids, j, ctx.liste);
+                  return s.niveau === 'aucun'
+                    ? <td key={j} className="synthese-vide">·</td>
+                    : <td key={j} className={`synthese ${s.niveau}`} title={`${nombre(s.absents)} absent(s) sur ${s.total}`}>{nombre(s.absents)}/{s.total}</td>;
+                })}
+                {ctx.editable && <td />}
+              </tr>
+            )
+            : ligne.genre === 'groupe'
             ? (
               <tr key={ligne.id} className="groupe">
                 <td colSpan={ctx.jours.length + (ctx.editable ? 2 : 1)}>

@@ -11,6 +11,8 @@ import type { ReactNode } from 'react';
 
 interface PropsFenetre {
   titre: string;
+  /** Ligne au-dessus du titre (ex. l'équipe d'un projet) */
+  surtitre?: ReactNode;
   onFermer: () => void;
   children: ReactNode;
   /** Boutons d'action en bas (Annuler, Enregistrer…) */
@@ -26,14 +28,14 @@ function useFermerAvecEchap(onFermer: () => void): void {
   }, [onFermer]);
 }
 
-function Cadre({ classe, titre, onFermer, children, pied }: PropsFenetre & { classe: 'panneau' | 'modale' }) {
+function Cadre({ classe, titre, surtitre, onFermer, children, pied }: PropsFenetre & { classe: 'panneau' | 'modale' }) {
   useFermerAvecEchap(onFermer);
   return (
     <>
       <div className="voile" data-testid="voile" onClick={onFermer} />
       <div className={classe} role="dialog" aria-modal="true" aria-label={titre}>
         <div className="panneau-entete">
-          <h2>{titre}</h2>
+          <div className="extensible">{surtitre}<h2>{titre}</h2></div>
           <button type="button" className="fermer" aria-label="Fermer" onClick={onFermer}>✕</button>
         </div>
         <div className="panneau-corps">{children}</div>

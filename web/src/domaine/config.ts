@@ -71,7 +71,7 @@ export const PERIMETRES = {
 };
 
 /** Statuts d'une mise en production (même liste que la contrainte de la table mises_en_production, migration 039) */
-export const STATUTS_MEP = [
+export const STATUTS_MEP: readonly { valeur: string; libelle: string; ton: Ton }[] = [
   { valeur: 'prevue', libelle: 'Prévue', ton: 'info' },
   { valeur: 'faite', libelle: 'Faite', ton: 'succes' },
   { valeur: 'reportee', libelle: 'Reportée', ton: 'attention' }

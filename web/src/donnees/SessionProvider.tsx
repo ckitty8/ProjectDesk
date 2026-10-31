@@ -15,12 +15,13 @@ import { activerOrganisation, connecter, deconnecter, definirSimulationActive } 
 import { chargerComptesEnAttente, chargerRoles, equipeAOuvrir, lireEquipeMemorisee, memoriserEquipe, ouvrirCompte } from './compte';
 import type { Compte, CompteEnAttente, RolesEquipes } from './compte';
 import { chargerDonnees } from './chargement';
+import { lireTable } from './chargement';
 import type { ResultatChargement } from './chargement';
 import { construireVue, identiteReelle } from './contexte';
 import { mesEquipes } from '../domaine/droits';
 import type { ContexteDroits, Simulation } from '../domaine/droits';
 import { choixSimulation } from './simulation';
-import type { Donnees } from './tables';
+import type { CleTable, Donnees } from './tables';
 
 export type EtatSession = 'chargement' | 'deconnecte' | 'erreur' | 'pret';
 
@@ -47,6 +48,8 @@ export interface ValeurSession {
   seDeconnecter: () => Promise<void>;
   /** Relit les données (après une écriture, ou sur demande) */
   recharger: () => Promise<void>;
+  /** Relit seulement certaines tables (après une écriture) et met à jour l'affichage ; une table illisible garde ses données */
+  rechargerTables: (...cles: CleTable[]) => Promise<void>;
   /** Relit tout : compte, équipes, invitations, données (après une connexion, une invitation acceptée…) */
   actualiser: () => Promise<void>;
 }
@@ -152,6 +155,12 @@ function Interne({ children }: { children: ReactNode }) {
       navigate('/', { replace: true });      // la prochaine connexion repart de l'écran d'arrivée, pas de l'écran quitté
     },
     recharger: async () => { await client.invalidateQueries({ queryKey: ['donnees'] }); },
+    rechargerTables: async (...cles) => {
+      const lues = await Promise.all(cles.map(async cle => ({ cle, lignes: await lireTable(cle) })));
+      client.setQueryData<ResultatChargement>(['donnees'], ancien => (ancien
+        ? { ...ancien, donnees: { ...ancien.donnees, ...Object.fromEntries(lues.map(l => [l.cle, l.lignes])) } as unknown as Donnees }
+        : ancien));
+    },
     actualiser: async () => { await client.invalidateQueries(); }
   };
 

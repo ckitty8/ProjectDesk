@@ -3,7 +3,9 @@
    Lecture : indicateurs (projets actifs, avancement, risques, occupation) et projets à surveiller (objectifs OKR retirés : porteur 2026-10-25).
    Les calculs viennent de domaine/calculs.ts ; l'écran ne recalcule rien.
    ============================================================ */
+import { useState } from 'react';
 import { Badge } from '../composants/Badge';
+import { PanneauProjet } from '../composants/PanneauProjet';
 import { Carte, EnteteEcran, Kpi, Vide } from '../composants/Carte';
 import { Aide } from '../composants/Aide';
 import { useSession } from '../donnees/SessionProvider';
@@ -15,6 +17,7 @@ import { AIDES } from '../domaine/textes';
 
 export function Dashboard() {
   const { donnees } = useSession();
+  const [ouvert, setOuvert] = useState<string | null>(null);
   if (!donnees) return null;
   const jour = aujourdhui();
   const { projets, ressources, temps, absences, equipes, valeurs } = donnees;
@@ -41,7 +44,7 @@ export function Dashboard() {
             <table className="tableau">
               <tbody>
                 {aSurveiller.map(p => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className="cliquable" tabIndex={0} onClick={() => setOuvert(p.id)} onKeyDown={e => { if (e.key === 'Enter') setOuvert(p.id); }}>
                     <td>
                       {p.nom}
                       <div className="discret texte-12">{equipes.find(e => e.id === p.equipeId)?.nom} · échéance {formatCourt(p.fin)}</div>
@@ -53,6 +56,7 @@ export function Dashboard() {
             </table>
           )}
       </Carte>
+      {ouvert && <PanneauProjet projetId={ouvert} onFermer={() => setOuvert(null)} />}
     </div>
   );
 }

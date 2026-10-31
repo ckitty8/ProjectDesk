@@ -42,7 +42,11 @@ export interface Projet {
   chefId?: string | null;
   statut: string;
   avancement?: number | null;
+  debut?: Iso | null;
   fin?: Iso | null;
+  description?: string | null;
+  /** Méthode de gestion : Agile Scrum, Agile Kanban, Cascade, Cycle en V, Test & Learn */
+  methode?: string | null;
 }
 
 export interface Affectation {
@@ -68,20 +72,44 @@ export interface TempsSaisi {
   heures: number | string | null;
 }
 
+/** Feuille de temps d'une personne pour un mois (« semaine » = 1er jour du mois) : en_saisie, soumise, validee ou a_completer */
 export interface FeuilleTemps {
   ressourceId: string;
   semaine: Iso;
   statut?: string;
+  commentaire?: string | null;
 }
 
+/** Sprint saisi pour un projet (Mon dashboard › Projets et Roadmap › Sprints) ; « numero » = clé technique, « numeroSprint » = le « Sprint N » affiché */
 export interface SprintProjet {
   projetId: string;
   numero: number;
+  numeroSprint?: number | null;
+  annee?: number | null;
+  nom?: string | null;
+  debut?: Iso | null;
+  fin?: Iso | null;
 }
 
+/** Mise en production d'un projet (migrations 039 et 044) : date, version, statut (voir STATUTS_MEP) et tickets livrés */
 export interface MiseEnProduction {
   id?: string;
   projetId: string;
+  jour?: Iso;
+  version?: string | null;
+  statut?: string;
+  nbUs?: number | null;
+  nbBugs?: number | null;
+  nbIncidents?: number | null;
+}
+
+/** Note de daily d'une personne pour un projet et un jour (table notes_daily_projet) */
+export interface NoteDaily {
+  userId: string;
+  projetId: string;
+  jour: Iso;
+  texte: string;
+  modifieLe?: string | null;
 }
 
 export interface EnvoiDaily {

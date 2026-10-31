@@ -35,6 +35,8 @@ export interface ContexteMois {
   types: readonly TypeAbsence[];
   /** Absences indexées par « ressourceId|jour » */
   absences: ReadonlyMap<string, Absence>;
+  /** Les mêmes absences en liste (synthèse des absents par projet) */
+  liste: readonly Absence[];
   editable: boolean;
 }
 
@@ -45,6 +47,7 @@ export function contexteMois(annee: number, mois: number, feries: readonly JourF
     feries: new Map(feries.map(f => [f.jour, f.libelle || 'Jour férié'])),
     types,
     absences: new Map(absences.map(a => [`${a.ressourceId}|${a.jour}`, a])),
+    liste: absences,
     editable
   };
 }

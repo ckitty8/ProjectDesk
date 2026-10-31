@@ -18,10 +18,10 @@ export interface Route {
 
 export const ROUTES: readonly Route[] = [
   { id: 'dashboard', chemin: '/dashboard', titre: 'Dashboard général', section: 'general', migre: true },
-  { id: 'dailyEquipes', chemin: '/daily-des-equipes', titre: 'Daily des équipes', section: 'general', migre: false },
-  { id: 'projets', chemin: '/projets', titre: 'Projets et Roadmap', section: 'general', migre: false },
-  { id: 'ressources', chemin: '/ressources', titre: 'Gestion des ressources', section: 'general', migre: false },
-  { id: 'timesheet', chemin: '/timesheet', titre: 'Timesheet', section: 'general', migre: false },
+  { id: 'dailyEquipes', chemin: '/daily-des-equipes', titre: 'Daily des équipes', section: 'general', migre: true },
+  { id: 'projets', chemin: '/projets', titre: 'Projets et Roadmap', section: 'general', migre: true },
+  { id: 'ressources', chemin: '/ressources', titre: 'Gestion des ressources', section: 'general', migre: true },
+  { id: 'timesheet', chemin: '/timesheet', titre: 'Timesheet', section: 'general', migre: true },
   { id: 'daily', chemin: '/daily', titre: 'Daily', section: 'moi', migre: false },
   { id: 'mesProjets', chemin: '/mes-projets', titre: 'Projets et Roadmap', section: 'moi', migre: false },
   { id: 'mesSprints', chemin: '/sprints', titre: 'Projets et Roadmap', section: 'moi', migre: false },

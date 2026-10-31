@@ -8,7 +8,7 @@
    ============================================================ */
 import { ajouterJours } from '../domaine/dates';
 import type { Absence, Affectation, CompteAdmin, Equipe, EnvoiDaily, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, ObjectifJoursTravail, Projet,
-  Rattachement, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
+  Rattachement, NoteDaily, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
 import type { JourFerie } from '../domaine/calendrier';
 import type { Ligne } from './api';
 
@@ -36,7 +36,7 @@ export interface Donnees {
   referentiels: readonly Ligne[];
   valeurs: readonly ValeurReferentiel[];
   joursFeries: readonly JourFerie[];
-  notesProjet: readonly Ligne[];
+  notesProjet: readonly NoteDaily[];
 }
 export type CleTable = keyof Donnees;
 
@@ -68,7 +68,7 @@ const CLES_UNIQUES: Partial<Record<CleTable, string>> = {
 export const ordreDe = (cle: CleTable): string => [TRIS[cle], CLES_UNIQUES[cle] || 'id'].filter(Boolean).join(',');
 
 // Les notes de daily (celles que je peux lire, voir peut_lire_daily_projet) sont limitées aux JOURS_DAILY derniers jours
-const JOURS_DAILY = 90;
+export const JOURS_DAILY = 90;
 
 /** Filtres de lecture d'une table (aujourd'hui en paramètre pour rester testable) */
 export function filtresDe(cle: CleTable, aujourdhuiIso: Iso): Record<string, string> {

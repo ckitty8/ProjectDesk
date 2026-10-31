@@ -148,11 +148,138 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Trucs et astuces › Test & Learn : boucle, carte d\'expérience, phases IA et indicateurs', (await texte()).includes('La boucle Test & Learn')
       && (await texte()).includes('Carte d’expérience') && (await texte()).includes('Les phases d’un projet IA') && (await texte()).includes('Ce que l’on mesure'));
 
+    /* ---------- Vague B : Projets et Roadmap, Timesheet, Daily des équipes, Gestion des ressources ---------- */
+    const VAGUE_B = path.resolve(__dirname, '../docs/maquettes/v2-vague-b');
+    fs.mkdirSync(VAGUE_B, { recursive: true });
+    const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
+    const menu = fin => page.click(`a.menu-lien[href$="${fin}"]`);
+
+    // Dashboard : un projet à surveiller ouvre le panneau du projet (lecture seule)
+    await menu('/dashboard');
+    await page.click('tr.cliquable:has-text("App terrain hors-ligne")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Dashboard : un projet à surveiller ouvre son panneau en lecture seule', (await page.textContent('.panneau')).includes('Mobile')
+      && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
+    await page.keyboard.press('Escape');
+
+    // Projets et Roadmap
+    await menu('/projets');
+    await page.waitForSelector('.tableau');
+    await captureB('02-projets');
+    verifier('Projets et Roadmap : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
+      && await page.locator('tr.groupe').count() >= 3 && await page.locator('.tableau .barre').count() === 9 && await page.locator('.tableau .badge').count() >= 9);
+    await page.click('.puces >> text=Mobile');
+    verifier('Projets et Roadmap : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
+    await page.click('.puces >> text=Toutes les équipes');
+    await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Projets et Roadmap : un clic ouvre le panneau (équipe, statut, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
+      && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Projets et Roadmap : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
+    await page.click('[role=tab]:has-text("Planning projet")');
+    await page.waitForSelector('.planning-projet');
+    await captureB('04b-planning-projet');
+    verifier('Planning projet : frise de 6 mois, sprints, mises en production et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
+      && await page.locator('.gantt-sprint').count() >= 2 && await page.locator('.gantt-mep').count() >= 3 && await page.locator('.gantt-jour').count() >= 1);
+    verifier('Planning projet : sprint en cours mis en avant, détail en infobulle', await page.locator('.gantt-mep').first().getAttribute('title') !== null
+      && (await page.locator('.gantt-sprint').first().getAttribute('title')).includes('Sprint'));
+    const periode = await page.textContent('.encart-compact b');
+    await page.click('[aria-label="Période suivante"]');
+    verifier('Planning projet : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
+    await page.click('text=Aujourd’hui');
+    verifier('Planning projet : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
+
+    // Timesheet : validation des feuilles par la responsable
+    await menu('/timesheet');
+    await page.waitForSelector('.tableau');
+    await page.click('[aria-label="Mois précédent"]');
+    await page.waitForSelector('text=septembre 2026');
+    await captureB('07-timesheet');
+    verifier('Timesheet : feuilles du mois par personne, 4 indicateurs (validation possible)', (await texte()).includes('Saisi / attendu') && await page.locator('.grille-kpi .kpi').count() === 4
+      && !(await texte()).includes('NaN'));
+    const avant = await page.locator('button:has-text("Valider")').count();
+    verifier('Timesheet : feuilles soumises à valider pour mes équipes seulement', avant === 1);
+    await page.locator('button:has-text("Renvoyer")').first().click();
+    await page.waitForSelector('.modale');
+    await page.fill('.modale textarea', 'Merci de compléter septembre');
+    await page.click('.modale button:has-text("Renvoyer la feuille")');
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+    await page.waitForSelector('.badge:has-text("À compléter")');
+    verifier('Timesheet : « Renvoyer » demande un motif et renvoie la feuille à compléter', await page.locator('.badge:has-text("À compléter")').count() >= 1);
+
+    // Daily des équipes
+    await menu('/daily-des-equipes');
+    await page.waitForSelector('.grille-fil');
+    await captureB('17-daily-equipes');
+    verifier('Daily des équipes : note d\'un coéquipier sur un projet commun visible', (await texte()).includes('Mapping des rôles applicatifs'));
+    verifier('Daily des équipes : fil groupé par jour et blocages ouverts', await page.locator('.fil-jour').count() >= 1 && (await texte()).includes('Blocages ouverts · 2')
+      && (await texte()).includes('Identifiants de recette expirés'));
+    await page.click('.filtres-fil >> text=Thomas Bernard');
+    verifier('Daily des équipes : filtre par personne', (await texte()).includes('Mapping des rôles applicatifs') && !(await texte()).includes('Finaliser le plan de migration SSO'));
+    await page.click('.filtres-fil >> text=Toutes');
+    await page.click('[role=tab]:has-text("Synthèse")');
+    await page.waitForSelector('.tableau-synthese');
+    await captureB('33-daily-synthese');
+    verifier('Daily des équipes › Synthèse : chiffres clés et carte membre × jour', (await texte()).includes('Dailys renseignés')
+      && await page.locator('.tableau-synthese thead th').count() === 7 && await page.locator('.case-synthese.case-bloc').count() >= 1);
+    await page.locator('.case-synthese.case-bloc').first().click();
+    verifier('Daily des équipes › Synthèse : un clic ouvre le daily à droite', (await page.textContent('.panneau-lecture')).includes('Blocages'));
+    const titreAvant = await page.textContent('.panneau-lecture .discret');
+    await page.click('text=‹ Jour précédent');
+    verifier('Daily des équipes : jour précédent dans le panneau de lecture', (await page.textContent('.panneau-lecture .discret')) !== titreAvant);
+    await page.click('text=Cette semaine');
+    const semaine = await page.textContent('.libelle-semaine');
+    await page.click('[aria-label="Semaine précédente"]');
+    verifier('Daily des équipes : semaine précédente', (await page.textContent('.libelle-semaine')) !== semaine);
+    await page.click('text=Cette semaine');
+    verifier('Daily des équipes : « Cette semaine » revient à la semaine courante', (await page.textContent('.libelle-semaine')) === semaine);
+    // Export Excel
+    await page.click('text=Exporter en Excel');
+    await page.waitForSelector('.modale');
+    await captureB('22-export-daily-excel');
+    verifier('Export Excel : période, projets et contenu du fichier', (await page.textContent('.modale')).includes('Projets (ceux dont vous pouvez lire le daily)')
+      && (await page.textContent('.modale')).includes('Ajouter l’onglet « Blocages »'));
+    const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('.modale >> text=Télécharger le fichier Excel')]);
+    const fichierXlsx = path.join(VAGUE_B, 'export-test.xlsx');
+    await telechargement.saveAs(fichierXlsx);
+    const octets = fs.readFileSync(fichierXlsx);
+    fs.unlinkSync(fichierXlsx);
+    verifier('Export Excel : fichier .xlsx téléchargé (archive valide avec feuille Daily et Blocages)', /^Daily_.*\.xlsx$/.test(telechargement.suggestedFilename())
+      && octets.readUInt32LE(0) === 0x04034B50 && octets.includes('sheet2.xml') && octets.toString('utf8').includes('Mapping des rôles applicatifs'));
+    await page.waitForFunction(() => !document.querySelector('.modale'));
+
+    // Gestion des ressources
+    await menu('/ressources');
+    await page.waitForSelector('.calendrier');
+    await captureB('05-ressources');
+    verifier('Gestion des ressources : calendrier par équipe, légende, synthèse des absents par projet', (await page.textContent('.carte-titre')).includes('Congés')
+      && await page.locator('.calendrier tr.groupe').count() >= 3 && await page.locator('.calendrier tr.ligne-synthese').count() >= 3 && await page.locator('.calendrier tr[data-personne]').count() >= 10);
+    verifier('Gestion des ressources : lecture seule (aucune case cliquable)', await page.locator('.calendrier td.cliquable').count() === 0);
+    await page.click('[aria-label="Mois suivant"]');
+    verifier('Gestion des ressources : navigation de mois', (await page.textContent('.carte-titre b')).includes('novembre 2026') && await page.locator('.calendrier th').count() === 31);
+    await page.click('.puce >> text=Par projet');
+    verifier('Gestion des ressources : vue par projet (membres et synthèse)', await page.locator('.calendrier tr[data-personne]').count() >= 1 && await page.locator('.calendrier tr.ligne-synthese').count() === 1);
+    await page.click('.puce >> text=Par équipe');
+    await page.click('[role=tab]:has-text("Liste des ressources")');
+    await page.waitForSelector('#annuaire-ressources');
+    await captureB('05b-ressources-liste');
+    verifier('Gestion des ressources › Liste : annuaire des 12 personnes avec projets et statut', await page.locator('#annuaire-ressources tbody tr').count() === 12
+      && (await texte()).includes(' · PO') && (await texte()).includes('Anniversaires d’octobre'));
+    await page.fill('input[placeholder="Rechercher une personne"]', 'thomas');
+    verifier('Gestion des ressources › Liste : recherche par nom', await page.locator('#annuaire-ressources tbody tr').count() === 1);
+    await page.fill('input[placeholder="Rechercher une personne"]', '');
+    await page.selectOption('select[aria-label="Statut"]', 'inactif');
+    verifier('Gestion des ressources › Liste : filtre par statut', (await texte()).includes('Aucune ressource.'));
+    await page.selectOption('select[aria-label="Statut"]', '');
+    await page.selectOption('select[aria-label="Équipe"]', { label: 'Mobile' });
+    verifier('Gestion des ressources › Liste : filtre par équipe', await page.locator('#annuaire-ressources tbody tr').count() === 3);
+
     /* ---------- Écran pas encore migré ---------- */
-    await page.click('.menu-lien >> text=Daily des équipes');
+    await page.click('a.menu-lien[href$="/daily"]');
     await page.waitForSelector('text=pas encore migré');
     verifier('Écran pas encore migré : page explicative avec lien vers l\'application actuelle', (await texte()).includes('pas encore migré') && await page.locator('a[href="/app/"]').count() >= 1
-      && page.url().endsWith('/v2/daily-des-equipes'));
+      && page.url().endsWith('/v2/daily'));
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
@@ -213,6 +340,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('[data-testid=compte]');
     verifier('Fin de simulation : données complètes de nouveau', await lignes('projets') === projetsReels);
     verifier('Fin de simulation : le créateur est de retour', (await page.textContent('[data-testid=role]')).includes('Créateur'));
+
+    // Le créateur valide les feuilles de toutes les équipes
+    await page.goto(BASE + '/v2/timesheet');
+    await page.waitForSelector('.tableau');
+    await page.click('[aria-label="Mois précédent"]');
+    await page.waitForSelector('text=septembre 2026');
+    const aValider = await page.locator('button:has-text("Valider")').count();
+    verifier('Timesheet : le créateur peut valider les feuilles soumises de toutes les équipes', aValider >= 3);
+    await page.locator('button:has-text("Valider")').first().click();
+    await page.waitForFunction(n => document.querySelectorAll('.tableau button.succes').length < n, aValider);
+    verifier('Timesheet : « Valider » fige la feuille et met à jour l\'écran', await page.locator('button:has-text("Valider")').count() === aValider - 1
+      && await page.locator('.badge:has-text("Validée")').count() >= 1);
 
     /* ---------- Catalogue des composants (/v2/composants) ---------- */
     await page.goto(BASE + '/v2/composants');
