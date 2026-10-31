@@ -4,7 +4,8 @@
    - Grille mensuelle : choisir un type d'absence (« pinceau ») et une durée (journée / demi-journée), puis cliquer sur les jours pour
      l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux jours attendus par le client (par équipe et par année).
-   Modifiable : sa propre ligne et celles de ses équipes (règle RLS ; l'écran masque les cases non modifiables d'après la matrice).
+   Périmètre (porteur, 2026-10-31) : quel que soit le rôle, sauf Administrateur, Mon dashboard › Congés n'affiche et ne permet de saisir que SES congés
+   (les congés des autres se consultent dans Suivi de mes équipes › Gestion des ressources). Règle RLS en base ; l'écran masque le reste.
    ============================================================ */
 import { useState } from 'react';
 import { Aide } from '../composants/Aide';
@@ -16,6 +17,7 @@ import { Icone } from '../composants/Icone';
 import { Onglets } from '../composants/Onglets';
 import { creer, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
+import type { Donnees } from '../donnees/tables';
 import { joursDuMois, estWeekend, aujourdhui, depuisIso, nombre } from '../domaine/dates';
 import { ABSENCES, COULEURS } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
@@ -33,9 +35,9 @@ const MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août'
 const Reste = ({ v }: { v: number }) => <b className={v < 0 ? 'reste-negatif' : 'reste-positif'}>{v > 0 ? '+' : ''}{nombre(v)}</b>;
 
 /** Récap annuel : jours travaillés / congés / reste à prendre, par unité et par personne */
-function RecapAnnuel({ annee, onAnnee }: { annee: number; onAnnee: (a: number) => void }) {
-  const { ctx, donnees, executer, notifier } = useSession();
-  if (!ctx || !donnees) return null;
+function RecapAnnuel({ vue: donnees, annee, onAnnee }: { vue: Donnees; annee: number; onAnnee: (a: number) => void }) {
+  const { ctx, executer, notifier } = useSession();
+  if (!ctx) return null;
   const feries = new Set(donnees.joursFeries.map(j => j.jour));
   const ouvres = MOIS.map((_, m) => joursDuMois(annee, m).filter(j => !estWeekend(j)).length);
   const lignes: ElementRecap[] = unitesRacines(donnees.equipes).flatMap(e => modeleRecap(ctx, donnees, annee, feries, e));
@@ -151,9 +153,14 @@ export function Conges() {
   const onglet = (liste.find(o => o.id === choix) ?? liste[0])?.id;
   if (!onglet) return <div className="ecran"><EnteteEcran titre="Congés" /><AucunOnglet /></div>;
   const moi = maRessource(ctx);
+  /* Hors administrateur, seule ma fiche est affichée (grille et récap) ; sans fiche reliée, rien à restreindre ni à saisir */
+  const vue = ctx.estAdmin || !moi ? donnees : { ...donnees, ressources: donnees.ressources.filter(r => r.id === moi.id) };
 
-  // Une case est modifiable : sur sa propre ligne (droit « Mon dashboard »), sur celle de ses équipes (droit « congés des équipes »)
-  const modifiable = (ressourceId: string) => (ressourceId === moi?.id ? aDroit(ctx, 'mon_dashboard') : aDroit(ctx, 'conges_equipe'));
+  /* Une case est modifiable : sur ma ligne, si mon rôle a le droit « Mon dashboard » ou l'onglet Grille mensuelle (la Direction n'a que ce dernier) ;
+     sur celle des autres, seulement pour l'administrateur (droit « congés des autres ») */
+  const modifiable = (ressourceId: string) => (ressourceId === moi?.id
+    ? aDroit(ctx, 'mon_dashboard') || aDroit(ctx, 'onglet_conges_grille')
+    : ctx.estAdmin && aDroit(ctx, 'conges_equipe'));
 
   /* Clic sur un jour : pose le type et la durée choisis (journée ou demi-journée) ; retire l'absence si elle a déjà ce type et cette durée
      (ou avec « Effacer ») ; même type mais autre durée : la durée est changée */
@@ -189,9 +196,9 @@ export function Conges() {
       <EnteteEcran titre="Congés" sousTitre={onglet === 'grille' ? 'Choisissez un type d’absence puis cliquez sur les jours pour l’appliquer ou le retirer' : 'Absences et récapitulatif annuel'} />
       <Onglets liste={liste} actif={onglet} onChoisir={setChoix} />
       {onglet === 'recap'
-        ? <RecapAnnuel annee={mois.annee} onAnnee={annee => setMois(m => ({ ...m, annee }))} />
+        ? <RecapAnnuel vue={vue} annee={mois.annee} onAnnee={annee => setMois(m => ({ ...m, annee }))} />
         : (
-          <CalendrierAbsences ctx={ctx} donnees={donnees} mois={mois} onMois={setMois} editable modifiable={modifiable}
+          <CalendrierAbsences ctx={ctx} donnees={vue} mois={mois} onMois={setMois} editable modifiable={modifiable}
             onBasculer={(r, jour) => void basculer(r, jour)} droite={choixPinceau} />
         )}
     </div>
