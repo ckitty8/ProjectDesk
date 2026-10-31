@@ -569,6 +569,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('.detail-entete button[title="Supprimer l’équipe"]');
     await page.waitForFunction(() => ![...document.querySelectorAll('.noeud.equipe')].some(n => n.textContent.includes('Équipe Test')));
     verifier('Équipe vide : suppression possible (après confirmation)', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 0);
+    // La création a rendu « Équipe Test » active : on revient à Plateforme (la suite des contrôles couvre toutes les équipes)
+    await page.click('.bloc-equipe >> text=Changer');
+    await page.click('.carte-choix:has-text("Plateforme") >> text=Ouvrir');
+    await page.waitForSelector('.laterale');
 
     /* ---------- Vague D (2/2) : Administration (administrateur) ---------- */
     await menu('/administration');

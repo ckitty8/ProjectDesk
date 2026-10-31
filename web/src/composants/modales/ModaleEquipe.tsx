@@ -31,7 +31,7 @@ export const slugEquipe = (nom: string, suffixe: string): string =>
   nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '-' + suffixe;
 
 export function ModaleEquipe({ id, typeUnite = 'equipe', parentId = null, onFermer }: Props) {
-  const { ctx, donnees, equipeCourante, executer, notifier, actualiser, choisirEquipe } = useSession();
+  const { ctx, donnees, executer, notifier, actualiser, choisirEquipe } = useSession();
   const [organisation, setOrganisation] = useState<OrganisationDetaillee | null>(null);
   const equipe = id ? donnees?.equipes.find(e => e.id === id) : undefined;
   const [type, setType] = useState(equipe?.type ?? typeUnite);
@@ -77,7 +77,8 @@ export function ModaleEquipe({ id, typeUnite = 'equipe', parentId = null, onFerm
     if (!reussi) return;
     if (nouvelleId) {
       await actualiser();                                    // nouvelle équipe dans les organisations du compte
-      if (!equipeCourante) choisirEquipe(nouvelleId);       // première équipe de l'utilisateur : elle devient l'équipe ouverte
+      // La nouvelle équipe devient l'équipe active : les écrans ne montrent que l'équipe active, elle doit donc être visible aussitôt
+      choisirEquipe(nouvelleId);
     }
     onFermer();
   }

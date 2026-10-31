@@ -23,8 +23,8 @@ function Racine() {
 }
 
 /* Écrans qui suivent l'équipe active (porteur, 2026-10-31) : tout Suivi de mes équipes et les écrans de saisie de Mon dashboard ;
-   Administration, Liste des ressources et Trucs et astuces gardent leur portée habituelle */
-const ECRANS_DE_L_EQUIPE = ['dashboard', 'dailyEquipes', 'projets', 'ressources', 'timesheet', 'daily', 'mesProjets', 'mesSprints', 'conges', 'monTimesheet'];
+   Administration et Trucs et astuces gardent leur portée habituelle */
+const ECRANS_DE_L_EQUIPE = ['dashboard', 'dailyEquipes', 'projets', 'ressources', 'timesheet', 'daily', 'mesProjets', 'mesSprints', 'conges', 'listeRessources', 'monTimesheet'];
 
 /** Écrans de l'application, selon l'état de la session : chargement, erreur, connexion, ou les adresses de routes.ts */
 function Contenu() {
