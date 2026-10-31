@@ -20,6 +20,7 @@ export function MentionPropriete({ complete = false }: { complete?: boolean }) {
   return (
     <div className="mention-propriete">
       © {CONFIG.ANNEE_DROITS} <b>{CONFIG.PROPRIETAIRE}</b> · Tous droits réservés
+      {!complete && ` · v${typeof __VERSION_APPLICATION__ === 'string' ? __VERSION_APPLICATION__ : ''}`}
       {complete && ` · ${CONFIG.NOM_APPLICATION} est un logiciel propriétaire`}
     </div>
   );

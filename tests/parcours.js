@@ -700,7 +700,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await captureD('29-simulation-en-cours');
     // Mon dashboard › Congés : hors administrateur, seule la fiche de la personne simulée est affichée (aucune autre, pas de bascule « Par projet »)
     await menu('/conges');
-    await page.waitForSelector('.carte');
+    await page.waitForSelector('tr[data-personne]');
     verifier('Congés (non administrateur) : une seule personne est affichée, sans bascule « Par projet »',
       await page.locator('tr[data-personne]').count() === 1
       && await page.locator('button.puce:has-text("Par projet")').count() === 0);

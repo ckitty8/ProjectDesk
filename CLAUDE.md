@@ -88,7 +88,7 @@ Historique et décisions : `docs/specifications/migration-react.md`.
 - [ ] Code commenté, lisible
 - [ ] Aucune donnée existante modifiée (règle n°8)
 - [ ] Référentiels / calculs centralisés (pas de duplication)
-- [ ] `docs/DAT.md` à jour + ligne d'historique
+- [ ] `docs/DAT.md` à jour + ligne d'historique, et `version` de `web/package.json` alignée dessus (affichée sous le menu)
 - [ ] `npm --prefix web run verifier` → types, lint, tests unitaires et build passent
 - [ ] `node tests/parcours.js` → tous les contrôles passent (captures régénérées)
 
