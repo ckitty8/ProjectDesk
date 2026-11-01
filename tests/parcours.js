@@ -708,6 +708,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       const id = await page.locator('select[aria-label="Personne pour Utilisateur"] option', { hasText: 'Thomas Bernard' }).getAttribute('value');
       await page.selectOption('select[aria-label="Personne pour Utilisateur"]', id);
     });
+    // Le choix de la personne est mémorisé : on quitte l'écran (Mon profil) puis on revient, la carte garde la personne choisie
+    const choixAvant = await page.locator('select[aria-label="Personne pour Utilisateur"]').inputValue();
+    await page.click('.bloc-moi .avatar');
+    await page.waitForSelector('.grille-profil');
+    await ouvrirAdminCreateur();
+    await page.waitForSelector('.grille-simulation');
+    verifier('Simulation : la personne choisie sur une carte est mémorisée au retour sur l\'écran',
+      await page.locator('select[aria-label="Personne pour Utilisateur"]').inputValue() === choixAvant);
     await page.click('button:has-text("Voir l’application en tant que utilisateur")');
     await page.waitForSelector('.bandeau-simulation');
     verifier('Simulation : le rôle simulé remplace celui du créateur', !(await page.textContent('.bloc-utilisateur')).includes('★ Créateur')
