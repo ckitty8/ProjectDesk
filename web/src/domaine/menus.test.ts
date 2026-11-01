@@ -23,8 +23,8 @@ function attendu(ctx: ContexteDroits, role: string) {
     'Saisir mes heures': dashboard && ouvert('mon_dashboard'),
     'Daily': dashboard && ouvert('mon_dashboard'),
     'Trucs et astuces': dashboard && (ouvert('onglet_astuces_agile') || ouvert('onglet_astuces_roadmap') || ouvert('onglet_astuces_test_learn')),
-    'Administration': dashboard && ['comptes', 'onglet_admin_equipes', 'onglet_admin_referentiels', 'onglet_admin_feries',
-      'onglet_admin_envoi_daily', 'roles'].some(ouvert)
+    // Menu réservé aux administrateurs (porteur, 2026-11-01), quels que soient les droits d'onglets
+    'Administration': role === 'admin' && dashboard
   };
 }
 
@@ -54,13 +54,14 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
 });
 
 describe('le droit « Daily · Saisir mes heures » à Non ne ferme que Daily et Saisir mes heures (porteur 2026-10-26)', () => {
-  it('Responsable garde Congés, Trucs et astuces et Administration', () => {
+  it('Responsable garde Congés et Trucs et astuces (Administration est réservée aux administrateurs)', () => {
     const base = contexte();
     const sansDaily = contexte({ droitsRoles: base.droitsRoles.map(d => (d.role === 'responsable' && d.droit === 'mon_dashboard' ? { ...d, niveau: 'non' } : d)) });
     const affiches = libelles(menusDuRole(sansDaily, 'responsable').moi);
     expect(affiches).not.toContain('Daily');
     expect(affiches).not.toContain('Saisir mes heures');
-    expect(affiches).toEqual(expect.arrayContaining(['Gestion des ressources', 'Congés', 'Trucs et astuces', 'Administration']));
+    expect(affiches).toEqual(expect.arrayContaining(['Gestion des ressources', 'Congés', 'Trucs et astuces']));
+    expect(affiches).not.toContain('Administration');
   });
 });
 

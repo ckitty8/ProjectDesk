@@ -24,6 +24,9 @@ export interface Menu {
   enfants?: readonly MenuEnfant[];
   /** Menu réservé au créateur (Administration créateur) : jamais un menu de rôle */
   reserveCreateur?: boolean;
+  /** Menu réservé aux administrateurs (porteur, 2026-11-01 : « le menu Administration est uniquement pour les administrateurs »),
+   *  quels que soient les droits d'onglets */
+  reserveAdmin?: boolean;
   /** Écran ouvert au rôle mais absent de la barre latérale (porteur, 2026-11-01) : on y accède par un lien de « Mon profil » */
   horsBarre?: boolean;
 }
@@ -49,7 +52,7 @@ export const MENU_MOI: readonly Menu[] = [
       { id: 'listeRessources', libelle: 'Liste des ressources', droit: ['fiches_ressources', 'affecter'] }] },
   { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time', droit: 'mon_dashboard' },
   { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
-  { id: 'monAdmin', libelle: 'Administration', icone: 'admin' },
+  { id: 'monAdmin', libelle: 'Administration', icone: 'admin', reserveAdmin: true },
   { id: 'adminCreateur', libelle: 'Administration créateur', icone: 'admin', reserveCreateur: true, horsBarre: true }
 ];
 
@@ -72,7 +75,8 @@ export function menusDuRole(ctx: ContexteDroits, role?: string): { suivi: Menu[]
   const suivi = MENU_GENERAL.filter(item => !!item.droit && droitOuvert(ctx, item.droit, role) && ecranOuvert(ctx, item.id, role));
   const lectureSeule = (role ?? monRole(ctx)) === 'lecture';
   const moi = lectureSeule ? [] : MENU_MOI
-    .filter(item => (item.reserveCreateur ? !role && ctx.estCreateur : true) && menuOuvert(ctx, item, role))
+    .filter(item => (item.reserveCreateur ? !role && ctx.estCreateur : true) && (item.reserveAdmin ? (role ? role === 'admin' : ctx.estAdmin) : true)
+      && menuOuvert(ctx, item, role))
     .map(item => ({ ...item, enfants: item.enfants?.filter(e => enfantOuvert(ctx, e, role)) }));
   return { suivi, moi };
 }
