@@ -19,8 +19,11 @@ export interface Simulation {
 /** Tout ce qu'il faut savoir du compte connecté et des données chargées pour décider des droits */
 export interface ContexteDroits {
   estCreateur: boolean;
-  /** Administrateur (ou créateur) : périmètre « Tout » */
+  /** Administrateur (ou créateur) EN MODE ADMINISTRATEUR : périmètre « Tout ».
+   *  Hors de ce mode (vue par défaut, porteur 2026-11-01), faux même pour un administrateur */
   estAdmin: boolean;
+  /** Le compte est administrateur ou créateur (qu'il soit ou non en mode administrateur) : il peut basculer depuis « Mon profil » */
+  peutAdministrer: boolean;
   /** Identifiant du compte connecté (null si non connecté) */
   userId: string | null;
   simulation: Simulation | null;
@@ -105,11 +108,11 @@ export const rolePrevu = (ctx: ContexteDroits, r: Ressource): string | null => c
 /** Rôle d'accès déclaré et appliqué d'une fiche (roles_acces, migration 030), ou null s'il est déduit */
 export const roleDeclare = (ctx: ContexteDroits, r: Ressource): string | null => ctx.rolesAcces.find(x => x.ressourceId === r.id)?.role ?? null;
 
-/** Rôle d'accès d'une fiche, compte relié ou non : déclaré, sinon déduit (administrateur, responsable, utilisateur) */
+/** Rôle d'accès d'une fiche, compte relié ou non : déclaré, sinon déduit (responsable, utilisateur). L'administrateur n'est plus un rôle de la
+ *  fiche : il se cumule avec un autre rôle (case « Administrateur » d'Administration › Rôles, porteur 2026-11-01) */
 export function roleDeLaFiche(ctx: ContexteDroits, r: Ressource): string {
   const declare = roleDeclare(ctx, r);
   if (declare) return declare;
-  if (estAdministrateur(ctx, r)) return 'admin';
   return estResponsableEquipe(ctx, r) ? 'responsable' : 'utilisateur';
 }
 
@@ -119,14 +122,18 @@ export function estLectureSeule(ctx: ContexteDroits): boolean {
   return !ctx.estCreateur && !!moi && roleDeclare(ctx, moi) === 'lecture';
 }
 
-/** Mon rôle d'accès : celui de la simulation en cours, sinon déclaré sur ma fiche, sinon administrateur, responsable, utilisateur
- *  (même règle que mon_role en base, migration 031) */
+/** Mon rôle d'accès : celui de la simulation en cours ; « administrateur » en mode administrateur ; sinon le rôle déclaré sur ma fiche, sinon
+ *  responsable, utilisateur (déduits) */
 export function monRole(ctx: ContexteDroits): string {
   if (ctx.simulation && (ROLES_CHOISISSABLES as readonly string[]).includes(ctx.simulation.cle)) return ctx.simulation.cle;
+  return ctx.estAdmin ? 'admin' : monRoleSansAdmin(ctx);
+}
+
+/** Mon rôle hors mode administrateur : déclaré sur ma fiche, sinon responsable ou utilisateur (déduits) — le rôle auquel « Revenir à mon rôle » ramène */
+export function monRoleSansAdmin(ctx: ContexteDroits): string {
   const moi = maRessource(ctx);
   const declare = moi ? roleDeclare(ctx, moi) : null;
   if (declare) return declare;
-  if (ctx.estAdmin) return 'admin';
   const responsable = (!!moi && estResponsableEquipe(ctx, moi)) || Object.values(ctx.rolesEquipe).some(r => ROLES_RESPONSABLE.includes(r));
   return responsable ? 'responsable' : 'utilisateur';
 }

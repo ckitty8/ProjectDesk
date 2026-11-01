@@ -19,8 +19,9 @@ import { IconeMenu } from './composants/IconeMenu';
 import { Marque, MentionPropriete } from './composants/Marque';
 import { useSession } from './donnees/SessionProvider';
 import { decoderChoixSimulation, libelleRoleSimule } from './donnees/simulation';
-import { CONFIG } from './domaine/config';
-import { maRessource, mesEquipes } from './domaine/droits';
+import { CONFIG, LIBELLES_ROLES } from './domaine/config';
+import type { RoleAcces } from './domaine/config';
+import { maRessource, mesEquipes, monRoleSansAdmin } from './domaine/droits';
 import { menusDuRole } from './domaine/menus';
 import type { Menu } from './domaine/menus';
 import { AIDES, GUIDES, GUIDE_ECRANS } from './domaine/textes';
@@ -49,7 +50,7 @@ function LienMenu({ menu, idActif, alerte }: { menu: Menu; idActif: string; aler
 }
 
 function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean }) {
-  const { ctx, compte, equipeCourante, comptesEnAttente, simulation, seDeconnecter } = useSession();
+  const { ctx, compte, equipeCourante, comptesEnAttente, simulation, modeAdmin, seDeconnecter } = useSession();
   if (!ctx || !compte) return null;
   const equipes = mesEquipes(ctx);
   const equipe = ctx.equipes.find(e => e.id === equipeCourante);
@@ -87,6 +88,7 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
           <div>
             <Link className="moi-nom moi-profil" to={cheminDe('profil')} title="Voir mon profil">{nom}</Link>
             {simulation && <span className="badge-createur" title="Simulation des rôles en cours">simulation</span>}
+            {modeAdmin && !simulation && <span className="badge-createur" title="Mode administrateur actif">administrateur</span>}
             {compte.session.user.emailVerified === false && !simulation && <><Link className="moi-sortie" to="/verifier-email">Vérifier mon email</Link> · </>}
             <button type="button" className="moi-sortie lien-btn" onClick={() => void seDeconnecter()}>Se déconnecter</button>
           </div>
@@ -147,9 +149,20 @@ function MenuAide({ route }: { route: Route }) {
 /* ---------- Bandeau de simulation (en haut de chaque écran pendant la simulation) ---------- */
 
 export function BandeauConnecte() {
-  const { simulation, ctx, choixSimulation, demarrerSimulation, arreterSimulation } = useSession();
+  const { simulation, ctx, choixSimulation, demarrerSimulation, arreterSimulation, modeAdmin, definirModeAdmin } = useSession();
   const navigate = useNavigate();
-  if (!simulation || !ctx) return null;
+  if (!ctx) return null;
+  // Mode administrateur (porteur, 2026-11-01) : rappel en haut de chaque écran, avec le retour au rôle habituel
+  if (modeAdmin && !simulation) {
+    return (
+      <div className="bandeau-mode-admin" role="status">
+        <span>★ <b>Mode administrateur</b> : vous voyez tout ce que voit un administrateur</span>
+        <span className="extensible" />
+        <Bouton petit onClick={() => { definirModeAdmin(false); navigate('/'); }}>Revenir à mon rôle ({LIBELLES_ROLES[monRoleSansAdmin(ctx) as RoleAcces] ?? '—'})</Bouton>
+      </div>
+    );
+  }
+  if (!simulation) return null;
   const fiche = ctx.ressources.find(r => r.id === simulation.ressourceId);
   return (
     <BandeauSimulation libelleRole={libelleRoleSimule(simulation.cle)} nomPersonne={fiche?.nom} choix={choixSimulation}

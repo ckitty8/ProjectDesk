@@ -347,8 +347,8 @@ function appliquerRole(ressourceId, role) {
   if (role === 'direction') bd.responsables_equipe.push({ equipe_id: eq.parent_id || eq.id, ressource_id: r.id, cree_le: maintenant() });
   let membre = null;
   if (compte) {
-    bd.administrateurs = bd.administrateurs.filter(a => a.user_id !== compte.id);
-    if (role === 'admin') bd.administrateurs.push({ user_id: compte.id });
+    // Administrateur cumulable (migration 046) : seul l'ancien rôle « admin » ajoute le statut, les autres rôles n'y touchent plus
+    if (role === 'admin' && !bd.administrateurs.some(a => a.user_id === compte.id)) bd.administrateurs.push({ user_id: compte.id });
     membre = membres.find(m => m.organizationId === r.equipe_id && m.userId === compte.id);
     if (membre && membre.role !== 'owner') membre.role = ['responsable', 'direction'].includes(role) ? 'admin' : 'member';
   }
@@ -390,6 +390,16 @@ async function donnees(req, res, table, url) {
       if (!estAdmin) return envoyer(res, 403, { message: 'Réservé aux administrateurs' });
       const { p_ressource, p_role } = await lireCorps(req);
       return envoyer(res, 200, appliquerRole(p_ressource, p_role));
+    }
+    // Administrateur cumulable (migration 046) : coche / décoche le statut sans toucher au rôle ; réservé au créateur
+    if (table === 'rpc/affecter_administrateur') {
+      if (!bd.createur.some(c => c.user_id === moi.id)) return envoyer(res, 403, { message: 'Réservé au créateur' });
+      const { p_ressource, p_actif } = await lireCorps(req);
+      const fiche = bd.ressources.find(r => r.id === p_ressource);
+      if (!fiche || !fiche.user_id) return envoyer(res, 400, { message: 'Cette personne n\'a pas encore de compte' });
+      bd.administrateurs = bd.administrateurs.filter(a => a.user_id !== fiche.user_id);
+      if (p_actif) bd.administrateurs.push({ user_id: fiche.user_id });
+      return envoyer(res, 200, p_actif ? 'ajoute' : 'retire');
     }
     if (table === 'rpc/appliquer_mes_roles_prevus') {
       const miennes = bd.roles_prevus.filter(x => (bd.ressources.find(r => r.id === x.ressource_id) || {}).user_id === moi.id);

@@ -55,6 +55,9 @@ export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'projet' | 'util
 /** Rôles d'accès choisissables, dans l'ordre de la matrice des droits */
 export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
 
+/** Rôles qui s'attribuent à une personne (Administration › Rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
+export const ROLES_ATTRIBUABLES: readonly RoleAcces[] = ROLES_CHOISISSABLES.filter(r => r !== 'admin');
+
 /** Niveau d'un droit dans la matrice */
 export type Niveau = 'oui' | 'lecture' | 'non';
 

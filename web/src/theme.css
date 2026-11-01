@@ -310,9 +310,9 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .badge-createur { display: block; width: fit-content; margin: 1px 0 2px; font-size: 10.5px; font-weight: 600; color: #E6D9FF; background: rgba(122, 63, 194, .45); border-radius: 4px; padding: 0 5px; white-space: nowrap; }
 
 /* Simulation des rôles (simulation.js) : bandeau violet en haut de l'écran, cartes des rôles */
-.bandeau-simulation { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px; padding: 9px 20px; background: #5B2A9E; color: #fff; font-size: 13px; }
-.bandeau-simulation .champ { background: #fff; color: var(--texte); border: 0; }
-.bandeau-simulation .btn { background: #fff; color: #5B2A9E; border: 0; font-weight: 600; }
+.bandeau-simulation, .bandeau-mode-admin { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px; padding: 9px 20px; background: #5B2A9E; color: #fff; font-size: 13px; }
+.bandeau-simulation .champ, .bandeau-mode-admin .champ { background: #fff; color: var(--texte); border: 0; }
+.bandeau-simulation .btn, .bandeau-mode-admin .btn { background: #fff; color: #5B2A9E; border: 0; font-weight: 600; }
 .grille-simulation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 
 /* ---------- Grilles d'écran (remplacent des styles en ligne, pour pouvoir s'adapter à l'écran) ---------- */

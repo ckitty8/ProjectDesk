@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PROJETS, contexte } from './__fixtures__/donnees';
-import { ecranAccueil, ecranOuvert, equipesGerees, estLectureSeule, maRessource, mesEquipes, monRole, niveauDroit, niveauDuRole, ongletPermis,
+import { ecranAccueil, ecranOuvert, equipesGerees, estLectureSeule, maRessource, mesEquipes, monRole, monRoleSansAdmin, niveauDroit, niveauDuRole, ongletPermis,
   peutAffecterSur, peutEditerProjet, peutGererEquipe, peutLireDailyProjet, peutModifierFiche, peutPiloterProjet, peutValiderEquipe, responsablesDe,
   roleDeLaFiche, suisChefDuProjet, travailleSurLeProjet } from './droits';
 import type { ContexteDroits } from './droits';
+import type { Ressource } from './types';
 
 const projet = (code: string) => {
   const p = PROJETS.find(x => x.code === code);
@@ -190,5 +191,24 @@ describe('daily et pilotage d’un projet', () => {
   it('la lecture seule ne pilote rien', () => {
     const lecture = contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'lecture' }] });
     expect(suisChefDuProjet(lecture, projet('APP-02'))).toBe(false);
+  });
+});
+
+describe('administrateur cumulable (porteur, 2026-11-01)', () => {
+  it('un administrateur hors mode administrateur garde le rôle de sa fiche', () => {
+    const ctx = contexte({ peutAdministrer: true, estAdmin: false, rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }] });
+    expect(monRole(ctx)).toBe('projet');
+    expect(monRoleSansAdmin(ctx)).toBe('projet');
+  });
+
+  it('en mode administrateur, le rôle est administrateur et « revenir à mon rôle » ramène au rôle de la fiche', () => {
+    const ctx = contexte({ peutAdministrer: true, estAdmin: true, rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }] });
+    expect(monRole(ctx)).toBe('admin');
+    expect(monRoleSansAdmin(ctx)).toBe('projet');
+  });
+
+  it('le rôle d\'une fiche n\'est plus déduit « administrateur » : le statut est à part', () => {
+    const ctx = contexte({ administrateurs: [{ userId: 'u-thomas' }] });
+    expect(roleDeLaFiche(ctx, maRessource(ctx) as Ressource)).not.toBe('admin');
   });
 });

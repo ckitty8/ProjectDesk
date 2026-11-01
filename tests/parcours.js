@@ -27,6 +27,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 900 } });
     // Date figée au 31/10/2026 (les contrôles et les captures supposent octobre 2026 comme mois courant) ; les minuteurs restent réels
     await contexte.clock.setFixedTime(new Date('2026-10-31T10:00:00'));
+    // Les contrôles supposent la vue administrateur (la vue par défaut d'un administrateur est son rôle : voir le contrôle « Mode administrateur »)
+    await contexte.addInitScript(() => { try { if (localStorage.getItem('pp_mode_admin') === null) localStorage.setItem('pp_mode_admin', '1'); } catch { /* sans stockage */ } });
     await contexte.addInitScript(base => { window.CONFIG_SURCHARGE = { NEON_AUTH_URL: base + '/auth', DATA_API_URL: base + '/rest/v1' }; }, BASE);
     page = await contexte.newPage();
     const erreurs = [];
@@ -108,7 +110,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Mon profil : compte, fiche ressource et accès affichés, sans bouton de modification',
       page.url().endsWith('/app/mon-profil') && (await texte()).includes('Camille Laurent') && (await texte()).includes('Ma fiche ressource')
       && (await texte()).includes('Mon accès') && await page.locator('.ecran button:has-text("Modifier")').count() === 0);
-    await page.goBack();
+    // Mode administrateur : la vue par défaut est le rôle ; le bouton du profil donne la vue administrateur complète
+    verifier('Mode administrateur : bandeau, pastille et bouton « Revenir à mon rôle » quand il est actif',
+      await page.locator('.bandeau-mode-admin').count() === 1 && (await page.textContent('.bloc-moi')).includes('administrateur')
+      && await page.locator('button:has-text("Revenir à mon rôle")').count() >= 1);
+    await page.click('.ecran button:has-text("Revenir à mon rôle")');
+    await page.waitForSelector('.laterale');
+    verifier('Mode administrateur : « Revenir à mon rôle » rend la vue du rôle (plus de bandeau ni de pastille)',
+      await page.locator('.bandeau-mode-admin').count() === 0 && !(await page.textContent('.bloc-moi')).includes('administrateur'));
+    await page.click('.bloc-moi .avatar');
+    await page.click('.ecran button:has-text("Passer en administrateur")');
+    await page.waitForSelector('.bandeau-mode-admin');
+    verifier('Mode administrateur : « Passer en administrateur » active la vue complète', await page.locator('.bandeau-mode-admin').count() === 1);
+    await page.click('.laterale a[href$="/dashboard"]');
     await page.waitForSelector('.laterale');
 
     // Menu Aide : guide de l'écran, puis premiers pas
@@ -700,7 +714,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.waitForSelector('.grille-kpi');
       return parseInt(await page.locator('.kpi:has-text("Projets actifs") .kpi-valeur >> nth=0').textContent(), 10);
     };
-    verifier('Le créateur est reconnu (carte « Espace créateur » de Mon profil), sans badge dans le menu', !(await page.textContent('.bloc-utilisateur')).includes('Créateur') && await page.locator('.bloc-utilisateur .badge-createur').count() === 0);
+    verifier('Le créateur est reconnu (carte « Espace créateur » de Mon profil), sans badge « Créateur » dans le menu', !(await page.textContent('.bloc-utilisateur')).includes('Créateur'));
     const projetsReels = await projetsActifs();
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');

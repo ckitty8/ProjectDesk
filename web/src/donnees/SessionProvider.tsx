@@ -15,6 +15,7 @@ import { activerOrganisation, connecter, deconnecter, definirSimulationActive } 
 import { chargerComptesEnAttente, chargerRoles, equipeAOuvrir, lireEquipeMemorisee, memoriserEquipe, ouvrirCompte } from './compte';
 import type { Compte, CompteEnAttente, RolesEquipes } from './compte';
 import { chargerDonnees } from './chargement';
+import { lireModeAdmin, memoriserModeAdmin } from './modeAdmin';
 import { restreindreEquipe } from '../domaine/perimetre';
 import { lireTable } from './chargement';
 import type { ResultatChargement } from './chargement';
@@ -44,6 +45,9 @@ export interface ValeurSession {
   equipeCourante: string | null;
   choisirEquipe: (id: string) => void;
   simulation: Simulation | null;
+  /** Mode administrateur actif (un administrateur voit tout) ; faux en vue par défaut et pendant une simulation */
+  modeAdmin: boolean;
+  definirModeAdmin: (actif: boolean) => void;
   /** Rôles et personnes proposés pour changer de simulation (calculés sur toutes les fiches, pas sur le périmètre simulé) */
   choixSimulation: { valeur: string; libelle: string }[];
   demarrerSimulation: (simulation: Simulation) => void;
@@ -78,6 +82,9 @@ function Interne({ children }: { children: ReactNode }) {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [simulation, setSimulation] = useState<Simulation | null>(null);
+  // Mode administrateur : désactivé par défaut ; mémorisé sur ce poste jusqu'au retour manuel (porteur, 2026-11-01)
+  const [modeAdmin, setModeAdmin] = useState<boolean>(lireModeAdmin);
+  const definirModeAdmin = useCallback((actif: boolean) => { memoriserModeAdmin(actif); setModeAdmin(actif); }, []);
   const [equipeChoisie, setEquipeChoisie] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'erreur' } | null>(null);
   const notifier = useCallback((message: string, type: 'info' | 'erreur' = 'info') => setNotification({ message, type }), []);
@@ -101,7 +108,7 @@ function Interne({ children }: { children: ReactNode }) {
   const userId = compte?.session.user.id ?? null;
   const identite = useMemo(() => (brutes ? identiteReelle(userId, brutes, compte?.organisations ?? [], {}) : null), [userId, brutes, compte]);
   const idsEquipes = useMemo(() => (brutes && identite
-    ? mesEquipes({ ...identite, simulation: null, membresEquipe: {}, ...brutes }).map(e => e.id) : []), [brutes, identite]);
+    ? mesEquipes({ ...identite, peutAdministrer: identite.estAdmin, simulation: null, membresEquipe: {}, ...brutes }).map(e => e.id) : []), [brutes, identite]);
 
   const rolesQ = useQuery({
     queryKey: ['roles', userId, idsEquipes],
@@ -119,8 +126,8 @@ function Interne({ children }: { children: ReactNode }) {
 
   const vue = useMemo(() => {
     if (!brutes || !identite) return null;
-    return construireVue({ ...identite, rolesEquipe }, brutes, membresEquipe, simulation);
-  }, [brutes, identite, rolesEquipe, membresEquipe, simulation]);
+    return construireVue({ ...identite, rolesEquipe }, brutes, membresEquipe, simulation, modeAdmin);
+  }, [brutes, identite, rolesEquipe, membresEquipe, simulation, modeAdmin]);
 
   // Lecture seule pendant une simulation : le client API refuse alors toute écriture
   useEffect(() => { definirSimulationActive(!!simulation); }, [simulation]);
@@ -165,6 +172,8 @@ function Interne({ children }: { children: ReactNode }) {
     // Équipe mémorisée sur ce poste et déclarée « active » côté Neon Auth (sans attendre la réponse)
     choisirEquipe: id => { memoriserEquipe(id); setEquipeChoisie(id); activerOrganisation(id).catch(() => undefined); },
     simulation,
+    modeAdmin: !!vue?.ctx.estAdmin && !simulation,
+    definirModeAdmin,
     choixSimulation: choixPourBandeau,
     demarrerSimulation: setSimulation,
     arreterSimulation: () => setSimulation(null),

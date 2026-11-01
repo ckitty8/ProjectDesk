@@ -22,8 +22,8 @@ export function identiteReelle(userId: string | null, donnees: Donnees, organisa
 
 /** Contexte de droits à partir de l'identité et des données COMPLÈTES */
 function assembler(identite: Identite, simulation: Simulation | null, donnees: Donnees,
-  membresEquipe: ContexteDroits['membresEquipe']): ContexteDroits {
-  return { ...identite, simulation, membresEquipe, ...donnees };
+  membresEquipe: ContexteDroits['membresEquipe'], peutAdministrer = false): ContexteDroits {
+  return { ...identite, peutAdministrer, simulation, membresEquipe, ...donnees };
 }
 
 export interface VueDroits {
@@ -36,8 +36,18 @@ export interface VueDroits {
 /* Contexte et données visibles. Pendant une simulation, le périmètre est calculé avec le contexte SIMULÉ sur les données
    complètes ; les autres tables (droits, référentiels…) restent entières. */
 export function construireVue(identiteReelleDuCompte: Identite, donneesBrutes: Donnees, membresEquipe: ContexteDroits['membresEquipe'],
-  simulation: Simulation | null): VueDroits {
-  if (!simulation) return { ctx: assembler(identiteReelleDuCompte, null, donneesBrutes, membresEquipe), donnees: donneesBrutes };
+  simulation: Simulation | null, modeAdmin = true): VueDroits {
+  const peutAdministrer = identiteReelleDuCompte.estAdmin;
+  if (!simulation) {
+    // Vue par défaut d'un administrateur (porteur, 2026-11-01) : son rôle, comme les autres ; le mode administrateur s'active depuis « Mon profil »
+    if (peutAdministrer && !modeAdmin) {
+      const identite: Identite = { ...identiteReelleDuCompte, estCreateur: false, estAdmin: false };
+      const ctxRole = assembler(identite, null, donneesBrutes, membresEquipe, true);
+      const donnees: Donnees = { ...donneesBrutes, ...appliquerPerimetre(ctxRole, donneesBrutes, true) };
+      return { ctx: { ...ctxRole, ...donnees }, donnees };
+    }
+    return { ctx: assembler(identiteReelleDuCompte, null, donneesBrutes, membresEquipe, peutAdministrer), donnees: donneesBrutes };
+  }
   const base = assembler(identiteReelleDuCompte, simulation, donneesBrutes, membresEquipe);
   const fiche = maRessource(base);
   const ctxSimule = assembler(identiteSimulee(base, simulation, fiche), simulation, donneesBrutes, membresEquipe);

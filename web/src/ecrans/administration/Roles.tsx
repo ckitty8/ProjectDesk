@@ -11,9 +11,9 @@ import { BarreOutils, Carte, Vide } from '../../composants/Carte';
 import { executer as appelerFonction } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { roleChoisi } from '../../domaine/annuaire';
-import { ROLES_ACCES, ROLES_CHOISISSABLES } from '../../domaine/config';
+import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
-import { aDroit, rolePrevu } from '../../domaine/droits';
+import { aDroit, estAdministrateur, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
 import { projetsAvecRoleDe, ressourcesPresentes } from '../../domaine/vues';
@@ -40,10 +40,20 @@ export function Roles() {
     } catch (e) { notifier((e as Error).message, 'erreur'); }
   }
 
+  // Case « Administrateur » : cumule ou retire le statut sans toucher au rôle (fonction affecter_administrateur, migration 046)
+  async function definirAdministrateur(r: Ressource, actif: boolean) {
+    try {
+      await appelerFonction('affecter_administrateur', { p_ressource: r.id, p_actif: actif });
+      await actualiser();
+      notifier(actif ? 'Administrateur ajouté : il peut passer en mode administrateur depuis son profil' : 'Statut d’administrateur retiré');
+    } catch (e) { notifier((e as Error).message, 'erreur'); }
+  }
+
   const ligne = (r: Ressource) => {
     const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
-    // Administrateur : choisi ou retiré seulement avec le droit « Nommer un administrateur »
-    const options = ROLES_CHOISISSABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle, desactive: !nommer && (cle === 'admin' || choisi === 'admin') && cle !== choisi }));
+    const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
+    // Administrateur : case à part, cumulée avec le rôle ; cochée ou décochée par le créateur seul, pour une personne qui a un compte
+    const admin = estAdministrateur(ctx, r), estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
     const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
     return (
       <tr key={r.id}>
@@ -58,9 +68,16 @@ export function Roles() {
         <td>{r.poste || '—'}</td>
         <td>
           <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={choisi} disabled={verrou} onChange={e => void affecter(r, e.target.value)}>
-            {options.map(o => <option key={o.valeur} value={o.valeur} disabled={o.desactive}>{o.libelle}</option>)}
+            {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
           </select>
           {effet && <div className="discret texte-12">{effet}</div>}
+        </td>
+        <td>
+          <label className="ligne-flex">
+            <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || !r.userId || estLeCreateur}
+              onChange={e => void definirAdministrateur(r, e.target.checked)} />
+            Administrateur {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
+          </label>
         </td>
       </tr>
     );
@@ -77,7 +94,7 @@ export function Roles() {
               <option value="">Toutes les équipes</option>{donnees.equipes.map(e => <option key={e.id} value={e.id}>{e.nom}</option>)}
             </select>
             <select className="champ champ-compact" aria-label="Rôle" value={role} onChange={e => setRole(e.target.value)}>
-              <option value="">Tous les rôles</option>{ROLES_CHOISISSABLES.map(c => <option key={c} value={c}>{ROLES_ACCES[c].libelle}</option>)}
+              <option value="">Tous les rôles</option>{ROLES_ATTRIBUABLES.map(c => <option key={c} value={c}>{ROLES_ACCES[c].libelle}</option>)}
             </select>
           </>
         )}
@@ -87,9 +104,12 @@ export function Roles() {
         <div className="defilement-x">
           <table className="tableau tableau-roles-acces">
             <thead>
-              <tr><th>Utilisateur</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th><th>Rôle <Aide texte={AIDES.roleAcces} /></th></tr>
+              <tr>
+                <th>Utilisateur</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
+                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
+              </tr>
             </thead>
-            <tbody>{personnes.length === 0 ? <tr><td colSpan={6}><Vide texte="Personne ne correspond aux filtres." /></td></tr> : personnes.map(ligne)}</tbody>
+            <tbody>{personnes.length === 0 ? <tr><td colSpan={7}><Vide texte="Personne ne correspond aux filtres." /></td></tr> : personnes.map(ligne)}</tbody>
           </table>
         </div>
       </Carte>

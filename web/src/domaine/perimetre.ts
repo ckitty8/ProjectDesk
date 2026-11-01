@@ -29,9 +29,9 @@ export interface DonneesPerimetre {
 }
 
 /** Filtre les données selon ce que verrait la personne simulée ; sans simulation, renvoie les données telles quelles
- *  (c'est alors la base qui filtre). */
-export function appliquerPerimetre(ctx: ContexteDroits, brut: DonneesPerimetre): DonneesPerimetre {
-  if (!ctx.simulation) return brut;
+ *  (c'est alors la base qui filtre). « forcer » : un administrateur hors du mode administrateur voit comme son rôle (la base lui renverrait tout). */
+export function appliquerPerimetre(ctx: ContexteDroits, brut: DonneesPerimetre, forcer = false): DonneesPerimetre {
+  if (!ctx.simulation && !forcer) return brut;
   const gerees = equipesGerees(ctx);
   const moi = maRessource(ctx);
   const moiId = moi ? moi.id : null;

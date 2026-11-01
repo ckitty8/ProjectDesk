@@ -54,6 +54,7 @@ export function contexte(surcharge: Partial<ContexteDroits> = {}): ContexteDroit
   return {
     estCreateur: false,
     estAdmin: false,
+    peutAdministrer: false,
     userId: 'u-thomas',
     simulation: null,
     organisations: [{ id: 'app' }],
