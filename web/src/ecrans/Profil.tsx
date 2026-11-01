@@ -12,6 +12,7 @@ import type { RoleAcces } from '../domaine/config';
 import { formatAvecAnnee } from '../domaine/dates';
 import { maRessource, mesEquipes, monRole, trouverEquipe } from '../domaine/droits';
 import { projetsDe } from '../domaine/vues';
+import { cheminDe } from '../routes';
 
 /** Une ligne « libellé : valeur » de carte (« — » quand l'information n'est pas renseignée) */
 const Ligne = ({ libelle, valeur }: { libelle: string; valeur?: string | null }) => (
@@ -66,6 +67,13 @@ export function Profil() {
           <Ligne libelle="Projets" valeur={projets} />
         </Carte>
       </div>
+      {ctx.estCreateur && !simulation && (
+        <Carte classe="carte-profil">
+          <h3 className="sans-marge">Espace créateur</h3>
+          <p className="discret">Simulation des rôles et « Qui a quel rôle » (la matrice des droits est dans Administration).</p>
+          <Link className="btn" to={cheminDe('adminCreateur')}>Ouvrir l’Administration créateur</Link>
+        </Carte>
+      )}
     </div>
   );
 }

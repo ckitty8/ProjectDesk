@@ -24,6 +24,8 @@ export interface Menu {
   enfants?: readonly MenuEnfant[];
   /** Menu réservé au créateur (Administration créateur) : jamais un menu de rôle */
   reserveCreateur?: boolean;
+  /** Écran ouvert au rôle mais absent de la barre latérale (porteur, 2026-11-01) : on y accède par un lien de « Mon profil » */
+  horsBarre?: boolean;
 }
 
 /** Suivi de mes équipes : chaque menu est affiché si le droit de son menu n'est pas « Non » (matrice, migration 037) et si au
@@ -48,7 +50,7 @@ export const MENU_MOI: readonly Menu[] = [
   { id: 'monTimesheet', libelle: 'Saisir mes heures', icone: 'time', droit: 'mon_dashboard' },
   { id: 'astuces', libelle: 'Trucs et astuces', icone: 'idee' },
   { id: 'monAdmin', libelle: 'Administration', icone: 'admin' },
-  { id: 'adminCreateur', libelle: 'Administration créateur', icone: 'admin', reserveCreateur: true }
+  { id: 'adminCreateur', libelle: 'Administration créateur', icone: 'admin', reserveCreateur: true, horsBarre: true }
 ];
 
 /** Un droit, ou une liste de droits dont un seul suffit : au moins un n'est pas « Non » */

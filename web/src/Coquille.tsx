@@ -68,10 +68,10 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
             {menus.suivi.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={0} />)}
           </>
         )}
-        {menus.moi.length > 0 && (
+        {menus.moi.some(m => !m.horsBarre) && (
           <>
             <div className="menu-titre"><span>Mon dashboard <Aide texte={AIDES.sectionMoi} /></span><span>édition</span></div>
-            {menus.moi.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={m.id === 'monAdmin' ? enAttente : 0} />)}
+            {menus.moi.filter(m => !m.horsBarre).map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={m.id === 'monAdmin' ? enAttente : 0} />)}
           </>
         )}
       </nav>

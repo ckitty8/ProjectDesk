@@ -25,6 +25,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
   let page;
   try {
     const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 900 } });
+    // Date figée au 31/10/2026 (les contrôles et les captures supposent octobre 2026 comme mois courant) ; les minuteurs restent réels
+    await contexte.clock.setFixedTime(new Date('2026-10-31T10:00:00'));
     await contexte.addInitScript(base => { window.CONFIG_SURCHARGE = { NEON_AUTH_URL: base + '/auth', DATA_API_URL: base + '/rest/v1' }; }, BASE);
     page = await contexte.newPage();
     const erreurs = [];
@@ -159,6 +161,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const VAGUE_B = CAPTURES;
     const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
     const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
+    // Administration créateur : hors de la barre latérale, on y entre par « Mon profil »
+    const ouvrirAdminCreateur = async () => { await page.click('.bloc-moi .avatar'); await page.click('text=Ouvrir l’Administration créateur'); };
 
     // Dashboard : un projet à surveiller ouvre le panneau du projet (lecture seule)
     await menu('/dashboard');
@@ -698,7 +702,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     };
     verifier('Le créateur est reconnu (badge) et voit toutes les équipes', (await page.textContent('.bloc-utilisateur')).includes('Créateur'));
     const projetsReels = await projetsActifs();
-    await menu('/administration-createur');
+    await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');
     await page.selectOption('select[aria-label="Personne pour Utilisateur"]', { label: 'Thomas Bernard · aujourd’hui Projet' }).catch(async () => {
       const id = await page.locator('select[aria-label="Personne pour Utilisateur"] option', { hasText: 'Thomas Bernard' }).getAttribute('value');
@@ -754,6 +758,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Fin de simulation : retour à Administration créateur', page.url().endsWith('/app/administration-createur') && await page.locator('.bandeau-simulation').count() === 0);
     await page.click('button:has-text("Voir l’application en tant que compte en attente")');
     await page.waitForSelector('.bandeau-simulation');
+    await page.waitForSelector('text=Votre compte est créé');
     verifier('Simulation « Compte en attente » : écran d\'attente d\'accès', (await texte()).includes('Votre compte est créé'));
     await page.click('text=Revenir à mon rôle de créateur');
     await page.waitForSelector('.grille-simulation');
@@ -772,7 +777,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
     await celluleDroit.selectOption(avantNiveau);
     verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
-    await menu('/administration-createur');
+    await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');
     await page.click('[role=tab]:has-text("Qui a quel rôle")');
     await page.waitForSelector('.tableau-qui-a-quel-role');
