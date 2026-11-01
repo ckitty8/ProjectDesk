@@ -59,3 +59,17 @@ export function decoderChoixSimulation(valeur: string): Simulation {
   const [cle = '', ressourceId = ''] = valeur.split('|');
   return { cle, ressourceId: ressourceId || null };
 }
+
+/* ---------- Personnes choisies sur les cartes de simulation (mémorisées sur ce poste) ---------- */
+
+const CLE_PERSONNES_SIMULATION = 'pp_simulation_personnes';
+
+/** Personne choisie pour chaque rôle de la page de simulation, relue au retour sur la page
+ *  (porteur, 2026-11-01 : « tu as encore réinitialisé mon paramétrage ») */
+export function lirePersonnesSimulation(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(CLE_PERSONNES_SIMULATION) ?? '{}') as Record<string, string>; } catch { return {}; }
+}
+
+export function memoriserPersonnesSimulation(choix: Record<string, string>): void {
+  try { localStorage.setItem(CLE_PERSONNES_SIMULATION, JSON.stringify(choix)); } catch { /* navigation privée */ }
+}

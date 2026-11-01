@@ -20,7 +20,7 @@ import { Marque, MentionPropriete } from './composants/Marque';
 import { useSession } from './donnees/SessionProvider';
 import { decoderChoixSimulation, libelleRoleSimule } from './donnees/simulation';
 import { CONFIG } from './domaine/config';
-import { mesEquipes } from './domaine/droits';
+import { maRessource, mesEquipes } from './domaine/droits';
 import { menusDuRole } from './domaine/menus';
 import type { Menu } from './domaine/menus';
 import { AIDES, GUIDES, GUIDE_ECRANS } from './domaine/textes';
@@ -54,7 +54,9 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
   const equipes = mesEquipes(ctx);
   const equipe = ctx.equipes.find(e => e.id === equipeCourante);
   const menus = menusDuRole(ctx);
-  const nom = compte.session.user.name || compte.session.user.email;
+  // Pendant une simulation, le bloc montre la personne simulée (pas le compte du créateur)
+  const fiche = simulation ? maRessource(ctx) : null;
+  const nom = fiche?.nom || compte.session.user.name || compte.session.user.email;
   // « Changer » d'équipe n'a de sens que s'il y a un choix : au moins deux équipes, ou une invitation à accepter
   const unChoix = equipes.length > 1 || compte.invitations.length > 0;
   const enAttente = comptesEnAttente.filter(c => !c.invite).length;
@@ -84,7 +86,6 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
           <Link className="moi-profil" to={cheminDe('profil')} title="Voir mon profil"><Avatar nom={nom} grand /></Link>
           <div>
             <Link className="moi-nom moi-profil" to={cheminDe('profil')} title="Voir mon profil">{nom}</Link>
-            {ctx.estCreateur && !simulation && <span className="badge-createur" title="Rôle Créateur : tous les droits, toutes les équipes">★ Créateur</span>}
             {simulation && <span className="badge-createur" title="Simulation des rôles en cours">simulation</span>}
             {compte.session.user.emailVerified === false && !simulation && <><Link className="moi-sortie" to="/verifier-email">Vérifier mon email</Link> · </>}
             <button type="button" className="moi-sortie lien-btn" onClick={() => void seDeconnecter()}>Se déconnecter</button>

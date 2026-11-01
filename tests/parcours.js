@@ -700,7 +700,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.waitForSelector('.grille-kpi');
       return parseInt(await page.locator('.kpi:has-text("Projets actifs") .kpi-valeur >> nth=0').textContent(), 10);
     };
-    verifier('Le créateur est reconnu (badge) et voit toutes les équipes', (await page.textContent('.bloc-utilisateur')).includes('Créateur'));
+    verifier('Le créateur est reconnu (carte « Espace créateur » de Mon profil), sans badge dans le menu', !(await page.textContent('.bloc-utilisateur')).includes('Créateur') && await page.locator('.bloc-utilisateur .badge-createur').count() === 0);
     const projetsReels = await projetsActifs();
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');

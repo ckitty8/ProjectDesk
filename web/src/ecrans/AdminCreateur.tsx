@@ -13,7 +13,7 @@ import { Bouton } from '../composants/Bouton';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
 import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
-import { ROLE_SANS_EQUIPE } from '../donnees/simulation';
+import { lirePersonnesSimulation, memoriserPersonnesSimulation, ROLE_SANS_EQUIPE } from '../donnees/simulation';
 import { parRole, rolesAffiches } from '../domaine/admin';
 import { roleChoisi } from '../domaine/annuaire';
 import { ROLES_ACCES } from '../domaine/config';
@@ -27,7 +27,12 @@ const ONGLETS = [{ id: 'simulation', libelle: 'Simulation des rôles' }, { id: '
 function Simulation() {
   const { ctx, donnees, demarrerSimulation } = useSession();
   const navigate = useNavigate();
-  const [personnes, setPersonnes] = useState<Record<string, string>>({});
+  const [personnes, setPersonnes] = useState<Record<string, string>>(lirePersonnesSimulation);
+  const choisirPersonne = (role: string, id: string) => setPersonnes(p => {
+    const suite = { ...p, [role]: id };
+    memoriserPersonnesSimulation(suite);
+    return suite;
+  });
   if (!ctx || !donnees) return null;
   const actives = ressourcesPresentes(ctx, aujourdhui());
   /* Personnes proposées pour un rôle : toutes les fiches actives, celles qui ont déjà ce rôle en tête (« · a ce rôle »), puis les autres avec leur rôle
@@ -49,7 +54,9 @@ function Simulation() {
       <div className="grille-simulation">
         {rolesAffiches(ctx).map(role => {
           const liste = proposees(role.cle), sansPersonne = role.cle === ROLE_SANS_EQUIPE;
-          const choisie = personnes[role.cle] ?? liste[0]?.valeur ?? '';
+          // Personne mémorisée si elle est toujours proposée, sinon la première de la liste
+          const memorisee = liste.some(p => p.valeur === personnes[role.cle]) ? personnes[role.cle] : undefined;
+          const choisie = memorisee ?? liste[0]?.valeur ?? '';
           return (
             <div key={role.cle} className="carte" style={{ padding: '14px 16px', borderTop: `4px solid ${role.couleur}` }}>
               <b style={{ fontSize: 15, color: role.couleur }}>{role.libelle}</b>
@@ -59,7 +66,7 @@ function Simulation() {
                 ? <div className="discret" style={{ height: 34, display: 'flex', alignItems: 'center' }}>un compte inscrit sans équipe</div>
                 : liste.length
                   ? (
-                    <select className="champ" aria-label={`Personne pour ${role.libelle}`} value={choisie} onChange={e => setPersonnes(p => ({ ...p, [role.cle]: e.target.value }))}>
+                    <select className="champ" aria-label={`Personne pour ${role.libelle}`} value={choisie} onChange={e => choisirPersonne(role.cle, e.target.value)}>
                       {liste.map(p => <option key={p.valeur} value={p.valeur}>{p.libelle}</option>)}
                     </select>
                   )
