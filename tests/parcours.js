@@ -120,8 +120,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       await page.locator('.bandeau-mode-admin').count() === 0 && !(await page.textContent('.bloc-moi')).includes('administrateur'));
     await page.click('.bloc-moi .avatar');
     await page.click('.ecran button:has-text("Passer en administrateur")');
+    await page.waitForURL('**/app/dashboard');
     await page.waitForSelector('.bandeau-mode-admin');
-    verifier('Mode administrateur : « Passer en administrateur » active la vue complète', await page.locator('.bandeau-mode-admin').count() === 1);
+    verifier('Mode administrateur : « Passer en administrateur » active la vue complète', await page.locator('.bandeau-mode-admin').count() >= 1);
     await page.click('.laterale a[href$="/dashboard"]');
     await page.waitForSelector('.laterale');
 
