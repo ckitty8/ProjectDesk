@@ -187,33 +187,38 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.keyboard.press('Escape');
 
-    // Projets et Roadmap
+    // Projets (Suivi de mes équipes)
     await menu('/projets');
     await page.waitForSelector('.tableau');
     await captureB('02-projets');
-    verifier('Projets et Roadmap : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
+    verifier('Projets : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
       && await page.locator('tr.groupe').count() >= 3 && await page.locator('.tableau .barre').count() === 9 && await page.locator('.tableau .badge').count() >= 9);
     await page.click('.puces >> text=Mobile');
-    verifier('Projets et Roadmap : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
+    verifier('Projets : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
     await page.click('.puces >> text=Toutes les équipes');
     await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
     await page.waitForSelector('.panneau[role=dialog]');
-    verifier('Projets et Roadmap : un clic ouvre le panneau (équipe, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
+    verifier('Projets : un clic ouvre le panneau (équipe, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
       && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.click('.panneau [aria-label=Fermer]');
-    verifier('Projets et Roadmap : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
-    await page.click('[role=tab]:has-text("Planning projet")');
+    verifier('Projets : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
+    verifier('Projets : plus d\'onglets (la frise est dans le menu Roadmap)', await page.locator('[role=tab]').count() === 0
+      && await page.locator('.laterale a[href$="/roadmap"]').count() === 1);
+
+    // Roadmap (Suivi de mes équipes) : ancien onglet « Planning projet »
+    await menu('/roadmap');
     await page.waitForSelector('.planning-projet');
-    await captureB('04b-planning-projet');
-    verifier('Planning projet : frise de 6 mois, sprints, mises en production et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
+    await captureB('04b-roadmap');
+    verifier('Roadmap : filtre par équipe', await page.locator('.puces .puce').count() >= 2);
+    verifier('Roadmap : frise de 6 mois, sprints, mises en production et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
       && await page.locator('.gantt-sprint').count() >= 2 && await page.locator('.gantt-mep').count() >= 3 && await page.locator('.gantt-jour').count() >= 1);
-    verifier('Planning projet : sprint en cours mis en avant, détail en infobulle', await page.locator('.gantt-mep').first().getAttribute('title') !== null
+    verifier('Roadmap : sprint en cours mis en avant, détail en infobulle', await page.locator('.gantt-mep').first().getAttribute('title') !== null
       && (await page.locator('.gantt-sprint').first().getAttribute('title')).includes('Sprint'));
     const periode = await page.textContent('.encart-compact b');
     await page.click('[aria-label="Période suivante"]');
-    verifier('Planning projet : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
+    verifier('Roadmap : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
     await page.click('text=Aujourd’hui');
-    verifier('Planning projet : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
+    verifier('Roadmap : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
 
     // Timesheet : validation des feuilles par la responsable
     await menu('/timesheet');

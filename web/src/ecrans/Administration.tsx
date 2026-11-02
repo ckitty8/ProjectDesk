@@ -2,7 +2,7 @@
    Mon dashboard › Administration (maquette 10-mAdmin.png ; portage de app/js/ecrans/mon-admin.js — phase 5, vague D)
    Onglets selon le périmètre puis le droit de chaque onglet (matrice, migration 038) : Comptes en attente et Rôles (administrateurs), Équipes
    (administrateurs et responsables), Référentiels, Jours fériés, Envoi du daily (projets que je pilote). Les demandes ne sont plus gérées ici (Azure DevOps,
-   2026-10-05) ; les sprints sont dans Projets et Roadmap › Sprints. Accessible sans équipe ouverte pour un administrateur (création de la première équipe).
+   2026-10-05) ; les sprints sont dans Mon dashboard › Roadmap. Accessible sans équipe ouverte pour un administrateur (création de la première équipe).
    ============================================================ */
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';

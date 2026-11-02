@@ -36,7 +36,9 @@ export interface Menu {
 export const MENU_GENERAL: readonly Menu[] = [
   { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash', droit: 'suivi_dashboard' },
   { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
-  { id: 'projets', libelle: 'Projets et Roadmap', icone: 'proj', droit: 'suivi_projets' },
+  // Projets et Roadmap : un seul droit (suivi_projets) pour les deux menus (porteur, 2026-11-02 : « deux menus, Projets et Roadmap »)
+  { id: 'projets', libelle: 'Projets', icone: 'proj', droit: 'suivi_projets' },
+  { id: 'roadmap', libelle: 'Roadmap', icone: 'road', droit: 'suivi_projets' },
   { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
   { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' }
 ];
@@ -44,8 +46,9 @@ export const MENU_GENERAL: readonly Menu[] = [
 /** Mon dashboard : Daily et Saisir mes heures suivent le droit « mon_dashboard » ; chaque autre menu suit ses propres lignes */
 export const MENU_MOI: readonly Menu[] = [
   { id: 'daily', libelle: 'Daily', icone: 'daily', droit: 'mon_dashboard' },
-  { id: 'mesProjets', libelle: 'Projets et Roadmap', icone: 'road',
-    enfants: [{ id: 'mesProjets', libelle: 'Mises en production', droit: 'projets' }, { id: 'mesSprints', libelle: 'Sprints' }] },
+  // Projets (mises en production, nouveau projet : droit « projets ») et Roadmap (sprints : droit d'onglet « onglet_admin_sprints »)
+  { id: 'mesProjets', libelle: 'Projets', icone: 'proj', droit: 'projets' },
+  { id: 'mesSprints', libelle: 'Roadmap', icone: 'road' },
   { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
     enfants: [{ id: 'conges', libelle: 'Congés' },
       // Liste des ressources : ouverte si le rôle a l'un de ses deux droits (fiches, affectations)

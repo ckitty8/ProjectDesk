@@ -16,8 +16,9 @@ function attendu(ctx: ContexteDroits, role: string) {
     'Dashboard général': ouvert('suivi_dashboard'),
     'Daily des équipes': ouvert('daily_equipes') && (ouvert('onglet_daily_fil') || ouvert('onglet_daily_synthese')),
     'Timesheet': ouvert('suivi_timesheet'),
-    'Mises en production': dashboard && ouvert('projets'),
-    'Sprints': dashboard && ouvert('onglet_admin_sprints'),
+    // Suivi de mes équipes : Projets et Roadmap suivent le même droit (porteur, 2026-11-02)
+    'Projets': ouvert('suivi_projets'),
+    'Roadmap': ouvert('suivi_projets') || (dashboard && ouvert('onglet_admin_sprints')),
     'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')),
     'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')),
     'Saisir mes heures': dashboard && ouvert('mon_dashboard'),
@@ -40,10 +41,14 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     });
   });
 
-  it('le menu parent Projets et Roadmap n’existe que si l’un de ses sous-menus est ouvert', () => {
+  it('Mon dashboard : Projets (mises en production) et Roadmap (sprints) sont deux menus, absents du rôle Utilisateur', () => {
     const ctx = contexte();
-    expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesProjets')).toBe(false);
-    expect(menusDuRole(ctx, 'projet').moi.find(m => m.id === 'mesProjets')?.enfants?.map(e => e.libelle)).toEqual(['Mises en production', 'Sprints']);
+    expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesProjets' || m.id === 'mesSprints')).toBe(false);
+    expect(menusDuRole(ctx, 'projet').moi.filter(m => m.id === 'mesProjets' || m.id === 'mesSprints').map(m => m.libelle)).toEqual(['Projets', 'Roadmap']);
+  });
+
+  it('Suivi de mes équipes : Projets et Roadmap sont deux menus ouverts ensemble', () => {
+    expect(menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle)).toEqual(expect.arrayContaining(['Projets', 'Roadmap']));
   });
 
   it('Lecture seule : Mon dashboard fermé, Suivi consultable', () => {
@@ -79,10 +84,10 @@ describe('mes menus (sans rôle précisé)', () => {
 });
 
 describe('description d’un rôle', () => {
-  it('est calculée d’après la matrice : Utilisateur n’a ni Projets et Roadmap ni Liste des ressources', () => {
+  it('est calculée d’après la matrice : Utilisateur n’a ni Projets et Roadmap de Mon dashboard ni Liste des ressources', () => {
     const texte = resumeDuRole(contexte(), 'utilisateur');
     expect(texte).toContain('Mon dashboard : Daily');
-    expect(texte).not.toContain('Projets et Roadmap (Mises');
+    expect(texte.split(' · Mon dashboard : ')[1]).not.toMatch(/Projets|Roadmap/);
     expect(texte).not.toContain('Liste des ressources');
     expect(texte).toContain('Congés');
   });

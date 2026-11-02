@@ -1,5 +1,5 @@
 /* ============================================================
-   Onglet Planning projet (maquette planning-projet/, porteur 2026-10-23 ; portage de PlanningProjet de app/js/ecrans/projets.js)
+   Planning projet de l'écran Roadmap (maquette planning-projet/, porteur 2026-10-23 ; portage de PlanningProjet de app/js/ecrans/projets.js)
    Une ligne par projet ayant un sprint ou une MEP sur la période, sur une frise de 6 mois : sprints en blocs « S12 » (sprint en cours en
    bleu) et mises en production en repères ▲ + version (couleur du statut, STATUTS_MEP) ; trait vertical = aujourd'hui, détail au survol.
    ============================================================ */
@@ -55,7 +55,7 @@ export function PlanningProjet({ projets }: { projets: readonly Projet[] }) {
           <b>{libelleMois(...anneeMois(per.debut))} → {libelleMois(...anneeMois(per.fin))}</b>
           <Bouton aria-label="Période suivante" onClick={() => setChoisi(decalerDebut(debut, 1))}>›</Bouton>
         </div>
-        <span className="discret texte-12">Sprints et MEP : saisis dans Mon dashboard › Projets et Roadmap</span>
+        <span className="discret texte-12">Sprints et MEP : saisis dans Mon dashboard › Projets (MEP) et Roadmap (sprints)</span>
       </div>
       <Carte classe="planning-projet">
         <div className="gantt-mois">
