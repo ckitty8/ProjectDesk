@@ -85,7 +85,7 @@ export interface FeuilleTemps {
   commentaire?: string | null;
 }
 
-/** Sprint saisi pour un projet (Mon dashboard › Roadmap) ; « numero » = clé technique, « numeroSprint » = le « Sprint N » affiché */
+/** Sprint saisi pour un projet (Mon dashboard › Projet › Sprints) ; « numero » = clé technique, « numeroSprint » = le « Sprint N » affiché */
 export interface SprintProjet {
   projetId: string;
   numero: number;

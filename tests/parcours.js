@@ -172,7 +172,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Trucs et astuces › Test & Learn : boucle, carte d\'expérience, phases IA et indicateurs', (await texte()).includes('La boucle Test & Learn')
       && (await texte()).includes('Carte d’expérience') && (await texte()).includes('Les phases d’un projet IA') && (await texte()).includes('Ce que l’on mesure'));
 
-    /* ---------- Vague B : Projets, Roadmap, Feuilles de temps, Daily des équipes, Gestion des ressources ---------- */
+    /* ---------- Vague B : Projet (Gantt, Liste), Feuilles de temps, Daily des équipes, Gestion des ressources ---------- */
     const VAGUE_B = CAPTURES;
     const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
     const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
@@ -187,38 +187,52 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.keyboard.press('Escape');
 
-    // Projets (Suivi de mes équipes)
+    // Projet (Suivi de mes équipes) : onglets Gantt (par défaut) et Liste (2.91)
     await menu('/projets');
-    await page.waitForSelector('.tableau');
-    await captureB('02-projets');
-    verifier('Projets : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
-      && await page.locator('tr.groupe').count() >= 3 && await page.locator('.tableau .barre').count() === 9 && await page.locator('.tableau .badge').count() >= 9);
-    await page.click('.puces >> text=Mobile');
-    verifier('Projets : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
-    await page.click('.puces >> text=Toutes les équipes');
-    await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
-    await page.waitForSelector('.panneau[role=dialog]');
-    verifier('Projets : un clic ouvre le panneau (équipe, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
-      && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
-    await page.click('.panneau [aria-label=Fermer]');
-    verifier('Projets : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
-    verifier('Projets : plus d\'onglets (la frise est dans le menu Roadmap)', await page.locator('[role=tab]').count() === 0
-      && await page.locator('.laterale a[href$="/roadmap"]').count() === 1);
-
-    // Roadmap (Suivi de mes équipes) : ancien onglet « Planning projet »
-    await menu('/roadmap');
-    await page.waitForSelector('.planning-projet');
-    await captureB('04b-roadmap');
-    verifier('Roadmap : filtre par équipe', await page.locator('.puces .puce').count() >= 2);
-    verifier('Roadmap : frise de 6 mois, sprints, mises en production et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
-      && await page.locator('.gantt-sprint').count() >= 2 && await page.locator('.gantt-mep').count() >= 3 && await page.locator('.gantt-jour').count() >= 1);
-    verifier('Roadmap : sprint en cours mis en avant, détail en infobulle', await page.locator('.gantt-mep').first().getAttribute('title') !== null
+    await page.waitForSelector('.gantt-carte');
+    await captureB('04b-gantt');
+    verifier('Projet : deux onglets Gantt et Liste, plus de menu Roadmap', await page.locator('[role=tab]').count() === 2
+      && await page.locator('[role=tab][aria-selected=true]:has-text("Gantt")').count() === 1 && await page.locator('.laterale a[href$="/roadmap"]').count() === 0);
+    verifier('Gantt : échelle de 6 mois, groupes par équipe, une ligne par projet et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
+      && await page.locator('.gantt-groupe').count() >= 3 && await page.locator('.gantt-ligne').count() === 9 && await page.locator('.gantt-jour').count() >= 1);
+    verifier('Gantt : sprints en barres et mises en production en losanges, détail en infobulle', await page.locator('.gantt-sprint').count() >= 2
+      && await page.locator('.gantt-mep .losange').count() >= 3 && await page.locator('.gantt-mep').first().getAttribute('title') !== null
       && (await page.locator('.gantt-sprint').first().getAttribute('title')).includes('Sprint'));
     const periode = await page.textContent('.encart-compact b');
     await page.click('[aria-label="Période suivante"]');
-    verifier('Roadmap : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
+    verifier('Gantt : la période se décale d\'un mois', (await page.textContent('.encart-compact b')) !== periode);
     await page.click('text=Aujourd’hui');
-    verifier('Roadmap : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
+    verifier('Gantt : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
+    await page.click('[aria-label=Zoom] >> text=Semaine');
+    verifier('Gantt : zoom semaine (12 semaines)', await page.locator('.gantt-mois .mois > div').count() === 12);
+    await page.click('[aria-label=Zoom] >> text=Trimestre');
+    verifier('Gantt : zoom trimestre (4 trimestres)', await page.locator('.gantt-mois .mois > div').count() === 4);
+    await page.click('[aria-label=Zoom] >> text=Mois');
+    await page.click('.puces >> text=Mobile');
+    verifier('Gantt : filtre par équipe', await page.locator('.gantt-ligne').count() > 0 && await page.locator('.gantt-ligne').count() < 9);
+    await page.click('.puces >> text=Toutes les équipes');
+    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    verifier('Gantt : filtre par projet', await page.locator('.gantt-ligne').count() === 1);
+    await page.selectOption('select[aria-label="Projet"]', { label: 'Tous les projets' });
+    await page.click('.gantt-projet:has-text("SSO & gestion des droits")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Gantt : un clic sur un projet ouvre son panneau', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits');
+    await page.click('.panneau [aria-label=Fermer]');
+
+    await page.click('[role=tab]:has-text("Liste")');
+    await page.waitForSelector('.tableau');
+    await captureB('02-projets');
+    verifier('Liste des projets : 9 projets groupés par équipe, avancement et statut', await page.locator('tr.cliquable').count() === 9
+      && await page.locator('tr.groupe').count() >= 3 && await page.locator('.tableau .barre').count() === 9 && await page.locator('.tableau .badge').count() >= 9);
+    await page.click('.puces >> text=Mobile');
+    verifier('Liste des projets : filtre par équipe', await page.locator('tr.cliquable').count() > 0 && await page.locator('tr.cliquable').count() < 9);
+    await page.click('.puces >> text=Toutes les équipes');
+    await page.click('tr.cliquable:has-text("SSO & gestion des droits")');
+    await page.waitForSelector('.panneau[role=dialog]');
+    verifier('Liste des projets : un clic ouvre le panneau (équipe, chef, équipe projet)', (await page.textContent('.panneau h2')) === 'SSO & gestion des droits'
+      && (await page.textContent('.panneau')).includes('Chef de projet') && (await page.textContent('.panneau')).includes('Équipe projet'));
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Liste des projets : la croix ferme le panneau', await page.locator('.panneau').count() === 0);
 
     // Feuilles de temps (ex-Timesheet) : validation des feuilles par la responsable
     await menu('/timesheet');
@@ -468,9 +482,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => document.querySelector('input[aria-label="Nom du projet"]').value.includes('renommé'));
     await page.keyboard.press('Escape');
     await menu('/projets');
-    await page.waitForSelector('.tableau');
+    await page.click('[role=tab]:has-text("Liste")');
     await page.waitForSelector('tr.cliquable');
-    verifier('Panneau projet : le nom modifié est enregistré (visible dans Projets et Roadmap)', await page.locator('tr.cliquable:has-text("Projet vague C (renommé)")').count() === 1
+    verifier('Panneau projet : le nom modifié est enregistré (visible dans Projet › Liste)', await page.locator('tr.cliquable:has-text("Projet vague C (renommé)")').count() === 1
       && await page.locator('tr.cliquable').count() === 10);
     await menu('/mes-projets');
     await page.click('text=+ Nouveau projet');

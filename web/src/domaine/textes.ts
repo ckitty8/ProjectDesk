@@ -26,7 +26,7 @@ export const AIDES = {
     'compte 0,5 ; les jours fériés ne sont pas des congés) ; T = jours travaillés = jours de semaine − jours fériés − congés.',
   objectifClient: 'Nombre de jours de travail attendus par le client pour chaque personne de l’équipe sur l’année. Reste à prendre = total travaillé − ' +
     'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
-  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Roadmap), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
+  sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Projet › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
     '»), l’année, le nom de la version, sa date de début et sa date de fin.',
   productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
     `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
@@ -68,9 +68,9 @@ export const GUIDE_ECRANS = {
   mesProjets: ['« + Nouveau projet » crée un projet dans votre équipe ; un projet se modifie depuis Liste des ressources.',
     'Saisissez les mises en production (date, version, nombre de bugs, d’incidents et d’US livrés, statut) des projets que vous pouvez modifier ; ' +
     'chaque champ s’enregistre dès qu’il change.',
-    'Tout le monde les voit dans Suivi de mes équipes › Roadmap (repères ▲).'],
+    'Tout le monde les voit dans Suivi de mes équipes › Projet › Gantt (repères ▲).'],
   mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
-    'Ils s’affichent dans Suivi de mes équipes › Roadmap.'],
+    'Ils s’affichent dans Suivi de mes équipes › Projet › Gantt.'],
   conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',

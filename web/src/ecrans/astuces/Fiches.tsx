@@ -83,7 +83,7 @@ export function FicheRoadmap() {
         <ListeConseils titre="✔ Bonnes pratiques" couleur={TONS.succes.texte} lignes={R.bonnesPratiques} />
         <ListeConseils titre="✕ Pièges à éviter" couleur="var(--danger)" lignes={R.pieges} />
       </div>
-      <DansLApplication>la roadmap se construit dans <b>Roadmap</b> (Gantt), la méthode du projet se choisit à sa création.</DansLApplication>
+      <DansLApplication>la roadmap se construit dans <b>Projet</b> (onglet Gantt) (Gantt), la méthode du projet se choisit à sa création.</DansLApplication>
     </>
   );
 }
@@ -111,7 +111,7 @@ export function FicheTestLearn() {
         <ListeConseils titre="✕ Pièges à éviter" couleur="var(--danger)" lignes={T.pieges} />
         <DansLApplication>
           notez chaque expérience et sa décision dans le <b>Daily</b> du projet IA (les blocages remontent dans Daily des équipes),
-          planifiez les phases dans <b>Roadmap</b> (format Now / Next / Later) et fixez une boîte de temps pour chaque expérience.
+          planifiez les phases dans <b>Projet</b> (onglet Gantt) (format Now / Next / Later) et fixez une boîte de temps pour chaque expérience.
         </DansLApplication>
       </div>
     </>

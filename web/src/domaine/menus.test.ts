@@ -16,9 +16,10 @@ function attendu(ctx: ContexteDroits, role: string) {
     'Dashboard général': ouvert('suivi_dashboard'),
     'Daily des équipes': ouvert('daily_equipes') && (ouvert('onglet_daily_fil') || ouvert('onglet_daily_synthese')),
     'Feuilles de temps': ouvert('suivi_timesheet'),
-    // Suivi de mes équipes : Projets et Roadmap suivent le même droit (porteur, 2026-11-02)
-    'Projets': ouvert('suivi_projets'),
-    'Roadmap': ouvert('suivi_projets') || (dashboard && ouvert('onglet_admin_sprints')),
+    // Suivi de mes équipes : le menu Projet (Gantt et Liste) suit le droit suivi_projets ; Mon dashboard : sous-menu Sprints et Mises en production
+    'Projet': ouvert('suivi_projets') || (dashboard && (ouvert('onglet_admin_sprints') || ouvert('projets'))),
+    'Mises en production': dashboard && ouvert('projets'),
+    'Sprints': dashboard && ouvert('onglet_admin_sprints'),
     'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')),
     'Liste des ressources': dashboard && (ouvert('fiches_ressources') || ouvert('affecter')),
     'Saisir mes heures': dashboard && ouvert('mon_dashboard'),
@@ -41,14 +42,18 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     });
   });
 
-  it('Mon dashboard : Projets (mises en production) et Roadmap (sprints) sont deux menus, absents du rôle Utilisateur', () => {
+  it('Mon dashboard : le menu Projet a deux sous-menus, Sprints puis Mises en production, absent du rôle Utilisateur', () => {
     const ctx = contexte();
-    expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesProjets' || m.id === 'mesSprints')).toBe(false);
-    expect(menusDuRole(ctx, 'projet').moi.filter(m => m.id === 'mesProjets' || m.id === 'mesSprints').map(m => m.libelle)).toEqual(['Projets', 'Roadmap']);
+    expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesSprints')).toBe(false);
+    const projet = menusDuRole(ctx, 'projet').moi.find(m => m.id === 'mesSprints');
+    expect(projet?.libelle).toBe('Projet');
+    expect(projet?.enfants?.map(e => e.libelle)).toEqual(['Sprints', 'Mises en production']);
   });
 
-  it('Suivi de mes équipes : Projets et Roadmap sont deux menus ouverts ensemble', () => {
-    expect(menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle)).toEqual(expect.arrayContaining(['Projets', 'Roadmap']));
+  it('Suivi de mes équipes : un seul menu Projet (le Gantt et la liste), plus de menu Roadmap', () => {
+    const menus = menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle);
+    expect(menus).toContain('Projet');
+    expect(menus).not.toContain('Roadmap');
   });
 
   it('Lecture seule : Mon dashboard fermé, Suivi consultable', () => {
@@ -84,10 +89,10 @@ describe('mes menus (sans rôle précisé)', () => {
 });
 
 describe('description d’un rôle', () => {
-  it('est calculée d’après la matrice : Utilisateur n’a ni Projets et Roadmap de Mon dashboard ni Liste des ressources', () => {
+  it('est calculée d’après la matrice : Utilisateur n’a ni le menu Projet de Mon dashboard ni Liste des ressources', () => {
     const texte = resumeDuRole(contexte(), 'utilisateur');
     expect(texte).toContain('Mon dashboard : Daily');
-    expect(texte.split(' · Mon dashboard : ')[1]).not.toMatch(/Projets|Roadmap/);
+    expect(texte.split(' · Mon dashboard : ')[1]).not.toMatch(/Projet|Sprints|Mises en production/);
     expect(texte).not.toContain('Liste des ressources');
     expect(texte).toContain('Congés');
   });

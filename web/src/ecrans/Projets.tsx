@@ -1,15 +1,18 @@
 /* ============================================================
-   Suivi de mes équipes › Projets (maquette 02-gProjets.png ; portage de app/js/ecrans/projets.js — phase 5, vague B) — lecture
-   Projets groupés par équipe, filtre par équipe (notion de ticket retirée, 2026-09-27) ; un clic ouvre le panneau de détail.
-   Menu séparé de la Roadmap (porteur 2026-11-02, maquette menus-projets-roadmap/) : l'ancien onglet « Planning projet » est devenu l'écran Roadmap.
+   Suivi de mes équipes › Projet (maquette 02-gProjets.png ; portage de app/js/ecrans/projets.js — phase 5, vague B) — lecture
+   Deux onglets (porteur 2026-11-02, maquette menu-projet-gantt/) : Gantt (sprints et mises en production, composant projets/Gantt) et Liste (projets
+   groupés par équipe, notion de ticket retirée le 2026-09-27). Le filtre par équipe est commun aux deux onglets ; un clic sur un projet ouvre
+   son panneau de détail (lecture). Le menu Roadmap n'existe plus : le Gantt en a repris le contenu.
    ============================================================ */
 import { useState } from 'react';
 import { Aide } from '../composants/Aide';
 import { Avatar, BadgeRef, Pastille } from '../composants/Badge';
 import { Barre } from '../composants/Barre';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
+import { Onglets } from '../composants/Onglets';
 import { PanneauProjet } from '../composants/PanneauProjet';
 import { PucesEquipes } from '../composants/PucesEquipes';
+import { Gantt } from './projets/Gantt';
 import { useSession } from '../donnees/SessionProvider';
 import { avancementMoyen } from '../domaine/calculs';
 import { COULEURS } from '../domaine/config';
@@ -22,6 +25,7 @@ export function Projets() {
   const { donnees } = useSession();
   const [equipeId, setEquipeId] = useState('toutes');
   const [ouvert, setOuvert] = useState<string | null>(null);
+  const [onglet, setOnglet] = useState('gantt');
   if (!donnees) return null;
   const { equipes, projets, ressources, valeurs } = donnees;
 
@@ -48,10 +52,15 @@ export function Projets() {
 
   return (
     <div className="ecran">
-      <EnteteEcran titre="Projets" sousTitre={`${projets.length} projets · avancement par équipe`}
+      <EnteteEcran titre="Projet" sousTitre={`${projets.length} projets · sprints, mises en production et avancement par équipe`}
         actions={<PucesEquipes equipes={equipes} choisie={equipeId} onChoisir={setEquipeId} />}
       />
-      <Carte>
+      <Onglets liste={[{ id: 'gantt', libelle: 'Gantt' }, { id: 'liste', libelle: 'Liste' }]} actif={onglet} onChoisir={setOnglet} />
+      {onglet === 'gantt' && (
+        <Gantt projets={projets.filter(p => equipeId === 'toutes' || p.equipeId === equipeId)} equipes={equipes.filter(e => equipeId === 'toutes' || e.id === equipeId)}
+          onOuvrir={setOuvert} />
+      )}
+      {onglet === 'liste' && <Carte>
         <table className="tableau">
           <thead>
             <tr><th>Projet</th><th>Chef de projet</th><th>Avancement <Aide texte={AIDES.avancementProjet} /></th><th>Échéance</th><th>Statut</th></tr>
@@ -65,7 +74,7 @@ export function Projets() {
             ))}
           </tbody>
         </table>
-      </Carte>
+      </Carte>}
       {ouvert && <PanneauProjet projetId={ouvert} onFermer={() => setOuvert(null)} />}
     </div>
   );

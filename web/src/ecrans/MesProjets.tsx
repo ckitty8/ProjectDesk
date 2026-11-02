@@ -1,8 +1,8 @@
 /* ============================================================
-   Mon dashboard › Projets (ex-sous-menu Mises en production de Projets et Roadmap ; maquette menu-projets-roadmap/, porteur 2026-10-23 ; portage de
+   Mon dashboard › Projet › Mises en production (ex-menu Projets ; maquette menu-projets-roadmap/, porteur 2026-10-23 ; portage de
    app/js/ecrans/mes-projets.js — phase 5, vague C)
    Saisie des MEP des projets que l'utilisateur peut modifier (table mises_en_production, migration 039), affichées dans Suivi de mes équipes ›
-   Roadmap. Chaque champ s'enregistre dès qu'il change. Bouton « + Nouveau projet » (panneau de création).
+   Projet › Gantt. Chaque champ s'enregistre dès qu'il change. Bouton « + Nouveau projet » (panneau de création).
    ============================================================ */
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -50,8 +50,8 @@ export function MesProjets() {
 
   return (
     <div className="ecran">
-      <EnteteEcran titre="Projets"
-        sousTitre="MEP des projets que vous pouvez modifier (date, version, tickets livrés) · affichées dans Suivi de mes équipes › Roadmap"
+      <EnteteEcran titre="Mises en production"
+        sousTitre="MEP des projets que vous pouvez modifier (date, version, tickets livrés) · affichées dans Suivi de mes équipes › Projet › Gantt"
         actions={<Bouton variante="primaire" onClick={() => setPanneau({ genre: 'nouveau' })}>+ Nouveau projet</Bouton>} />
       {projets.length === 0
         ? <Carte><div className="vide">Vous ne pouvez modifier aucun projet : pas de mise en production à saisir.</div></Carte>
@@ -99,7 +99,7 @@ export function MesProjets() {
               </table>
             </Carte>
             <div className="discret texte-12">
-              Chaque chef de projet saisit les MEP de ses projets ; tout le monde les consulte dans Suivi de mes équipes › Roadmap.
+              Chaque chef de projet saisit les MEP de ses projets ; tout le monde les consulte dans Suivi de mes équipes › Projet › Gantt.
             </div>
           </>
         )}

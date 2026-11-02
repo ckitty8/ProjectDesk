@@ -78,7 +78,7 @@ Historique et décisions : `docs/specifications/migration-react.md`.
 - L'application est dans `web/` (React + TypeScript, Vite) et servie sur `/app/` : `app/` est le **résultat du build**
   (ignoré par git, jamais modifié à la main).
 - Travail **directement sur `main`**.
-- Le Gantt et la roadmap interactifs sont **hors périmètre** (à développer après la migration).
+- Le Gantt de lecture (Suivi de mes équipes › Projet › Gantt : sprints et MEP) est livré depuis la version 2.91 ; un Gantt **modifiable** à la souris et la roadmap des demandes restent hors périmètre (la saisie se fait dans Mon dashboard › Projet).
 - Les règles n°2, 4, 5, 7 et 8 s'appliquent au code TypeScript (commentaires, un seul endroit pour les calculs :
   `web/src/domaine/`, DAT à jour, documents vérifiés, aucune donnée touchée).
 

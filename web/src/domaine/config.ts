@@ -116,7 +116,7 @@ export const DROITS: readonly Droit[] = [
   // Synthèse : au départ administrateurs, direction et responsables (mêmes valeurs que « fiches_ressources »)
   { cle: 'onglet_daily_synthese', section: 'suivi', menu: 'Daily des équipes', onglet: 'Synthèse de l’équipe', ecran: 'dailyEquipes', id: 'synthese',
     libelle: 'Synthèse par projet et par personne', repli: 'fiches_ressources' },
-  { cle: 'suivi_projets', section: 'suivi', menu: 'Projets · Roadmap', libelle: 'Consulter les projets et la roadmap des équipes', repli: 'general' },
+  { cle: 'suivi_projets', section: 'suivi', menu: 'Projet', libelle: 'Consulter le Gantt et les projets des équipes', repli: 'general' },
   { cle: 'suivi_ressources', section: 'suivi', menu: 'Gestion des ressources', libelle: 'Consulter le calendrier des congés et la liste des ressources', repli: 'general' },
   { cle: 'onglet_ressources_calendrier', section: 'suivi', menu: 'Gestion des ressources', onglet: 'Calendrier', ecran: 'ressources', id: 'calendrier',
     libelle: 'Congés des équipes, anniversaires', repli: 'suivi_ressources' },
@@ -125,10 +125,10 @@ export const DROITS: readonly Droit[] = [
   { cle: 'suivi_timesheet', section: 'suivi', menu: 'Feuilles de temps', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
   { cle: 'valider_timesheet', section: 'suivi', menu: 'Feuilles de temps', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
-  { cle: 'projets', section: 'dashboard', menu: 'Projets', libelle: 'Mises en production, projets' },
-  // Menu Roadmap = sprints (sous-menu Sprints le 2026-10-23, menu Roadmap le 2026-11-02 ; auparavant onglet d'Administration ;
+  { cle: 'projets', section: 'dashboard', menu: 'Projet', libelle: 'Mises en production, projets' },
+  // Sous-menu Sprints du menu Projet (sous-menu de « Projets et Roadmap » le 2026-10-23, auparavant onglet d'Administration ;
   // clé inchangée, enregistrée en base)
-  { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Roadmap', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
+  { cle: 'onglet_admin_sprints', section: 'dashboard', menu: 'Projet', onglet: 'Sprints', ecran: 'mesSprints', id: 'sprints',
     libelle: 'Dates des sprints des projets', repli: 'mon_dashboard' },
   { cle: 'conges_equipe', section: 'dashboard', menu: 'Congés', libelle: 'Congés et objectif de jours des autres' },
   { cle: 'onglet_conges_grille', section: 'dashboard', menu: 'Congés', onglet: 'Grille mensuelle', ecran: 'conges', id: 'grille',
