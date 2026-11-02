@@ -172,7 +172,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Trucs et astuces › Test & Learn : boucle, carte d\'expérience, phases IA et indicateurs', (await texte()).includes('La boucle Test & Learn')
       && (await texte()).includes('Carte d’expérience') && (await texte()).includes('Les phases d’un projet IA') && (await texte()).includes('Ce que l’on mesure'));
 
-    /* ---------- Vague B : Projets et Roadmap, Timesheet, Daily des équipes, Gestion des ressources ---------- */
+    /* ---------- Vague B : Projets, Roadmap, Feuilles de temps, Daily des équipes, Gestion des ressources ---------- */
     const VAGUE_B = CAPTURES;
     const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
     const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
@@ -220,23 +220,23 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('text=Aujourd’hui');
     verifier('Roadmap : « Aujourd\'hui » revient à la période par défaut', (await page.textContent('.encart-compact b')) === periode);
 
-    // Timesheet : validation des feuilles par la responsable
+    // Feuilles de temps (ex-Timesheet) : validation des feuilles par la responsable
     await menu('/timesheet');
     await page.waitForSelector('.tableau');
     await page.click('[aria-label="Mois précédent"]');
     await page.waitForSelector('text=septembre 2026');
     await captureB('07-timesheet');
-    verifier('Timesheet : feuilles du mois par personne, 4 indicateurs (validation possible)', (await texte()).includes('Saisi / attendu') && await page.locator('.grille-kpi .kpi').count() === 4
+    verifier('Feuilles de temps : feuilles du mois par personne, 4 indicateurs (validation possible)', (await texte()).includes('Saisi / attendu') && await page.locator('.grille-kpi .kpi').count() === 4
       && !(await texte()).includes('NaN'));
     const avant = await page.locator('button:has-text("Valider")').count();
-    verifier('Timesheet : feuilles soumises à valider pour mes équipes seulement', avant === 1);
+    verifier('Feuilles de temps : feuilles soumises à valider pour mes équipes seulement', avant === 1);
     await page.locator('button:has-text("Renvoyer")').first().click();
     await page.waitForSelector('.modale');
     await page.fill('.modale textarea', 'Merci de compléter septembre');
     await page.click('.modale button:has-text("Renvoyer la feuille")');
     await page.waitForFunction(() => !document.querySelector('.modale'));
     await page.waitForSelector('.badge:has-text("À compléter")');
-    verifier('Timesheet : « Renvoyer » demande un motif et renvoie la feuille à compléter', await page.locator('.badge:has-text("À compléter")').count() >= 1);
+    verifier('Feuilles de temps : « Renvoyer » demande un motif et renvoie la feuille à compléter', await page.locator('.badge:has-text("À compléter")').count() >= 1);
 
     // Daily des équipes
     await menu('/daily-des-equipes');
@@ -690,6 +690,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
+    // Administrateur : la case est réservée au créateur (la base refuse les autres), elle est donc grisée pour une administratrice
+    verifier('Administration › Rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
@@ -762,10 +764,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[aria-label="Mois précédent"]');
     await page.waitForSelector('text=septembre 2026');
     const aValider = await page.locator('button:has-text("Valider")').count();
-    verifier('Timesheet : le créateur peut valider les feuilles soumises de toutes les équipes', aValider >= 3);
+    verifier('Feuilles de temps : le créateur peut valider les feuilles soumises de toutes les équipes', aValider >= 3);
     await page.locator('button:has-text("Valider")').first().click();
     await page.waitForFunction(n => document.querySelectorAll('.tableau button.succes').length < n, aValider);
-    verifier('Timesheet : « Valider » fige la feuille et met à jour l\'écran', await page.locator('button:has-text("Valider")').count() === aValider - 1
+    verifier('Feuilles de temps : « Valider » fige la feuille et met à jour l\'écran', await page.locator('button:has-text("Valider")').count() === aValider - 1
       && await page.locator('.badge:has-text("Validée")').count() >= 1);
 
     /* ---------- Vague D (2/2) : Administration créateur ---------- */
@@ -805,6 +807,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
     await celluleDroit.selectOption(avantNiveau);
     verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
+    await page.click('[role=tab]:has-text("Rôles")');
+    await page.waitForSelector('.tableau-roles-acces');
+    // Administrateur prévu (migration 047), côté créateur : la case est cochable même pour une fiche sans compte, puis décochable
+    const caseAdmin = page.locator('input[aria-label="Administrateur : Léa Moreau"]');
+    verifier('Administration › Rôles : la case Administrateur n\'est pas grisée pour une fiche sans compte (créateur)', await caseAdmin.isEnabled());
+    await caseAdmin.click();   // case contrôlée : son état change après l'enregistrement, d'où click() et non check()
+    await page.waitForSelector('.notification.visible:has-text("Administrateur prévu")');
+    verifier('Administration › Rôles : administrateur prévu pour une fiche sans compte, appliqué à sa connexion',
+      await caseAdmin.isChecked() && (await page.textContent('.tableau-roles-acces')).includes('administrateur prévu'));
+    await caseAdmin.click();
+    await page.waitForFunction(() => !document.querySelector('.tableau-roles-acces')?.textContent?.includes('administrateur prévu'));
+    verifier('Administration › Rôles : le statut d\'administrateur prévu se retire', !(await caseAdmin.isChecked()));
+
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');
     await page.click('[role=tab]:has-text("Qui a quel rôle")');

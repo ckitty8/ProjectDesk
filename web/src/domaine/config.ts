@@ -122,8 +122,8 @@ export const DROITS: readonly Droit[] = [
     libelle: 'Congés des équipes, anniversaires', repli: 'suivi_ressources' },
   { cle: 'onglet_ressources_liste', section: 'suivi', menu: 'Gestion des ressources', onglet: 'Liste des ressources', ecran: 'ressources', id: 'liste',
     libelle: 'Personnes, projets, anniversaires', repli: 'suivi_ressources' },
-  { cle: 'suivi_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
-  { cle: 'valider_timesheet', section: 'suivi', menu: 'Timesheet', libelle: 'Valider / renvoyer les feuilles de temps' },
+  { cle: 'suivi_timesheet', section: 'suivi', menu: 'Feuilles de temps', libelle: 'Consulter les feuilles de temps des équipes', repli: 'general' },
+  { cle: 'valider_timesheet', section: 'suivi', menu: 'Feuilles de temps', libelle: 'Valider / renvoyer les feuilles de temps' },
   { cle: 'mon_dashboard', section: 'dashboard', menu: 'Daily · Saisir mes heures', libelle: 'Saisir son daily, ses heures et ses congés' },
   { cle: 'projets', section: 'dashboard', menu: 'Projets', libelle: 'Mises en production, projets' },
   // Menu Roadmap = sprints (sous-menu Sprints le 2026-10-23, menu Roadmap le 2026-11-02 ; auparavant onglet d'Administration ;

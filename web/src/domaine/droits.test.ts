@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PROJETS, contexte } from './__fixtures__/donnees';
-import { ecranAccueil, ecranOuvert, equipesGerees, estLectureSeule, maRessource, mesEquipes, monRole, monRoleSansAdmin, niveauDroit, niveauDuRole, ongletPermis,
-  peutAffecterSur, peutEditerProjet, peutGererEquipe, peutLireDailyProjet, peutModifierFiche, peutPiloterProjet, peutValiderEquipe, responsablesDe,
-  roleDeLaFiche, suisChefDuProjet, travailleSurLeProjet } from './droits';
+import {
+  ecranAccueil, ecranOuvert, equipesGerees, estAdministrateurPrevu, estLectureSeule, maRessource, mesEquipes, monRole, monRoleSansAdmin, niveauDroit,
+  niveauDuRole, ongletPermis, peutAffecterSur, peutEditerProjet, peutGererEquipe, peutLireDailyProjet, peutModifierFiche, peutPiloterProjet,
+  peutValiderEquipe, responsablesDe, roleDeLaFiche, suisChefDuProjet, travailleSurLeProjet
+} from './droits';
 import type { ContexteDroits } from './droits';
 import type { Ressource } from './types';
 
@@ -210,5 +212,17 @@ describe('administrateur cumulable (porteur, 2026-11-01)', () => {
   it('le rôle d\'une fiche n\'est plus déduit « administrateur » : le statut est à part', () => {
     const ctx = contexte({ administrateurs: [{ userId: 'u-thomas' }] });
     expect(roleDeLaFiche(ctx, maRessource(ctx) as Ressource)).not.toBe('admin');
+  });
+});
+
+describe('administrateur prévu (migration 047)', () => {
+  const sansCompte: Ressource = { id: 'r-nouveau', nom: 'Nouveau', equipeId: 'app', userId: null };
+  it('une fiche sans compte est prévue administrateur si elle figure dans administrateurs_prevus', () => {
+    expect(estAdministrateurPrevu(contexte({ administrateursPrevus: [{ ressourceId: 'r-nouveau' }] }), sansCompte)).toBe(true);
+    expect(estAdministrateurPrevu(contexte(), sansCompte)).toBe(false);
+  });
+  it('une fiche avec compte n\'est jamais « prévue » : son statut est immédiat', () => {
+    const avecCompte = maRessource(contexte()) as Ressource;
+    expect(estAdministrateurPrevu(contexte({ administrateursPrevus: [{ ressourceId: avecCompte.id }] }), avecCompte)).toBe(false);
   });
 });

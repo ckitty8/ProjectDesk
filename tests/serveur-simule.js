@@ -114,6 +114,7 @@ function amorcer() {
   bd.comptes_ignores = [];   // comptes écartés par un administrateur (migration 024)
   bd.responsables_equipe = [];   // responsables de chaque équipe (migration 027)
   bd.roles_prevus = [];          // rôles prévus en attente de la connexion de la personne (migration 029)
+  bd.administrateurs_prevus = []; // administrateurs prévus : fiches sans compte (migration 047)
   bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
   bd.membres_equipe = [];        // personnes rattachées à une autre équipe (migration 033)
   // Matrice des droits (migrations 031, 037 : droits par menu de Suivi de mes équipes, et 038 : droits par onglet) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
@@ -396,10 +397,24 @@ async function donnees(req, res, table, url) {
       if (!bd.createur.some(c => c.user_id === moi.id)) return envoyer(res, 403, { message: 'Réservé au créateur' });
       const { p_ressource, p_actif } = await lireCorps(req);
       const fiche = bd.ressources.find(r => r.id === p_ressource);
-      if (!fiche || !fiche.user_id) return envoyer(res, 400, { message: 'Cette personne n\'a pas encore de compte' });
+      if (!fiche) return envoyer(res, 400, { message: 'Fiche introuvable' });
+      // Fiche sans compte (migration 047) : statut prévu, appliqué à la première connexion
+      if (!fiche.user_id) {
+        bd.administrateurs_prevus = bd.administrateurs_prevus.filter(a => a.ressource_id !== fiche.id);
+        if (p_actif) bd.administrateurs_prevus.push({ ressource_id: fiche.id });
+        return envoyer(res, 200, p_actif ? 'prevu' : 'retire');
+      }
+      bd.administrateurs_prevus = bd.administrateurs_prevus.filter(a => a.ressource_id !== fiche.id);
       bd.administrateurs = bd.administrateurs.filter(a => a.user_id !== fiche.user_id);
       if (p_actif) bd.administrateurs.push({ user_id: fiche.user_id });
       return envoyer(res, 200, p_actif ? 'ajoute' : 'retire');
+    }
+    // Connexion : promeut administrateur le compte dont la fiche a un statut prévu (migration 047)
+    if (table === 'rpc/appliquer_mes_admins_prevus') {
+      const miennes = bd.administrateurs_prevus.filter(x => (bd.ressources.find(r => r.id === x.ressource_id) || {}).user_id === moi.id);
+      miennes.forEach(() => { if (!bd.administrateurs.some(a => a.user_id === moi.id)) bd.administrateurs.push({ user_id: moi.id }); });
+      bd.administrateurs_prevus = bd.administrateurs_prevus.filter(x => !miennes.includes(x));
+      return envoyer(res, 200, miennes.length);
     }
     if (table === 'rpc/appliquer_mes_roles_prevus') {
       const miennes = bd.roles_prevus.filter(x => (bd.ressources.find(r => r.id === x.ressource_id) || {}).user_id === moi.id);

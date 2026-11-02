@@ -143,6 +143,11 @@ export interface Rattachement {
   creeLe?: string | null;
 }
 
+/** Administrateur prévu : fiche sans compte dont le statut s'appliquera à la première connexion (table administrateurs_prevus, migration 047) */
+export interface AdminPrevu {
+  ressourceId: string;
+}
+
 /** Rôle d'accès déclaré d'une fiche (table roles_acces, migration 030) */
 export interface RoleDeclare {
   ressourceId: string;

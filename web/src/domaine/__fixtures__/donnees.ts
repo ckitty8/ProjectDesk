@@ -68,6 +68,7 @@ export function contexte(surcharge: Partial<ContexteDroits> = {}): ContexteDroit
     responsablesEquipe: [{ equipeId: 'ia', ressourceId: 'r-anne' }],
     rolesAcces: [],
     rolesPrevus: [],
+    administrateursPrevus: [],
     administrateurs: [],
     createur: [{ userId: 'u-christelle' }],
     droitsRoles: MATRICE_PRODUCTION,

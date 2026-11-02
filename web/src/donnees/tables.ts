@@ -7,8 +7,10 @@
    jusqu'à la migration de leur écran.
    ============================================================ */
 import { ajouterJours } from '../domaine/dates';
-import type { Absence, Affectation, CompteAdmin, Equipe, EnvoiDaily, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, ObjectifJoursTravail, Projet,
-  Rattachement, NoteDaily, Referentiel, Ressource, ResponsableEquipe, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel } from '../domaine/types';
+import type {
+  Absence, AdminPrevu, Affectation, CompteAdmin, EnvoiDaily, Equipe, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, NoteDaily,
+  ObjectifJoursTravail, Projet, Rattachement, Referentiel, ResponsableEquipe, Ressource, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel
+} from '../domaine/types';
 import type { JourFerie } from '../domaine/calendrier';
 
 /** Données chargées, par clé applicative (mêmes clés que etat.d dans l'application actuelle) */
@@ -28,6 +30,7 @@ export interface Donnees {
   rattachements: readonly Rattachement[];
   responsablesEquipe: readonly ResponsableEquipe[];
   rolesPrevus: readonly RoleDeclare[];
+  administrateursPrevus: readonly AdminPrevu[];
   rolesAcces: readonly RoleDeclare[];
   droitsRoles: readonly LigneDroit[];
   administrateurs: readonly CompteAdmin[];
@@ -47,7 +50,7 @@ export const TABLES: Record<CleTable, string> = {
   temps: 'temps_saisis', feuilles: 'feuilles_temps',
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   createur: 'createur',
-  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
+  responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', administrateursPrevus: 'administrateurs_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
   rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production'
 };
 export const CLES_TABLES = Object.keys(TABLES) as CleTable[];
@@ -59,7 +62,7 @@ const CLES_UNIQUES: Partial<Record<CleTable, string>> = {
   envoisDaily: 'projet_id', absences: 'ressource_id,jour', objectifsTravail: 'equipe_id,annee', sprintsProjet: 'projet_id,numero',
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', createur: 'user_id',
-  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
+  responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', administrateursPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
   rattachements: 'equipe_id,ressource_id'
 };
 

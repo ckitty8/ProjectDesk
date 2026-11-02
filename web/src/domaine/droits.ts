@@ -8,7 +8,7 @@
    ============================================================ */
 import { DROITS, ROLES_CHOISISSABLES, ROLES_PROJET } from './config';
 import type { Niveau, RoleAcces } from './config';
-import type { Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
+import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
 
 /** Simulation de rôle (créateur seul) : le rôle de la carte s'applique à la fiche choisie */
 export interface Simulation {
@@ -42,6 +42,7 @@ export interface ContexteDroits {
   responsablesEquipe: readonly ResponsableEquipe[];
   rolesAcces: readonly RoleDeclare[];
   rolesPrevus: readonly RoleDeclare[];
+  administrateursPrevus: readonly AdminPrevu[];
   administrateurs: readonly CompteAdmin[];
   createur: readonly CompteAdmin[];
   droitsRoles: readonly LigneDroit[];
@@ -85,6 +86,10 @@ const membreOrganisation = (ctx: ContexteDroits, r: Ressource) =>
 
 export const estAdministrateur = (ctx: ContexteDroits, r: Ressource): boolean =>
   !!r.userId && [...ctx.administrateurs, ...ctx.createur].some(a => a.userId === r.userId);
+
+/** Statut d'administrateur prévu pour une fiche sans compte (migration 047) : il s'applique à sa première connexion, email vérifié */
+export const estAdministrateurPrevu = (ctx: ContexteDroits, r: Ressource): boolean =>
+  !r.userId && ctx.administrateursPrevus.some(a => a.ressourceId === r.id);
 
 /** Responsables d'une équipe (fiches) : ceux de responsables_equipe, puis l'ancien responsable désigné s'il n'y est pas */
 export function responsablesDe(ctx: ContexteDroits, equipeId: string): Ressource[] {

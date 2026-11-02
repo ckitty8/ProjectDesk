@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi des feuilles de temps (Suivi de mes équipes › Timesheet)
+   Suivi des feuilles de temps (Suivi de mes équipes › Feuilles de temps)
    (portage de tableauFeuilles et MoisTemps de app/js/ecrans/timesheet.js — phase 5, vague B)
    ------------------------------------------------------------
    Par personne et par mois : heures saisies / attendues, complétude, statut de la feuille, et si JE peux la valider (responsable de

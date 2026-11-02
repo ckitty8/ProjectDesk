@@ -15,7 +15,7 @@ function attendu(ctx: ContexteDroits, role: string) {
   return {
     'Dashboard général': ouvert('suivi_dashboard'),
     'Daily des équipes': ouvert('daily_equipes') && (ouvert('onglet_daily_fil') || ouvert('onglet_daily_synthese')),
-    'Timesheet': ouvert('suivi_timesheet'),
+    'Feuilles de temps': ouvert('suivi_timesheet'),
     // Suivi de mes équipes : Projets et Roadmap suivent le même droit (porteur, 2026-11-02)
     'Projets': ouvert('suivi_projets'),
     'Roadmap': ouvert('suivi_projets') || (dashboard && ouvert('onglet_admin_sprints')),

@@ -1,5 +1,6 @@
 /* ============================================================
-   Suivi de mes équipes › Timesheet (maquette 05-gTime.png ; portage de app/js/ecrans/timesheet.js — phase 5, vague B)
+   Suivi de mes équipes › Feuilles de temps (ex-« Timesheet », renommé le 2026-11-02 pour ne plus être confondu avec « Saisir mes heures » ;
+   maquette 05-gTime.png ; portage de app/js/ecrans/timesheet.js — phase 5, vague B)
    Heures déclarées par personne sur un mois, toutes équipes ; validation des feuilles par les responsables d'équipe (seule écriture
    de la section « Suivi de mes équipes », contrôlée en base). La saisie se fait dans Mon dashboard › Saisir mes heures.
    La saisie et la validation des heures sont MENSUELLES (porteur du projet, 2026-10-05) : une feuille par personne et par mois.
@@ -47,7 +48,7 @@ export function Timesheet() {
 
   return (
     <div className="ecran">
-      <EnteteEcran titre="Timesheet"
+      <EnteteEcran titre="Feuilles de temps"
         sousTitre={`Heures déclarées par personne sur le mois · toutes équipes${valide ? ' · validation des feuilles de vos équipes' : ''}`}
         actions={(
           <div className="ligne-flex">

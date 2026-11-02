@@ -40,7 +40,7 @@ export const MENU_GENERAL: readonly Menu[] = [
   { id: 'projets', libelle: 'Projets', icone: 'proj', droit: 'suivi_projets' },
   { id: 'roadmap', libelle: 'Roadmap', icone: 'road', droit: 'suivi_projets' },
   { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
-  { id: 'timesheet', libelle: 'Timesheet', icone: 'time', droit: 'suivi_timesheet' }
+  { id: 'timesheet', libelle: 'Feuilles de temps', icone: 'time', droit: 'suivi_timesheet' }
 ];
 
 /** Mon dashboard : Daily et Saisir mes heures suivent le droit « mon_dashboard » ; chaque autre menu suit ses propres lignes */
@@ -84,7 +84,7 @@ export function menusDuRole(ctx: ContexteDroits, role?: string): { suivi: Menu[]
   return { suivi, moi };
 }
 
-/** « Suivi : Dashboard général, Timesheet · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle */
+/** « Suivi : Dashboard général, Feuilles de temps · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle */
 export function resumeDuRole(ctx: ContexteDroits, role: string): string {
   const { suivi, moi } = menusDuRole(ctx, role);
   const nom = (m: Menu): string => m.libelle + (m.enfants ? ` (${m.enfants.map(e => e.libelle).join(', ')})` : '');

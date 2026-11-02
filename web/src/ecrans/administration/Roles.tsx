@@ -13,7 +13,7 @@ import { useSession } from '../../donnees/SessionProvider';
 import { roleChoisi } from '../../domaine/annuaire';
 import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
-import { aDroit, estAdministrateur, rolePrevu } from '../../domaine/droits';
+import { aDroit, estAdministrateur, estAdministrateurPrevu, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
 import { projetsAvecRoleDe, ressourcesPresentes } from '../../domaine/vues';
@@ -29,7 +29,8 @@ export function Roles() {
     .filter(r => !equipe || r.equipeId === equipe).filter(r => !role || roleChoisi(ctx, r) === role)
     .filter(r => !texte || `${r.nom} ${r.email ?? ''}`.toLowerCase().includes(texte))
     .sort((a, b) => (donnees.equipes.find(e => e.id === a.equipeId)?.nom ?? '').localeCompare(donnees.equipes.find(e => e.id === b.equipeId)?.nom ?? '') || a.nom.localeCompare(b.nom));
-  const nommer = aDroit(ctx, 'nommer_admin'), verrou = !aDroit(ctx, 'roles');
+  // Nommer un administrateur : droit de la matrice ET créateur (la fonction affecter_administrateur de la base est réservée au créateur)
+  const nommer = aDroit(ctx, 'nommer_admin') && ctx.estCreateur, verrou = !aDroit(ctx, 'roles');
 
   // Rôle d'accès choisi dans la liste d'une ligne (administrateurs ; la base contrôle le droit)
   async function affecter(r: Ressource, nouveau: string) {
@@ -43,18 +44,23 @@ export function Roles() {
   // Case « Administrateur » : cumule ou retire le statut sans toucher au rôle (fonction affecter_administrateur, migration 046)
   async function definirAdministrateur(r: Ressource, actif: boolean) {
     try {
-      await appelerFonction('affecter_administrateur', { p_ressource: r.id, p_actif: actif });
+      const resultat = await appelerFonction('affecter_administrateur', { p_ressource: r.id, p_actif: actif });
       await actualiser();
-      notifier(actif ? 'Administrateur ajouté : il peut passer en mode administrateur depuis son profil' : 'Statut d’administrateur retiré');
+      // « prevu » : fiche sans compte, le statut s'applique à la première connexion (migration 047)
+      notifier(resultat === 'prevu' ? 'Administrateur prévu : le statut s’appliquera à sa première connexion (email vérifié)'
+        : actif ? 'Administrateur ajouté : il peut passer en mode administrateur depuis son profil' : 'Statut d’administrateur retiré');
     } catch (e) { notifier((e as Error).message, 'erreur'); }
   }
 
   const ligne = (r: Ressource) => {
     const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
     const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
-    // Administrateur : case à part, cumulée avec le rôle ; cochée ou décochée par le créateur seul, pour une personne qui a un compte
-    const admin = estAdministrateur(ctx, r), estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
+    // Administrateur : case à part, cumulée avec le rôle ; cochée ou décochée par le créateur seul, pour toute fiche : sans compte, le statut
+    // est « prévu » et s'applique à la première connexion (migration 047)
+    const adminPrevu = estAdministrateurPrevu(ctx, r), admin = estAdministrateur(ctx, r) || adminPrevu;
+    const estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
     const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
+    const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
     return (
       <tr key={r.id}>
         <td><span className="ligne-flex"><Avatar nom={r.nom} /><b>{r.nom}</b></span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
@@ -74,10 +80,11 @@ export function Roles() {
         </td>
         <td>
           <label className="ligne-flex">
-            <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || !r.userId || estLeCreateur}
+            <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || estLeCreateur} title={nommer ? undefined : 'Réservé au créateur'}
               onChange={e => void definirAdministrateur(r, e.target.checked)} />
             Administrateur {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
           </label>
+          {effetAdmin && <div className="discret texte-12">{effetAdmin}</div>}
         </td>
       </tr>
     );

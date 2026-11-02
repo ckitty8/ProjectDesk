@@ -10,7 +10,7 @@ import { CONFIG, ROLES_PROJET } from './config';
 
 export const AIDES = {
   sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule — seule exception : ' +
-    'les responsables d’équipe y valident les feuilles de temps de leurs équipes (Timesheet).',
+    'les responsables d’équipe y valident les feuilles de temps de leurs équipes (menu Feuilles de temps).',
   sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les sprints des projets.',
   avancementMoyen: 'Moyenne de l’avancement (%) des projets non terminés.',
   projetsRisque: 'Projets au statut « À risque » ou « En retard ».',
@@ -101,7 +101,7 @@ export const GUIDES = {
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
-    'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (Timesheet).',
+    'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (menu Feuilles de temps).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
