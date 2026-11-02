@@ -543,10 +543,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Nouvelle personne puis suppression
     await page.click('text=+ Personne >> nth=-1');
     await page.waitForSelector('.modale[role=dialog]');
-    await page.fill('.modale input[name=nom]', 'Nouvelle Recrue');
+    await page.fill('.modale input[name=prenom]', 'Nouvelle');
+    await page.fill('.modale input[name=nomFamille]', 'Recrue');
     await page.click('.modale button:has-text("Enregistrer")');
     await page.waitForSelector('tr[data-ressource]:has-text("Nouvelle Recrue")');
-    verifier('Nouvelle personne : créée dans l\'équipe et visible dans le tableau', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 1);
+    verifier('Nouvelle personne : prénom et nom saisis séparément, nom complet recomposé et visible dans le tableau', await page.locator('tr[data-ressource]:has-text("Nouvelle Recrue")').count() === 1);
     await page.locator('tr[data-ressource]', { hasText: 'Nouvelle Recrue' }).locator('text=Fiche').click();
     await page.click('.modale button:has-text("Supprimer")');
     await page.waitForFunction(() => !document.querySelector('tr[data-ressource]') || ![...document.querySelectorAll('tr[data-ressource]')].some(r => r.textContent.includes('Nouvelle Recrue')));
@@ -686,15 +687,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('input[aria-label="Rechercher une personne"]', 'thomas');
     verifier('Administration › Rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
     await page.fill('input[aria-label="Rechercher une personne"]', '');
-    // Nom et prénom modifiables dans la ligne (2.88) : enregistré en quittant le champ, remis à l'identique ensuite
-    const champNom = page.locator('input[aria-label="Nom et prénom de Léa Moreau"]');
-    await champNom.fill('Léa Moreau-Durand');
+    // Prénom et nom séparés, modifiables dans la ligne (2.88, 2.89) : enregistrés en quittant le champ, le nom complet est recomposé ; remis ensuite
+    const champNom = page.locator('input[aria-label="Nom de Léa Moreau"]');
+    verifier('Administration › Rôles : prénom et nom sont deux champs (découpage du nom complet existant)', await page.locator('input[aria-label="Prénom de Léa Moreau"]').inputValue() === 'Léa'
+      && await champNom.inputValue() === 'Moreau');
+    await champNom.fill('Moreau-Durand');
     await champNom.blur();
     await page.waitForSelector('.notification.visible:has-text("Nom enregistré")');
-    verifier('Administration › Rôles : le nom et prénom se modifie dans la ligne et s\'enregistre', await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').count() === 1);
-    await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').fill('Léa Moreau');
-    await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').blur();
-    await page.waitForSelector('input[aria-label="Nom et prénom de Léa Moreau"]');
+    await page.waitForSelector('input[aria-label="Nom de Léa Moreau-Durand"]');
+    verifier('Administration › Rôles : le nom se modifie dans la ligne, le nom complet est recomposé', await page.locator('input[aria-label="Prénom de Léa Moreau-Durand"]').inputValue() === 'Léa');
+    await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').fill('Moreau');
+    await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').blur();
+    await page.waitForSelector('input[aria-label="Nom de Léa Moreau"]');
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));

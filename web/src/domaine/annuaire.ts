@@ -10,6 +10,19 @@ import { roleDeLaFiche, rolePrevu } from './droits';
 import type { ContexteDroits } from './droits';
 import type { Equipe, Projet, Ressource } from './types';
 
+/* ---------- Prénom et nom d'une personne (migration 048) ---------- */
+
+/** Prénom et nom d'une fiche. Colonnes prenom / nom_famille si l'une d'elles est renseignée ; sinon découpage du nom complet : le premier mot est
+ *  le prénom, le reste le nom (« Cerine KERARMA » → Cerine | KERARMA). Un nom d'un seul mot est un prénom. Lecture seule : rien n'est écrit en base. */
+export function prenomEtNom(r: Pick<Ressource, 'nom' | 'prenom' | 'nomFamille'>): { prenom: string; nomFamille: string } {
+  if (r.prenom != null || r.nomFamille != null) return { prenom: r.prenom ?? '', nomFamille: r.nomFamille ?? '' };
+  const [prenom = '', ...reste] = r.nom.trim().split(/\s+/);
+  return { prenom, nomFamille: reste.join(' ') };
+}
+
+/** Nom complet recomposé à partir du prénom et du nom (espaces superflus retirés) : valeur de la colonne nom, affichée sur tous les écrans */
+export const nomComplet = (prenom: string, nomFamille: string): string => [prenom, nomFamille].map(x => x.trim()).filter(Boolean).join(' ');
+
 /** Élément choisi dans la navigation de gauche */
 export type Choix = { type: 'equipe' | 'projet'; id: string } | { type: 'postes' | 'contrats' | 'aucun'; id?: undefined };
 

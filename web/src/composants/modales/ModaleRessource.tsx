@@ -12,7 +12,7 @@ import { Bouton } from '../Bouton';
 import { Cadre } from '../Fenetres';
 import { creer, modifier, supprimer } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
-import { roleAcces } from '../../domaine/annuaire';
+import { nomComplet, prenomEtNom, roleAcces } from '../../domaine/annuaire';
 import { ROLES_ACCES } from '../../domaine/config';
 import { rolePrevu } from '../../domaine/droits';
 import { valeursDe } from '../../domaine/referentiels';
@@ -35,6 +35,7 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
   const { ctx, donnees, executer, notifier } = useSession();
   if (!ctx || !donnees) return null;
   const fiche = id ? donnees.ressources.find(r => r.id === id) : undefined;
+  const noms = fiche ? prenomEtNom(fiche) : { prenom: '', nomFamille: '' };
   const eqId = fiche?.equipeId ?? equipeId ?? '';
   const equipe = donnees.equipes.find(e => e.id === eqId);
   const naissance = donnees.ressources.some(r => 'dateNaissance' in r);
@@ -51,7 +52,8 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
     const brut = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     const dateArrivee = brut.dateArrivee || null, dateDepart = brut.dateDepart || null;
     if (dateArrivee && dateDepart && dateDepart < dateArrivee) return notifier('La date de départ précède la date d’arrivée', 'erreur');
-    const champs: Record<string, unknown> = { ...brut, capacite: Number(brut.capacite), dateArrivee, dateDepart };
+    // Prénom et nom (migration 048) : le nom complet « Prénom Nom » (colonne nom) est recomposé, il reste affiché sur tous les écrans
+    const champs: Record<string, unknown> = { ...brut, nom: nomComplet(brut.prenom ?? '', brut.nomFamille ?? ''), capacite: Number(brut.capacite), dateArrivee, dateDepart };
     if ('dateNaissance' in brut) champs.dateNaissance = brut.dateNaissance || null;      // champ présent après la migration 036
     let creeeId = '';
     const reussi = await executer(async () => {
@@ -85,7 +87,10 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
         </>
       )}>
       <form id="fiche-ressource" className="pile" onSubmit={e => void enregistrer(e)}>
-        <div><label className="libelle">Nom complet<input className="champ" name="nom" defaultValue={fiche?.nom ?? ''} required /></label></div>
+        <div className="deux-colonnes">
+          <div><label className="libelle">Prénom<input className="champ" name="prenom" defaultValue={noms.prenom} required /></label></div>
+          <div><label className="libelle">Nom<input className="champ" name="nomFamille" defaultValue={noms.nomFamille} required /></label></div>
+        </div>
         <div className="deux-colonnes">
           <div><label className="libelle">Poste{liste('poste', 'poste', fiche?.poste)}</label></div>
           <div><label className="libelle">Type de contrat{liste('contrat', 'typeContrat', fiche?.typeContrat)}</label></div>

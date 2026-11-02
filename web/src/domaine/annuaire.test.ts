@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPES, PROJETS, contexte } from './__fixtures__/donnees';
-import { equipeVide, rattachesA, roleAcces, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
+import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleAcces, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
 
 describe('navigation de l\'annuaire', () => {
   it('liste les équipes avant les directions, et cache une direction qui ne porte rien', () => {
@@ -48,5 +48,23 @@ describe('rôle d\'accès affiché', () => {
     expect(roleAcces(ctx, r('r-cerine'))).toBe('utilisateur');
     expect(roleChoisi(ctx, r('r-cerine'))).toBe('lecture');
     expect(roleChoisi(ctx, r('r-thomas'))).toBe('utilisateur');
+  });
+});
+
+describe('prénom et nom (migration 048)', () => {
+  it('découpe le nom complet d\'une fiche sans prénom ni nom saisis : premier mot = prénom', () => {
+    expect(prenomEtNom({ nom: 'Cerine KERARMA' })).toEqual({ prenom: 'Cerine', nomFamille: 'KERARMA' });
+    expect(prenomEtNom({ nom: 'Jean Pierre Dupont' })).toEqual({ prenom: 'Jean', nomFamille: 'Pierre Dupont' });
+    expect(prenomEtNom({ nom: 'Christelle' })).toEqual({ prenom: 'Christelle', nomFamille: '' });
+    expect(prenomEtNom({ nom: '  Léa   Moreau ' })).toEqual({ prenom: 'Léa', nomFamille: 'Moreau' });
+  });
+  it('préfère les colonnes saisies au découpage', () => {
+    expect(prenomEtNom({ nom: 'Jean Pierre Dupont', prenom: 'Jean Pierre', nomFamille: 'Dupont' })).toEqual({ prenom: 'Jean Pierre', nomFamille: 'Dupont' });
+    expect(prenomEtNom({ nom: 'Marc', prenom: 'Marc', nomFamille: null })).toEqual({ prenom: 'Marc', nomFamille: '' });
+  });
+  it('recompose le nom complet', () => {
+    expect(nomComplet(' Léa ', 'Moreau-Durand')).toBe('Léa Moreau-Durand');
+    expect(nomComplet('Christelle', '')).toBe('Christelle');
+    expect(nomComplet('', '')).toBe('');
   });
 });

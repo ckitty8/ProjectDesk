@@ -22,7 +22,11 @@ export interface Equipe {
 
 export interface Ressource {
   id: string;
+  /** Nom complet « Prénom Nom » : affiché partout, recomposé à chaque modification du prénom ou du nom (migration 048) */
   nom: string;
+  /** Prénom et nom de famille saisis (migration 048) ; vides tant que la fiche n'a pas été modifiée : voir prenomEtNom */
+  prenom?: string | null;
+  nomFamille?: string | null;
   equipeId: string;
   userId?: string | null;
   email?: string | null;

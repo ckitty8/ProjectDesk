@@ -10,7 +10,7 @@ import { Avatar, BadgeTon, Pastille } from '../../composants/Badge';
 import { BarreOutils, Carte, Vide } from '../../composants/Carte';
 import { executer as appelerFonction, modifier } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
-import { roleChoisi } from '../../domaine/annuaire';
+import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
 import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
 import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
@@ -41,13 +41,14 @@ export function Roles() {
     } catch (e) { notifier((e as Error).message, 'erreur'); }
   }
 
-  // Nom et prénom : la fiche n'a qu'un champ « nom » (« Prénom Nom »), modifiable ici comme dans la fiche de Liste des ressources.
-  // Même droit (peutModifierFiche, règle RLS de la table ressources) ; enregistré en quittant le champ ; un nom vide est refusé.
-  async function renommer(r: Ressource, saisi: string) {
-    const nom = saisi.trim();
-    if (!nom) { notifier('Le nom ne peut pas être vide', 'erreur'); return; }
-    if (nom === r.nom) return;
-    if (await executer(() => modifier('ressources', { id: 'eq.' + r.id }, { nom }), 'ressources')) notifier('Nom enregistré');
+  // Prénom et nom (migration 048) : enregistrés dans leurs colonnes, et le nom complet « Prénom Nom » (colonne nom, affichée partout) est recomposé.
+  // Même droit que la fiche de Liste des ressources (peutModifierFiche, règle RLS de la table ressources) ; enregistré en quittant le champ.
+  async function renommer(r: Ressource, prenom: string, nomFamille: string): Promise<boolean> {
+    const nom = nomComplet(prenom, nomFamille);
+    if (!nom) { notifier('Le prénom et le nom ne peuvent pas être tous les deux vides', 'erreur'); return false; }
+    const reussi = await executer(() => modifier('ressources', { id: 'eq.' + r.id }, { prenom: prenom.trim(), nomFamille: nomFamille.trim(), nom }), 'ressources');
+    if (reussi) notifier('Nom enregistré');
+    return reussi;
   }
 
   // Case « Administrateur » : cumule ou retire le statut sans toucher au rôle (fonction affecter_administrateur, migration 046)
@@ -75,9 +76,7 @@ export function Roles() {
         <td>
           <span className="ligne-flex">
             <Avatar nom={r.nom} />
-            <input key={r.id + r.nom} className="champ champ-nom" aria-label={`Nom et prénom de ${r.nom}`} defaultValue={r.nom} disabled={!peutModifierFiche(ctx, r)}
-              onBlur={e => void renommer(r, e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = r.nom; e.currentTarget.blur(); } }} />
+            <ChampsNom key={r.id + r.nom + (r.prenom ?? '') + (r.nomFamille ?? '')} r={r} modifiable={peutModifierFiche(ctx, r)} enregistrer={(p, n) => renommer(r, p, n)} />
           </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
         <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? '#8A93A3'} />{eq?.nom}</span></td>
         <td>
@@ -127,7 +126,7 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Nom et prénom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
+                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
                 <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
               </tr>
             </thead>
@@ -135,6 +134,32 @@ export function Roles() {
           </table>
         </div>
       </Carte>
+    </>
+  );
+}
+
+/** Prénom et nom d'une personne dans sa ligne : deux champs enregistrés en quittant l'un d'eux (Entrée valide, Échap annule) ; remis à
+ *  leur valeur si l'enregistrement échoue. Le composant est recréé (clé de la ligne) quand les données changent. */
+interface PropsNom { r: Ressource; modifiable: boolean; enregistrer: (prenom: string, nomFamille: string) => Promise<boolean> }
+function ChampsNom({ r, modifiable, enregistrer }: PropsNom) {
+  const initial = prenomEtNom(r);
+  const [prenom, setPrenom] = useState(initial.prenom);
+  const [nomFamille, setNomFamille] = useState(initial.nomFamille);
+  const remettre = () => { setPrenom(initial.prenom); setNomFamille(initial.nomFamille); };
+  async function sauver() {
+    if (prenom === initial.prenom && nomFamille === initial.nomFamille) return;
+    if (!(await enregistrer(prenom, nomFamille))) remettre();
+  }
+  const touche = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') e.currentTarget.blur();
+    if (e.key === 'Escape') { remettre(); e.currentTarget.blur(); }
+  };
+  return (
+    <>
+      <input className="champ champ-nom" aria-label={`Prénom de ${r.nom}`} placeholder="Prénom" value={prenom} disabled={!modifiable}
+        onChange={e => setPrenom(e.target.value)} onBlur={() => void sauver()} onKeyDown={touche} />
+      <input className="champ champ-nom" aria-label={`Nom de ${r.nom}`} placeholder="Nom" value={nomFamille} disabled={!modifiable}
+        onChange={e => setNomFamille(e.target.value)} onBlur={() => void sauver()} onKeyDown={touche} />
     </>
   );
 }
