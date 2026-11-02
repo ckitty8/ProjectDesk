@@ -392,6 +392,16 @@ async function donnees(req, res, table, url) {
       const { p_ressource, p_role } = await lireCorps(req);
       return envoyer(res, 200, appliquerRole(p_ressource, p_role));
     }
+    // Nom du compte de connexion (migration 049) : copie le nom complet de la fiche dans le compte relié
+    if (table === 'rpc/renommer_compte') {
+      const { p_ressource, p_nom } = await lireCorps(req);
+      const fiche = bd.ressources.find(r => r.id === p_ressource);
+      if (!fiche) return envoyer(res, 400, { message: 'Fiche introuvable' });
+      const compte = utilisateurs.find(x => x.id === fiche.user_id);
+      if (!compte) return envoyer(res, 200, 'sans_compte');
+      compte.name = String(p_nom).trim();
+      return envoyer(res, 200, 'applique');
+    }
     // Administrateur cumulable (migration 046) : coche / décoche le statut sans toucher au rôle ; réservé au créateur
     if (table === 'rpc/affecter_administrateur') {
       if (!bd.createur.some(c => c.user_id === moi.id)) return envoyer(res, 403, { message: 'Réservé au créateur' });

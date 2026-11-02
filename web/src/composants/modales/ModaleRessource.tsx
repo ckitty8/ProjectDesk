@@ -11,6 +11,7 @@ import { Aide } from '../Aide';
 import { Bouton } from '../Bouton';
 import { Cadre } from '../Fenetres';
 import { creer, modifier, supprimer } from '../../donnees/api';
+import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
 import { nomComplet, prenomEtNom, roleAcces } from '../../domaine/annuaire';
 import { ROLES_ACCES } from '../../domaine/config';
@@ -32,7 +33,7 @@ interface Props {
 }
 
 export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffecter, onRetourAffectation, onRoles }: Props) {
-  const { ctx, donnees, executer, notifier } = useSession();
+  const { ctx, donnees, executer, notifier, actualiser } = useSession();
   if (!ctx || !donnees) return null;
   const fiche = id ? donnees.ressources.find(r => r.id === id) : undefined;
   const noms = fiche ? prenomEtNom(fiche) : { prenom: '', nomFamille: '' };
@@ -57,11 +58,16 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
     if ('dateNaissance' in brut) champs.dateNaissance = brut.dateNaissance || null;      // champ présent après la migration 036
     let creeeId = '';
     const reussi = await executer(async () => {
-      if (id) { await modifier('ressources', { id: 'eq.' + id }, champs); return; }
+      if (id) {
+        await modifier('ressources', { id: 'eq.' + id }, champs);
+        if (fiche?.userId && champs.nom !== fiche.nom) await renommerCompte(id, String(champs.nom));   // nom du compte de connexion (migration 049)
+        return;
+      }
       const [creee] = await creer('ressources', { ...champs, equipeId: eqId });
       creeeId = String(creee?.id ?? '');
     }, 'ressources', 'administrateurs');
     if (!reussi) return;
+    if (fiche?.userId && fiche.userId === ctx?.userId) await actualiser();   // mon propre nom, affiché sous le menu
     if (!id && retourProjet && creeeId) onRetourAffectation(creeeId, retourProjet); else onFermer();
   }
 

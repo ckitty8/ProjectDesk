@@ -91,3 +91,7 @@ export function ecranDArrivee(ctx: ContexteDroits, equipeCourante: string | null
   if (!equipes.length) return ctx.estAdmin ? (ctx.equipes.length ? ecranAccueil(ctx) : 'monAdmin') : 'choixEquipe';
   return equipeCourante ? ecranAccueil(ctx) : 'choixEquipe';
 }
+
+/** Copie le nom complet d'une fiche dans le compte de connexion relié (fonction renommer_compte, migration 049) : le nom affiché sous le menu.
+ *  Sans effet si la fiche n'a pas encore de compte. Mêmes droits que la modification de la fiche (vérifiés par la base). */
+export const renommerCompte = (ressourceId: string, nom: string) => executer('renommer_compte', { p_ressource: ressourceId, p_nom: nom });

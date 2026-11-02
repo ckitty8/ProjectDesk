@@ -699,6 +699,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').fill('Moreau');
     await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').blur();
     await page.waitForSelector('input[aria-label="Nom de Léa Moreau"]');
+    // Le nom du compte de connexion suit la fiche (2.90, migration 049) : mon propre nom, affiché sous le menu, est mis à jour
+    const nomAvant = (await page.textContent('.moi-nom')).trim();
+    await page.locator('input[aria-label="Nom de Camille Laurent"]').fill('Laurent-Test');
+    await page.locator('input[aria-label="Nom de Camille Laurent"]').blur();
+    await page.waitForFunction(() => document.querySelector('.moi-nom')?.textContent?.includes('Laurent-Test'));
+    verifier('Administration › Rôles : le nom du compte de connexion (sous le menu) suit la fiche', (await page.textContent('.notification')).includes('compte de connexion')
+      && (await page.textContent('.moi-nom')).includes('Camille Laurent-Test') && nomAvant.includes('Camille'));
+    await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').fill('Laurent');
+    await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').blur();
+    await page.waitForFunction(() => !document.querySelector('.moi-nom')?.textContent?.includes('Laurent-Test'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));

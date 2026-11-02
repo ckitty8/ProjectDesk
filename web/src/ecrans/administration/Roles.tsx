@@ -9,6 +9,7 @@ import { Aide } from '../../composants/Aide';
 import { Avatar, BadgeTon, Pastille } from '../../composants/Badge';
 import { BarreOutils, Carte, Vide } from '../../composants/Carte';
 import { executer as appelerFonction, modifier } from '../../donnees/api';
+import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
 import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
 import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
@@ -46,8 +47,15 @@ export function Roles() {
   async function renommer(r: Ressource, prenom: string, nomFamille: string): Promise<boolean> {
     const nom = nomComplet(prenom, nomFamille);
     if (!nom) { notifier('Le prénom et le nom ne peuvent pas être tous les deux vides', 'erreur'); return false; }
-    const reussi = await executer(() => modifier('ressources', { id: 'eq.' + r.id }, { prenom: prenom.trim(), nomFamille: nomFamille.trim(), nom }), 'ressources');
-    if (reussi) notifier('Nom enregistré');
+    // Le nom du compte de connexion relié suit la fiche (migration 049)
+    const reussi = await executer(async () => {
+      await modifier('ressources', { id: 'eq.' + r.id }, { prenom: prenom.trim(), nomFamille: nomFamille.trim(), nom });
+      if (r.userId) await renommerCompte(r.id, nom);
+    }, 'ressources');
+    if (reussi) {
+      notifier(r.userId ? 'Nom enregistré, compte de connexion mis à jour' : 'Nom enregistré');
+      if (r.userId && r.userId === ctx?.userId) await actualiser();   // mon propre nom, affiché sous le menu
+    }
     return reussi;
   }
 
