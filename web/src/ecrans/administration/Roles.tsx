@@ -147,7 +147,7 @@ export function Roles() {
             </select>
           </>
         )}
-        droite={<span className="discret">Rôles de projet (Chef de projet, Membre, Lecteur) : projet par projet, dans Liste des ressources</span>} />
+        droite={<span className="discret">Un seul rôle par personne : le même sur tous ses projets</span>} />
       <Carte>
         <div className="carte-titre"><h2>Utilisateurs et rôles</h2><span className="discret">{personnes.length} personne(s)</span></div>
         <div className="defilement-x">

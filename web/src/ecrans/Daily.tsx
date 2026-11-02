@@ -136,7 +136,7 @@ export function Daily() {
           <CarteProjet key={p.id} projet={p} jour={jour} texte={texteDe(p.id, jour)} texteVeille={texteDe(p.id, decalerJourOuvre(jour, -1))}
             absentJournee={b.absentJournee} onSaisie={saisie} />
         ))}
-        {projets.length === 0 && <Carte><Vide texte="Aucun projet en cours : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur)." /></Carte>}
+        {projets.length === 0 && <Carte><Vide texte="Aucun projet en cours : vous n’êtes affecté(e) à aucun projet." /></Carte>}
       </div>
       <Carte classe="historique">
         <div className="carte-titre"><h2>Historique <Aide texte={AIDES.dailyVisibilite} /></h2></div>

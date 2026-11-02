@@ -35,12 +35,12 @@ export const PROJETS: Projet[] = [
 ];
 
 export const AFFECTATIONS: Affectation[] = [
-  { projetId: 'p-app2', ressourceId: 'r-thomas', role: 'Chef de projet' },
-  { projetId: 'p-app1', ressourceId: 'r-christelle', role: 'Chef de projet' },
-  { projetId: 'p-ia2', ressourceId: 'r-cerine', role: 'Membre' },
-  { projetId: 'p-ia2', ressourceId: 'r-lena', role: 'Chef de projet' },
-  { projetId: 'p-ia1', ressourceId: 'r-lena', role: 'Membre' },
-  { projetId: 'p-am1', ressourceId: 'r-marc', role: 'Chef de projet' }
+  { projetId: 'p-app2', ressourceId: 'r-thomas' },
+  { projetId: 'p-app1', ressourceId: 'r-christelle' },
+  { projetId: 'p-ia2', ressourceId: 'r-cerine' },
+  { projetId: 'p-ia2', ressourceId: 'r-lena' },
+  { projetId: 'p-ia1', ressourceId: 'r-lena' },
+  { projetId: 'p-am1', ressourceId: 'r-marc' }
 ];
 
 export const ABSENCES: Absence[] = [

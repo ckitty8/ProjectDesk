@@ -92,11 +92,11 @@ function amorcer() {
     const methode = ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'][bd.projets.length % 4];
     bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, chef_id: idP[chef], debut, fin, statut, avancement, methode });
   });
-  const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Membre'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
-    ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Membre'],
-    ['DA-08', 'ag', 'Chef de projet'], ['DA-08', 'sp', 'Membre'], ['MO-21', 'ir', 'Chef de projet'], ['MO-21', 'mf', 'Membre'], ['MO-21', 'cg', 'Membre'], ['MO-23', 'mf', 'Chef de projet'],
-    ['MO-23', 'cg', 'Membre'], ['PR-03', 'nb', 'Chef de projet'], ['PR-03', 'pl', 'Membre'], ['PR-03', 'cl', 'Membre'], ['PR-06', 'pl', 'Chef de projet'], ['PR-06', 'nb', 'Membre'], ['PR-06', 'lm', 'Membre']];
-  bd.affectations = AFF.map(([code, p, role]) => ({ id: uuid(), projet_id: idPr[code], ressource_id: idP[p], role }));
+  const AFF = [['PF-12', 'jd'], ['PF-12', 'tb'], ['PF-12', 'cl'], ['PF-14', 'cl'], ['PF-14', 'tb'], ['PF-14', 'lm'],
+    ['PF-17', 'lm'], ['PF-17', 'cl'], ['PF-17', 'jd'], ['DA-05', 'hm'], ['DA-05', 'sp'], ['DA-05', 'cl'],
+    ['DA-08', 'ag'], ['DA-08', 'sp'], ['MO-21', 'ir'], ['MO-21', 'mf'], ['MO-21', 'cg'], ['MO-23', 'mf'],
+    ['MO-23', 'cg'], ['PR-03', 'nb'], ['PR-03', 'pl'], ['PR-03', 'cl'], ['PR-06', 'pl'], ['PR-06', 'nb'], ['PR-06', 'lm']];
+  bd.affectations = AFF.map(([code, p]) => ({ id: uuid(), projet_id: idPr[code], ressource_id: idP[p] }));
 
   // Absences d'octobre 2026 (proches de la maquette) et heures de la semaine du 21 septembre
   const ABS = [['tb', '2026-10-19', 'Congés prévisionnel'], ['tb', '2026-10-20', 'Congés prévisionnel'], ['lm', '2026-10-06', 'Congés validé'], ['lm', '2026-10-07', 'Congés validé'], ['lm', '2026-10-08', 'Congés validé'],
@@ -148,7 +148,7 @@ function amorcer() {
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // sans saisie au départ (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
   bd.ressources.forEach((r, i) => {
-    const sesProjets = bd.affectations.filter(a => a.ressource_id === r.id && a.role !== 'Lecteur').map(a => a.projet_id);
+    const sesProjets = bd.affectations.filter(a => a.ressource_id === r.id).map(a => a.projet_id);
     if (!sesProjets.length) return;
     jours.forEach((jour, j) => {
       if (bd.absences.some(a => a.ressource_id === r.id && a.jour === jour)) return;
@@ -159,10 +159,9 @@ function amorcer() {
   });
 
   // Référentiels et champs : identiques à la migration 002
-  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Profil', 7], ['contrat', 'Types de contrat', 8], ['methode', 'Méthodes projet', 9]]
+  bd.referentiels = [['stp', 'Statuts projet', 3], ['abs', 'Types d’absence', 6], ['poste', 'Profil', 7], ['contrat', 'Types de contrat', 8], ['methode', 'Méthodes projet', 9]]
     .map(([id, nom, ordre]) => ({ id, nom, ordre }));
   const V = { stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
-    role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],
     // Types d'absence de la production (données du porteur, DAT 1.19 ; migration 008)
     abs: [['Congés validé', '#0F8A6B', 1, 'CV'], ['Congés prévisionnel', '#E07B00', 0, 'PR'], ['Jours férié', '#7B4A1E', 1, 'JF']],
     poste: ['Chef de projet', 'Product manager', 'Product designer', 'Dév. back-end', 'Dév. front-end', 'DevOps', 'Lead data', 'Data engineer', 'Data analyst', 'Lead mobile', 'Dév. iOS', 'Dév. Android'].map(l => [l, '#4A5363']),
@@ -172,7 +171,7 @@ function amorcer() {
   bd.valeurs_referentiel = [];
   // Clés techniques des valeurs système (migration 007)
   const CLES_SYSTEME = { 'stp:Planifié': 'planifie', 'stp:En cours': 'en_cours', 'stp:À risque': 'a_risque', 'stp:En retard': 'en_retard', 'stp:Terminé': 'termine',
-    'role:Chef de projet': 'chef', 'role:Membre': 'membre', 'role:Lecteur': 'lecteur', 'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie',
+    'abs:Congés validé': 'cp', 'abs:Jours férié': 'ferie',
     'methode:Agile Scrum': 'scrum', 'methode:Agile Kanban': 'kanban', 'methode:Cascade': 'cascade', 'methode:Cycle en V': 'cycle_v', 'methode:Test & Learn': 'test_learn' };
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
@@ -456,7 +455,7 @@ async function donnees(req, res, table, url) {
       const { p_projet, p_cle } = await lireCorps(req);
       if (!p_cle || clesDaily[p_projet] !== p_cle) return envoyer(res, 400, { message: 'Clé invalide' });
       const pr = bd.projets.find(x => x.id === p_projet), reglage = bd.envois_daily_projet.find(x => x.projet_id === p_projet) || {};
-      const noms = bd.affectations.filter(a => a.projet_id === p_projet && a.role !== 'Lecteur').map(a => bd.ressources.find(r => r.id === a.ressource_id).nom);
+      const noms = bd.affectations.filter(a => a.projet_id === p_projet).map(a => bd.ressources.find(r => r.id === a.ressource_id).nom);
       return envoyer(res, 200, { projet: pr.code + ' · ' + pr.nom, a_envoyer: true, destinataires: reglage.destinataires || '', objet: 'Daily ' + pr.code,
         html: `<div><h2>Daily ${pr.code} · ${pr.nom}</h2><h3 style="color:#C62828">Blocages du jour</h3><p>Aucun blocage signalé.</p>${noms.map(n => `<h4>${n}</h4><b>Hier</b><br>- …<br>`).join('')}</div>` });
     }
@@ -476,7 +475,7 @@ async function donnees(req, res, table, url) {
   if (req.method === 'PATCH' && table === 'valeurs_referentiel' && corps.libelle) filtrer(bd[table], p).forEach(v => {
     // Propagation du renommage aux données (trigger propager_renommage_valeur, migration 007)
     const cibles = { poste: [['ressources', 'poste']], contrat: [['ressources', 'type_contrat']], stp: [['projets', 'statut']],
-      role: [['affectations', 'role']], abs: [['absences', 'type']] }[v.referentiel_id] || [];
+      abs: [['absences', 'type']] }[v.referentiel_id] || [];
     cibles.forEach(([t, champ]) => bd[t].filter(r => r[champ] === v.libelle).forEach(r => { r[champ] = corps.libelle; }));
   });
   if (req.method === 'PATCH') { const cibles = filtrer(bd[table], p); cibles.forEach(l => Object.assign(l, corps, { modifie_le: maintenant() })); return envoyer(res, 200, cibles); }

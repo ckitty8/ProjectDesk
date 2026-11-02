@@ -57,10 +57,6 @@ export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 
  *  garde les autres listes. */
 export const REFERENTIELS_RESSOURCES: readonly string[] = ['poste'];
 
-/** Référentiels qui ne s'affichent plus nulle part : « role » (rôles projet) est remplacé par le rôle unique de la personne ; la liste reste en base
- *  jusqu'au nettoyage (docs/specifications/role-unique.md, étape 5) */
-export const REFERENTIELS_ABANDONNES: readonly string[] = ['role'];
-
 /** Rôles qui s'attribuent à une personne (Administration › Rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
 export const ROLES_ATTRIBUABLES: readonly RoleAcces[] = ROLES_CHOISISSABLES.filter(r => r !== 'admin');
 

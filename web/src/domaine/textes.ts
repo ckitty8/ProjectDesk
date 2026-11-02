@@ -103,7 +103,7 @@ export const GUIDES = {
   roles: { titre: 'Rôles et droits', paragraphes: [
     'Vue d’ensemble : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (menu Feuilles de temps).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
-    'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
+    'Le rôle de la personne (Administration › Rôles) décide : Chef de projet gère le projet, Membre saisit ses sprints et mises en production, Utilisateur ne modifie rien.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
     'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés, donne l’accès aux comptes en attente.',
     'Administrateurs : nomment les rôles d’accès de chacun (Administration › Rôles), y compris d’autres administrateurs.',

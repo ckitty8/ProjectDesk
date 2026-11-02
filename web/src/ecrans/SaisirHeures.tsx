@@ -1,7 +1,7 @@
 /* ============================================================
    Mon dashboard › Saisir mes heures (menu à part depuis le 2026-10-22 ; maquette complements/mon-timesheet.png ; portage de
    app/js/ecrans/mon-timesheet.js — phase 5, vague C)
-   Saisie MENSUELLE : ses heures par jour du mois sur les projets où l'on est affecté (hors rôle Lecteur), puis « Soumettre le mois ».
+   Saisie MENSUELLE : ses heures par jour du mois sur les projets où l'on est affecté, puis « Soumettre le mois ».
    La validation / le renvoi par le responsable se font dans Vue d’ensemble › Timesheet. Droits contrôlés en base (trigger).
    ============================================================ */
 import { useState } from 'react';
@@ -45,7 +45,7 @@ export function SaisirHeures() {
   const statut = statutFeuille(donnees.feuilles, moi.id, cle);
   const verrouille = ['soumise', 'validee'].includes(statut);
   const feuille = donnees.feuilles.find(f => f.ressourceId === moi.id && f.semaine === cle);
-  // Projets proposés : mes affectations (hors Lecteur) + projets déjà saisis ce mois
+  // Projets proposés : mes affectations + projets déjà saisis ce mois
   const ids = new Set(donnees.affectations.filter(a => a.ressourceId === moi.id).map(a => a.projetId));
   donnees.temps.filter(t => t.ressourceId === moi.id && jours.includes(t.jour)).forEach(t => ids.add(t.projetId));
   const mesProjets = donnees.projets.filter(p => ids.has(p.id));
@@ -100,7 +100,7 @@ export function SaisirHeures() {
               </tr>
             </thead>
             <tbody>
-              {mesProjets.length === 0 && <tr><td colSpan={jours.length + 2}><Vide texte="Aucun projet : vous n’êtes affecté(e) à aucun projet (hors rôle Lecteur)." /></td></tr>}
+              {mesProjets.length === 0 && <tr><td colSpan={jours.length + 2}><Vide texte="Aucun projet : vous n’êtes affecté(e) à aucun projet." /></td></tr>}
               {mesProjets.map(p => (
                 <tr key={p.id}>
                   <td className="col-projet">{p.nom}</td>

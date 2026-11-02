@@ -42,7 +42,7 @@ export interface LigneExport {
 }
 
 /* Lignes du fichier, du jour le plus récent au plus ancien, puis par projet et par nom. Pour chaque jour ouvré (hors week-ends et fériés) et
-   chaque projet : les membres attendus au daily ce jour-là (mêmes règles qu'à l'écran : affectés hors Lecteur, présents) avec un statut :
+   chaque projet : les membres attendus au daily ce jour-là (mêmes règles qu'à l'écran : personnes affectées et présentes) avec un statut :
    Renseigné, Absent(e) (Congés), Sans compte (fiche non reliée) ou Manquant. « notes » = notes_daily_projet de la période. */
 export function lignesExport(d: DonneesVues & { absences: readonly Absence[] }, debut: Iso, fin: Iso, projets: readonly Projet[],
   notes: readonly NoteDaily[], avecManquants: boolean, feries: ReadonlySet<Iso>): LigneExport[] {

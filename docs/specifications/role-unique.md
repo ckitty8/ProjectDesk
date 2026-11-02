@@ -1,6 +1,6 @@
 # Spécification — Un rôle unique par personne (fusion « rôle d'accès » + « rôle projet »)
 
-> **Statut : étapes 1 à 4 livrées le 2026-11-02 (version 2.96) : migration 052 (additive) puis 054 (conversion des 9 fiches et règles de la base) appliquées, code basculé. Reste l'étape 5 (nettoyage), qui attend l'accord du porteur.**
+> **Statut : étapes 1 à 4 livrées le 2026-11-02 (version 2.96) : migration 052 (additive) puis 054 (conversion des 9 fiches et règles de la base) appliquées, code basculé. Étape 5 (nettoyage) livrée le 2026-11-02 (version 2.97, migration 055) : la fonctionnalité est terminée.**
 > Les décisions ci-dessous viennent des réponses du porteur ; la conversion des données existantes (§ 3) demande son accord explicite avant toute écriture (règle n°8).
 
 | Date       | Décision du porteur |
@@ -78,7 +78,7 @@ Règle générale (nouvelles fiches et comptes) : rôle choisi dans Administrati
 2. **Migration A** (052) — **appliquée le 2026-11-02**, comptages inchangés ; les fonctions `peut_saisir_projet` et `peut_gerer_projet` attendent l'étape 4 pour être branchées. Le code qui lit les deux modèles vient avec l'étape 3.
 3. **Conversion des données** (accord du porteur : « oui, lance la conversion des 9 fiches ») puis bascule du code sur le rôle unique — **faite** (migration 054, 2.96). Cerine, Nouha et Lenaic restent « Membre prévu » (pas de compte à l'email vérifié) : elles gagnent leurs droits à leur première connexion.
 4. **Migration B** (règles de la base, incluse dans 054) + vérification des 6 rôles par la simulation : tests unitaires de chaque rôle (`droits.test.ts`, `menus.test.ts`) — **faite**. La nuance « Lecteur d'un projet » (exclusion du daily et des heures) disparaît : aucune donnée ne l'utilisait.
-5. **Nettoyage** (retrait de `affectations.role`, du référentiel `role`, de `projet`).
+5. **Nettoyage** (retrait de `affectations.role`, du référentiel `role`, de `projet`) — **fait** (migration 055, 2.97, accord du porteur : « oui, lance le nettoyage de l’étape 5 »).
 
 ## 7. Risques
 

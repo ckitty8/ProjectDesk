@@ -70,7 +70,7 @@ Décisions du porteur à respecter lors du développement des fonctionnalités c
 - **Roadmap** (en attente : demandes gérées dans Azure DevOps depuis le 2026-10-05) :
   `docs/specifications/roadmap.md` (rang de traitement DSI, sprint en liste
   déroulante alimentée par Administration).
-- **Rôle unique** (livré le 2026-11-02, version 2.96 ; reste le nettoyage de l'étape 5, avec accord) : `docs/specifications/role-unique.md` (fusion rôle d'accès +
+- **Rôle unique** (terminé le 2026-11-02, versions 2.96 et 2.97) : `docs/specifications/role-unique.md` (fusion rôle d'accès +
   rôle projet en un « Rôle » par personne : Direction, Responsable d'équipe, Chef de projet, Membre, Utilisateur, Lecture seule).
 
 ## Migration React (terminée le 2026-10-31, version 2.68)

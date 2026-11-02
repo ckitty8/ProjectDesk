@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { MATRICE_PRODUCTION } from './__fixtures__/matrice';
-import { DROITS, LIBELLES_ROLES, MENUS_SANS_DROIT, PERIMETRES, REFERENTIELS_ABANDONNES, REFERENTIELS_RESSOURCES, ROLES_ACCES, ROLES_ATTRIBUABLES, ROLES_CHOISISSABLES } from './config';
+import { DROITS, LIBELLES_ROLES, MENUS_SANS_DROIT, PERIMETRES, REFERENTIELS_RESSOURCES, ROLES_ACCES, ROLES_ATTRIBUABLES, ROLES_CHOISISSABLES } from './config';
 import { MENU_GENERAL, MENU_MOI } from './menus';
 import { referentielsAffiches } from './referentiels';
 import type { Referentiel } from './types';
@@ -74,19 +74,15 @@ describe('droits de la matrice', () => {
 
 describe('référentiels rangés entre Référentiels et Ressources (Administration)', () => {
   const ref = (id: string): Referentiel => ({ id, nom: id });
-  const tous = ['stp', 'role', 'abs', 'poste', 'contrat', 'methode'].map(ref);
+  const tous = ['stp', 'abs', 'poste', 'contrat', 'methode'].map(ref);
   it('Ressources ne montre que les profils', () => {
     expect(referentielsAffiches(tous, REFERENTIELS_RESSOURCES).map(r => r.id)).toEqual(['poste']);
   });
   it('Référentiels montre tous les autres', () => {
     expect(referentielsAffiches(tous, undefined, REFERENTIELS_RESSOURCES).map(r => r.id)).toEqual(['stp', 'abs', 'contrat', 'methode']);
   });
-  it('le référentiel abandonné « role » (rôles par projet) ne s’affiche nulle part', () => {
-    expect(REFERENTIELS_ABANDONNES).toEqual(['role']);
-    expect(referentielsAffiches(tous).map(r => r.id)).not.toContain('role');
-  });
-  it('chaque référentiel (hors abandonné) apparaît dans un onglet et un seul', () => {
+  it('chaque référentiel apparaît dans un onglet et un seul', () => {
     const ici = referentielsAffiches(tous, undefined, REFERENTIELS_RESSOURCES), la = referentielsAffiches(tous, REFERENTIELS_RESSOURCES);
-    expect([...ici, ...la].map(r => r.id).sort()).toEqual(tous.filter(r => !REFERENTIELS_ABANDONNES.includes(r.id)).map(r => r.id).sort());
+    expect([...ici, ...la].map(r => r.id).sort()).toEqual(tous.map(r => r.id).sort());
   });
 });

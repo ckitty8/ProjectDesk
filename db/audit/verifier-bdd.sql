@@ -67,9 +67,6 @@ ecarts as (
   select 'Projet sans méthode', 'avertissement', count(*), string_agg(code, ', ')
     from public.projets where methode is null having count(*) > 0
   union all
-  select 'Affectation avec un rôle hors référentiel', 'erreur', count(*), string_agg(role, ', ')
-    from public.affectations where role not in (select libelle from ref where referentiel_id = 'role') having count(*) > 0
-  union all
   select 'Absence avec un type hors référentiel', 'erreur', count(*), string_agg(distinct type, ', ')
     from public.absences where type not in (select libelle from ref where referentiel_id = 'abs') having count(*) > 0
   union all
