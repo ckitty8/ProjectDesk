@@ -74,7 +74,7 @@ Règle générale (nouvelles fiches et comptes) : rôle choisi dans Administrati
 
 ## 6. Livraison en étapes (chaque étape est validée avant la suivante)
 
-1. **Maquettes** des écrans du § 5, validées par le porteur.
+1. **Maquettes** des écrans du § 5, validées par le porteur — **produites le 2026-11-02** (`docs/maquettes/role-unique/` : Ressources › Rôle, Rôles, matrice, fiche, affectation, projet, panneau projet, simulation), **en attente de validation**.
 2. **Migration A** + code qui lit les deux modèles (aucun changement visible) — comptages vérifiés.
 3. **Conversion des données** (accord sur le § 3) puis bascule du code sur le rôle unique.
 4. **Migration B** (règles de la base) + vérification des 6 rôles par la simulation.
