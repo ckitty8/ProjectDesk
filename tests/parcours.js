@@ -647,6 +647,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.modale[role=dialog]');
     verifier('Administration › Équipes : la fenêtre équipe s\'ouvre', await page.locator('.modale input[name=nom]').count() === 1);
     await page.keyboard.press('Escape');
+    await page.click('button:has-text("+ Nouvelle direction")');
+    await page.waitForSelector('.modale[role=dialog]');
+    verifier('Administration › Équipes : « + Nouvelle direction » ouvre le formulaire sur le type Direction, sans rattachement', (await page.locator('.modale select[name=type]').inputValue()) === 'direction'
+      && (await page.textContent('.modale h2')).includes('Nouvelle direction'));
+    await page.keyboard.press('Escape');
 
     await page.click('[role=tab]:has-text("Référentiels")');
     await page.waitForSelector('.lien-referentiel');

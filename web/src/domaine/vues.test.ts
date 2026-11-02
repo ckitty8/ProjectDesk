@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ABSENCES, AFFECTATIONS, EQUIPES, PROJETS, RESSOURCES, contexte } from './__fixtures__/donnees';
 import { absenceDe, auteurDaily, decalerJourOuvre, estInactive, membresDuDaily, misesEnProductionDe, modeleParEquipe, modeleParProjet,
   noteNonVide, personnesProposees, projetsAvecMembres, projetsDailyVisibles, projetsDe, projetsPourAnnuaire, ressourcesPresentes, sprintsDuProjet,
-  arbreUnites, unitesRacines } from './vues';
+  arbreUnites, optionsUnites, unitesRacines } from './vues';
 
 const d = { equipes: EQUIPES, ressources: RESSOURCES, projets: PROJETS, affectations: AFFECTATIONS };
 
@@ -59,6 +59,13 @@ describe('daily', () => {
     const arbre = arbreUnites([{ id: 'e', nom: 'Isolée', parentId: null, type: 'equipe' }, { id: 'f', nom: 'Zèbre', parentId: 'd', type: 'equipe' },
       { id: 'd', nom: 'Direction', parentId: null, type: 'direction' }, { id: 'g', nom: 'Alpha', parentId: 'd', type: 'equipe' }]);
     expect(arbre.map(x => `${x.niveau}:${x.equipe.id}`)).toEqual(['0:d', '1:g', '1:f', '0:e']);
+  });
+  it('options d\'une liste d\'unités : la direction (« (direction) ») puis ses équipes en retrait', () => {
+    const options = optionsUnites([{ id: 'd', nom: 'Direction', parentId: null, type: 'direction' }, { id: 'g', nom: 'Alpha', parentId: 'd', type: 'equipe' }]);
+    expect(options.map(o => o.valeur)).toEqual(['d', 'g']);
+    expect(options[0]?.libelle).toBe('Direction (direction)');
+    expect(options[1]?.libelle.trim()).toBe('Alpha');
+    expect(options[1]?.libelle.startsWith('\u00A0')).toBe(true);
   });
   it('ignore une note vide', () => {
     const notes = [{ userId: 'u1', projetId: 'p', jour: '2026-11-02', texte: '  ' }, { userId: 'u1', projetId: 'p', jour: '2026-11-03', texte: 'Hier : x' }];

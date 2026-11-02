@@ -21,7 +21,7 @@ import { ongletPermis } from '../domaine/droits';
 import type { ContexteDroits } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
 import type { Ressource } from '../domaine/types';
-import { estInactive, projetsPourAnnuaire } from '../domaine/vues';
+import { estInactive, optionsUnites, projetsPourAnnuaire } from '../domaine/vues';
 
 /** Onglet Calendrier : le calendrier partagé, en lecture, avec la légende des types d'absence */
 function OngletCalendrier({ ctx, donnees }: { ctx: ContexteDroits; donnees: Donnees }) {
@@ -78,7 +78,7 @@ function OngletListe({ ctx, donnees }: { ctx: ContexteDroits; donnees: Donnees }
             <Icone nom="recherche" /><input placeholder="Rechercher une personne" value={q} onChange={e => setQ(e.target.value)} />
           </label>
           <Liste className="champ champ-compact" aria-label="Équipe" valeur={equipeId} onChoisir={setEquipeId}
-            options={[{ valeur: '', libelle: 'Toutes les équipes' }, ...donnees.equipes.map(e => ({ valeur: e.id, libelle: e.nom }))]} />
+            options={[{ valeur: '', libelle: 'Toutes les équipes' }, ...optionsUnites(donnees.equipes)]} />
           <Liste className="champ champ-compact" aria-label="Statut" valeur={statut} onChoisir={setStatut}
             options={[{ valeur: '', libelle: 'Actifs et inactifs' }, { valeur: 'actif', libelle: 'Actifs' }, { valeur: 'inactif', libelle: 'Inactifs' }]} />
           <span className="extensible" />

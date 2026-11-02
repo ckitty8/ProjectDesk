@@ -17,7 +17,7 @@ import { aujourdhui } from '../../domaine/dates';
 import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
-import { projetsDe, ressourcesPresentes } from '../../domaine/vues';
+import { optionsUnites, projetsDe, ressourcesPresentes } from '../../domaine/vues';
 
 /** Actions de l'écran : chacune appelle la base (la base contrôle le droit), relit les données puis confirme par un message */
 function useActionsRoles() {
@@ -140,7 +140,7 @@ export function Roles() {
             <input className="champ" style={{ width: 260 }} placeholder="Rechercher une personne…" value={recherche}
               onChange={e => setRecherche(e.target.value)} aria-label="Rechercher une personne" />
             <select className="champ champ-compact" aria-label="Équipe" value={equipe} onChange={e => setEquipe(e.target.value)}>
-              <option value="">Toutes les équipes</option>{donnees.equipes.map(e => <option key={e.id} value={e.id}>{e.nom}</option>)}
+              <option value="">Toutes les équipes</option>{optionsUnites(donnees.equipes).map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
             </select>
             <select className="champ champ-compact" aria-label="Rôle" value={role} onChange={e => setRole(e.target.value)}>
               <option value="">Tous les rôles</option>{ROLES_ATTRIBUABLES.map(c => <option key={c} value={c}>{ROLES_ACCES[c].libelle}</option>)}

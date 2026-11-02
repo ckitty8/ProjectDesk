@@ -69,6 +69,15 @@ export function arbreUnites(equipes: readonly Equipe[]): UniteNiveau[] {
   return unitesRacines(equipes).flatMap(e => descendre(e, 0));
 }
 
+/** Options d'une liste d'unités (filtres « Toutes les équipes », choix d'équipe d'un compte) dans l'ordre de l'arborescence : la direction (« (direction) »)
+ *  puis ses équipes en retrait (espaces insécables, une liste native ne se met pas en forme autrement). Porteur 2026-11-02 : Direction › équipe. */
+export function optionsUnites(equipes: readonly Equipe[]): { valeur: string; libelle: string }[] {
+  return arbreUnites(equipes).map(({ equipe, niveau }) => ({
+    valeur: equipe.id,
+    libelle: '\u00A0\u00A0\u00A0\u00A0'.repeat(niveau) + equipe.nom + (equipe.type === 'direction' ? ' (direction)' : '')
+  }));
+}
+
 /* ---------- Sprints et mises en production ---------- */
 
 /** Sprint d'un projet avec ses deux dates (« debut » et « fin » connus) */

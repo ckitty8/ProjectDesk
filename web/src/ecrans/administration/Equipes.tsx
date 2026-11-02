@@ -19,14 +19,19 @@ import { COULEURS } from '../../domaine/config';
 
 export function Equipes() {
   const { ctx, donnees } = useSession();
-  const [modale, setModale] = useState<{ id: string | null } | null>(null);
+  const [modale, setModale] = useState<{ id: string | null; typeUnite?: string } | null>(null);
   if (!ctx || !donnees) return null;
   const actives = ressourcesPresentes(donnees, aujourdhui());
   return (
     <Carte>
       <div className="carte-titre">
         <h2>Directions et équipes <Aide texte={AIDES.rolesEquipe} /></h2>
-        {ctx.estAdmin && <Bouton variante="primaire" onClick={() => setModale({ id: null })}>+ Nouvelle équipe</Bouton>}
+        {ctx.estAdmin && (
+          <span className="ligne-flex">
+            <Bouton onClick={() => setModale({ id: null, typeUnite: 'direction' })}>+ Nouvelle direction</Bouton>
+            <Bouton variante="primaire" onClick={() => setModale({ id: null, typeUnite: 'equipe' })}>+ Nouvelle équipe</Bouton>
+          </span>
+        )}
       </div>
       <table className="tableau">
         <thead><tr><th>Direction › équipe</th><th>Responsable</th><th>Membres</th><th>Projets</th><th /></tr></thead>
@@ -48,7 +53,7 @@ export function Equipes() {
           ))}
         </tbody>
       </table>
-      {modale && <ModaleEquipe id={modale.id} onFermer={() => setModale(null)} />}
+      {modale && <ModaleEquipe id={modale.id} typeUnite={modale.typeUnite} onFermer={() => setModale(null)} />}
     </Carte>
   );
 }

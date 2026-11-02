@@ -12,7 +12,7 @@ import { useSession } from '../../donnees/SessionProvider';
 import { choixParDefaut } from '../../domaine/admin';
 import type { ChoixCompte } from '../../domaine/admin';
 import { aujourdhui, formatAvecAnnee } from '../../domaine/dates';
-import { ressourcesPresentes } from '../../domaine/vues';
+import { optionsUnites, ressourcesPresentes } from '../../domaine/vues';
 
 export function Comptes() {
   const { donnees, comptesEnAttente, executer, notifier, actualiser } = useSession();
@@ -68,7 +68,7 @@ export function Comptes() {
                   <td>{formatAvecAnnee((c.inscritLe || '').slice(0, 10))}</td>
                   <td>
                     <select className="champ largeur-auto" aria-label="Équipe" value={ch.equipe} onChange={e => choisir(c.userId, 'equipe', e.target.value, ch)}>
-                      <option value="">— choisir —</option>{equipes.map(e => <option key={e.id} value={e.id}>{e.nom}</option>)}
+                      <option value="">— choisir —</option>{optionsUnites(equipes).map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
                     </select>
                   </td>
                   <td>
