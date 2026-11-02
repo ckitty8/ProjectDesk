@@ -642,7 +642,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Comptes en attente : « Donner l\'accès » crée la fiche et invite dans l\'équipe', (await toast()).includes('Accès donné à'));
 
     await page.click('[role=tab]:has-text("Équipes")');
-    verifier('Administration › Équipes : tableau avec responsables, membres, projets, « Modifier »', await page.locator('.tableau tbody tr').count() >= 4 && await page.locator('button:has-text("Modifier")').count() >= 4);
+    verifier('Administration › Équipes : directions et équipes (la direction en ligne de groupe, ses équipes dessous), responsables, membres, projets, « Modifier »', await page.locator('.tableau tbody tr.groupe').count() === 1 && await page.locator('.tableau tbody tr').count() >= 4 && await page.locator('button:has-text("Modifier")').count() >= 4);
     await page.locator('button:has-text("Modifier")').first().click();
     await page.waitForSelector('.modale[role=dialog]');
     verifier('Administration › Équipes : la fenêtre équipe s\'ouvre', await page.locator('.modale input[name=nom]').count() === 1);

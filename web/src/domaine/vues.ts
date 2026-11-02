@@ -56,6 +56,19 @@ export function unitesRacines(equipes: readonly Equipe[]): Equipe[] {
   return [...racines.filter(e => e.type === 'direction'), ...racines.filter(e => e.type !== 'direction')];
 }
 
+/** Une unité et son niveau dans l'arborescence (0 = racine) */
+export interface UniteNiveau { equipe: Equipe; niveau: number }
+
+/** Arborescence à plat, dans l'ordre d'affichage : chaque racine (directions d'abord, puis équipes isolées) suivie de ses sous-unités, triées par nom,
+ *  avec leur niveau. Hiérarchie du porteur : Direction › équipe › projet › membre (Administration › Équipes, 2026-11-02). Garde-fou : 10 niveaux. */
+export function arbreUnites(equipes: readonly Equipe[]): UniteNiveau[] {
+  const descendre = (e: Equipe, niveau: number): UniteNiveau[] => {
+    const enfants = niveau >= 10 ? [] : equipes.filter(x => x.parentId === e.id).sort((a, b) => a.nom.localeCompare(b.nom));
+    return [{ equipe: e, niveau }, ...enfants.flatMap(x => descendre(x, niveau + 1))];
+  };
+  return unitesRacines(equipes).flatMap(e => descendre(e, 0));
+}
+
 /* ---------- Sprints et mises en production ---------- */
 
 /** Sprint d'un projet avec ses deux dates (« debut » et « fin » connus) */
