@@ -56,7 +56,7 @@ export function Profil() {
           {fiche ? (
             <>
               <Ligne libelle="Équipe" valeur={trouverEquipe(ctx, fiche.equipeId)?.nom} />
-              <Ligne libelle="Poste" valeur={fiche.poste} />
+              <Ligne libelle="Profil" valeur={fiche.poste} />
               <Ligne libelle="Capacité" valeur={fiche.capacite == null ? null : `${fiche.capacite} %`} />
               <Ligne libelle="Arrivée" valeur={fiche.dateArrivee ? formatAvecAnnee(fiche.dateArrivee) : null} />
               <Ligne libelle="Date de naissance" valeur={fiche.dateNaissance ? formatAvecAnnee(fiche.dateNaissance) : null} />

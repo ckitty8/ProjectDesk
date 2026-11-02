@@ -138,7 +138,7 @@ export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onF
       <table className="tableau tableau-personnes">
         <thead>
           <tr>
-            <th>Personne</th><th>Poste</th><th>Accès <Aide texte={AIDES.roleAcces} /></th><th>{deProjet ? 'Rôle sur le projet' : 'Projets / origine'}</th>
+            <th>Personne</th><th>Profil</th><th>Accès <Aide texte={AIDES.roleAcces} /></th><th>{deProjet ? 'Rôle sur le projet' : 'Projets / origine'}</th>
             <th>Présence <Aide texte={AIDES.datesPresence} /></th><th>Statut <Aide texte={AIDES.statutPersonne} /></th><th />
           </tr>
         </thead>

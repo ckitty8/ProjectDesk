@@ -55,6 +55,10 @@ export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'projet' | 'util
 /** Rôles d'accès choisissables, dans l'ordre de la matrice des droits */
 export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
 
+/** Référentiels gérés dans Administration › Ressources (porteur, 2026-11-02) : rôles de projet et profils (postes). Ils ne figurent plus dans l'onglet
+ *  Référentiels, qui garde les autres listes. */
+export const REFERENTIELS_RESSOURCES: readonly string[] = ['role', 'poste'];
+
 /** Rôles qui s'attribuent à une personne (Administration › Rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
 export const ROLES_ATTRIBUABLES: readonly RoleAcces[] = ROLES_CHOISISSABLES.filter(r => r !== 'admin');
 

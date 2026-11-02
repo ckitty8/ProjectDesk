@@ -86,9 +86,9 @@ export function menusDuRole(ctx: ContexteDroits, role?: string): { suivi: Menu[]
   return { suivi, moi };
 }
 
-/** « Suivi : Dashboard général, Feuilles de temps · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle */
+/** « Vue d’ensemble : Dashboard général, Feuilles de temps · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle */
 export function resumeDuRole(ctx: ContexteDroits, role: string): string {
   const { suivi, moi } = menusDuRole(ctx, role);
   const nom = (m: Menu): string => m.libelle + (m.enfants ? ` (${m.enfants.map(e => e.libelle).join(', ')})` : '');
-  return `Suivi : ${suivi.map(nom).join(', ') || 'aucun menu'} · Mon dashboard : ${moi.map(nom).join(', ') || 'aucun menu'}`;
+  return `Vue d’ensemble : ${suivi.map(nom).join(', ') || 'aucun menu'} · Mon dashboard : ${moi.map(nom).join(', ') || 'aucun menu'}`;
 }

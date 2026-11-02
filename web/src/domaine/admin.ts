@@ -25,7 +25,7 @@ export interface OngletAdmin { id: string; libelle: string; compte?: number }
 
 /** Onglets : d'abord le périmètre (comptes et rôles : administrateurs ; équipes : administrateurs et responsables ; envoi du daily : projets que
  *  je pilote), puis le droit de chaque onglet (matrice, migration 038). Les compteurs sont ceux de l'ancien écran. */
-export interface CompteursAdmin { enAttente: number; referentiels: number; feries: number; envoisActifs: number }
+export interface CompteursAdmin { enAttente: number; referentiels: number; ressources: number; feries: number; envoisActifs: number }
 
 export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): OngletAdmin[] {
   const gereEquipes = ctx.estAdmin || mesEquipes(ctx).some(e => estResponsableDe(ctx, e.id));
@@ -34,6 +34,8 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
     ...(ctx.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: n.enAttente }] : []),
     ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: ctx.equipes.length }] : []),
     { id: 'referentiels', libelle: 'Référentiels', compte: n.referentiels },
+    // Ressources (porteur, 2026-11-02) : rôles de projet, profils (postes) et rôles d'accès ; administrateurs
+    ...(ctx.estAdmin ? [{ id: 'ressources', libelle: 'Ressources', compte: n.ressources }] : []),
     { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
     ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhui()).length }] : []),

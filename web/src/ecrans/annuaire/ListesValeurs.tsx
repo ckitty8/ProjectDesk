@@ -20,7 +20,7 @@ export function ListesValeurs({ refId, champ, titre }: { refId: 'poste' | 'contr
   const valeurs = valeursDe(donnees.valeurs, refId, true);
 
   const ajouter = () => {
-    const libelle = (window.prompt(refId === 'poste' ? 'Nouveau poste :' : 'Nouveau type de contrat :') ?? '').trim();
+    const libelle = (window.prompt(refId === 'poste' ? 'Nouveau profil :' : 'Nouveau type de contrat :') ?? '').trim();
     if (libelle) void executer(() => creer('valeurs_referentiel', { referentielId: refId, libelle, ordre: valeurs.length + 1, couleur: COULEURS.neutre }), 'valeurs');
   };
   const renommer = (id: string, actuel: string) => {

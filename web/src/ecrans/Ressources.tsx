@@ -92,7 +92,7 @@ function OngletListe({ ctx, donnees }: { ctx: ContexteDroits; donnees: Donnees }
         </div>
         <table className="tableau" id="annuaire-ressources">
           <thead>
-            <tr><th>Nom</th><th>Équipe</th><th>Poste</th><th>Projets</th><th>Statut</th>{naissance && <th>Anniversaire</th>}</tr>
+            <tr><th>Nom</th><th>Équipe</th><th>Profil</th><th>Projets</th><th>Statut</th>{naissance && <th>Anniversaire</th>}</tr>
           </thead>
           <tbody>
             {affichees.length === 0 && <tr><td colSpan={colonnes}><Vide texte="Aucune ressource." /></td></tr>}

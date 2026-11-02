@@ -17,21 +17,25 @@ describe('comptes en attente', () => {
 });
 
 describe('onglets d\'Administration', () => {
-  const ids = (ctx: ReturnType<typeof contexte>) => ongletsAdministration(ctx, { enAttente: 2, referentiels: 8, feries: 11, envoisActifs: 1 }).map(o => o.id);
-  it('un administrateur voit comptes, équipes, référentiels, jours fériés et rôles', () => {
+  const compteurs = { enAttente: 2, referentiels: 4, ressources: 3, feries: 11, envoisActifs: 1 };
+  const ids = (ctx: ReturnType<typeof contexte>) => ongletsAdministration(ctx, compteurs).map(o => o.id);
+  it('un administrateur voit comptes, équipes, référentiels, ressources, jours fériés et rôles', () => {
     const liste = ids(contexte({ estAdmin: true, estCreateur: true }));
-    expect(liste).toEqual(expect.arrayContaining(['comptes', 'equipes', 'referentiels', 'feries', 'roles']));
+    expect(liste).toEqual(expect.arrayContaining(['comptes', 'equipes', 'referentiels', 'ressources', 'feries', 'roles']));
+    expect(liste.indexOf('ressources')).toBe(liste.indexOf('referentiels') + 1);   // juste après Référentiels
   });
   it('un simple membre ne gère ni comptes, ni équipes, ni rôles', () => {
     const liste = ids(contexte());
     expect(liste).not.toEqual(expect.arrayContaining(['comptes']));
     expect(liste).not.toContain('roles');
     expect(liste).not.toContain('equipes');
+    expect(liste).not.toContain('ressources');
   });
   it('reprend les compteurs', () => {
-    const o = ongletsAdministration(contexte({ estAdmin: true, estCreateur: true }), { enAttente: 2, referentiels: 8, feries: 11, envoisActifs: 1 });
+    const o = ongletsAdministration(contexte({ estAdmin: true, estCreateur: true }), compteurs);
     expect(o.find(x => x.id === 'comptes')?.compte).toBe(2);
     expect(o.find(x => x.id === 'feries')?.compte).toBe(11);
+    expect(o.find(x => x.id === 'ressources')?.compte).toBe(3);
   });
 });
 
@@ -39,7 +43,7 @@ describe('rôles', () => {
   it('affiche les six rôles puis le compte en attente, avec la description tirée de la matrice', () => {
     const r = rolesAffiches(contexte());
     expect(r.map(x => x.cle)).toEqual(['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture', 'sansEquipe']);
-    expect(r[0]?.description).toContain('Suivi :');
+    expect(r[0]?.description).toContain('Vue d’ensemble :');
   });
   it('range chaque fiche sous son rôle choisi (prévu avant actuel) et les comptes en attente à part', () => {
     const ctx = contexte({ rolesPrevus: [{ ressourceId: 'r-cerine', role: 'lecture' }] });

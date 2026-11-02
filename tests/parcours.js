@@ -502,7 +502,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/liste-des-ressources');
     await page.waitForSelector('.nav-ressources');
     await captureD('12-liste-ressources');
-    verifier('Liste des ressources : navigation par équipe (responsable, projets), Postes et Types de contrat', await page.locator('.noeud.equipe').count() >= 4
+    verifier('Liste des ressources : navigation par équipe (responsable, projets), Profils et Types de contrat', await page.locator('.noeud.equipe').count() >= 4
       && await page.locator('.noeud.projet').count() >= 9 && (await page.textContent('.nav-ressources')).includes('Types de contrat'));
     verifier('Liste des ressources : l\'équipe ouverte est choisie, avec son responsable et ses personnes', (await page.textContent('.detail-ressources')).includes('Plateforme')
       && (await page.textContent('.detail-ressources')).includes('Responsable de l’équipe') && await page.locator('.tableau-personnes tr[data-ressource]').count() === 4);
@@ -578,20 +578,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => !document.querySelector('tr[data-rattachee]'));
     verifier('Rattachement : « Retirer » supprime le rattachement seulement', await page.locator('tr[data-rattachee]').count() === 0);
 
-    // Postes et types de contrat
-    await page.click('.noeud:has-text("Postes")');
+    // Profils (postes) et types de contrat
+    await page.click('.noeud:has-text("Profils")');
     await page.waitForSelector('.detail-ressources .tableau');
     const nbPostes = await page.locator('.detail-ressources tbody tr').count();
     reponsePrompt = 'Poste de test';
     await page.click('.detail-ressources button:has-text("+ Ajouter")');
     await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n + 1, nbPostes);
-    verifier('Postes : ajout d\'une valeur (administrateur)', (await page.textContent('.detail-ressources')).includes('Poste de test'));
+    verifier('Profils : ajout d\'une valeur (administrateur)', (await page.textContent('.detail-ressources')).includes('Poste de test'));
     reponsePrompt = 'Poste de test renommé';
     await page.locator('tr:has-text("Poste de test") button[title^="Renommer"]').click();
     await page.waitForSelector('text=Poste de test renommé');
     await page.locator('tr:has-text("Poste de test renommé") button[title="Supprimer"]').click();
     await page.waitForFunction(n => document.querySelectorAll('.detail-ressources tbody tr').length === n, nbPostes);
-    verifier('Postes : renommer puis supprimer une valeur inutilisée', !(await page.textContent('.detail-ressources')).includes('Poste de test'));
+    verifier('Profils : renommer puis supprimer une valeur inutilisée', !(await page.textContent('.detail-ressources')).includes('Poste de test'));
 
     // Équipe : modification, membres et invitation, création puis suppression
     await page.click('.noeud.equipe:has-text("Plateforme")');
@@ -646,7 +646,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[role=tab]:has-text("Référentiels")');
     await page.waitForSelector('.lien-referentiel');
     await captureD('10b-referentiels');
-    verifier('Administration › Référentiels : liste des référentiels et leurs valeurs', await page.locator('.lien-referentiel').count() >= 6 && await page.locator('input[aria-label="Valeur 1"]').count() === 1);
+    verifier('Administration › Référentiels : liste des référentiels et leurs valeurs', await page.locator('.lien-referentiel').count() === 4 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 0
+      && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 0 && await page.locator('input[aria-label="Valeur 1"]').count() === 1);
     await page.click('.lien-referentiel:has-text("Statuts projet")');
     const nomValeur = await page.inputValue('input[aria-label="Valeur 1"]');
     await page.fill('.encart-compact input[name=libelle]', 'Statut de test');
@@ -661,6 +662,26 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await interrupteur.click();
     await page.waitForFunction(() => ![...document.querySelectorAll('tr')].find(r => r.querySelector('input[value="Statut de test renommé"]'))?.querySelector('.interrupteur')?.classList.contains('actif'));
     verifier('Administration › Référentiels : renommer et désactiver une valeur', (await interrupteur.getAttribute('class')).includes('actif') === false && nomValeur.length > 0);
+
+    // Ressources (2.93) : rôles de projet, profils (postes) et rôles d'accès
+    await page.click('[role=tab]:has-text("Ressources")');
+    await page.waitForSelector('.lien-referentiel');
+    await captureD('10c-ressources');
+    verifier('Administration › Ressources : rôles de projet, profil et rôles d\'accès', await page.locator('.lien-referentiel').count() === 3
+      && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 1 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
+      && await page.locator('.lien-referentiel:has-text("Rôles d’accès")').count() === 1);
+    verifier('Administration › Ressources : les rôles de projet sont modifiables (Chef de projet, Membre, Lecteur)', await page.locator('input[aria-label="Valeur 1"]').count() === 1
+      && (await page.textContent('.tableau')).length > 0);
+    await page.click('.lien-referentiel:has-text("Profil")');
+    await page.waitForSelector('input[aria-label="Valeur 1"]');
+    verifier('Administration › Ressources : le profil (postes) est une liste modifiable', await page.locator('.carte-titre h2:has-text("Profil")').count() === 1
+      && await page.locator('input[aria-label="Nouvelle valeur"]').count() === 1);
+    await page.click('.lien-referentiel:has-text("Rôles d’accès")');
+    await page.waitForSelector('.carte-titre h2:has-text("Rôles d’accès")');
+    verifier('Administration › Ressources : les rôles d\'accès sont en lecture seule, avec périmètre et nombre de personnes', await page.locator('tbody tr').count() === 7
+      && await page.locator('input').count() === 0 && (await page.textContent('tbody')).includes('Sa direction et ses équipes') && (await page.textContent('tbody')).includes('Lecture seule'));
+    await page.click('[role=tab]:has-text("Référentiels")');
+    await page.waitForSelector('.lien-referentiel');
 
     await page.click('[role=tab]:has-text("Jours fériés")');
     await page.waitForSelector('input[aria-label="Nouvelle date"]');
@@ -822,7 +843,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.grille-simulation');
     await captureD('28-simulation-roles');
     verifier('Administration créateur : une carte par rôle (6 rôles d\'accès puis compte en attente)', await page.locator('.grille-simulation .carte').count() === 7
-      && (await page.textContent('.grille-simulation')).includes('Suivi :'));
+      && (await page.textContent('.grille-simulation')).includes('Vue d’ensemble :'));
     await page.selectOption('select[aria-label="Personne pour Projet"]', { label: 'Thomas Bernard · a ce rôle' }).catch(async () => {
       await page.selectOption('select[aria-label="Personne pour Projet"]', { index: 0 });
     });

@@ -98,7 +98,7 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
           <div><label className="libelle">Nom<input className="champ" name="nomFamille" defaultValue={noms.nomFamille} required /></label></div>
         </div>
         <div className="deux-colonnes">
-          <div><label className="libelle">Poste{liste('poste', 'poste', fiche?.poste)}</label></div>
+          <div><label className="libelle">Profil{liste('poste', 'poste', fiche?.poste)}</label></div>
           <div><label className="libelle">Type de contrat{liste('contrat', 'typeContrat', fiche?.typeContrat)}</label></div>
         </div>
         <div>

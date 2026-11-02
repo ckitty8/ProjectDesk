@@ -153,7 +153,7 @@ function amorcer() {
   });
 
   // Référentiels et champs : identiques à la migration 002
-  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Postes', 7], ['contrat', 'Types de contrat', 8], ['methode', 'Méthodes projet', 9]]
+  bd.referentiels = [['stp', 'Statuts projet', 3], ['role', 'Rôles projet', 5], ['abs', 'Types d’absence', 6], ['poste', 'Profil', 7], ['contrat', 'Types de contrat', 8], ['methode', 'Méthodes projet', 9]]
     .map(([id, nom, ordre]) => ({ id, nom, ordre }));
   const V = { stp: [['Planifié', '#8A93A3', 1], ['En cours', '#003CC8', 1], ['À risque', '#D98A1C', 1], ['En retard', '#D14343', 1], ['Terminé', '#0F8A6B', 1]],
     role: [['Chef de projet', '#003CC8', 1], ['Membre', '#4A5363', 1], ['Lecteur', '#8A93A3', 1]],

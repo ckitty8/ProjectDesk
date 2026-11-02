@@ -189,7 +189,7 @@ export function ListeRessources() {
     );
   };
 
-  const detail = choix.type === 'postes' ? <ListesValeurs refId="poste" champ="poste" titre="Postes" />
+  const detail = choix.type === 'postes' ? <ListesValeurs refId="poste" champ="poste" titre="Profils" />
     : choix.type === 'contrats' ? <ListesValeurs refId="contrat" champ="typeContrat" titre="Types de contrat" />
       : choix.type === 'projet' ? (() => { const p = donnees.projets.find(x => x.id === choix.id); return p ? detailProjet(p) : null; })()
         : choix.type === 'equipe' ? (() => { const e = donnees.equipes.find(x => x.id === choix.id); return e ? detailEquipe(e) : null; })() : null;
@@ -215,7 +215,7 @@ export function ListeRessources() {
             </div>
           ))}
           <div className="nav-separateur" />
-          {noeud('postes', undefined, <>Postes <span className="compte">{valeursDe(donnees.valeurs, 'poste', true).length}</span></>)}
+          {noeud('postes', undefined, <>Profils <span className="compte">{valeursDe(donnees.valeurs, 'poste', true).length}</span></>)}
           {noeud('contrats', undefined, <>Types de contrat <span className="compte">{valeursDe(donnees.valeurs, 'contrat', true).length}</span></>)}
         </nav>
         <div className="detail-ressources">{detail}</div>

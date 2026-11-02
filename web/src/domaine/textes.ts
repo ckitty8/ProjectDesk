@@ -77,7 +77,7 @@ export const GUIDE_ECRANS = {
     'Une équipe : son responsable (même hors projet), ses projets et tous ses membres avec leur rôle ' +
       'd’accès. Un projet : ses Product Owners, puis ses membres. Actifs et Inactifs se replient d’un clic.',
     '« Fiche » modifie une personne : dates d’arrivée et de départ, rôle d’accès (Administrateur, Responsable d’équipe, Membre), ses projets.',
-    'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
+    'Profils et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.',
     'Le responsable d’équipe la valide ou la renvoie dans « Vue d’ensemble » ; une feuille validée n’est plus modifiable.'],
   adminCreateur: ['Réservée au créateur. Simulation des rôles : voir l’application comme une personne avec un rôle donné, ' +

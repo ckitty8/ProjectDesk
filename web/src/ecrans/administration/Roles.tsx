@@ -134,7 +134,7 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
+                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Profil</th>
                 <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
               </tr>
             </thead>
