@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    Détail réduit à la demande du porteur (2026-09-25) : nom, description, chef de projet, équipe projet (membres et rôles) ; + méthode.
    Le statut n'y figure plus (porteur, 2026-10-31 : « je ne veux pas du statut »). Modifiable si l'écran d'origine est de « Mon dashboard » et
-   que je peux modifier le projet (peutEditerProjet) ; sinon lecture seule. Depuis « Suivi de mes équipes », le panneau reste en lecture.
+   que je peux modifier le projet (peutEditerProjet) ; sinon lecture seule. Depuis « Vue d’ensemble », le panneau reste en lecture.
    Suppression du projet par un membre de son équipe (règle RLS). L'ajout de membres (« + Membre ») arrive avec la fenêtre d'affectation (vague D).
    ============================================================ */
 import { Avatar, BadgeRef, Pastille } from './Badge';
@@ -21,7 +21,7 @@ import { personnesProposees } from '../domaine/vues';
 interface Props {
   projetId: string;
   onFermer: () => void;
-  /** Écran d'origine : « general » = Suivi de mes équipes (toujours en lecture), « moi » = Mon dashboard (modifiable si j'ai le droit) */
+  /** Écran d'origine : « general » = Vue d’ensemble (toujours en lecture), « moi » = Mon dashboard (modifiable si j'ai le droit) */
   section?: 'general' | 'moi';
   /** « + Membre » : ouvre la fenêtre d'affectation sur ce projet (écrans de Mon dashboard) */
   onAssigner?: (projetId: string) => void;
@@ -37,7 +37,7 @@ export function PanneauProjet({ projetId, onFermer, section = 'general', onAssig
   const modifiable = section === 'moi' && peutEditerProjet(ctx, projet);
   const membres = donnees.affectations.filter(a => a.projetId === projet.id)
     .flatMap(a => donnees.ressources.filter(r => r.id === a.ressourceId && estPresent(r, aujourdhui())).map(r => ({ r, role: a.role })));
-  const note = section === 'general' ? 'Vue « Suivi de mes équipes » en lecture seule. Modifiez ce projet depuis Mon dashboard.'
+  const note = section === 'general' ? 'Vue d’ensemble : lecture seule. Modifiez ce projet depuis Mon dashboard.'
     : !modifiable ? 'Rôle Lecteur ou autre équipe : modification impossible.' : '';
 
   // Modification d'un champ du projet (enregistrée à la sortie du champ) ; champ vidé = valeur nulle (nom obligatoire)

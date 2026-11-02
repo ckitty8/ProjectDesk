@@ -2,7 +2,7 @@
    Coquille de l'application : barre latérale, en-tête, zone d'écran
    (portage de app/js/coquille.js — phase 5 de la migration, vague A)
    ------------------------------------------------------------
-   Barre latérale (sections « Suivi de mes équipes » en lecture et « Mon dashboard » en édition, menus filtrés par la matrice des
+   Barre latérale (sections « Vue d’ensemble » en lecture et « Mon dashboard » en édition, menus filtrés par la matrice des
    droits : domaine/menus.ts), en-tête (fil d'Ariane, badge de mode, menu Aide) et bandeau de simulation. Les écrans plein écran
    (connexion, choix d'équipe) n'ont pas de coquille.
    ============================================================ */
@@ -67,7 +67,7 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
       <nav>
         {menus.suivi.length > 0 && (
           <>
-            <div className="menu-titre"><span>Suivi de mes équipes <Aide texte={AIDES.sectionGeneral} /></span><span>lecture</span></div>
+            <div className="menu-titre"><span>Vue d’ensemble <Aide texte={AIDES.sectionGeneral} /></span><span>lecture</span></div>
             {menus.suivi.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={0} />)}
           </>
         )}
@@ -202,7 +202,7 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
     contenu = (
       <div className="ecran"><Carte classe="encart-info-ecran">
         <h2>Aucune équipe ouverte</h2>
-        <p className="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Suivi de mes équipes » reste consultable.</p>
+        <p className="discret">Les écrans « Mon dashboard » travaillent dans une équipe. La section « Vue d’ensemble » reste consultable.</p>
         {mesEquipes(ctx).length > 0
           ? <Link className="btn primaire" to={cheminDe('choixEquipe')}>Choisir une équipe</Link>
           : ctx.estAdmin && <Link className="btn primaire" to={cheminDe('monAdmin')}>Créer une équipe (Administration)</Link>}
@@ -219,7 +219,7 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
           <div className="fil">
             {route.id === 'profil' ? <b>{route.titre}</b> : (
               <>
-                <span className="discret">{general ? 'Suivi de mes équipes' : 'Mon dashboard'}</span><span className="sep">/</span><b>{route.titre}</b>
+                <span className="discret">{general ? 'Vue d’ensemble' : 'Mon dashboard'}</span><span className="sep">/</span><b>{route.titre}</b>
                 {general ? <BadgeTon texte="Lecture seule" ton="neutre" /> : <BadgeTon texte="Édition" ton="info" />}
               </>
             )}

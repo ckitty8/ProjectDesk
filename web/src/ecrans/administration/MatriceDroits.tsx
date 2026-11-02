@@ -12,7 +12,7 @@ import { NIVEAUX_DROIT, PERIMETRES, ROLES_ACCES, ROLES_CHOISISSABLES } from '../
 import type { Niveau } from '../../domaine/config';
 import { droitEnBase, niveauDuRole } from '../../domaine/droits';
 
-/** Onglet Matrice des droits : une colonne par rôle, la ligne « Périmètre », puis les menus en deux sections (Suivi de mes équipes, Mon dashboard) */
+/** Onglet Matrice des droits : une colonne par rôle, la ligne « Périmètre », puis les menus en deux sections (Vue d’ensemble, Mon dashboard) */
 export function MatriceDroits() {
   const { ctx, executer } = useSession();
   if (!ctx) return null;

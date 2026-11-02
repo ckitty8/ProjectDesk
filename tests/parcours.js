@@ -97,9 +97,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('03-dashboard');
     verifier('Dashboard : 4 indicateurs', await page.locator('.grille-kpi .kpi').count() === 4);
     verifier('Dashboard : projets à surveiller', await page.locator('.carte-titre', { hasText: 'Projets à surveiller' }).count() === 1);
-    verifier('Barre latérale : sections Suivi de mes équipes et Mon dashboard, lien actif', (await page.textContent('.laterale')).includes('Suivi de mes équipes')
+    verifier('Barre latérale : sections Vue d’ensemble et Mon dashboard, lien actif', (await page.textContent('.laterale')).includes('Vue d’ensemble')
       && (await page.textContent('.laterale')).includes('Mon dashboard') && await page.locator('.menu-lien.actif', { hasText: 'Dashboard général' }).count() === 1);
-    verifier('En-tête : fil d\'Ariane et badge Lecture seule', (await page.textContent('.fil')).includes('Suivi de mes équipes') && (await page.textContent('.fil')).includes('Lecture seule'));
+    verifier('En-tête : fil d\'Ariane et badge Lecture seule', (await page.textContent('.fil')).includes('Vue d’ensemble') && (await page.textContent('.fil')).includes('Lecture seule'));
     verifier('Barre latérale : bloc utilisateur (équipe, nom, mention)', (await page.textContent('.bloc-utilisateur')).includes('Plateforme') && (await page.textContent('.bloc-utilisateur')).includes('Camille Laurent')
       && (await page.textContent('.bloc-utilisateur')).includes('CIRITEC'));
     verifier('Titre de l\'onglet du navigateur', (await page.title()) === 'Dashboard général · ProjectDesk');
@@ -187,7 +187,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.keyboard.press('Escape');
 
-    // Projet (Suivi de mes équipes) : onglets Gantt (par défaut) et Liste (2.91)
+    // Projet (Vue d’ensemble) : onglets Gantt (par défaut) et Liste (2.91)
     await menu('/projets');
     await page.waitForSelector('.gantt-carte');
     await captureB('04b-gantt');
@@ -753,14 +753,22 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     /* ---------- Créateur : simulation de rôle ---------- */
     await connecter('createur@test.fr');
     await page.waitForSelector('.laterale');
-    // Nombre de projets actifs du dashboard : toutes les équipes pour le créateur, le périmètre de la personne en simulation
+    // Nombre de personnes de la liste des ressources (Vue d’ensemble) : toutes les équipes pour le créateur, le périmètre de la personne en simulation.
+    // (Les projets, sprints et MEP, eux, sont lisibles de tous depuis la migration 050 : ils ne servent plus à mesurer le périmètre.)
     const projetsActifs = async () => {
-      await menu('/dashboard');
-      await page.waitForSelector('.grille-kpi');
-      return parseInt(await page.locator('.kpi:has-text("Projets actifs") .kpi-valeur >> nth=0').textContent(), 10);
+      await menu('/ressources');
+      await page.click('[role=tab]:has-text("Liste des ressources")');
+      await page.waitForSelector('.tableau');
+      return await page.locator('.tableau tbody tr:not(.groupe)').count();
     };
     verifier('Le créateur est reconnu (carte « Espace créateur » de Mon profil), sans badge « Créateur » dans le menu', !(await page.textContent('.bloc-utilisateur')).includes('Créateur'));
     const projetsReels = await projetsActifs();
+    const projetsGantt = async () => {
+      await menu('/projets');
+      await page.waitForSelector('.gantt-carte');
+      return await page.locator('.gantt-ligne').count();
+    };
+    const ganttReel = await projetsGantt();
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');
     await page.selectOption('select[aria-label="Personne pour Utilisateur"]', { label: 'Thomas Bernard · aujourd’hui Projet' }).catch(async () => {
@@ -779,7 +787,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.bandeau-simulation');
     verifier('Simulation : le rôle simulé remplace celui du créateur', !(await page.textContent('.bloc-utilisateur')).includes('★ Créateur')
       && (await page.textContent('.laterale')).includes('simulation'));
-    verifier('Simulation : les données sont limitées au périmètre de la personne', await projetsActifs() < projetsReels);
+    verifier('Simulation : les personnes visibles sont limitées au périmètre de la personne', await projetsActifs() < projetsReels);
+    verifier('Simulation (rôle Utilisateur) : le menu Projet de Vue d’ensemble reste visible et montre tous les projets de toutes les équipes (migration 050)',
+      await page.locator('.laterale a[href$="/projets"]').count() === 1 && await projetsGantt() === ganttReel && ganttReel >= 9);
     await captureD('29-simulation-en-cours');
     // Mon dashboard › Congés : hors administrateur, seule la fiche de la personne simulée est affichée (aucune autre, pas de bascule « Par projet »)
     await menu('/conges');

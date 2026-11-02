@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi de mes équipes › Daily des équipes : fil, blocages et synthèse de la semaine
+   Vue d’ensemble › Daily des équipes : fil, blocages et synthèse de la semaine
    (portage de Ecrans.dailyEquipes et Synthese de app/js/ecrans/daily-equipes.js — phase 5, vague B ; maquettes daily-equipes-design/retenu/)
    ------------------------------------------------------------
    Semaine choisie (lundi → vendredi ouvrés), projets dont je peux lire le daily (voir projetsDailyVisibles). Fonctions pures : l'écran

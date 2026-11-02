@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi de mes équipes › Projet (maquette 02-gProjets.png ; portage de app/js/ecrans/projets.js — phase 5, vague B) — lecture
+   Vue d’ensemble › Projet (maquette 02-gProjets.png ; portage de app/js/ecrans/projets.js — phase 5, vague B) — lecture
    Deux onglets (porteur 2026-11-02, maquette menu-projet-gantt/) : Gantt (sprints et mises en production, composant projets/Gantt) et Liste (projets
    groupés par équipe, notion de ticket retirée le 2026-09-27). Le filtre par équipe est commun aux deux onglets ; un clic sur un projet ouvre
    son panneau de détail (lecture). Le menu Roadmap n'existe plus : le Gantt en a repris le contenu.

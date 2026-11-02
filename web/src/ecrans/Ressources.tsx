@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi de mes équipes › Gestion des ressources (maquette 03-gRess.png ; portage de app/js/ecrans/ressources.js — phase 5, vague B) — lecture
+   Vue d’ensemble › Gestion des ressources (maquette 03-gRess.png ; portage de app/js/ecrans/ressources.js — phase 5, vague B) — lecture
    Deux onglets (maquette ressources-onglets-naissance, porteur 2026-10-16) : « Calendrier » des absences (composant Calendrier partagé avec
    Mon dashboard › Congés) et « Liste des ressources » (annuaire filtrable).
    Calendrier : vue « Par équipe » (chaque personne une fois, étiquettes de projets, synthèse des absents par projet) ou « Par projet ».

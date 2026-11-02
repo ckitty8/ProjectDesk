@@ -1,10 +1,12 @@
 /* ============================================================
-   Périmètre de lecture par rôle (miroir des règles RLS de la migration 042)
+   Périmètre de lecture par rôle (miroir des règles RLS des migrations 042 et 050)
    (portage TypeScript de appliquerPerimetre de app/js/etat.js — phase 2 de la migration)
    ------------------------------------------------------------
    En fonctionnement normal, la base ne renvoie déjà que ce que le compte a le droit de lire (RLS). Pendant une simulation de
    rôle, les données sont lues avec le compte du créateur : on applique ici les mêmes règles que peut_voir_projet,
    peut_voir_ressource, peut_voir_temps et peut_voir_equipe, pour que la simulation montre exactement ce que verrait la personne.
+   Exception (migration 050, porteur 2026-11-02) : les projets, leurs sprints et leurs mises en production sont lisibles par tous les membres
+   (menu Projet de Vue d’ensemble : « tous les projets de toutes les équipes ») ; ils ne sont donc pas filtrés ici.
    Le contexte reçu doit porter les données COMPLÈTES (non filtrées).
    ============================================================ */
 import { equipesGerees, maRessource } from './droits';
@@ -53,15 +55,12 @@ export function appliquerPerimetre(ctx: ContexteDroits, brut: DonneesPerimetre, 
 
   return {
     ...brut,
-    projets: brut.projets.filter(p => projetsVus.has(p.id)),
     affectations: parProjet(brut.affectations),
     ressources: brut.ressources.filter(r => voitPersonne(r.id)),
     absences: brut.absences.filter(a => voitPersonne(a.ressourceId)),
     temps: brut.temps.filter(t => voitTemps(t.ressourceId)),
     feuilles: brut.feuilles.filter(f => voitTemps(f.ressourceId)),
-    sprintsProjet: parProjet(brut.sprintsProjet),
     repartitionsSprint: parProjet(brut.repartitionsSprint),
-    misesEnProduction: parProjet(brut.misesEnProduction),
     envoisDaily: parProjet(brut.envoisDaily),
     objectifsTravail: brut.objectifsTravail.filter(o => voitEquipe(o.equipeId))
   };
@@ -70,7 +69,7 @@ export function appliquerPerimetre(ctx: ContexteDroits, brut: DonneesPerimetre, 
 /* ---------- Équipe active (Mon dashboard) ---------- */
 
 /** Données d'une seule équipe (porteur, 2026-10-31 : « dans AMOA, je ne dois voir que les projets liés à AMOA ») : l'équipe choisie et ses
- *  sous-unités, avec leurs personnes (ou rattachées), leurs projets et ce qui s'y rapporte. Sert à Mon dashboard ; « Suivi de mes équipes » reste
+ *  sous-unités, avec leurs personnes (ou rattachées), leurs projets et ce qui s'y rapporte. Sert à Mon dashboard ; « Vue d’ensemble » reste
  *  global. Ne donne aucun droit de plus : ne fait que réduire ce que la personne voit déjà. */
 export function restreindreEquipe<T extends DonneesPerimetre & { equipes: readonly { id: string; parentId?: string | null }[] }>(brut: T, equipeId: string): T {
   const unites = new Set([equipeId]);

@@ -2,7 +2,7 @@
    Mon dashboard › Projet › Sprints (ex-menu Roadmap ; maquette sprints-mon-dashboard/, porteur 2026-10-23 ; portage de app/js/ecrans/sprints.js
    — phase 5, vague C)
    Création et modification des sprints de chaque projet (table sprints_projet) : numéro, année, version, début, fin. Modifiable par ceux
-   qui peuvent modifier le projet (peutEditerProjet). Les sprints s'affichent dans Suivi de mes équipes › Projet › Gantt
+   qui peuvent modifier le projet (peutEditerProjet). Les sprints s'affichent dans Vue d’ensemble › Projet › Gantt
    et servent aussi à la roadmap (docs/specifications/roadmap.md § 2). Règles de saisie : domaine/saisies.ts.
    ============================================================ */
 import { useState } from 'react';
@@ -118,7 +118,7 @@ export function Sprints() {
   if (!ctx || !donnees) return null;
   const projets = donnees.projets;
   const projet = projets.find(p => p.id === projetId) ?? projets.find(p => p.nom === 'CDO') ?? projets[0];
-  const entete = <EnteteEcran titre="Sprints" sousTitre="Sprints de vos projets · affichés dans Suivi de mes équipes › Projet › Gantt" />;
+  const entete = <EnteteEcran titre="Sprints" sousTitre="Sprints de vos projets · affichés dans Vue d’ensemble › Projet › Gantt" />;
   if (!projet) return <div className="ecran">{entete}<Carte><Vide texte="Aucun projet." /></Carte></div>;
   // Affichage par année (demande du porteur, 2026-10-05) : années des sprints du projet + année en cours
   const anneeCourante = Number(aujourdhui().slice(0, 4));

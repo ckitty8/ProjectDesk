@@ -16,8 +16,8 @@ function attendu(ctx: ContexteDroits, role: string) {
     'Dashboard général': ouvert('suivi_dashboard'),
     'Daily des équipes': ouvert('daily_equipes') && (ouvert('onglet_daily_fil') || ouvert('onglet_daily_synthese')),
     'Feuilles de temps': ouvert('suivi_timesheet'),
-    // Suivi de mes équipes : le menu Projet (Gantt et Liste) suit le droit suivi_projets ; Mon dashboard : sous-menu Sprints et Mises en production
-    'Projet': ouvert('suivi_projets') || (dashboard && (ouvert('onglet_admin_sprints') || ouvert('projets'))),
+    // Vue d’ensemble : le menu Projet (Gantt et Liste) est ouvert à tous les rôles (porteur, 2026-11-02) ; Mon dashboard : Sprints et Mises en production
+    'Projet': true,
     'Mises en production': dashboard && ouvert('projets'),
     'Sprints': dashboard && ouvert('onglet_admin_sprints'),
     'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')),
@@ -50,10 +50,11 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     expect(projet?.enfants?.map(e => e.libelle)).toEqual(['Sprints', 'Mises en production']);
   });
 
-  it('Suivi de mes équipes : un seul menu Projet (le Gantt et la liste), plus de menu Roadmap', () => {
-    const menus = menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle);
-    expect(menus).toContain('Projet');
-    expect(menus).not.toContain('Roadmap');
+  it('Vue d’ensemble : le menu Projet (le Gantt et la liste) est visible de tous les rôles, même sans aucun droit de la matrice', () => {
+    ROLES_CHOISISSABLES.forEach(role => expect(menusDuRole(contexte(), role).suivi.map(m => m.libelle), role).toContain('Projet'));
+    const sansDroits = contexte({ droitsRoles: [] });
+    expect(menusDuRole(sansDroits, 'utilisateur').suivi.map(m => m.libelle)).toContain('Projet');
+    expect(menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle)).not.toContain('Roadmap');
   });
 
   it('Lecture seule : Mon dashboard fermé, Suivi consultable', () => {

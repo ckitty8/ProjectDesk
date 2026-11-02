@@ -1,6 +1,6 @@
 /* ============================================================
    Registre des écrans migrés : identifiant d'écran (routes.ts) → composant
-   Chaque écran de « Suivi de mes équipes » et de « Mon dashboard » (routes.ts) y figure ; les pages plein écran (connexion, choix d'équipe) sont dans App.tsx.
+   Chaque écran de « Vue d’ensemble » et de « Mon dashboard » (routes.ts) y figure ; les pages plein écran (connexion, choix d'équipe) sont dans App.tsx.
    ============================================================ */
 import type { ComponentType } from 'react';
 import { AdminCreateur } from './AdminCreateur';

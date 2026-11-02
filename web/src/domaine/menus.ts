@@ -22,6 +22,8 @@ export interface Menu {
   icone: string;
   droit?: string | readonly string[];
   enfants?: readonly MenuEnfant[];
+  /** Menu visible de tous les profils et rôles, sans droit de la matrice (porteur, 2026-11-02 : le menu Projet de Vue d’ensemble) */
+  pourTous?: boolean;
   /** Menu réservé au créateur (Administration créateur) : jamais un menu de rôle */
   reserveCreateur?: boolean;
   /** Menu réservé aux administrateurs (porteur, 2026-11-01 : « le menu Administration est uniquement pour les administrateurs »),
@@ -31,13 +33,14 @@ export interface Menu {
   horsBarre?: boolean;
 }
 
-/** Suivi de mes équipes : chaque menu est affiché si le droit de son menu n'est pas « Non » (matrice, migration 037) et si au
+/** Vue d’ensemble : chaque menu est affiché si le droit de son menu n'est pas « Non » (matrice, migration 037) — sauf Projet, ouvert à tous — et si au
  *  moins un de ses onglets est permis (migration 038). Pas d'Administration dans cette section (porteur, 2026-10-22). */
 export const MENU_GENERAL: readonly Menu[] = [
   { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash', droit: 'suivi_dashboard' },
   { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
-  // Projet (porteur, 2026-11-02) : le Gantt et la liste des projets, un seul droit (suivi_projets)
-  { id: 'projets', libelle: 'Projet', icone: 'proj', droit: 'suivi_projets' },
+  // Projet (porteur, 2026-11-02) : le Gantt et la liste des projets, visibles de tous les profils et rôles ; chacun y voit ce que son périmètre
+  // lui permet de lire (règles de lecture de la base : ses projets, ceux de ses unités…), sans droit de la matrice
+  { id: 'projets', libelle: 'Projet', icone: 'proj', pourTous: true },
   { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
   { id: 'timesheet', libelle: 'Feuilles de temps', icone: 'time', droit: 'suivi_timesheet' }
 ];
@@ -71,10 +74,10 @@ const menuOuvert = (ctx: ContexteDroits, item: Menu, role?: string): boolean => 
   ? item.enfants.some(e => enfantOuvert(ctx, e, role))
   : (!item.droit || droitOuvert(ctx, item.droit, role)) && ecranOuvert(ctx, item.id, role));
 
-/** Menus que voit un rôle, d'après la matrice : ceux de Suivi de mes équipes, puis ceux de Mon dashboard avec leurs sous-menus
+/** Menus que voit un rôle, d'après la matrice : ceux de Vue d’ensemble, puis ceux de Mon dashboard avec leurs sous-menus
  *  ouverts. Mon dashboard est fermé en Lecture seule (migration 030). */
 export function menusDuRole(ctx: ContexteDroits, role?: string): { suivi: Menu[]; moi: Menu[] } {
-  const suivi = MENU_GENERAL.filter(item => !!item.droit && droitOuvert(ctx, item.droit, role) && ecranOuvert(ctx, item.id, role));
+  const suivi = MENU_GENERAL.filter(item => (item.pourTous || (!!item.droit && droitOuvert(ctx, item.droit, role))) && ecranOuvert(ctx, item.id, role));
   const lectureSeule = (role ?? monRole(ctx)) === 'lecture';
   const moi = lectureSeule ? [] : MENU_MOI
     .filter(item => (item.reserveCreateur ? !role && ctx.estCreateur : true) && (item.reserveAdmin ? (role ? role === 'admin' : ctx.estAdmin) : true)

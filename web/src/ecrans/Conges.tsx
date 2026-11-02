@@ -5,7 +5,7 @@
      l'appliquer ou le retirer ;
    - Récap annuel : jours travaillés / congés par mois et reste à prendre par rapport aux jours attendus par le client (par équipe et par année).
    Périmètre (porteur, 2026-10-31) : quel que soit le rôle, sauf Administrateur, Mon dashboard › Congés n'affiche et ne permet de saisir que SES congés
-   (les congés des autres se consultent dans Suivi de mes équipes › Gestion des ressources). Règle RLS en base ; l'écran masque le reste.
+   (les congés des autres se consultent dans Vue d’ensemble › Gestion des ressources). Règle RLS en base ; l'écran masque le reste.
    ============================================================ */
 import { useState } from 'react';
 import { Aide } from '../composants/Aide';

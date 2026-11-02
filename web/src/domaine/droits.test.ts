@@ -53,10 +53,10 @@ describe('matrice des droits', () => {
   });
 
   it('reprend le droit de repli quand le droit manque en base (migrations 037 et 038)', () => {
-    const sansDroitProjets = contexte({ droitsRoles: contexte().droitsRoles.filter(d => d.droit !== 'suivi_projets') });
-    // suivi_projets est absent : il reprend « general » (utilisateur : Oui)
-    expect(niveauDuRole(sansDroitProjets, 'utilisateur', 'suivi_projets')).toBe('oui');
-    expect(niveauDuRole(sansDroitProjets, 'lecture', 'suivi_projets')).toBe('lecture');
+    const sansDroitProjets = contexte({ droitsRoles: contexte().droitsRoles.filter(d => d.droit !== 'suivi_ressources') });
+    // suivi_ressources est absent : il reprend « general » (utilisateur : Oui)
+    expect(niveauDuRole(sansDroitProjets, 'utilisateur', 'suivi_ressources')).toBe('oui');
+    expect(niveauDuRole(sansDroitProjets, 'lecture', 'suivi_ressources')).toBe('lecture');
     // un droit inconnu de la configuration reste « Non »
     expect(niveauDuRole(contexte(), 'admin', 'droit_inexistant')).toBe('non');
   });

@@ -1,5 +1,5 @@
 /* ============================================================
-   Gantt (Suivi de mes équipes › Projet) : période affichée et zoom
+   Gantt (Vue d’ensemble › Projet) : période affichée et zoom
    (portage de PlanningProjet.debut / periode de app/js/ecrans/projets.js — phase 5, vague B ; maquette planning-projet/, porteur 2026-10-23 ;
    zoom semaine / mois / trimestre ajouté le 2026-11-02, maquette menu-projet-gantt/)
    ------------------------------------------------------------

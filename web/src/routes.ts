@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    « id » est l'identifiant d'écran de l'application actuelle (celui des menus, des droits et du DAT) : il relie les menus de
    domaine/menus.ts aux adresses et au registre des écrans (ecrans/index.ts). Tous les écrans sont migrés (phase 5, vagues A à D).
-   « section » : general = Suivi de mes équipes (lecture), moi = Mon dashboard (édition), plein = écran sans menu.
+   « section » : general = Vue d’ensemble (lecture), moi = Mon dashboard (édition), plein = écran sans menu.
    ============================================================ */
 export type SectionEcran = 'general' | 'moi' | 'plein';
 

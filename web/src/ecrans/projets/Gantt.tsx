@@ -1,5 +1,5 @@
 /* ============================================================
-   Gantt de Suivi de mes équipes › Projet (onglet Gantt ; porteur 2026-11-02, maquette menu-projet-gantt/ ; évolution du planning projet 2.38)
+   Gantt de Vue d’ensemble › Projet (onglet Gantt ; porteur 2026-11-02, maquette menu-projet-gantt/ ; évolution du planning projet 2.38)
    Une ligne par projet, groupée par équipe : les sprints en barres (dates exactes, le sprint en cours en bleu) et les mises en production
    (MEP) en losanges + version, de la couleur de leur statut (STATUTS_MEP). Trait vertical = aujourd'hui, détail au survol, clic sur un projet =
    son panneau en lecture. Zoom semaine / mois / trimestre, période décalable, filtre par projet. Lecture seule : la saisie des sprints et des

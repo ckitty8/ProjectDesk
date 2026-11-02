@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi de mes équipes › Daily des équipes (maquettes docs/maquettes/daily-equipes-design/retenu/, 2026-10-15 ; portage de
+   Vue d’ensemble › Daily des équipes (maquettes docs/maquettes/daily-equipes-design/retenu/, 2026-10-15 ; portage de
    app/js/ecrans/daily-equipes.js — phase 5, vague B)
    Semaine choisie (lundi → vendredi ouvrés), projets dont je peux lire le daily (même règle qu'en base). Lecture seule.
    - Onglet « Fil des dailys » : les dailys du plus récent au plus ancien, groupés par jour ; filtres projets / personnes à gauche ;

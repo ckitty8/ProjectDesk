@@ -2,7 +2,7 @@
    Mon dashboard › Saisir mes heures (menu à part depuis le 2026-10-22 ; maquette complements/mon-timesheet.png ; portage de
    app/js/ecrans/mon-timesheet.js — phase 5, vague C)
    Saisie MENSUELLE : ses heures par jour du mois sur les projets où l'on est affecté (hors rôle Lecteur), puis « Soumettre le mois ».
-   La validation / le renvoi par le responsable se font dans Suivi de mes équipes › Timesheet. Droits contrôlés en base (trigger).
+   La validation / le renvoi par le responsable se font dans Vue d’ensemble › Timesheet. Droits contrôlés en base (trigger).
    ============================================================ */
 import { useState } from 'react';
 import type { FocusEvent } from 'react';

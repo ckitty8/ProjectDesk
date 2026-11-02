@@ -39,7 +39,7 @@ export const AIDES = {
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, ` +
     `absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
   aValider: 'Feuilles soumises par les membres : le responsable d’équipe (rôle owner ou admin) les valide ou les renvoie. Une feuille validée est figée.',
-  dailyVisibilite: 'Un daily par projet. Il est lu (Suivi de mes équipes › Daily des équipes) par les personnes affectées au projet, par le ' +
+  dailyVisibilite: 'Un daily par projet. Il est lu (Vue d’ensemble › Daily des équipes) par les personnes affectées au projet, par le ' +
     'responsable de l’unité du projet et des unités au-dessus, et par les administrateurs. Un jour de congé d’une journée, aucun daily n’est attendu.',
   referentielSysteme: 'Valeurs « système » : utilisées par les calculs et les droits. Renommables (les données suivent), désactivables, mais non supprimables.',
   joursFeries: 'Exclus des jours ouvrés (capacité, timesheet, heures attendues) et affichés « JF » dans les calendriers.',
@@ -68,9 +68,9 @@ export const GUIDE_ECRANS = {
   mesProjets: ['« + Nouveau projet » crée un projet dans votre équipe ; un projet se modifie depuis Liste des ressources.',
     'Saisissez les mises en production (date, version, nombre de bugs, d’incidents et d’US livrés, statut) des projets que vous pouvez modifier ; ' +
     'chaque champ s’enregistre dès qu’il change.',
-    'Tout le monde les voit dans Suivi de mes équipes › Projet › Gantt (repères ▲).'],
+    'Tout le monde les voit dans Vue d’ensemble › Projet › Gantt (repères ▲).'],
   mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
-    'Ils s’affichent dans Suivi de mes équipes › Projet › Gantt.'],
+    'Ils s’affichent dans Vue d’ensemble › Projet › Gantt.'],
   conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',
     'Dans la grille : choisissez un type d’absence, puis cliquez sur les jours. Les jours fériés sont affichés automatiquement.'],
   listeRessources: ['L’organisation par équipe : à gauche les équipes, leur responsable et leurs projets ; à droite le détail de ce que vous choisissez.',
@@ -79,7 +79,7 @@ export const GUIDE_ECRANS = {
     '« Fiche » modifie une personne : dates d’arrivée et de départ, rôle d’accès (Administrateur, Responsable d’équipe, Membre), ses projets.',
     'Postes et Types de contrat (en bas à gauche) : les listes utilisées dans les fiches des personnes.'],
   monTimesheet: ['Saisissez vos heures du mois, par projet et par jour (JF = férié, Abs = absence posée), puis soumettez le mois.',
-    'Le responsable d’équipe la valide ou la renvoie dans « Suivi de mes équipes » ; une feuille validée n’est plus modifiable.'],
+    'Le responsable d’équipe la valide ou la renvoie dans « Vue d’ensemble » ; une feuille validée n’est plus modifiable.'],
   adminCreateur: ['Réservée au créateur. Simulation des rôles : voir l’application comme une personne avec un rôle donné, ' +
     'en lecture seule ; le bandeau violet permet de changer de rôle ou de revenir.',
     'Matrice des droits : ce que chaque rôle peut faire (Oui, Lecture, Non), menu par menu et onglet par onglet ; modifiable par le créateur seul.',
@@ -101,7 +101,7 @@ export const GUIDES = {
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [
-    'Suivi de mes équipes : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (menu Feuilles de temps).',
+    'Vue d’ensemble : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (menu Feuilles de temps).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
     'Rôle sur un projet : Chef de projet et Membre peuvent le modifier ; Lecteur le consulte seulement.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',

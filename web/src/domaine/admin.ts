@@ -91,12 +91,12 @@ export function parRole(ctx: ContexteDroits, jour: Iso, enAttente: readonly Comp
 
 /** Lignes d'une section de la matrice, dans l'ordre de DROITS ; un menu ouvert à tous (MENUS_SANS_DROIT, sans clé) est placé juste avant les droits de
  *  ses onglets (Trucs et astuces), ou à la fin de la section s'il n'en a pas */
-export type LigneMatrice = Droit | { menu: string; libelle: string; section: string; cle?: undefined; onglet?: undefined };
+export type LigneMatrice = Droit | { menu: string; libelle: string; section: string; cle?: undefined; onglet?: undefined; avant?: string };
 
 export function lignesSection(section: string): LigneMatrice[] {
   const lignes: LigneMatrice[] = DROITS.filter(d => d.section === section);
   MENUS_SANS_DROIT.filter(m => m.section === section).forEach(m => {
-    const position = lignes.findIndex(d => d.menu === m.menu);
+    const position = lignes.findIndex(d => d.menu === (m.avant ?? m.menu));
     lignes.splice(position < 0 ? lignes.length : position, 0, m);
   });
   return lignes;

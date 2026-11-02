@@ -81,10 +81,16 @@ export const STATUTS_MEP: readonly { valeur: string; libelle: string; ton: Ton }
 ];
 
 /** Sections de la matrice des droits */
-export const SECTIONS_DROITS = [{ cle: 'suivi', libelle: 'Suivi de mes équipes' }, { cle: 'dashboard', libelle: 'Mon dashboard' }] as const;
+export const SECTIONS_DROITS = [{ cle: 'suivi', libelle: 'Vue d’ensemble' }, { cle: 'dashboard', libelle: 'Mon dashboard' }] as const;
 
-/** Menus ouverts à tous, sans droit de menu (leurs onglets ont un droit) */
-export const MENUS_SANS_DROIT = [{ section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques' }] as const;
+/** Menus ouverts à tous, sans droit de menu (leurs onglets ont un droit). « avant » : menu devant lequel la ligne s'affiche dans la matrice
+ *  (par défaut, juste avant les droits de ses propres onglets, ou à la fin de la section). */
+export const MENUS_SANS_DROIT: readonly { section: 'suivi' | 'dashboard'; menu: string; libelle: string; avant?: string }[] = [
+  // Projet (Vue d’ensemble) : visible de tous les profils et rôles (porteur, 2026-11-02) ; ce que chacun y voit suit son périmètre
+  // (règles de lecture de la base)
+  { section: 'suivi', menu: 'Projet', libelle: 'Gantt et liste des projets (selon le périmètre)', avant: 'Gestion des ressources' },
+  { section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques' }
+];
 
 /** Un droit de la matrice : menu ou onglet de la barre latérale (clés fixes, reliées aux règles de la base) */
 export interface Droit {
@@ -104,7 +110,7 @@ export interface Droit {
 /** La matrice des droits : un droit par menu, puis un droit par onglet */
 export const DROITS: readonly Droit[] = [
   /* menu : menu de la barre latérale où le droit s'exerce (colonne « Menu » de la matrice, porteur 2026-10-18).
-     Suivi de mes équipes : un droit par menu (option B du porteur, migration 037). Si l'un de ces droits
+     Vue d’ensemble : un droit par menu (option B du porteur, migration 037). Si l'un de ces droits
      manque en base, il reprend le niveau de l'ancien droit commun « general » (repli, niveauDuRole). */
   /* onglet : droit d'un onglet (porteur 2026-10-18, maquette docs/maquettes/matrice-par-onglet/, migration 038) —
      ligne « ↳ Onglet » de la matrice ; ecran + id : écran et identifiant de l'onglet masqué si le droit est « Non »
@@ -116,7 +122,6 @@ export const DROITS: readonly Droit[] = [
   // Synthèse : au départ administrateurs, direction et responsables (mêmes valeurs que « fiches_ressources »)
   { cle: 'onglet_daily_synthese', section: 'suivi', menu: 'Daily des équipes', onglet: 'Synthèse de l’équipe', ecran: 'dailyEquipes', id: 'synthese',
     libelle: 'Synthèse par projet et par personne', repli: 'fiches_ressources' },
-  { cle: 'suivi_projets', section: 'suivi', menu: 'Projet', libelle: 'Consulter le Gantt et les projets des équipes', repli: 'general' },
   { cle: 'suivi_ressources', section: 'suivi', menu: 'Gestion des ressources', libelle: 'Consulter le calendrier des congés et la liste des ressources', repli: 'general' },
   { cle: 'onglet_ressources_calendrier', section: 'suivi', menu: 'Gestion des ressources', onglet: 'Calendrier', ecran: 'ressources', id: 'calendrier',
     libelle: 'Congés des équipes, anniversaires', repli: 'suivi_ressources' },

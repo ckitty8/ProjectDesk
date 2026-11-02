@@ -1,5 +1,5 @@
 /* ============================================================
-   Suivi de mes équipes › Dashboard général (maquette 01-gDash.png ; portage de app/js/ecrans/dashboard.js — phase 5, vague A)
+   Vue d’ensemble › Dashboard général (maquette 01-gDash.png ; portage de app/js/ecrans/dashboard.js — phase 5, vague A)
    Lecture : indicateurs (projets actifs, avancement, risques, occupation) et projets à surveiller (objectifs OKR retirés : porteur 2026-10-25).
    Les calculs viennent de domaine/calculs.ts ; l'écran ne recalcule rien.
    ============================================================ */

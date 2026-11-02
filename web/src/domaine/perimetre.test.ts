@@ -4,17 +4,18 @@ import { appliquerPerimetre, restreindreEquipe } from './perimetre';
 
 const ids = <T extends { id: string }>(lignes: readonly T[]) => lignes.map(l => l.id).sort();
 
-describe('périmètre de lecture en simulation (migration 042)', () => {
+describe('périmètre de lecture en simulation (migrations 042 et 050)', () => {
   it('ne filtre rien hors simulation : c’est la base qui filtre', () => {
     expect(appliquerPerimetre(contexte(), DONNEES)).toBe(DONNEES);
   });
 
-  it('Thomas en rôle Projet ne voit que VISTA et les personnes de ce projet, pas CDO de sa propre équipe', () => {
+  it('Thomas en rôle Projet voit tous les projets, sprints et MEP (migration 050) mais seulement les personnes et daily de son projet', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'projet', ressourceId: 'r-thomas' } }), DONNEES);
-    expect(ids(v.projets)).toEqual(['p-app2']);
+    expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
+    expect(v.sprintsProjet).toEqual(DONNEES.sprintsProjet);
+    expect(v.misesEnProduction).toEqual(DONNEES.misesEnProduction);
     expect(ids(v.ressources)).toEqual(['r-thomas']);
-    expect(v.sprintsProjet.map(s => s.projetId)).toEqual(['p-app2']);
-    expect(v.misesEnProduction.map(m => m.projetId)).toEqual(['p-app2']);
+    expect(v.affectations.every(a => a.projetId === 'p-app2')).toBe(true);
     expect(v.envoisDaily).toEqual([]);
     expect(v.absences.map(a => a.ressourceId)).toEqual(['r-thomas']);
     expect(v.temps.map(t => t.ressourceId)).toEqual(['r-thomas']);
@@ -23,24 +24,24 @@ describe('périmètre de lecture en simulation (migration 042)', () => {
 
   it('un collègue de projet est visible (fiche et absences) mais pas ses heures', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'projet', ressourceId: 'r-cerine' } }), DONNEES);
-    expect(ids(v.projets)).toEqual(['p-ia2']);
+    expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
     expect(ids(v.ressources)).toEqual(['r-cerine', 'r-lena']);
     expect(v.absences.map(a => a.ressourceId)).toEqual(['r-lena']);
     expect(v.temps).toEqual([]);
     expect(v.feuilles).toEqual([]);
   });
 
-  it('un responsable ne voit que son équipe, plus les projets où il est affecté', () => {
+  it('un responsable voit tous les projets (migration 050) mais seulement les personnes de son équipe', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'responsable', ressourceId: 'r-cerine' } }), DONNEES);
-    expect(ids(v.projets)).toEqual(['p-app1', 'p-app2', 'p-ia2']);
-    expect(v.projets.some(p => p.equipeId === 'amoa')).toBe(false);
+    expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
+    expect(v.projets.some(p => p.equipeId === 'amoa')).toBe(true);
     expect(ids(v.ressources)).toEqual(['r-anne', 'r-cerine', 'r-christelle', 'r-lena', 'r-thomas']);
     expect(v.temps.map(t => t.ressourceId)).toEqual(['r-thomas']);
   });
 
-  it('une direction voit ses équipes (Applications et IA) mais pas AMOA', () => {
+  it('une direction voit tous les projets mais seulement les personnes de ses équipes (Applications et IA), pas AMOA', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'direction', ressourceId: 'r-thomas' } }), DONNEES);
-    expect(ids(v.projets)).toEqual(['p-app1', 'p-app2', 'p-ia1', 'p-ia2']);
+    expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
     expect(ids(v.ressources)).not.toContain('r-marc');
     expect(v.temps).toHaveLength(2);
   });
@@ -59,9 +60,10 @@ describe('périmètre de lecture en simulation (migration 042)', () => {
     expect(v.temps.some(t => t.ressourceId === 'r-marc')).toBe(false);
   });
 
-  it('un compte sans fiche ne voit rien', () => {
+  it('un compte sans fiche ne voit aucune personne, mais les projets restent lisibles de tous (migration 050)', () => {
     const v = appliquerPerimetre(contexte({ simulation: { cle: 'utilisateur', ressourceId: null } }), DONNEES);
-    expect(v.projets).toEqual([]);
+    expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
+    expect(v.affectations).toEqual([]);
     expect(v.ressources).toEqual([]);
   });
 });

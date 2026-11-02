@@ -38,13 +38,14 @@ describe('contexte et données visibles', () => {
     expect(mesEquipes(vue.ctx)).toHaveLength(EQUIPES.length);
   });
 
-  it('en simulation du rôle Projet, l\'identité est celle de la personne et les projets sont filtrés', () => {
+  it('en simulation du rôle Projet, l\'identité est celle de la personne ; les projets restent lisibles de tous (migration 050)', () => {
     const vue = construireVue(base, donnees(), {}, { cle: 'projet', ressourceId: 'r-thomas' });
     expect(vue.ctx.estCreateur).toBe(false);
     expect(vue.ctx.userId).toBe('u-thomas');
     expect(monRole(vue.ctx)).toBe('projet');
     expect(mesEquipes(vue.ctx).map(e => e.id)).toEqual(['app']);
-    expect(vue.donnees.projets.map(p => p.id)).toEqual(['p-app2']);
+    expect(vue.donnees.projets).toHaveLength(PROJETS.length);   // projets lisibles par tous les membres (migration 050)
+    expect(vue.donnees.affectations.every(a => a.projetId === 'p-app2')).toBe(true);   // le reste suit le périmètre
     expect(vue.donnees.droitsRoles).toHaveLength(MATRICE_PRODUCTION.length);
   });
 

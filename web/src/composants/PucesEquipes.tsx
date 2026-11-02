@@ -1,5 +1,5 @@
 /* ============================================================
-   Filtre « Toutes les équipes / une équipe » en puces (Suivi de mes équipes › Projet : Gantt et Liste)
+   Filtre « Toutes les équipes / une équipe » en puces (Vue d’ensemble › Projet : Gantt et Liste)
    Même rangée de puces sur les deux écrans, d'où un composant commun (règle n°4 : réutiliser avant de recréer).
    ============================================================ */
 import { Pastille } from './Badge';
