@@ -1,7 +1,8 @@
 /* ============================================================
-   Matrice des droits de PRODUCTION au 2026-11-02 (30 droits × 6 rôles ; « suivi_projets » retiré par la migration 053), relevée dans la table droits_roles.
+   Matrice des droits de PRODUCTION au 2026-11-02 (30 droits × 7 rôles ; « suivi_projets » retiré par la migration 053),
+   relevée dans la table droits_roles avant le Rôle unique (054) ; « Chef de projet » = l'ancienne colonne « Projet »,
    Sert de jeu d'essai réaliste aux tests des droits et des menus : si la matrice de production change, mettre ce fichier à jour.
-   Colonnes : admin, direction, responsable, projet, utilisateur, lecture.
+   Colonnes de NIVEAUX : admin, direction, responsable, projet (devenu Chef de projet), utilisateur, lecture.
    ============================================================ */
 import type { LigneDroit } from '../types';
 
@@ -38,8 +39,14 @@ const NIVEAUX: Record<string, readonly [string, string, string, string, string, 
   valider_timesheet: ['oui', 'oui', 'oui', 'non', 'non', 'non'],
 };
 
-const ROLES = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'] as const;
+const ROLES = ['admin', 'direction', 'responsable', 'chef', 'membre', 'utilisateur', 'lecture'] as const;
 
-/** Les lignes de la table droits_roles (186 lignes) */
-export const MATRICE_PRODUCTION: LigneDroit[] = Object.entries(NIVEAUX)
-  .flatMap(([droit, niveaux]) => niveaux.map((niveau, i) => ({ role: ROLES[i] ?? '', droit, niveau })));
+/** Droits que le Membre n'a pas (le Chef de projet les a) : affecter, envoyer le daily (migration 052, décision du porteur « Chef de projet > Membre ») */
+const DROITS_DU_CHEF_SEUL = ['affecter', 'piloter', 'onglet_admin_envoi_daily'];
+
+/** Les lignes de la table droits_roles : les 6 colonnes ci-dessus donnent l'ancienne colonne « Projet », devenue Chef de projet, dont le Membre
+ *  se déduit (migration 052) */
+export const MATRICE_PRODUCTION: LigneDroit[] = Object.entries(NIVEAUX).flatMap(([droit, [admin, direction, responsable, projet, utilisateur, lecture]]) => {
+  const membre = DROITS_DU_CHEF_SEUL.includes(droit) ? 'non' : projet;
+  return [admin, direction, responsable, projet, membre, utilisateur, lecture].map((niveau, i) => ({ role: ROLES[i] ?? '', droit, niveau: niveau ?? 'non' }));
+});

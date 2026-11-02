@@ -40,9 +40,9 @@ describe('onglets d\'Administration', () => {
 });
 
 describe('rôles', () => {
-  it('affiche les six rôles puis le compte en attente, avec la description tirée de la matrice', () => {
+  it('affiche l’administrateur et les six rôles puis le compte en attente, avec la description tirée de la matrice', () => {
     const r = rolesAffiches(contexte());
-    expect(r.map(x => x.cle)).toEqual(['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture', 'sansEquipe']);
+    expect(r.map(x => x.cle)).toEqual(['admin', 'direction', 'responsable', 'chef', 'membre', 'utilisateur', 'lecture', 'sansEquipe']);
     expect(r[0]?.description).toContain('Vue d’ensemble :');
   });
   it('range chaque fiche sous son rôle choisi (prévu avant actuel) et les comptes en attente à part', () => {

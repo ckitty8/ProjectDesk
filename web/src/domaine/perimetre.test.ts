@@ -10,7 +10,7 @@ describe('périmètre de lecture en simulation (migrations 042 et 050)', () => {
   });
 
   it('Thomas en rôle Projet voit tous les projets, sprints et MEP (migration 050) mais seulement les personnes et daily de son projet', () => {
-    const v = appliquerPerimetre(contexte({ simulation: { cle: 'projet', ressourceId: 'r-thomas' } }), DONNEES);
+    const v = appliquerPerimetre(contexte({ simulation: { cle: 'chef', ressourceId: 'r-thomas' } }), DONNEES);
     expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
     expect(v.sprintsProjet).toEqual(DONNEES.sprintsProjet);
     expect(v.misesEnProduction).toEqual(DONNEES.misesEnProduction);
@@ -23,7 +23,7 @@ describe('périmètre de lecture en simulation (migrations 042 et 050)', () => {
   });
 
   it('un collègue de projet est visible (fiche et absences) mais pas ses heures', () => {
-    const v = appliquerPerimetre(contexte({ simulation: { cle: 'projet', ressourceId: 'r-cerine' } }), DONNEES);
+    const v = appliquerPerimetre(contexte({ simulation: { cle: 'chef', ressourceId: 'r-cerine' } }), DONNEES);
     expect(ids(v.projets)).toEqual(ids(DONNEES.projets));
     expect(ids(v.ressources)).toEqual(['r-cerine', 'r-lena']);
     expect(v.absences.map(a => a.ressourceId)).toEqual(['r-lena']);

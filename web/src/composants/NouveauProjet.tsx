@@ -12,7 +12,7 @@ import { Cadre } from './Fenetres';
 import { creer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { prochainCodeProjet } from '../domaine/calculs';
-import { COULEURS, DESCRIPTIONS_METHODES, ROLES_PROJET } from '../domaine/config';
+import { COULEURS, DESCRIPTIONS_METHODES } from '../domaine/config';
 import { aujourdhui } from '../domaine/dates';
 import { maRessource } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
@@ -32,7 +32,7 @@ export function NouveauProjet({ equipeId, onFermer, onCree }: { equipeId: string
     const reussi = await executer(async () => {
       const [cree] = await creer('projets', { code: f.code, nom: f.nom, description: f.description, chefId: f.chefId, methode: f.methode, equipeId: eqId });
       creeId = String(cree?.id ?? '');
-      if (f.chefId) await creer('affectations', { projetId: creeId, ressourceId: f.chefId, role: ROLES_PROJET.CHEF });
+      if (f.chefId) await creer('affectations', { projetId: creeId, ressourceId: f.chefId });
     }, 'projets', 'affectations');
     if (reussi && creeId) { notifier('Projet créé'); onCree(creeId); }
   }

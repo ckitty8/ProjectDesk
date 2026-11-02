@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPES, PROJETS, contexte } from './__fixtures__/donnees';
-import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleAcces, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
+import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
 
 describe('navigation de l\'annuaire', () => {
   it('liste les équipes avant les directions, et cache une direction qui ne porte rien', () => {
@@ -23,11 +23,11 @@ describe('navigation de l\'annuaire', () => {
 });
 
 describe('rôles sur un projet', () => {
-  it('Product Owners = Chef de projet, y compris le chef inscrit sur la fiche projet sans affectation', () => {
-    const ctx = contexte();
+  it('Product Owners = rôle Chef de projet des personnes affectées, y compris le chef inscrit sur la fiche projet sans affectation', () => {
+    const ctx = contexte({ rolesAcces: [{ ressourceId: 'r-lena', role: 'chef' }, { ressourceId: 'r-cerine', role: 'membre' }] });
     const { productOwners, membres } = rolesDuProjet(ctx, PROJETS.find(p => p.id === 'p-ia2')!);
     expect(productOwners.map(r => r.id)).toEqual(['r-lena']);
-    expect(membres.map(m => m.r.id)).toEqual(['r-cerine']);
+    expect(membres.map(r => r.id)).toEqual(['r-cerine']);
     const vista = rolesDuProjet(contexte({ affectations: [] }), PROJETS.find(p => p.id === 'p-app2')!);
     expect(vista.productOwners.map(r => r.id)).toEqual(['r-thomas']);                   // chef inscrit sur la fiche
   });
@@ -39,15 +39,14 @@ describe('rôles sur un projet', () => {
   });
 });
 
-describe('rôle d\'accès affiché', () => {
-  it('sans compte, chef de projet, utilisateur et rôle choisi (prévu avant actuel)', () => {
-    const ctx = contexte({ rolesPrevus: [{ ressourceId: 'r-cerine', role: 'lecture' }] });
+describe('rôle affiché', () => {
+  it('rôle choisi : le prévu avant l\'actuel ; sans rôle enregistré, responsable ou utilisateur', () => {
+    const ctx = contexte({ rolesPrevus: [{ ressourceId: 'r-cerine', role: 'lecture' }], rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }] });
     const r = (id: string) => ctx.ressources.find(x => x.id === id)!;
-    expect(roleAcces(ctx, r('r-anne'))).toBe('sansCompte');
-    expect(roleAcces(ctx, r('r-thomas'))).toBe('chef');
-    expect(roleAcces(ctx, r('r-cerine'))).toBe('utilisateur');
     expect(roleChoisi(ctx, r('r-cerine'))).toBe('lecture');
-    expect(roleChoisi(ctx, r('r-thomas'))).toBe('utilisateur');
+    expect(roleChoisi(ctx, r('r-thomas'))).toBe('chef');
+    expect(roleChoisi(ctx, r('r-anne'))).toBe('responsable');
+    expect(roleChoisi(ctx, r('r-marc'))).toBe('utilisateur');
   });
 });
 

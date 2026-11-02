@@ -6,7 +6,7 @@
    les boutons inutiles. Elles sont pures : tout ce dont elles ont besoin est dans le « contexte » reçu en premier
    paramètre (compte connecté, simulation éventuelle, données chargées), jamais dans une variable globale.
    ============================================================ */
-import { DROITS, ROLES_CHOISISSABLES, ROLES_PROJET } from './config';
+import { DROITS, ROLES_CHOISISSABLES } from './config';
 import type { Niveau } from './config';
 import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
 
@@ -210,24 +210,36 @@ export function equipesGerees(ctx: ContexteDroits): Set<string> {
   return gerees;
 }
 
-/** Personne qui agit sur le projet : administrateur (périmètre « Tout », migration 032), responsable ou direction de l'unité
- *  du projet (migration 042 : un simple membre de l'équipe n'agit plus sur ses projets), ou affectée Chef de projet / Membre
- *  (comme peut_editer_projet en base) */
-export function travailleSurLeProjet(ctx: ContexteDroits, projet: Projet | null | undefined): boolean {
-  if (!projet) return false;
-  if (ctx.estAdmin || equipesGerees(ctx).has(projet.equipeId)) return true;
+/** Suis-je affecté(e) au projet ? (affectation de ma fiche, ou de la fiche simulée) */
+const suisAffecteAu = (ctx: ContexteDroits, projet: Projet): boolean => {
   const moi = maRessource(ctx);
-  return !!moi && ctx.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id
-    && [ROLES_PROJET.CHEF, ROLES_PROJET.MEMBRE].includes(a.role));
+  return !!moi && ctx.affectations.some(a => a.projetId === projet.id && a.ressourceId === moi.id);
+};
+
+/** Gestionnaire du projet par son unité : administrateur (périmètre « Tout », migration 032), responsable ou direction de l'unité
+ *  du projet (migration 042 : un simple membre de l'équipe n'agit plus sur ses projets) */
+const gereLUniteDuProjet = (ctx: ContexteDroits, projet: Projet): boolean =>
+  ctx.estAdmin || equipesGerees(ctx).has(projet.equipeId);
+
+/** Gérer un projet (modifier sa fiche, le supprimer) : gestionnaire de l'unité, ou Chef de projet affecté ou chef désigné du projet
+ *  (comme peut_gerer_projet en base), et droit « projets » de la matrice */
+export function peutGererProjet(ctx: ContexteDroits, projet: Projet | null | undefined): boolean {
+  if (!projet || !aDroit(ctx, 'projets')) return false;
+  if (gereLUniteDuProjet(ctx, projet)) return true;
+  const moi = maRessource(ctx);
+  return monRole(ctx) === 'chef' && (suisAffecteAu(ctx, projet) || (!!moi && projet.chefId === moi.id));
 }
 
-/** Modifier le projet (fiche, sprints, mises en production) : selon la matrice */
-export const peutEditerProjet = (ctx: ContexteDroits, projet: Projet | null | undefined): boolean =>
-  travailleSurLeProjet(ctx, projet) && aDroit(ctx, 'projets');
+/** Saisir les sprints et les mises en production d'un projet : tout ce qui permet de le gérer, plus le Chef de projet ou le Membre affecté (rôle unique
+ *  de la personne, migration 054 ; comme peut_saisir_projet en base), et droit « projets » de la matrice */
+export function peutSaisirProjet(ctx: ContexteDroits, projet: Projet | null | undefined): boolean {
+  if (!projet || !aDroit(ctx, 'projets')) return false;
+  return peutGererProjet(ctx, projet) || (['chef', 'membre'].includes(monRole(ctx)) && suisAffecteAu(ctx, projet));
+}
 
-/** Affecter des personnes à un projet : selon la matrice */
+/** Affecter des personnes à un projet : gérer le projet, et droit « affecter » de la matrice */
 export const peutAffecterSur = (ctx: ContexteDroits, projet: Projet | null | undefined): boolean =>
-  travailleSurLeProjet(ctx, projet) && aDroit(ctx, 'affecter');
+  peutGererProjet(ctx, projet) && aDroit(ctx, 'affecter');
 
 /** Modifier la fiche d'une personne (Liste des ressources) : son équipe ou administrateur, et droit de la matrice */
 export const peutModifierFiche = (ctx: ContexteDroits, r: Ressource): boolean =>
@@ -270,13 +282,11 @@ export function monAffectation(ctx: ContexteDroits, p: Projet): Affectation | nu
 export const peutLireDailyProjet = (ctx: ContexteDroits, p: Projet): boolean =>
   ctx.estAdmin || !!monAffectation(ctx, p) || suisResponsableDuProjet(ctx, p);
 
-/** Chef du projet : fiche projet, affectation « Chef de projet », ou rôle « Projet » affecté (hors Lecteur) */
+/** Chef du projet : chef désigné sur la fiche projet, ou Chef de projet (rôle unique) affecté au projet — comme peut_gerer_envoi_projet en base */
 export function suisChefDuProjet(ctx: ContexteDroits, p: Projet): boolean {
   const moi = maRessource(ctx);
-  const aff = monAffectation(ctx, p);
-  if (estLectureSeule(ctx)) return false;
-  return (!!moi && p.chefId === moi.id) || (!!aff && aff.role === ROLES_PROJET.CHEF)
-    || (!!aff && aff.role !== ROLES_PROJET.LECTEUR && !!moi && roleDeclare(ctx, moi) === 'projet');
+  if (estLectureSeule(ctx) || !moi) return false;
+  return p.chefId === moi.id || (monRole(ctx) === 'chef' && suisAffecteAu(ctx, p));
 }
 
 /** Qui pilote un projet — règle l'envoi de son daily (même règle que peut_gerer_envoi_projet en base, migrations 019 et 021) :

@@ -3,18 +3,19 @@
    ------------------------------------------------------------
    Détail réduit à la demande du porteur (2026-09-25) : nom, description, chef de projet, équipe projet (membres et rôles) ; + méthode.
    Le statut n'y figure plus (porteur, 2026-10-31 : « je ne veux pas du statut »). Modifiable si l'écran d'origine est de « Mon dashboard » et
-   que je peux modifier le projet (peutEditerProjet) ; sinon lecture seule. Depuis « Vue d’ensemble », le panneau reste en lecture.
+   que je peux modifier le projet (peutGererProjet) ; sinon lecture seule. Depuis « Vue d’ensemble », le panneau reste en lecture.
    Suppression du projet par un membre de son équipe (règle RLS). L'ajout de membres (« + Membre ») arrive avec la fenêtre d'affectation (vague D).
    ============================================================ */
-import { Avatar, BadgeRef, Pastille } from './Badge';
+import { Avatar, BadgeRef, BadgeRole, Pastille } from './Badge';
 import { Bouton } from './Bouton';
 import { Liste } from './Liste';
 import { Panneau, useFermerAvecEchap } from './Fenetres';
 import { modifier, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
+import { roleChoisi } from '../domaine/annuaire';
 import { estPresent } from '../domaine/calculs';
 import { aujourdhui } from '../domaine/dates';
-import { peutEditerProjet } from '../domaine/droits';
+import { peutGererProjet } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
 import { personnesProposees } from '../domaine/vues';
 import { COULEURS } from '../domaine/config';
@@ -35,11 +36,11 @@ export function PanneauProjet({ projetId, onFermer, section = 'general', onAssig
   if (!ctx || !donnees || !projet) return null;
   const equipe = donnees.equipes.find(e => e.id === projet.equipeId);
   const chef = donnees.ressources.find(r => r.id === projet.chefId);
-  const modifiable = section === 'moi' && peutEditerProjet(ctx, projet);
+  const modifiable = section === 'moi' && peutGererProjet(ctx, projet);
   const membres = donnees.affectations.filter(a => a.projetId === projet.id)
-    .flatMap(a => donnees.ressources.filter(r => r.id === a.ressourceId && estPresent(r, aujourdhui())).map(r => ({ r, role: a.role })));
+    .flatMap(a => donnees.ressources.filter(r => r.id === a.ressourceId && estPresent(r, aujourdhui())).map(r => ({ r, role: roleChoisi(ctx, r) })));
   const note = section === 'general' ? 'Vue d’ensemble : lecture seule. Modifiez ce projet depuis Mon dashboard.'
-    : !modifiable ? 'Rôle Lecteur ou autre équipe : modification impossible.' : '';
+    : !modifiable ? 'Votre rôle ne permet pas de modifier ce projet.' : '';
 
   // Modification d'un champ du projet (enregistrée à la sortie du champ) ; champ vidé = valeur nulle (nom obligatoire)
   async function majChamp(champ: string, brut: string, actuel: string | null | undefined) {
@@ -82,7 +83,7 @@ export function PanneauProjet({ projetId, onFermer, section = 'general', onAssig
         {membres.length === 0 && <span className="pale">Aucun membre.</span>}
         {membres.map(({ r, role }) => (
           <div key={r.id} className="ligne-flex ligne-liste">
-            <Avatar nom={r.nom} /><span className="extensible">{r.nom}</span><BadgeRef valeurs={donnees.valeurs} referentielId="role" libelle={role} />
+            <Avatar nom={r.nom} /><span className="extensible">{r.nom}</span><BadgeRole role={role} />
           </div>
         ))}
         {modifiable && onAssigner && <button type="button" className="lien-btn" onClick={() => onAssigner(projetId)}>+ Membre</button>}

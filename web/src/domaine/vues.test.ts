@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ABSENCES, AFFECTATIONS, EQUIPES, PROJETS, RESSOURCES, contexte } from './__fixtures__/donnees';
 import { absenceDe, auteurDaily, decalerJourOuvre, estInactive, membresDuDaily, misesEnProductionDe, modeleParEquipe, modeleParProjet,
-  noteNonVide, personnesProposees, projetsAvecMembres, projetsAvecRoleDe, projetsDailyVisibles, projetsPourAnnuaire, ressourcesPresentes, sprintsDuProjet,
+  noteNonVide, personnesProposees, projetsAvecMembres, projetsDailyVisibles, projetsDe, projetsPourAnnuaire, ressourcesPresentes, sprintsDuProjet,
   unitesRacines } from './vues';
 
 const d = { equipes: EQUIPES, ressources: RESSOURCES, projets: PROJETS, affectations: AFFECTATIONS };
@@ -16,11 +16,9 @@ describe('personnes présentes', () => {
 });
 
 describe('projets d\'une personne', () => {
-  it('liste ses affectations avec le rôle, puis les projets dont elle est chef inscrit sur la fiche', () => {
+  it('liste les projets où elle est affectée (pas ceux où elle n\'est que chef inscrit sur la fiche)', () => {
     const avecChef = { ...d, projets: [...PROJETS, { id: 'p-chef', code: 'X-1', nom: 'Chef seul', equipeId: 'app', statut: 'En cours', chefId: 'r-lena' }] };
-    const noms = projetsAvecRoleDe(avecChef, 'r-lena').map(x => x.projet.id);
-    expect(noms).toContain('p-chef');
-    expect(projetsAvecRoleDe(avecChef, 'r-lena').find(x => x.projet.id === 'p-chef')?.role).toBe('Chef de projet');
+    expect(projetsDe(avecChef, 'r-lena').map(p => p.id)).toEqual(['p-ia2', 'p-ia1']);
   });
   it('annuaire : projets avec « PO » pour un chef, sinon responsable ou hors projet', () => {
     const anne = RESSOURCES.find(r => r.id === 'r-anne');      // responsable de l'équipe IA, sans projet attitré
@@ -67,12 +65,11 @@ describe('daily', () => {
     expect(absenceDe(ABSENCES, a?.ressourceId ?? '', a?.jour ?? '')).toBe(a);
     expect(absenceDe(ABSENCES, 'inconnu', '2026-01-01')).toBeNull();
   });
-  it('les membres attendus au daily excluent les lecteurs et les absents de la présence', () => {
-    const projet = AFFECTATIONS.find(a => a.role !== 'Lecteur')?.projetId ?? '';
-    const noms = membresDuDaily(d, projet, '2026-11-03').map(r => r.nom);
-    const lecteurs = AFFECTATIONS.filter(a => a.projetId === projet && a.role === 'Lecteur').map(a => RESSOURCES.find(r => r.id === a.ressourceId)?.nom);
-    lecteurs.forEach(n => expect(noms).not.toContain(n));
-    expect(noms).toEqual([...noms].sort((x, y) => x.localeCompare(y)));
+  it('les membres attendus au daily sont les personnes affectées et présentes, triées par nom', () => {
+    const noms = membresDuDaily(d, 'p-ia2', '2026-11-03').map(r => r.nom);
+    expect(noms).toEqual(['Cerine', 'Léna']);
+    const partie = { ...d, ressources: RESSOURCES.map(r => (r.id === 'r-cerine' ? { ...r, dateDepart: '2026-11-02' } : r)) };
+    expect(membresDuDaily(partie, 'p-ia2', '2026-11-03').map(r => r.nom)).toEqual(['Léna']);
   });
   it('saute les week-ends d\'un jour ouvré à l\'autre', () => {
     expect(decalerJourOuvre('2026-11-06', 1)).toBe('2026-11-09');   // vendredi → lundi

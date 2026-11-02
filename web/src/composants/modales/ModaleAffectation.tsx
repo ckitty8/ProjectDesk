@@ -2,31 +2,29 @@
    Fenêtre d'affectation (maquette « Assigner une ressource » ; portage de Modale.affectation et enregistrerAffectations de app/js/modale.js
    — phase 5, vague D)
    ------------------------------------------------------------
-   Assigner une ressource à des projets, avec un rôle. « projetId » pré-coche le projet d'origine (« + Membre ») et « role » pré-choisit le rôle
-   (« + Ajouter un Product Owner » → Chef de projet). Projets proposés : ceux que je peux modifier (peutAffecterSur), groupés par équipe.
+   Assigner une ressource à des projets. « projetId » pré-coche le projet d'origine (« + Membre »). Pas de rôle par
+   affectation : le rôle est celui de la personne (rôle unique, Administration › Rôles, migration 054). Projets proposés : ceux que je peux
+   gérer et où j'ai le droit d'affecter (peutAffecterSur), groupés par équipe.
    ============================================================ */
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Bouton } from '../Bouton';
 import { Cadre } from '../Fenetres';
-import { creer, modifier, supprimer } from '../../donnees/api';
+import { creer, supprimer } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
-import { ROLES_PROJET } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
 import { peutAffecterSur } from '../../domaine/droits';
-import { valeursDe } from '../../domaine/referentiels';
 import { personnesProposees } from '../../domaine/vues';
 
 interface Props {
   ressourceId: string | null;
   projetId: string | null;
-  role: string | null;
   onFermer: () => void;
   /** « + Nouveau membre » : créer la personne dans cette équipe, puis revenir ici avec elle sélectionnée */
   onNouvellePersonne?: (equipeId: string, projetId: string) => void;
 }
 
-export function ModaleAffectation({ ressourceId, projetId, role, onFermer, onNouvellePersonne }: Props) {
+export function ModaleAffectation({ ressourceId, projetId, onFermer, onNouvellePersonne }: Props) {
   /* Données complètes : on propose les personnes et les projets de toute l'application, pas seulement ceux de l'équipe active */
   const { ctxComplet: ctx, donneesCompletes: donnees, equipeCourante, executer } = useSession();
   const [choisie, setChoisie] = useState(ressourceId ?? '');
@@ -35,7 +33,6 @@ export function ModaleAffectation({ ressourceId, projetId, role, onFermer, onNou
   const personnes = personnesProposees(donnees, projetOrigine?.equipeId ?? '', aujourdhui());
   const ressource = donnees.ressources.find(r => r.id === choisie);
   const actuelles = choisie ? donnees.affectations.filter(a => a.ressourceId === choisie) : [];
-  const roles = valeursDe(donnees.valeurs, 'role').map(v => v.libelle);
   // Équipe où créer une nouvelle personne : celle du projet d'origine, sinon l'équipe ouverte
   const equipeNouvelle = projetOrigine?.equipeId ?? equipeCourante;
   const nbCoches = actuelles.length + (projetId && !actuelles.some(a => a.projetId === projetId) ? 1 : 0);
@@ -47,9 +44,8 @@ export function ModaleAffectation({ ressourceId, projetId, role, onFermer, onNou
     const coches = new Set(f.getAll('projet').map(String));
     const reussi = await executer(async () => {
       for (const p of donnees.projets.filter(x => peutAffecterSur(ctx, x))) {
-        const a = donnees.affectations.filter(x => x.ressourceId === rId).find(x => x.projetId === p.id), roleChoisi = String(f.get('role-' + p.id));
-        if (coches.has(p.id) && !a) await creer('affectations', { projetId: p.id, ressourceId: rId, role: roleChoisi });
-        else if (coches.has(p.id) && a && a.role !== roleChoisi) await modifier('affectations', { id: 'eq.' + a.id }, { role: roleChoisi });
+        const a = donnees.affectations.filter(x => x.ressourceId === rId).find(x => x.projetId === p.id);
+        if (coches.has(p.id) && !a) await creer('affectations', { projetId: p.id, ressourceId: rId });
         else if (!coches.has(p.id) && a) await supprimer('affectations', { id: 'eq.' + a.id });
       }
     }, 'affectations');
@@ -91,14 +87,10 @@ export function ModaleAffectation({ ressourceId, projetId, role, onFermer, onNou
                   // Coché : déjà affecté, ou projet d'où l'on vient (« + Membre »)
                   const a = actuelles.find(x => x.projetId === p.id);
                   const coche = !!a || projetId === p.id;
-                  const roleDefaut = a ? a.role : (p.id === projetId && role) || ROLES_PROJET.MEMBRE;
                   return (
                     <label key={`${p.id}-${choisie}`} className="ligne-flex ligne-liste">
                       <input type="checkbox" name="projet" value={p.id} defaultChecked={coche} />
                       <span className="extensible">{p.nom}</span>
-                      <select className="champ champ-mini" name={'role-' + p.id} defaultValue={roleDefaut}>
-                        {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
                     </label>
                   );
                 })}

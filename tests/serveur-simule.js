@@ -92,10 +92,10 @@ function amorcer() {
     const methode = ['Agile Scrum', 'Agile Kanban', 'Cascade', 'Cycle en V'][bd.projets.length % 4];
     bd.projets.push({ id, equipe_id: idEq[eq], code, nom, description, chef_id: idP[chef], debut, fin, statut, avancement, methode });
   });
-  const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Lecteur'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
-    ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Lecteur'],
+  const AFF = [['PF-12', 'jd', 'Chef de projet'], ['PF-12', 'tb', 'Membre'], ['PF-12', 'cl', 'Membre'], ['PF-14', 'cl', 'Chef de projet'], ['PF-14', 'tb', 'Membre'], ['PF-14', 'lm', 'Membre'],
+    ['PF-17', 'lm', 'Chef de projet'], ['PF-17', 'cl', 'Membre'], ['PF-17', 'jd', 'Membre'], ['DA-05', 'hm', 'Chef de projet'], ['DA-05', 'sp', 'Membre'], ['DA-05', 'cl', 'Membre'],
     ['DA-08', 'ag', 'Chef de projet'], ['DA-08', 'sp', 'Membre'], ['MO-21', 'ir', 'Chef de projet'], ['MO-21', 'mf', 'Membre'], ['MO-21', 'cg', 'Membre'], ['MO-23', 'mf', 'Chef de projet'],
-    ['MO-23', 'cg', 'Membre'], ['PR-03', 'nb', 'Chef de projet'], ['PR-03', 'pl', 'Membre'], ['PR-03', 'cl', 'Membre'], ['PR-06', 'pl', 'Chef de projet'], ['PR-06', 'nb', 'Lecteur'], ['PR-06', 'lm', 'Membre']];
+    ['MO-23', 'cg', 'Membre'], ['PR-03', 'nb', 'Chef de projet'], ['PR-03', 'pl', 'Membre'], ['PR-03', 'cl', 'Membre'], ['PR-06', 'pl', 'Chef de projet'], ['PR-06', 'nb', 'Membre'], ['PR-06', 'lm', 'Membre']];
   bd.affectations = AFF.map(([code, p, role]) => ({ id: uuid(), projet_id: idPr[code], ressource_id: idP[p], role }));
 
   // Absences d'octobre 2026 (proches de la maquette) et heures de la semaine du 21 septembre
@@ -135,9 +135,15 @@ function amorcer() {
     onglet_astuces_agile: 'general', onglet_astuces_roadmap: 'general', onglet_astuces_test_learn: 'general' };
   Object.entries(ONGLETS).forEach(([onglet, depart]) => { MATRICE[onglet] = MATRICE[depart]; });
   MATRICE.onglet_admin_sprints = 'oui oui oui oui non non';   // le rôle Utilisateur n'a pas Projets et Roadmap (porteur 2026-10-25)
-  const ROLES_MATRICE = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
-  bd.droits_roles = Object.entries(MATRICE).flatMap(([droit, niveaux]) =>
-    niveaux.split(' ').map((niveau, i) => ({ role: ROLES_MATRICE[i], droit, niveau })));
+  // Rôle unique (migrations 052 et 054) : les 6 colonnes ci-dessus sont admin, direction, responsable, chef de projet, utilisateur, lecture ;
+  // le Membre reprend le Chef de projet sans « affecter », « piloter » ni l'envoi du daily
+  const ROLES_MATRICE = ['admin', 'direction', 'responsable', 'chef', 'membre', 'utilisateur', 'lecture'];
+  const SANS_MEMBRE = ['affecter', 'piloter', 'onglet_admin_envoi_daily'];
+  bd.droits_roles = Object.entries(MATRICE).flatMap(([droit, niveaux]) => {
+    const n = niveaux.split(' ');
+    const sept = [n[0], n[1], n[2], n[3], SANS_MEMBRE.includes(droit) ? 'non' : n[3], n[4], n[5]];
+    return sept.map((niveau, i) => ({ role: ROLES_MATRICE[i], droit, niveau }));
+  });
   bd.objectifs_jours_travail = [];   // jours attendus par le client (migration 011) : défaut de config.js
   bd.sprints_projet = []; bd.repartitions_sprint = [];   // sans saisie au départ (migration 013)
   const jours = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25'];
@@ -333,7 +339,7 @@ function paginer(lignes, params) {
   return lignes.slice(offset, offset + limite);
 }
 /* Rôle d'accès d'une fiche, comme la fonction appliquer_role (migration 030) : six rôles ; un rôle qui
-   donne des droits (admin, direction, responsable, projet) attend un compte à l'email vérifié ('prevu'),
+   donne des droits (admin, direction, responsable, chef, membre) attend un compte à l'email vérifié ('prevu'),
    un rôle qui restreint (utilisateur, lecture) s'applique tout de suite. */
 function appliquerRole(ressourceId, role) {
   const r = bd.ressources.find(x => x.id === ressourceId), eq = bd.equipes.find(e => e.id === r.equipe_id);
@@ -342,7 +348,7 @@ function appliquerRole(ressourceId, role) {
     bd.roles_prevus = bd.roles_prevus.filter(x => x.ressource_id !== r.id).concat({ ressource_id: r.id, role, cree_le: maintenant() });
     return 'prevu';
   };
-  if (['admin', 'direction', 'responsable', 'projet'].includes(role) && (!compte || compte.emailVerified === false)) return prevoir();
+  if (['admin', 'direction', 'responsable', 'chef', 'membre'].includes(role) && (!compte || compte.emailVerified === false)) return prevoir();
   bd.responsables_equipe = bd.responsables_equipe.filter(x => x.ressource_id !== r.id);
   if (role === 'responsable') bd.responsables_equipe.push({ equipe_id: r.equipe_id, ressource_id: r.id, cree_le: maintenant() });
   if (role === 'direction') bd.responsables_equipe.push({ equipe_id: eq.parent_id || eq.id, ressource_id: r.id, cree_le: maintenant() });

@@ -4,7 +4,7 @@
    Aide des écrans et guides du menu Aide, puis fiches « Trucs et astuces » : KPI Agile, rôles Scrum, roadmap, Test & Learn.
    Textes repris à l'identique de l'application actuelle (source : porteur du projet, méthodes Scrum et Kanban, Scrum Guide).
    ============================================================ */
-import { CONFIG, ROLES_PROJET } from './config';
+import { CONFIG } from './config';
 
 /** Bulles d'information « ⓘ » : un seul endroit pour les textes ; une valeur peut être une fonction quand le texte dépend d'un libellé */
 
@@ -28,13 +28,13 @@ export const AIDES = {
     'ce nombre : vert = jours de congé encore disponibles, rouge = jours pris en trop. Modifiable par un administrateur ou le responsable de l’équipe.',
   sprintsProjet: 'Chaque projet a ses propres sprints, saisis ici (Mon dashboard › Projet › Sprints), affichés par année : pour chacun, le numéro (« Sprint 1 ' +
     '»), l’année, le nom de la version, sa date de début et sa date de fin.',
-  productOwners: () => `Product Owner = personne affectée au projet avec le rôle « ${ROLES_PROJET.CHEF} » (ou chef ` +
-    `inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.`,
+  productOwners: 'Product Owner = personne affectée au projet dont le rôle est « Chef de projet » (ou chef ' +
+    'inscrit sur la fiche du projet). Un projet peut en avoir un, deux ou plus ; les membres sont listés en dessous.',
   statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
     '» (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
-  roleAcces: 'Ce que la personne peut voir et faire : Administrateur, Direction, Responsable d’équipe, Projet, Utilisateur ou Lecture seule. Il se choisit dans ' +
-    'Administration › Rôles (administrateurs). Personne pas encore connectée, ou email non vérifié : le rôle est prévu et ' +
-    's’applique à sa connexion. Les rôles de projet (Chef de projet, Membre, Lecteur) se donnent projet par projet.',
+  roleAcces: 'Ce que la personne peut voir et faire : Direction, Responsable d’équipe, Chef de projet, Membre, Utilisateur ou Lecture seule (un seul rôle par personne, ' +
+    'le même sur tous ses projets). Il se choisit dans Administration › Rôles (administrateurs). Personne pas encore connectée, ' +
+    'ou email non vérifié : le rôle est prévu et s’applique à sa connexion.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, ` +
     `absences et jours hors présence × ${CONFIG.HEURES_PAR_JOUR} h × capacité de la personne.`,
@@ -97,7 +97,7 @@ export const GUIDES = {
   premiersPas: { titre: 'Premiers pas', paragraphes: [
     '1. Mon dashboard › Liste des ressources : « + Ajouter une équipe », puis choisissez-la à gauche.',
     '2. Sur l’équipe : « + Personne » pour créer la fiche de chaque personne (avec son email : son compte y sera lié à sa connexion) et « + Projet ».',
-    '3. Sur chaque projet : « + Ajouter un Product Owner » et « + Membre » pour affecter les personnes avec leur rôle (Chef de projet = Product Owner, Membre, Lecteur).',
+    '3. Sur chaque projet : « + Membre » pour affecter les personnes (leur rôle est celui de leur fiche : Chef de projet = Product Owner, Membre…).',
     '4. Mon dashboard › Administration › Équipes : invitez les personnes par email pour qu’elles se connectent.',
     '5. Congés : posez les absences ; Saisir mes heures : saisissez vos heures ; Daily : notez l’avancement du jour.'] },
   roles: { titre: 'Rôles et droits', paragraphes: [

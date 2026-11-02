@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { PROJETS, contexte } from './__fixtures__/donnees';
 import {
   ecranAccueil, ecranOuvert, equipesGerees, estAdministrateurPrevu, estLectureSeule, maRessource, mesEquipes, monRole, monRoleSansAdmin, niveauDroit,
-  niveauDuRole, ongletPermis, peutAffecterSur, peutEditerProjet, peutGererEquipe, peutLireDailyProjet, peutModifierFiche, peutPiloterProjet,
-  peutValiderEquipe, responsablesDe, roleDeLaFiche, suisChefDuProjet, travailleSurLeProjet
+  niveauDuRole, ongletPermis, peutAffecterSur, peutGererEquipe, peutGererProjet, peutLireDailyProjet, peutModifierFiche, peutPiloterProjet,
+  peutSaisirProjet, peutValiderEquipe, responsablesDe, roleDeLaFiche, suisChefDuProjet
 } from './droits';
 import type { ContexteDroits } from './droits';
 import type { Ressource } from './types';
@@ -14,13 +14,13 @@ const projet = (code: string) => {
   return p;
 };
 
-// Thomas avec le rôle « Projet » : la matrice lui donne « Oui » sur Projets, le périmètre décide du reste
-const thomasProjet = (): ContexteDroits => contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }] });
+// Thomas avec le rôle « Chef de projet » : la matrice lui donne « Oui » sur Projets, le périmètre décide du reste
+const thomasChef = (): ContexteDroits => contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }] });
 
 describe('rôle d’accès', () => {
   it('lit le rôle déclaré, sinon déduit utilisateur', () => {
     expect(monRole(contexte())).toBe('utilisateur');
-    expect(monRole(thomasProjet())).toBe('projet');
+    expect(monRole(thomasChef())).toBe('chef');
     expect(estLectureSeule(contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'lecture' }] }))).toBe(true);
   });
 
@@ -32,7 +32,7 @@ describe('rôle d’accès', () => {
 
   it('prend le rôle de la carte pendant une simulation', () => {
     expect(monRole(contexte({ simulation: { cle: 'direction', ressourceId: 'r-thomas' } }))).toBe('direction');
-    expect(maRessource(contexte({ simulation: { cle: 'projet', ressourceId: 'r-lena' } }))?.id).toBe('r-lena');
+    expect(maRessource(contexte({ simulation: { cle: 'chef', ressourceId: 'r-lena' } }))?.id).toBe('r-lena');
   });
 
   it('ne laisse jamais le créateur en lecture seule', () => {
@@ -43,7 +43,7 @@ describe('rôle d’accès', () => {
 describe('matrice des droits', () => {
   it('lit le niveau d’un droit pour un rôle', () => {
     const ctx = contexte();
-    expect(niveauDuRole(ctx, 'projet', 'projets')).toBe('oui');
+    expect(niveauDuRole(ctx, 'chef', 'projets')).toBe('oui');
     expect(niveauDuRole(ctx, 'utilisateur', 'projets')).toBe('non');
     expect(niveauDuRole(ctx, 'lecture', 'projets')).toBe('lecture');
   });
@@ -109,42 +109,58 @@ describe('équipes et périmètre (migration 042)', () => {
   });
 });
 
-describe('modifier un projet : seulement ceux où l’on est affecté ou que l’on gère', () => {
-  it('Thomas (rôle Projet) modifie VISTA, dont il est chef, mais pas CDO de sa propre équipe', () => {
-    const ctx = thomasProjet();
-    expect(peutEditerProjet(ctx, projet('APP-02'))).toBe(true);
-    expect(peutEditerProjet(ctx, projet('APP-01'))).toBe(false);
-    expect(peutEditerProjet(ctx, projet('IA-01'))).toBe(false);
-    expect(travailleSurLeProjet(ctx, projet('APP-01'))).toBe(false);
+describe('gérer un projet et saisir ses sprints : le rôle unique de la personne (migration 054)', () => {
+  it('Chef de projet : gère VISTA (affecté et chef désigné) mais pas CDO de sa propre équipe', () => {
+    const ctx = thomasChef();
+    expect(peutGererProjet(ctx, projet('APP-02'))).toBe(true);
+    expect(peutSaisirProjet(ctx, projet('APP-02'))).toBe(true);
+    expect(peutGererProjet(ctx, projet('APP-01'))).toBe(false);
+    expect(peutSaisirProjet(ctx, projet('APP-01'))).toBe(false);
+    expect(peutGererProjet(ctx, projet('IA-01'))).toBe(false);
+    expect(peutAffecterSur(ctx, projet('APP-02'))).toBe(true);
   });
 
-  it('une personne affectée Membre sur un projet d’une autre équipe peut le modifier', () => {
-    const cerine = contexte({ userId: 'u-cerine', rolesAcces: [{ ressourceId: 'r-cerine', role: 'projet' }] });
-    expect(peutEditerProjet(cerine, projet('IA-02'))).toBe(true);
-    expect(peutEditerProjet(cerine, projet('IA-01'))).toBe(false);
+  it('Chef de projet désigné sur la fiche du projet sans affectation : il gère et saisit', () => {
+    const ctx = contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }], affectations: [] });
+    expect(peutGererProjet(ctx, projet('APP-02'))).toBe(true);
+    expect(peutSaisirProjet(ctx, projet('APP-02'))).toBe(true);
   });
 
-  it('un Lecteur ne modifie pas', () => {
-    const lecteur = contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }],
-      affectations: [{ projetId: 'p-app1', ressourceId: 'r-thomas', role: 'Lecteur' }] });
-    expect(peutEditerProjet(lecteur, projet('APP-01'))).toBe(false);
+  it('Membre affecté sur un projet d’une autre équipe : il saisit sprints et MEP, il ne modifie ni n’affecte', () => {
+    const cerine = contexte({ userId: 'u-cerine', rolesAcces: [{ ressourceId: 'r-cerine', role: 'membre' }] });
+    expect(peutSaisirProjet(cerine, projet('IA-02'))).toBe(true);
+    expect(peutGererProjet(cerine, projet('IA-02'))).toBe(false);
+    expect(peutAffecterSur(cerine, projet('IA-02'))).toBe(false);
+    expect(peutSaisirProjet(cerine, projet('IA-01'))).toBe(false);
   });
 
-  it('un responsable modifie les projets de son unité et de ses sous-unités, pas ceux d’une autre équipe', () => {
+  it('un Chef de projet et un Membre non affectés ne font rien sur le projet', () => {
+    const membre = contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'membre' }] });
+    expect(peutSaisirProjet(membre, projet('APP-01'))).toBe(false);
+  });
+
+  it('la Lecture seule ne modifie rien, même affectée', () => {
+    const lecture = contexte({ rolesAcces: [{ ressourceId: 'r-thomas', role: 'lecture' }] });
+    expect(peutGererProjet(lecture, projet('APP-02'))).toBe(false);
+    expect(peutSaisirProjet(lecture, projet('APP-02'))).toBe(false);
+  });
+
+  it('un responsable gère les projets de son unité et de ses sous-unités, pas ceux d’une autre équipe', () => {
     const responsable = contexte({ rolesEquipe: { app: 'owner' }, rolesAcces: [{ ressourceId: 'r-thomas', role: 'responsable' }] });
-    expect(peutEditerProjet(responsable, projet('APP-01'))).toBe(true);
-    expect(peutEditerProjet(responsable, projet('IA-01'))).toBe(false);
-    expect(peutEditerProjet(responsable, projet('AM-01'))).toBe(false);
+    expect(peutGererProjet(responsable, projet('APP-01'))).toBe(true);
+    expect(peutGererProjet(responsable, projet('IA-01'))).toBe(false);
+    expect(peutGererProjet(responsable, projet('AM-01'))).toBe(false);
   });
 
   it('l’utilisateur n’a aucun droit de modification (la matrice dit « Non »)', () => {
-    expect(peutEditerProjet(contexte(), projet('APP-02'))).toBe(false);
+    expect(peutGererProjet(contexte(), projet('APP-02'))).toBe(false);
+    expect(peutSaisirProjet(contexte(), projet('APP-02'))).toBe(false);
     expect(peutAffecterSur(contexte(), projet('APP-02'))).toBe(false);
   });
 
-  it('l’administrateur modifie et affecte partout', () => {
+  it('l’administrateur gère, saisit et affecte partout', () => {
     const admin = contexte({ estAdmin: true, rolesAcces: [{ ressourceId: 'r-thomas', role: 'admin' }] });
-    PROJETS.forEach(p => expect(peutEditerProjet(admin, p)).toBe(true));
+    PROJETS.forEach(p => { expect(peutGererProjet(admin, p)).toBe(true); expect(peutSaisirProjet(admin, p)).toBe(true); });
     expect(peutAffecterSur(admin, projet('AM-01'))).toBe(true);
   });
 });
@@ -183,7 +199,7 @@ describe('daily et pilotage d’un projet', () => {
   });
 
   it('pilote un projet : chef du projet ou responsable, avec le droit « piloter »', () => {
-    const projetRole = thomasProjet();
+    const projetRole = thomasChef();
     expect(suisChefDuProjet(projetRole, projet('APP-02'))).toBe(true);
     expect(peutPiloterProjet(projetRole, projet('APP-02'))).toBe(true);
     expect(peutPiloterProjet(projetRole, projet('APP-01'))).toBe(false);
@@ -198,15 +214,15 @@ describe('daily et pilotage d’un projet', () => {
 
 describe('administrateur cumulable (porteur, 2026-11-01)', () => {
   it('un administrateur hors mode administrateur garde le rôle de sa fiche', () => {
-    const ctx = contexte({ peutAdministrer: true, estAdmin: false, rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }] });
-    expect(monRole(ctx)).toBe('projet');
-    expect(monRoleSansAdmin(ctx)).toBe('projet');
+    const ctx = contexte({ peutAdministrer: true, estAdmin: false, rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }] });
+    expect(monRole(ctx)).toBe('chef');
+    expect(monRoleSansAdmin(ctx)).toBe('chef');
   });
 
   it('en mode administrateur, le rôle est administrateur et « revenir à mon rôle » ramène au rôle de la fiche', () => {
-    const ctx = contexte({ peutAdministrer: true, estAdmin: true, rolesAcces: [{ ressourceId: 'r-thomas', role: 'projet' }] });
+    const ctx = contexte({ peutAdministrer: true, estAdmin: true, rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }] });
     expect(monRole(ctx)).toBe('admin');
-    expect(monRoleSansAdmin(ctx)).toBe('projet');
+    expect(monRoleSansAdmin(ctx)).toBe('chef');
   });
 
   it('le rôle d\'une fiche n\'est plus déduit « administrateur » : le statut est à part', () => {

@@ -7,11 +7,11 @@ import { absentToutLeJour, actionAbsence, anneeSprint, COMPTEURS_MEP, erreurModi
 const d = { equipes: EQUIPES, ressources: RESSOURCES, projets: PROJETS, affectations: AFFECTATIONS };
 
 describe('daily', () => {
-  it('mes projets : affecté hors Lecteur, projet en cours, triés par code', () => {
-    const ctx = contexte({ userId: 'u-lena' });                         // Léna : chef de « Vie de Ville », membre de « Chatbot »
+  it('mes projets : ceux où je suis affecté(e), projet en cours, triés par code', () => {
+    const ctx = contexte({ userId: 'u-lena' });                         // Léna : affectée à « Vie de Ville » et « Chatbot »
     expect(mesProjetsDaily(ctx, d).map(p => p.code)).toEqual(['IA-01', 'IA-02']);
-    const lecteur = { ...d, affectations: [{ projetId: 'p-ia1', ressourceId: 'r-lena', role: 'Lecteur' }] };
-    expect(mesProjetsDaily(ctx, lecteur)).toEqual([]);
+    const sansAffectation = { ...d, affectations: [] };
+    expect(mesProjetsDaily(ctx, sansAffectation)).toEqual([]);
     const fini = { ...d, projets: PROJETS.map(p => (p.id === 'p-ia1' ? { ...p, statut: 'Terminé' } : p)) };
     expect(mesProjetsDaily(ctx, fini).map(p => p.code)).toEqual(['IA-02']);
   });

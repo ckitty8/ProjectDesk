@@ -2,23 +2,25 @@
    Fiche ressource (portage de Modale.ressource, enregistrerRessource et supprimerRessource de app/js/modale.js — phase 5, vague D)
    ------------------------------------------------------------
    Nom, poste, type de contrat, capacité, dates de présence, date de naissance (facultative, migration 036 : donnée personnelle, la date complète
-   n'apparaît que dans la fiche), email (lien automatique avec son compte). Le rôle d'accès est en lecture : il se choisit dans Administration › Rôles
+   n'apparaît que dans la fiche), email (lien automatique avec son compte). Le rôle (unique, Direction… Lecture seule) est en lecture :
+   il se choisit dans Administration › Rôles
    (porteur, 2026-10-13). Création depuis « + Membre » : retour à la fenêtre d'affectation avec la personne sélectionnée.
    ============================================================ */
 import type { FormEvent, ReactNode } from 'react';
-import { Badge, BadgeRef } from '../Badge';
+import { BadgeRole } from '../Badge';
 import { Aide } from '../Aide';
 import { Bouton } from '../Bouton';
 import { Cadre } from '../Fenetres';
 import { creer, modifier, supprimer } from '../../donnees/api';
 import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
-import { nomComplet, prenomEtNom, roleAcces } from '../../domaine/annuaire';
-import { ROLES_ACCES } from '../../domaine/config';
-import { rolePrevu } from '../../domaine/droits';
+import { nomComplet, prenomEtNom } from '../../domaine/annuaire';
+import { LIBELLES_ROLES } from '../../domaine/config';
+import type { RoleAcces } from '../../domaine/config';
+import { roleDeLaFiche, rolePrevu } from '../../domaine/droits';
 import { valeursDe } from '../../domaine/referentiels';
 import { AIDES } from '../../domaine/textes';
-import { projetsAvecRoleDe } from '../../domaine/vues';
+import { projetsDe } from '../../domaine/vues';
 
 interface Props {
   /** Fiche à modifier ; sinon création dans « equipeId » */
@@ -77,12 +79,9 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
     if (await executer(() => supprimer('ressources', { id: 'eq.' + id }), 'ressources', 'affectations', 'absences', 'temps')) onFermer();
   }
 
-  const acces = fiche ? ROLES_ACCES[roleAcces(ctx, fiche) as keyof typeof ROLES_ACCES] : null;
   const prevu = fiche ? rolePrevu(ctx, fiche) : null;
-  // Affectations de la personne à des projets existants (le chef inscrit seulement sur la fiche projet n'y figure pas)
-  const projets = fiche
-    ? projetsAvecRoleDe(donnees, fiche.id).filter(x => donnees.affectations.some(a => a.ressourceId === fiche.id && a.projetId === x.projet.id))
-    : [];
+  // Projets où la personne est affectée (le chef inscrit seulement sur la fiche projet n'y figure pas)
+  const projets = fiche ? projetsDe(donnees, fiche.id) : [];
 
   return (
     <Cadre classe="modale" titre={fiche ? 'Fiche de ' + fiche.nom : `Nouveau membre · ${equipe?.nom ?? ''}`} onFermer={onFermer}
@@ -118,20 +117,19 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
           </div>
         )}
         <div><label className="libelle">Email (lien automatique avec son compte)<input className="champ" type="email" name="email" defaultValue={fiche?.email ?? ''} /></label></div>
-        {fiche && acces && (
+        {fiche && (
           <>
             <div>
-              <div className="libelle">Rôle d’accès <Aide texte={AIDES.roleAcces} /></div>
+              <div className="libelle">Rôle <Aide texte={AIDES.roleAcces} /></div>
               <div>
-                <Badge texte={acces.libelle} couleur={acces.texte} fond={acces.fond} />
-                {prevu && <> <span className="discret">rôle prévu : {ROLES_ACCES[prevu as keyof typeof ROLES_ACCES]?.libelle ?? prevu}</span></>}
+                <BadgeRole role={roleDeLaFiche(ctx, fiche)} />
+                {prevu && prevu !== roleDeLaFiche(ctx, fiche) && <> <span className="discret">rôle prévu : {LIBELLES_ROLES[prevu as RoleAcces] ?? prevu}</span></>}
                 {ctx.estAdmin && <> · <button type="button" className="lien-btn" onClick={onRoles}>Modifier dans Administration › Rôles</button></>}
               </div>
             </div>
             <div className="projets-fiche">
-              <b>Sur ses projets</b> (le rôle de projet s’ajoute au rôle d’accès) :{' '}
-              {projets.length === 0 ? <span className="pale">aucun</span>
-                : projets.map(x => <span key={x.projet.id}> <BadgeRef valeurs={donnees.valeurs} referentielId="role" libelle={`${x.projet.nom} · ${x.role}`} /></span>)}
+              <b>Sur ses projets</b> (même rôle sur chacun) :{' '}
+              {projets.length === 0 ? <span className="pale">aucun</span> : projets.map(p => <span key={p.id}> {p.nom}</span>)}
               {' '}<button type="button" className="lien-btn" onClick={() => onAffecter(fiche.id)}>Modifier ses projets</button>
             </div>
           </>

@@ -13,7 +13,6 @@ import { CompteSansFiche } from '../composants/CompteSansFiche';
 import { creer, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { debutMois, dureeAbsence, estPresent, heuresAttenduesMois, heuresMois, joursSemaineMois } from '../domaine/calculs';
-import { ROLES_PROJET } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
 import { aujourdhui, depuisIso, JOURS_INITIALES, libelleMois, nombre } from '../domaine/dates';
 import { maRessource } from '../domaine/droits';
@@ -47,7 +46,7 @@ export function SaisirHeures() {
   const verrouille = ['soumise', 'validee'].includes(statut);
   const feuille = donnees.feuilles.find(f => f.ressourceId === moi.id && f.semaine === cle);
   // Projets proposés : mes affectations (hors Lecteur) + projets déjà saisis ce mois
-  const ids = new Set(donnees.affectations.filter(a => a.ressourceId === moi.id && a.role !== ROLES_PROJET.LECTEUR).map(a => a.projetId));
+  const ids = new Set(donnees.affectations.filter(a => a.ressourceId === moi.id).map(a => a.projetId));
   donnees.temps.filter(t => t.ressourceId === moi.id && jours.includes(t.jour)).forEach(t => ids.add(t.projetId));
   const mesProjets = donnees.projets.filter(p => ids.has(p.id));
   const heure = (projetId: string, jour: string): number =>

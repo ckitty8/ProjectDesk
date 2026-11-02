@@ -58,8 +58,8 @@ export interface Affectation {
   id?: string;
   projetId: string;
   ressourceId: string;
-  /** Libellé du rôle sur le projet (Chef de projet, Membre, Lecteur) */
-  role: string;
+  /** Ancien rôle par projet : plus lu ni écrit depuis le rôle unique (migration 054) ; colonne retirée au nettoyage (role-unique.md, étape 5) */
+  role?: string;
 }
 
 /** Absence posée : 1 journée entière ou 0,5 demi-journée (migration 009) */

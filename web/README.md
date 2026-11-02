@@ -54,7 +54,7 @@ prévisualisation) doit être ajouté aux domaines de confiance de Neon Auth (Co
 | Créateur (table `createur`, un seul compte) | Tous les droits d'un administrateur, sur **toutes** les équipes ; seul à nommer ou retirer un administrateur ; **simule** les autres rôles (Administration créateur, lecture seule) |
 | Administrateur global (table `administrateurs`) | Créer les équipes et directions, gérer référentiels, donner l'accès aux comptes en attente |
 | Responsable d'équipe (rôle `owner` / `admin` de l'organisation) | Inviter des membres, valider les feuilles de temps |
-| Membre d'une équipe | Tout lire (« Vue d’ensemble ») ; modifier son équipe et ses projets (sauf rôle projet « Lecteur ») |
+| Membre d'une équipe | Tout lire (« Vue d’ensemble ») ; modifier ses projets selon son rôle unique (Chef de projet : le projet ; Membre : sprints et MEP ; Utilisateur : rien) |
 | Compte sans équipe | Attendre qu'un administrateur lui donne l'accès (Administration › Comptes en attente) |
 
 ## Organisation du code

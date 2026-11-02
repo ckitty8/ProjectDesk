@@ -1,19 +1,18 @@
 /* ============================================================
    Tableau de personnes de la Liste des ressources (portage de app/js/ecrans/liste-ressources.js — phase 5, vague D)
    ------------------------------------------------------------
-   Lignes [{ r, role }] : membres d'un projet (colonne « Rôle sur le projet ») ou d'une équipe (colonne « Projets / origine »).
-   Colonne « Accès » : rôle d'accès (maquette role-acces/). Sections Actifs / Inactifs repliables (porteur, 2026-10-12) puis personnes rattachées.
+   Lignes [{ r }] : membres d'un projet ou d'une équipe. Colonne « Rôle » : le rôle unique de la personne (maquette role-unique/, porteur 2026-11-02).
+   Sections Actifs / Inactifs repliables (porteur, 2026-10-12) puis personnes rattachées.
    Statut : « Inactif » dès qu'une date de fin est saisie (règle du porteur, 2026-10-05) ; cliquable par l'équipe de la personne.
    ============================================================ */
 import { useState } from 'react';
 import { Aide } from '../../composants/Aide';
-import { Avatar, Badge, BadgeActif, BadgeRef, BadgeTon } from '../../composants/Badge';
+import { Avatar, BadgeActif, BadgeRole, BadgeTon } from '../../composants/Badge';
 import { Vide } from '../../composants/Carte';
 import { modifier, supprimer } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
-import { roleAcces } from '../../domaine/annuaire';
+import { roleChoisi } from '../../domaine/annuaire';
 import { libellePresence } from '../../domaine/calculs';
-import { ROLES_ACCES } from '../../domaine/config';
 import { aujourdhui, formatAvecAnnee } from '../../domaine/dates';
 import { peutModifierFiche, peutRattacherA } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
@@ -22,7 +21,6 @@ import { estInactive, projetsPourAnnuaire } from '../../domaine/vues';
 
 export interface LignePersonne {
   r: Ressource;
-  role?: string;
   /** Équipe où la personne est rattachée (rattachement depuis une autre équipe) */
   rattacheA?: string;
   depuis?: string | null;
@@ -33,28 +31,26 @@ interface Props {
   cle: string;
   lignes: readonly LignePersonne[];
   texteVide: string;
-  deProjet?: boolean;
   onFiche: (ressourceId: string) => void;
 }
 
 const NB_COLONNES = 7;
 
-/** Trois premières cellules d'une ligne de personne : nom (avec avatar), poste, rôle d'accès */
+/** Trois premières cellules d'une ligne de personne : nom (avec avatar), profil, rôle */
 function CellulesIdentite({ r }: { r: Ressource }) {
   const { ctx } = useSession();
   if (!ctx) return null;
-  const acces = ROLES_ACCES[roleAcces(ctx, r) as keyof typeof ROLES_ACCES];
   return (
     <>
       <td><span className="ligne-flex"><Avatar nom={r.nom} /><span className="nom-personne">{r.nom}</span></span></td>
       <td>{r.poste || '—'}</td>
-      <td><Badge texte={acces.libelle} couleur={acces.texte} fond={acces.fond} /></td>
+      <td><BadgeRole role={roleChoisi(ctx, r)} /></td>
     </>
   );
 }
 
 /** Tableau des personnes d'une équipe ou d'un projet : sections Actifs et Inactifs repliables puis personnes rattachées ; un clic ouvre la fiche */
-export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onFiche }: Props) {
+export function TableauPersonnes({ cle, lignes, texteVide, onFiche }: Props) {
   const { ctx, donnees, executer } = useSession();
   const [replies, setReplies] = useState<Record<string, boolean>>({});
   if (!ctx || !donnees) return null;
@@ -66,7 +62,7 @@ export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onF
     await executer(() => modifier('ressources', { id: 'eq.' + r.id }, { dateDepart: inactive ? null : aujourdhui() }), 'ressources');
   }
 
-  const ligne = ({ r, role, rattacheA, depuis }: LignePersonne) => {
+  const ligne = ({ r, rattacheA, depuis }: LignePersonne) => {
     if (rattacheA) {
       const origine = donnees.equipes.find(e => e.id === r.equipeId)?.nom ?? '—';
       const accueil = donnees.equipes.find(e => e.id === rattacheA)?.nom ?? '—';
@@ -95,9 +91,8 @@ export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onF
       <tr key={r.id} data-ressource={r.id} className={inactif ? 'inactive' : undefined}>
         <CellulesIdentite r={r} />
         <td className="projets-personne">
-          {deProjet ? <BadgeRef valeurs={donnees.valeurs} referentielId="role" libelle={role} />
-            : projets.genre === 'projets' ? projets.lignes.map(l => <div key={l}>{l}</div>)
-              : projets.genre === 'responsable' ? <BadgeTon texte="Responsable d’équipe" ton="violet" /> : <span className="pale">hors projet</span>}
+          {projets.genre === 'projets' ? projets.lignes.map(l => <div key={l}>{l}</div>)
+            : projets.genre === 'responsable' ? <BadgeTon texte="Responsable d’équipe" ton="violet" /> : <span className="pale">hors projet</span>}
         </td>
         <td className={r.dateDepart ? 'presence-fin' : 'discret'}>{libellePresence(r, aujourdhui()) || <span className="pale">—</span>}</td>
         <td>
@@ -139,7 +134,7 @@ export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onF
       <table className="tableau tableau-personnes">
         <thead>
           <tr>
-            <th>Personne</th><th>Profil</th><th>Accès <Aide texte={AIDES.roleAcces} /></th><th>{deProjet ? 'Rôle sur le projet' : 'Projets / origine'}</th>
+            <th>Personne</th><th>Profil</th><th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Projets / origine</th>
             <th>Présence <Aide texte={AIDES.datesPresence} /></th><th>Statut <Aide texte={AIDES.statutPersonne} /></th><th />
           </tr>
         </thead>

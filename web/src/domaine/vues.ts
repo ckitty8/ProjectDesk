@@ -6,7 +6,6 @@
    lisent aucune variable globale. Un seul endroit pour ces listes : les écrans consomment, ils ne les recalculent pas (règle n°4).
    ============================================================ */
 import { estPresentSur, estTermine } from './calculs';
-import { ROLES_PROJET } from './config';
 import { estResponsableEquipe, peutLireDailyProjet, responsablesDe } from './droits';
 import type { ContexteDroits } from './droits';
 import type { Absence, Affectation, Equipe, Iso, MiseEnProduction, NoteDaily, Projet, Ressource, SprintProjet } from './types';
@@ -46,16 +45,6 @@ const parCode = (a: Projet, b: Projet): number => a.code.localeCompare(b.code);
 /** Projets en cours dont je peux lire le daily (même règle qu'en base : peut_lire_daily_projet), triés par code */
 export const projetsDailyVisibles = (ctx: ContexteDroits, projets: readonly Projet[]): Projet[] =>
   projets.filter(p => projetEnCours(p) && peutLireDailyProjet(ctx, p)).sort(parCode);
-
-/** Projets d'une personne avec son rôle : ses affectations, plus les projets dont elle est le chef inscrit sur la fiche projet
- *  (projets.chef_id, lu tant qu'un chef n'y figure que là — migration 028) → rôle « Chef de projet ». */
-export function projetsAvecRoleDe(d: DonneesVues, ressourceId: string): { projet: Projet; role: string }[] {
-  const liste = d.affectations.filter(a => a.ressourceId === ressourceId)
-    .flatMap(a => { const projet = d.projets.find(p => p.id === a.projetId); return projet ? [{ projet, role: a.role }] : []; });
-  d.projets.filter(p => p.chefId === ressourceId && !liste.some(x => x.projet.id === p.id))
-    .forEach(projet => liste.push({ projet, role: ROLES_PROJET.CHEF }));
-  return liste;
-}
 
 /** Projets où la personne est affectée (étiquettes « VISTA Digital »), dans l'ordre de ses affectations */
 export const projetsDe = (d: DonneesVues, ressourceId: string): Projet[] => d.affectations.filter(a => a.ressourceId === ressourceId)
@@ -105,9 +94,9 @@ export function noteNonVide(notes: readonly NoteDaily[], r: Pick<Ressource, 'id'
 export const absenceDe = (absences: readonly Absence[], ressourceId: string, jour: Iso): Absence | null =>
   absences.find(a => a.ressourceId === ressourceId && a.jour === jour) ?? null;
 
-/** Membres d'un projet attendus au daily ce jour-là : affectés hors Lecteur et présents (arrivée / fin), triés par nom */
+/** Membres d'un projet attendus au daily ce jour-là : personnes affectées et présentes (arrivée / fin), triées par nom */
 export function membresDuDaily(d: DonneesVues, projetId: string, jour: Iso): Ressource[] {
-  return d.affectations.filter(a => a.projetId === projetId && a.role !== ROLES_PROJET.LECTEUR && estPresenteSur(d, a.ressourceId, jour))
+  return d.affectations.filter(a => a.projetId === projetId && estPresenteSur(d, a.ressourceId, jour))
     .flatMap(a => d.ressources.filter(r => r.id === a.ressourceId)).sort((x, y) => x.nom.localeCompare(y.nom));
 }
 
@@ -120,12 +109,12 @@ export function decalerJourOuvre(jour: Iso, sens: number): Iso {
 
 /* ---------- Libellé « projets de la personne » (annuaire) ---------- */
 
-/** Ce que l'annuaire affiche pour les projets d'une personne : ses projets avec rôle (« VISTA · PO »), sinon « Responsable d'équipe »
+/** Ce que l'annuaire affiche pour les projets d'une personne : ses projets (« VISTA », « VISTA · PO » si elle en est le chef), sinon « Responsable d'équipe »
  *  pour un responsable (pas de projet attitré, c'est normal — porteur 2026-10-22), sinon « hors projet » */
 export type ProjetsAnnuaire = { genre: 'projets'; lignes: string[] } | { genre: 'responsable' } | { genre: 'aucun' };
 
 export function projetsPourAnnuaire(ctx: ContexteDroits, d: DonneesVues, r: Ressource): ProjetsAnnuaire {
-  const lignes = projetsAvecRoleDe(d, r.id).map(x => `${x.projet.nom} · ${x.role === ROLES_PROJET.CHEF ? 'PO' : x.role}`);
+  const lignes = projetsDe(d, r.id).map(p => (p.chefId === r.id ? `${p.nom} · PO` : p.nom));
   if (lignes.length) return { genre: 'projets', lignes };
   return estResponsableEquipe(ctx, r) ? { genre: 'responsable' } : { genre: 'aucun' };
 }

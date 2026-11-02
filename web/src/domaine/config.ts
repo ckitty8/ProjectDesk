@@ -43,22 +43,23 @@ export const CONFIG = {
 /** Libellés système des statuts de projet (référentiel « stp ») ; remplacés au chargement par ceux de la base */
 export const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_RISQUE: 'À risque', EN_RETARD: 'En retard', TERMINE: 'Terminé' };
 
-/** Libellés système des rôles sur un projet (référentiel « role ») */
-export const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
-
 /** Clés techniques (valeurs_referentiel.cle) des types d'absence système : CP = décompté du droit annuel, FERIE = affiché sur les jours fériés.
  *  Le code retrouve ces types par leur clé, jamais par leur libellé : le porteur peut les renommer (ex. « Congés payés » → « Congés validé »). */
 export const CLES_ABSENCE = { CP: 'cp', FERIE: 'ferie' };
 
-/** Clé d'un rôle d'accès (Administration › Rôles) */
-export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'projet' | 'utilisateur' | 'lecture';
+/** Clé du rôle d'une personne (Administration › Rôles) : un seul rôle par personne depuis le 2026-11-02 (ex-rôle d'accès + ex-rôle projet) */
+export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'chef' | 'membre' | 'utilisateur' | 'lecture';
 
 /** Rôles d'accès choisissables, dans l'ordre de la matrice des droits */
-export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 'responsable', 'projet', 'utilisateur', 'lecture'];
+export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 'responsable', 'chef', 'membre', 'utilisateur', 'lecture'];
 
-/** Référentiels gérés dans Administration › Ressources (porteur, 2026-11-02) : rôles de projet et profils (postes). Ils ne figurent plus dans l'onglet
- *  Référentiels, qui garde les autres listes. */
-export const REFERENTIELS_RESSOURCES: readonly string[] = ['role', 'poste'];
+/** Référentiels gérés dans Administration › Ressources (porteur, 2026-11-02) : les profils (postes). Ils ne figurent plus dans l'onglet Référentiels, qui
+ *  garde les autres listes. */
+export const REFERENTIELS_RESSOURCES: readonly string[] = ['poste'];
+
+/** Référentiels qui ne s'affichent plus nulle part : « role » (rôles projet) est remplacé par le rôle unique de la personne ; la liste reste en base
+ *  jusqu'au nettoyage (docs/specifications/role-unique.md, étape 5) */
+export const REFERENTIELS_ABANDONNES: readonly string[] = ['role'];
 
 /** Rôles qui s'attribuent à une personne (Administration › Rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
 export const ROLES_ATTRIBUABLES: readonly RoleAcces[] = ROLES_CHOISISSABLES.filter(r => r !== 'admin');
@@ -68,14 +69,14 @@ export type Niveau = 'oui' | 'lecture' | 'non';
 
 /** Libellé de chaque rôle d'accès (couleurs d'interface : phase 4) */
 export const LIBELLES_ROLES: Record<RoleAcces, string> = {
-  admin: 'Administrateur', direction: 'Direction', responsable: 'Responsable d’équipe', projet: 'Projet',
+  admin: 'Administrateur', direction: 'Direction', responsable: 'Responsable d’équipe', chef: 'Chef de projet', membre: 'Membre',
   utilisateur: 'Utilisateur', lecture: 'Lecture seule'
 };
 
 /** Périmètre de chaque rôle : sur quoi porte un « Oui » de la matrice */
 export const PERIMETRES = {
   createur: 'Tout, toutes équipes', admin: 'Tout', direction: 'Sa direction et ses équipes', responsable: 'Son équipe',
-  projet: 'Ses projets', utilisateur: 'Lui-même et ses projets', lecture: 'Ce qu’on lui ouvre'
+  chef: 'Ses projets', membre: 'Ses projets', utilisateur: 'Lui-même', lecture: 'Ce qu’on lui ouvre'
 };
 
 /** Statuts d'une mise en production (même liste que la contrainte de la table mises_en_production, migration 039) */
@@ -211,16 +212,15 @@ export const DESCRIPTIONS_METHODES: Record<string, string> = {
 
 /* ---------- Rôles d'accès : affichage, niveaux de la matrice, envoi du daily ---------- */
 
-/** Affichage des rôles d’accès (couleurs des badges) ; « chef » et « sansCompte » sont des états d’affichage, pas des rôles choisissables */
+/** Affichage des rôles (couleurs des badges) */
 export const ROLES_ACCES = {
   admin: { libelle: 'Administrateur', texte: '#0033AD', fond: '#E8EEFF' },
   direction: { libelle: 'Direction', texte: '#3B2A8C', fond: '#E9E6FA' },
   responsable: { libelle: 'Responsable d’équipe', texte: '#5B2DA0', fond: '#EDE6FA' },
-  projet: { libelle: 'Projet', texte: '#0B6B4F', fond: '#E3F5EC' },
+  chef: { libelle: 'Chef de projet', texte: '#0B6B4F', fond: '#E3F5EC' },
+  membre: { libelle: 'Membre', texte: '#0F6A73', fond: '#DDF3F5' },
   utilisateur: { libelle: 'Utilisateur', texte: '#4A5363', fond: '#F1F3F7' },
-  lecture: { libelle: 'Lecture seule', texte: '#6B7485', fond: '#F4F5F7' },
-  chef: { libelle: 'Chef de projet', texte: '#8A5300', fond: '#FFF1D6' },
-  sansCompte: { libelle: 'Pas encore de compte', texte: '#A32020', fond: '#FDECEC' }
+  lecture: { libelle: 'Lecture seule', texte: '#6B7485', fond: '#F4F5F7' }
 } as const;
 
 /** Niveaux d'un droit dans la matrice : libellé et classe de couleur de la liste */

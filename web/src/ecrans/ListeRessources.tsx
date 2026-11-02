@@ -4,7 +4,7 @@
    Deux colonnes : à gauche la navigation (équipes, sous chacune son responsable et ses projets, puis Postes et Types de contrat) ; à droite le
    détail de ce qui est choisi (équipe : responsable, projets, membres ; projet : Product Owners puis membres ; Postes / Types de contrat).
    Droits d'affichage des boutons : unités et listes → administrateurs ; projets et personnes → membres de l'unité ; membres d'un projet →
-   peutEditerProjet. La base (RLS, triggers) reste seule juge. Écran ouvert sans équipe pour un administrateur (vue d'organisation).
+   peutGererProjet. La base (RLS, triggers) reste seule juge. Écran ouvert sans équipe pour un administrateur (vue d'organisation).
    ============================================================ */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +27,9 @@ import { useSession } from '../donnees/SessionProvider';
 import { equipeVide, rattachesA, rolesDuProjet, selectionAnnuaire, unitesNavigation } from '../domaine/annuaire';
 import type { Choix } from '../domaine/annuaire';
 import { libellePresence } from '../domaine/calculs';
-import { ROLES_PROJET } from '../domaine/config';
+import { LIBELLES_ROLES } from '../domaine/config';
 import { aujourdhui } from '../domaine/dates';
-import { estMembreDe, estResponsableDe, peutEditerProjet, peutModifierFiche, peutRattacherA, responsablesDe } from '../domaine/droits';
+import { estMembreDe, estResponsableDe, peutGererProjet, peutModifierFiche, peutRattacherA, responsablesDe } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
 import { AIDES } from '../domaine/textes';
 import type { Equipe, Projet, Ressource } from '../domaine/types';
@@ -39,7 +39,7 @@ import { estInactive } from '../domaine/vues';
 type Ouvert =
   | { genre: 'projet'; id: string }
   | { genre: 'nouveauProjet'; equipeId: string }
-  | { genre: 'affectation'; ressourceId: string | null; projetId: string | null; role: string | null }
+  | { genre: 'affectation'; ressourceId: string | null; projetId: string | null }
   | { genre: 'rattachement'; equipeId: string }
   | { genre: 'ressource'; id: string | null; equipeId: string | null; retourProjet: string }
   | { genre: 'equipe'; id: string | null; typeUnite?: string }
@@ -67,7 +67,7 @@ export function ListeRessources() {
     const personnes = donnees.ressources.filter(r => r.equipeId === e.id);
     const projets = donnees.projets.filter(p => p.equipeId === e.id).map(p => {
       const { productOwners, membres } = rolesDuProjet(ctx, p);
-      const equipeProjet = [...productOwners, ...membres.map(m => m.r)];
+      const equipeProjet = [...productOwners, ...membres];
       return { p, equipeProjet, texte: `${p.code} ${p.nom} ${noms(equipeProjet)}`.toLowerCase() };
     });
     // Un élément est visible s'il correspond (son nom ou une de ses personnes) ; toute l'équipe reste visible si son nom correspond
@@ -143,9 +143,9 @@ export function ListeRessources() {
 
   /* ---------- Détail : projet ---------- */
   const detailProjet = (p: Projet) => {
-    const editable = peutEditerProjet(ctx, p);
+    const editable = peutGererProjet(ctx, p);
     const { productOwners, membres } = rolesDuProjet(ctx, p);
-    const departs = [...productOwners, ...membres.map(m => m.r)].filter(r => r.dateDepart && r.dateDepart >= aujourdhui()).length;
+    const departs = [...productOwners, ...membres].filter(r => r.dateDepart && r.dateDepart >= aujourdhui()).length;
     const indicateur = (n: number, libelle: string) => <div><b>{n}</b><span className="discret">{libelle}</span></div>;
     return (
       <>
@@ -159,7 +159,7 @@ export function ListeRessources() {
           <Bouton onClick={() => setOuvert({ genre: 'projet', id: p.id })}>{editable ? 'Modifier le projet' : 'Voir le projet'}</Bouton>
         </Carte>
         <Carte>
-          <div className="carte-titre"><h2>Product Owners <Aide texte={AIDES.productOwners()} /></h2><span className="discret">rôle « {ROLES_PROJET.CHEF} »</span></div>
+          <div className="carte-titre"><h2>Product Owners <Aide texte={AIDES.productOwners} /></h2><span className="discret">rôle « {LIBELLES_ROLES.chef} »</span></div>
           <div className="cartes-po">
             {productOwners.length === 0 && <span className="pale">Aucun Product Owner.</span>}
             {productOwners.map(r => (
@@ -172,19 +172,14 @@ export function ListeRessources() {
                 {peutModifierFiche(ctx, r) && <button type="button" className="lien-btn" onClick={() => setOuvert({ genre: 'ressource', id: r.id, equipeId: null, retourProjet: '' })}>Fiche</button>}
               </div>
             ))}
-            {editable && (
-              <a className="carte-po ajout" role="button" tabIndex={0} onClick={() => setOuvert({ genre: 'affectation', ressourceId: null, projetId: p.id, role: ROLES_PROJET.CHEF })}>
-                + Ajouter un Product Owner
-              </a>
-            )}
           </div>
         </Carte>
         <Carte>
           <div className="carte-titre">
             <h2>Membres</h2>
-            {editable && <button type="button" className="lien-btn" onClick={() => setOuvert({ genre: 'affectation', ressourceId: null, projetId: p.id, role: null })}>+ Membre</button>}
+            {editable && <button type="button" className="lien-btn" onClick={() => setOuvert({ genre: 'affectation', ressourceId: null, projetId: p.id })}>+ Membre</button>}
           </div>
-          <TableauPersonnes cle={'projet:' + p.id} lignes={membres} texteVide="Aucun membre." deProjet onFiche={id => setOuvert({ genre: 'ressource', id, equipeId: null, retourProjet: '' })} />
+          <TableauPersonnes cle={'projet:' + p.id} lignes={membres.map(r => ({ r }))} texteVide="Aucun membre." onFiche={id => setOuvert({ genre: 'ressource', id, equipeId: null, retourProjet: '' })} />
         </Carte>
       </>
     );
@@ -224,18 +219,18 @@ export function ListeRessources() {
 
       {ouvert?.genre === 'projet' && (
         <PanneauProjet projetId={ouvert.id} section="moi" onFermer={() => setOuvert(null)}
-          onAssigner={id => setOuvert({ genre: 'affectation', ressourceId: null, projetId: id, role: null })} />
+          onAssigner={id => setOuvert({ genre: 'affectation', ressourceId: null, projetId: id })} />
       )}
       {ouvert?.genre === 'nouveauProjet' && <NouveauProjet equipeId={ouvert.equipeId} onFermer={() => setOuvert(null)} onCree={id => setOuvert({ genre: 'projet', id })} />}
       {ouvert?.genre === 'affectation' && (
-        <ModaleAffectation ressourceId={ouvert.ressourceId} projetId={ouvert.projetId} role={ouvert.role} onFermer={() => setOuvert(null)}
+        <ModaleAffectation ressourceId={ouvert.ressourceId} projetId={ouvert.projetId} onFermer={() => setOuvert(null)}
           onNouvellePersonne={(equipeId, projetId) => setOuvert({ genre: 'ressource', id: null, equipeId, retourProjet: projetId })} />
       )}
       {ouvert?.genre === 'rattachement' && <ModaleRattachement equipeId={ouvert.equipeId} onFermer={() => setOuvert(null)} />}
       {ouvert?.genre === 'ressource' && (
         <ModaleRessource id={ouvert.id} equipeId={ouvert.equipeId} retourProjet={ouvert.retourProjet} onFermer={() => setOuvert(null)}
-          onAffecter={id => setOuvert({ genre: 'affectation', ressourceId: id, projetId: null, role: null })}
-          onRetourAffectation={(id, projetId) => setOuvert({ genre: 'affectation', ressourceId: id, projetId, role: null })}
+          onAffecter={id => setOuvert({ genre: 'affectation', ressourceId: id, projetId: null })}
+          onRetourAffectation={(id, projetId) => setOuvert({ genre: 'affectation', ressourceId: id, projetId })}
           onRoles={() => navigate('/administration', { state: { onglet: 'roles' } })} />
       )}
       {ouvert?.genre === 'equipe' && <ModaleEquipe id={ouvert.id} typeUnite={ouvert.typeUnite} onFermer={() => setOuvert(null)} />}

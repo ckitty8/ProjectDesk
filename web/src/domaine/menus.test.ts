@@ -42,10 +42,10 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     });
   });
 
-  it('Mon dashboard : le menu Projet a deux sous-menus, Sprints puis Mises en production, absent du rôle Utilisateur', () => {
+  it('Mon dashboard : le menu Projet a deux sous-menus, Sprints puis Mises en production, absent du rôle Utilisateur (Chef de projet et Membre l’ont)', () => {
     const ctx = contexte();
     expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesSprints')).toBe(false);
-    const projet = menusDuRole(ctx, 'projet').moi.find(m => m.id === 'mesSprints');
+    const projet = menusDuRole(ctx, 'chef').moi.find(m => m.id === 'mesSprints');
     expect(projet?.libelle).toBe('Projet');
     expect(projet?.enfants?.map(e => e.libelle)).toEqual(['Sprints', 'Mises en production']);
   });

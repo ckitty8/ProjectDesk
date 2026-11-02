@@ -17,7 +17,7 @@ import { aujourdhui } from '../../domaine/dates';
 import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
-import { projetsAvecRoleDe, ressourcesPresentes } from '../../domaine/vues';
+import { projetsDe, ressourcesPresentes } from '../../domaine/vues';
 
 /** Actions de l'écran : chacune appelle la base (la base contrôle le droit), relit les données puis confirme par un message */
 function useActionsRoles() {
@@ -93,8 +93,7 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
         </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
       <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? COULEURS.pale} />{eq?.nom}</span></td>
       <td>
-        {projetsAvecRoleDe(donnees, r.id).filter(x => donnees.affectations.some(a => a.ressourceId === r.id && a.projetId === x.projet.id))
-          .map(x => <div key={x.projet.id} className="ligne-flex projet-role">{x.projet.nom} <span className="discret texte-12">· {x.role}</span></div>)}
+        {projetsDe(donnees, r.id).map(p => <div key={p.id} className="ligne-flex projet-role">{p.nom}</div>)}
         {!donnees.affectations.some(a => a.ressourceId === r.id) && <span className="pale">aucun projet</span>}
       </td>
       <td>{r.userId ? <BadgeTon texte="Compte lié" ton="succes" /> : <BadgeTon texte="Pas encore connecté" ton="attention" />}</td>

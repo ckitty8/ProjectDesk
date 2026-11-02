@@ -15,7 +15,7 @@ import { PanneauProjet } from '../composants/PanneauProjet';
 import { creer, modifier, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { STATUTS_MEP } from '../domaine/config';
-import { peutEditerProjet } from '../domaine/droits';
+import { peutSaisirProjet } from '../domaine/droits';
 import { COMPTEURS_MEP, nombreEntier } from '../domaine/saisies';
 import type { MiseEnProduction } from '../domaine/types';
 import { misesEnProductionDe } from '../domaine/vues';
@@ -26,8 +26,8 @@ export function MesProjets() {
   const { ctx, donnees, executer, notifier } = useSession();
   const [panneau, setPanneau] = useState<Panneau>(null);
   if (!ctx || !donnees) return null;
-  // Projets que je peux modifier (miroir de la règle RLS de mises_en_production), triés par code
-  const projets = donnees.projets.filter(p => peutEditerProjet(ctx, p)).sort((a, b) => a.code.localeCompare(b.code));
+  // Projets dont je saisis les sprints et MEP (miroir de la règle RLS de mises_en_production), triés par code
+  const projets = donnees.projets.filter(p => peutSaisirProjet(ctx, p)).sort((a, b) => a.code.localeCompare(b.code));
   const meps = misesEnProductionDe(donnees.misesEnProduction, projets);
 
   async function ajouter(e: FormEvent<HTMLFormElement>) {
@@ -109,7 +109,7 @@ export function MesProjets() {
           onAssigner={id => setPanneau({ genre: 'affectation', projetId: id })} />
       )}
       {panneau?.genre === 'affectation' && (
-        <ModaleAffectation ressourceId={null} projetId={panneau.projetId} role={null} onFermer={() => setPanneau(null)} />
+        <ModaleAffectation ressourceId={null} projetId={panneau.projetId} onFermer={() => setPanneau(null)} />
       )}
     </div>
   );

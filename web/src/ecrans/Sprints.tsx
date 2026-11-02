@@ -2,7 +2,8 @@
    Mon dashboard › Projet › Sprints (ex-menu Roadmap ; maquette sprints-mon-dashboard/, porteur 2026-10-23 ; portage de app/js/ecrans/sprints.js
    — phase 5, vague C)
    Création et modification des sprints de chaque projet (table sprints_projet) : numéro, année, version, début, fin. Modifiable par ceux
-   qui peuvent modifier le projet (peutEditerProjet). Les sprints s'affichent dans Vue d’ensemble › Projet › Gantt
+   qui peuvent saisir les sprints du projet (peutSaisirProjet : Chef de projet ou Membre affecté, gestionnaire de l'unité).
+   Les sprints s'affichent dans Vue d’ensemble › Projet › Gantt
    et servent aussi à la roadmap (docs/specifications/roadmap.md § 2). Règles de saisie : domaine/saisies.ts.
    ============================================================ */
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import { Liste } from '../composants/Liste';
 import { creer, modifier, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { aujourdhui, formatAvecAnnee } from '../domaine/dates';
-import { peutEditerProjet } from '../domaine/droits';
+import { peutSaisirProjet } from '../domaine/droits';
 import { anneeSprint, erreurModificationSprint, lireChampSprint, numeroSprintSuivant, numeroTechniqueSuivant, sprintDejaPris } from '../domaine/saisies';
 import type { ChampSprint } from '../domaine/saisies';
 import { AIDES } from '../domaine/textes';
@@ -67,7 +68,7 @@ function TableSprints({ projet, editable, annee, onAnnee }: { projet: Projet; ed
   return (
     <div>
       <div className="discret" style={{ margin: '4px 0 8px' }}>
-        {editable ? 'Saisissez le numéro du sprint, son année, le nom de la version, la date de début et la date de fin.' : 'Lecture seule : vous ne pouvez pas modifier ce projet.'}{' '}
+        {editable ? 'Saisissez le numéro du sprint, son année, le nom de la version, la date de début et la date de fin.' : 'Lecture seule : votre rôle ne permet pas de saisir les sprints de ce projet.'}{' '}
         <Aide texte={AIDES.sprintsProjet} />
       </div>
       <table className="tableau tableau-sprints">
@@ -139,7 +140,7 @@ export function Sprints() {
           <span className="discret">chaque projet a ses propres sprints</span>
         </div>
         <div style={{ padding: '0 16px 14px' }}>
-          <TableSprints projet={projet} editable={peutEditerProjet(ctx, projet)} annee={annee} onAnnee={setAnnee} />
+          <TableSprints projet={projet} editable={peutSaisirProjet(ctx, projet)} annee={annee} onAnnee={setAnnee} />
         </div>
       </Carte>
     </div>

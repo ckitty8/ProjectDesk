@@ -1,6 +1,6 @@
 /* ============================================================
-   Administration › Ressources › Rôles d'accès (porteur, 2026-11-02, maquette ressources-roles-profil/) — lecture seule
-   Les rôles d'accès sont fixes : le code (domaine/config.ts) et les règles de la base en dépendent, ils ne se renomment pas et on n'en ajoute pas.
+   Administration › Ressources › Rôle (porteur, 2026-11-02, maquettes ressources-roles-profil/ et role-unique/) — lecture seule
+   Les rôles sont fixes : le code (domaine/config.ts) et les règles de la base en dépendent, ils ne se renomment pas et on n'en ajoute pas.
    On les consulte ici : leur périmètre, ce que la matrice leur ouvre aujourd'hui (resumeDuRole, un seul calcul pour toute l'application) et le
    nombre de personnes qui les ont. Pour donner un rôle : Administration › Rôles ; pour régler les droits : Matrice des droits.
    ============================================================ */
@@ -8,23 +8,23 @@ import { Badge, BadgeTon } from '../../composants/Badge';
 import { Carte } from '../../composants/Carte';
 import { useSession } from '../../donnees/SessionProvider';
 import { parRole, rolesAffiches } from '../../domaine/admin';
-import { PERIMETRES, ROLES_ACCES } from '../../domaine/config';
+import { PERIMETRES, ROLES_ACCES, ROLES_CHOISISSABLES } from '../../domaine/config';
 import type { RoleAcces } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
 
-/** Nombre de rôles listés (Créateur + les six rôles d'accès) : compteur de l'entrée dans la liste de gauche */
-export const NB_ROLES_ACCES = 7;
+/** Nombre de rôles listés (Créateur + Administrateur + les six rôles) : compteur de l'entrée dans la liste de gauche */
+export const NB_ROLES_ACCES = ROLES_CHOISISSABLES.length + 1;
 
-/** Tableau des rôles d'accès : le Créateur puis les six rôles, avec périmètre, droits ouverts par la matrice et nombre de personnes */
+/** Tableau des rôles : le Créateur puis les rôles, avec périmètre, droits ouverts par la matrice et nombre de personnes */
 export function RolesAcces() {
   const { ctx, comptesEnAttente } = useSession();
   if (!ctx) return null;
   const groupes = parRole(ctx, aujourdhui(), comptesEnAttente);
-  // Les six rôles d'accès (sans « Compte en attente », qui n'est pas un rôle)
+  // Les rôles (sans « Compte en attente », qui n'est pas un rôle)
   const roles = rolesAffiches(ctx).filter(r => r.cle !== 'sansEquipe');
   return (
     <Carte>
-      <div className="carte-titre"><h2>Rôles d’accès</h2><span className="discret texte-12">fixes : consultation seulement</span></div>
+      <div className="carte-titre"><h2>Rôle</h2><span className="discret texte-12">fixes : consultation seulement</span></div>
       <table className="tableau">
         <thead><tr><th>Rôle</th><th>Périmètre</th><th>Ce que la matrice lui ouvre</th><th className="num">Personnes</th></tr></thead>
         <tbody>

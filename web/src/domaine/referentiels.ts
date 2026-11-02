@@ -4,7 +4,7 @@
    ------------------------------------------------------------
    Les types, priorités, statuts, rôles et absences sont en base (table valeurs_referentiel, administrable : règle n°4 de CLAUDE.md).
    ============================================================ */
-import { COULEURS } from './config';
+import { COULEURS, REFERENTIELS_ABANDONNES } from './config';
 import type { Referentiel, ValeurReferentiel } from './types';
 
 /** Valeurs d'une liste, actives seulement par défaut (l'ordre est celui de la base : colonne « ordre ») */
@@ -20,6 +20,7 @@ export const valeurParCle = (valeurs: readonly ValeurReferentiel[], referentielI
   valeurs.find(v => v.referentielId === referentielId && v.cle === cle);
 
 /** Référentiels d'un onglet d'Administration : ceux de « montrer » (tous si absent) sans ceux de « cacher » (ceux d'un autre onglet). Chaque référentiel
- *  doit apparaître dans un onglet et un seul : Référentiels cache REFERENTIELS_RESSOURCES, Ressources ne montre que ceux-là. */
+ *  doit apparaître dans un onglet et un seul : Référentiels cache REFERENTIELS_RESSOURCES, Ressources ne montre que ceux-là. Les référentiels abandonnés
+ *  (REFERENTIELS_ABANDONNES) ne s'affichent nulle part. */
 export const referentielsAffiches = (referentiels: readonly Referentiel[], montrer?: readonly string[], cacher: readonly string[] = []): Referentiel[] =>
-  referentiels.filter(r => (!montrer || montrer.includes(r.id)) && !cacher.includes(r.id));
+  referentiels.filter(r => (!montrer || montrer.includes(r.id)) && !cacher.includes(r.id) && !REFERENTIELS_ABANDONNES.includes(r.id));

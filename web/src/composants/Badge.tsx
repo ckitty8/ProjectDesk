@@ -2,7 +2,7 @@
    Badges, pastilles, avatars (portage de C.badge, C.badgeTon, C.badgeFeuille, C.badgeActif, C.pastille, C.avatar, C.code)
    (phase 4 de la migration). Tout texte passe par React : l'échappement HTML est automatique.
    ============================================================ */
-import { STATUTS_FEUILLE, TONS } from '../domaine/config';
+import { ROLES_ACCES, STATUTS_FEUILLE, TONS } from '../domaine/config';
 import type { StatutFeuille, Ton } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
 import { initiales } from '../domaine/calculs';
@@ -23,6 +23,12 @@ export function BadgeTon({ texte, ton }: { texte: string; ton: Ton }) {
 export function BadgeFeuille({ statut }: { statut: string }) {
   const s = STATUTS_FEUILLE[statut as StatutFeuille] ?? STATUTS_FEUILLE.en_saisie;
   return <Badge texte={s.libelle} couleur={s.texte} fond={s.fond} />;
+}
+
+/** Rôle d'une personne (Direction, Chef de projet, Membre…) : libellé et couleurs de ROLES_ACCES ; clé inconnue = Utilisateur */
+export function BadgeRole({ role }: { role: string }) {
+  const r = ROLES_ACCES[role as keyof typeof ROLES_ACCES] ?? ROLES_ACCES.utilisateur;
+  return <Badge texte={r.libelle} couleur={r.texte} fond={r.fond} />;
 }
 
 /** Actif / inactif ; libellés au féminin par défaut (unités), ['Actif', 'Inactif'] pour une personne */

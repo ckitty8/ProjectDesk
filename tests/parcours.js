@@ -330,13 +330,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/daily');
     await page.waitForSelector('.ecran-daily');
     await captureC('08-daily');
-    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 9
-      && (await texte()).includes('0 / 3 projets renseignés') && await page.locator('.historique a').count() === 12);
+    verifier('Daily : une carte par projet où je suis affecté(e), trois champs, historique de 12 jours', await page.locator('textarea.note-daily').count() === 15
+      && (await texte()).includes('0 / 5 projets renseignés') && await page.locator('.historique a').count() === 12);
     const zone = page.locator('textarea.note-daily').nth(1);       // « Aujourd'hui » du premier projet
     await zone.fill('Revue de la roadmap SSO');
     await page.waitForSelector('text=enregistré');
-    await page.waitForSelector('text=1 / 3 projets renseignés');
-    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 3 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
+    await page.waitForSelector('text=1 / 5 projets renseignés');
+    verifier('Daily : enregistrement automatique, bilan et état « Renseigné »', (await texte()).includes('1 / 5 projets renseignés') && await page.locator('.badge:has-text("Renseigné")').count() === 1);
     await page.reload();
     await page.waitForSelector('.ecran-daily');
     verifier('Daily : la note survit au rechargement (écrite en base)', await page.locator('textarea.note-daily').nth(1).inputValue() === 'Revue de la roadmap SSO');
@@ -513,11 +513,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await captureD('12b-liste-projet');
     verifier('Liste des ressources : détail d\'un projet (Product Owners, membres, indicateurs)', (await page.textContent('.detail-ressources')).includes('Product Owners')
       && await page.locator('.carte-po:not(.ajout)').count() >= 1 && await page.locator('.detail-kpi b').count() === 3);
-    await page.click('text=+ Ajouter un Product Owner');
+    await page.click('.detail-ressources >> text=+ Membre');
     await page.waitForSelector('.modale[role=dialog]');
     await captureD('11b-affectation');
-    verifier('Fenêtre d\'affectation : projet d\'origine coché, rôle « Chef de projet » préchoisi', (await page.textContent('.modale h2')).includes('SSO & gestion des droits')
-      && await page.locator('.modale input[type=checkbox]:checked').count() >= 1);
+    verifier('Fenêtre d\'affectation : projet d\'origine coché, aucun rôle par affectation (rôle unique)', (await page.textContent('.modale h2')).includes('SSO & gestion des droits')
+      && await page.locator('.modale input[type=checkbox]:checked').count() >= 1 && await page.locator('.modale select[name^=role-]').count() === 0);
     await page.selectOption('.modale select[name=ressource]', { label: 'Julien Dubois — Plateforme · DevOps' }).catch(async () => {
       await page.selectOption('.modale select[name=ressource]', { index: 1 });
     });
@@ -530,8 +530,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('tr[data-ressource]', { hasText: 'Thomas Bernard' }).locator('text=Fiche').click();
     await page.waitForSelector('.modale[role=dialog]');
     await captureD('11c-fiche-ressource');
-    verifier('Fiche ressource : champs, rôle d\'accès en lecture, projets de la personne', (await page.textContent('.modale h2')) === 'Fiche de Thomas Bernard'
-      && (await page.textContent('.modale')).includes('Rôle d’accès') && (await page.textContent('.modale')).includes('Modifier ses projets'));
+    verifier('Fiche ressource : champs, rôle en lecture, projets de la personne', (await page.textContent('.modale h2')) === 'Fiche de Thomas Bernard'
+      && (await page.textContent('.modale')).includes('Rôle') && (await page.textContent('.modale')).includes('Modifier ses projets'));
     await page.fill('.modale input[name=dateArrivee]', '2026-06-01');
     await page.fill('.modale input[name=dateDepart]', '2026-05-01');
     await page.click('.modale button:has-text("Enregistrer")');
@@ -663,22 +663,20 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => ![...document.querySelectorAll('tr')].find(r => r.querySelector('input[value="Statut de test renommé"]'))?.querySelector('.interrupteur')?.classList.contains('actif'));
     verifier('Administration › Référentiels : renommer et désactiver une valeur', (await interrupteur.getAttribute('class')).includes('actif') === false && nomValeur.length > 0);
 
-    // Ressources (2.93) : rôles de projet, profils (postes) et rôles d'accès
+    // Ressources (2.93, rôle unique 2.96) : profils (postes) et Rôle
     await page.click('[role=tab]:has-text("Ressources")');
     await page.waitForSelector('.lien-referentiel');
     await captureD('10c-ressources');
-    verifier('Administration › Ressources : rôles de projet, profil et rôles d\'accès', await page.locator('.lien-referentiel').count() === 3
-      && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 1 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
-      && await page.locator('.lien-referentiel:has-text("Rôles d’accès")').count() === 1);
-    verifier('Administration › Ressources : les rôles de projet sont modifiables (Chef de projet, Membre, Lecteur)', await page.locator('input[aria-label="Valeur 1"]').count() === 1
-      && (await page.textContent('.tableau')).length > 0);
+    verifier('Administration › Ressources : profil et rôle (plus de rôles de projet)', await page.locator('.lien-referentiel').count() === 2
+      && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 0 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
+      && await page.locator('.lien-referentiel:has-text("Rôle")').count() === 1);
     await page.click('.lien-referentiel:has-text("Profil")');
     await page.waitForSelector('input[aria-label="Valeur 1"]');
     verifier('Administration › Ressources : le profil (postes) est une liste modifiable', await page.locator('.carte-titre h2:has-text("Profil")').count() === 1
       && await page.locator('input[aria-label="Nouvelle valeur"]').count() === 1);
-    await page.click('.lien-referentiel:has-text("Rôles d’accès")');
-    await page.waitForSelector('.carte-titre h2:has-text("Rôles d’accès")');
-    verifier('Administration › Ressources : les rôles d\'accès sont en lecture seule, avec périmètre et nombre de personnes', await page.locator('tbody tr').count() === 7
+    await page.click('.lien-referentiel:has-text("Rôle")');
+    await page.waitForSelector('.carte-titre h2:has-text("Rôle")');
+    verifier('Administration › Ressources : le rôle est en lecture seule (6 rôles, Administrateur, Créateur), avec périmètre et nombre de personnes', await page.locator('tbody tr').count() === 8
       && await page.locator('input').count() === 0 && (await page.textContent('tbody')).includes('Sa direction et ses équipes') && (await page.textContent('tbody')).includes('Lecture seule'));
     await page.click('[role=tab]:has-text("Référentiels")');
     await page.waitForSelector('.lien-referentiel');
@@ -744,9 +742,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').fill('Laurent');
     await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').blur();
     await page.waitForFunction(() => !document.querySelector('.moi-nom')?.textContent?.includes('Laurent-Test'));
-    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
+    await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'chef');
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
-    verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
+    verifier('Administration › Rôles : un rôle se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
     // Administrateur : la case est réservée au créateur (la base refuse les autres), elle est donc grisée pour une administratrice
     verifier('Administration › Rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
@@ -792,7 +790,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const ganttReel = await projetsGantt();
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');
-    await page.selectOption('select[aria-label="Personne pour Utilisateur"]', { label: 'Thomas Bernard · aujourd’hui Projet' }).catch(async () => {
+    await page.selectOption('select[aria-label="Personne pour Utilisateur"]', { label: 'Thomas Bernard · aujourd’hui Chef de projet' }).catch(async () => {
       const id = await page.locator('select[aria-label="Personne pour Utilisateur"] option', { hasText: 'Thomas Bernard' }).getAttribute('value');
       await page.selectOption('select[aria-label="Personne pour Utilisateur"]', id);
     });
@@ -842,14 +840,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.goto(BASE + '/app/administration-createur');
     await page.waitForSelector('.grille-simulation');
     await captureD('28-simulation-roles');
-    verifier('Administration créateur : une carte par rôle (6 rôles d\'accès puis compte en attente)', await page.locator('.grille-simulation .carte').count() === 7
+    verifier('Administration créateur : une carte par rôle (Administrateur, 6 rôles puis compte en attente)', await page.locator('.grille-simulation .carte').count() === 8
       && (await page.textContent('.grille-simulation')).includes('Vue d’ensemble :'));
-    await page.selectOption('select[aria-label="Personne pour Projet"]', { label: 'Thomas Bernard · a ce rôle' }).catch(async () => {
-      await page.selectOption('select[aria-label="Personne pour Projet"]', { index: 0 });
+    await page.selectOption('select[aria-label="Personne pour Chef de projet"]', { label: 'Thomas Bernard · a ce rôle' }).catch(async () => {
+      await page.selectOption('select[aria-label="Personne pour Chef de projet"]', { index: 0 });
     });
-    await page.click('button:has-text("Voir l’application en tant que projet")');
+    await page.click('button:has-text("Voir l’application en tant que chef de projet")');
     await page.waitForSelector('.bandeau-simulation');
-    verifier('Simulation depuis Administration créateur : le bandeau s\'affiche et l\'application suit le rôle simulé', (await page.textContent('.bandeau-simulation')).includes('Projet')
+    verifier('Simulation depuis Administration créateur : le bandeau s\'affiche et l\'application suit le rôle simulé', (await page.textContent('.bandeau-simulation')).includes('Chef de projet')
       && await page.locator('.laterale .badge-createur', { hasText: 'simulation' }).count() === 1);
     await page.click('text=Revenir à mon rôle de créateur');
     await page.waitForSelector('.grille-simulation');
@@ -866,7 +864,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[role=tab]:has-text("Matrice des droits")');
     await page.waitForSelector('.tableau-matrice');
     await captureD('32-matrice-droits');
-    verifier('Matrice des droits : une colonne par rôle, périmètres, sections et onglets', await page.locator('.tableau-matrice thead th').count() === 9
+    verifier('Matrice des droits : une colonne par rôle, périmètres, sections et onglets', await page.locator('.tableau-matrice thead th').count() === 10
       && (await texte()).includes('Périmètre') && await page.locator('.tableau-matrice .ligne-onglet').count() >= 5 && await page.locator('.tableau-matrice select').count() > 100);
     const celluleDroit = page.locator('select[aria-label="onglet_astuces_agile · utilisateur"]');
     const avantNiveau = await celluleDroit.inputValue();
@@ -893,7 +891,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[role=tab]:has-text("Qui a quel rôle")');
     await page.waitForSelector('.tableau-qui-a-quel-role');
     await captureD('27b-roles');
-    verifier('Qui a quel rôle : tableau par rôle avec description, personnes, équipe et compte', await page.locator('.tableau-qui-a-quel-role tr.groupe').count() === 7
+    verifier('Qui a quel rôle : tableau par rôle avec description, personnes, équipe et compte', await page.locator('.tableau-qui-a-quel-role tr.groupe').count() === 8
       && (await texte()).includes('personne(s)'));
 
     /* ---------- Catalogue des composants (/app/composants) ---------- */

@@ -5,7 +5,6 @@
    Maquette docs/maquettes/liste-ressources-ux/3-navigation-detail.png (piste 3, porteur 2026-10-09). Le niveau « direction » n'est plus affiché
    dans la navigation (« on oublie la direction DSI »). Fonctions pures : l'écran dessine ce qu'elles décident.
    ============================================================ */
-import { ROLES_PROJET } from './config';
 import { roleDeLaFiche, rolePrevu } from './droits';
 import type { ContexteDroits } from './droits';
 import type { Equipe, Projet, Ressource } from './types';
@@ -46,16 +45,16 @@ export function selectionAnnuaire(ctx: ContexteDroits, choix: Choix | null, equi
   return parDefaut ? { type: 'equipe', id: parDefaut.id } : { type: 'aucun' };
 }
 
-/** Rôles sur un projet. Product Owner = rôle « Chef de projet » (libellé du référentiel, inchangé en base) ; le chef inscrit sur la fiche du projet
- *  compte aussi, même sans affectation. */
-export function rolesDuProjet(ctx: ContexteDroits, p: Projet): { productOwners: Ressource[]; membres: { r: Ressource; role: string }[] } {
-  const affectations = ctx.affectations.filter(a => a.projetId === p.id);
+/** Équipe d'un projet : les chefs (Product Owners : chef désigné sur la fiche du projet, ou personne affectée dont le rôle est Chef de projet) puis les
+ *  autres personnes affectées (rôle unique de la personne, migration 054 : plus de rôle par affectation) */
+export function rolesDuProjet(ctx: ContexteDroits, p: Projet): { productOwners: Ressource[]; membres: Ressource[] } {
   const fiche = (id: string) => ctx.ressources.find(r => r.id === id);
-  const productOwners = affectations.filter(a => a.role === ROLES_PROJET.CHEF).map(a => fiche(a.ressourceId)).filter((r): r is Ressource => !!r);
+  const affectes = ctx.affectations.filter(a => a.projetId === p.id)
+    .flatMap(a => { const r = fiche(a.ressourceId); return r ? [r] : []; });
+  const productOwners = affectes.filter(r => roleChoisi(ctx, r) === 'chef');
   const chef = fiche(p.chefId ?? '');
-  if (chef && !productOwners.includes(chef) && !affectations.some(a => a.ressourceId === chef.id)) productOwners.unshift(chef);
-  const membres = affectations.filter(a => a.role !== ROLES_PROJET.CHEF)
-    .flatMap(a => { const r = fiche(a.ressourceId); return r ? [{ r, role: a.role }] : []; });
+  if (chef && !productOwners.includes(chef)) productOwners.unshift(chef);
+  const membres = affectes.filter(r => !productOwners.includes(r));
   return { productOwners, membres };
 }
 
@@ -71,17 +70,7 @@ export function rattachesA(ctx: ContexteDroits, equipeId: string): { r: Ressourc
 export const equipeVide = (ctx: ContexteDroits, equipeId: string): boolean => !ctx.ressources.some(r => r.equipeId === equipeId)
   && !ctx.projets.some(p => p.equipeId === equipeId) && !ctx.equipes.some(x => x.parentId === equipeId);
 
-/* ---------- Rôle d'accès affiché ---------- */
+/* ---------- Rôle affiché ---------- */
 
-/** Clé de ROLES_ACCES d'une fiche : « sansCompte » sans compte de connexion ; « chef » pour un utilisateur simple qui est chef de projet ;
- *  sinon son rôle d'accès (déclaré ou déduit) */
-export function roleAcces(ctx: ContexteDroits, r: Ressource): string {
-  if (!r.userId) return 'sansCompte';
-  const role = roleDeLaFiche(ctx, r);
-  if (role !== 'utilisateur') return role;
-  const chef = ctx.projets.some(p => p.chefId === r.id) || ctx.affectations.some(a => a.ressourceId === r.id && a.role === ROLES_PROJET.CHEF);
-  return chef ? 'chef' : 'utilisateur';
-}
-
-/** Rôle d'accès choisi dans « Utilisateurs et rôles » : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
+/** Rôle choisi dans Administration › Rôles : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
 export const roleChoisi = (ctx: ContexteDroits, r: Ressource): string => rolePrevu(ctx, r) ?? roleDeLaFiche(ctx, r);

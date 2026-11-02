@@ -1,23 +1,24 @@
 import { describe, expect, it } from 'vitest';
+import { ROLES_CHOISISSABLES } from '../domaine/config';
 import { RESSOURCES, contexte } from '../domaine/__fixtures__/donnees';
 import { choixSimulation, decoderChoixSimulation, identiteSimulee, libelleRoleSimule, ROLE_SANS_EQUIPE } from './simulation';
 
 describe('choix de simulation', () => {
   it('propose chaque rôle pour chaque fiche, puis le compte en attente', () => {
     const choix = choixSimulation(RESSOURCES);
-    expect(choix).toHaveLength(6 * RESSOURCES.length + 1);
+    expect(choix).toHaveLength(ROLES_CHOISISSABLES.length * RESSOURCES.length + 1);
     expect(choix.at(-1)).toEqual({ valeur: 'sansEquipe|', libelle: 'Compte en attente' });
     expect(choix[0]?.valeur).toMatch(/^admin\|/);
   });
 
   it('décode les valeurs du bandeau', () => {
-    expect(decoderChoixSimulation('projet|r-thomas')).toEqual({ cle: 'projet', ressourceId: 'r-thomas' });
+    expect(decoderChoixSimulation('chef|r-thomas')).toEqual({ cle: 'chef', ressourceId: 'r-thomas' });
     expect(decoderChoixSimulation('sansEquipe|')).toEqual({ cle: 'sansEquipe', ressourceId: null });
   });
 
   it('libelle les rôles', () => {
     expect(libelleRoleSimule(ROLE_SANS_EQUIPE)).toBe('Compte en attente');
-    expect(libelleRoleSimule('projet')).toBe('Projet');
+    expect(libelleRoleSimule('chef')).toBe('Chef de projet');
   });
 });
 

@@ -6,7 +6,7 @@
    reste le juge des droits (RLS) ; ces règles évitent seulement d'envoyer des saisies absurdes et de dessiner des cases inutiles.
    ============================================================ */
 import { dureeAbsence } from './calculs';
-import { CONFIG, ROLES_PROJET } from './config';
+import { CONFIG } from './config';
 import { estWeekend } from './dates';
 import { maRessource } from './droits';
 import type { ContexteDroits } from './droits';
@@ -18,11 +18,11 @@ import type { DonneesVues } from './vues';
 
 const parCode = (a: Projet, b: Projet): number => a.code.localeCompare(b.code);
 
-/** Projets où je saisis un daily : affecté(e) Chef de projet ou Membre (pas Lecteur), projet en cours, triés par code */
+/** Projets où je saisis un daily : ceux où je suis affecté(e), projet en cours, triés par code */
 export function mesProjetsDaily(ctx: ContexteDroits, d: DonneesVues): Projet[] {
   const moi = maRessource(ctx);
   if (!moi) return [];
-  return d.affectations.filter(a => a.ressourceId === moi.id && a.role !== ROLES_PROJET.LECTEUR)
+  return d.affectations.filter(a => a.ressourceId === moi.id)
     .flatMap(a => d.projets.filter(p => p.id === a.projetId)).filter(projetEnCours).sort(parCode);
 }
 
