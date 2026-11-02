@@ -1,7 +1,7 @@
 /* ============================================================
    Migration 053 — Ménage de la base après les changements sur les rôles et les profils (revue qualité du 2026-11-02)
    ------------------------------------------------------------
-   PROPOSÉE AU PORTEUR, NON APPLIQUÉE : chaque point écrit ou supprime des données (règle n°8) et attend un « ok » explicite.
+   APPLIQUÉE le 2026-11-02 sur accord explicite du porteur (« oui, applique la migration 053 ») : chaque point écrit ou supprime des données (règle n°8).
    Origine : audit db/audit/verifier-bdd.sql et comparaison code ↔ base.
 
    1. Absences « Congés payés » (2 lignes, Christelle LABBE, 1er et 2 octobre 2026) : le type système « cp » a été renommé « Congés validé » ; l'écran

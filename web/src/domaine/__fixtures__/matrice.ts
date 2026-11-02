@@ -1,5 +1,5 @@
 /* ============================================================
-   Matrice des droits de PRODUCTION au 2026-10-27 (31 droits × 6 rôles), relevée dans la table droits_roles.
+   Matrice des droits de PRODUCTION au 2026-11-02 (30 droits × 6 rôles ; « suivi_projets » retiré par la migration 053), relevée dans la table droits_roles.
    Sert de jeu d'essai réaliste aux tests des droits et des menus : si la matrice de production change, mettre ce fichier à jour.
    Colonnes : admin, direction, responsable, projet, utilisateur, lecture.
    ============================================================ */
@@ -33,7 +33,6 @@ const NIVEAUX: Record<string, readonly [string, string, string, string, string, 
   projets: ['oui', 'non', 'oui', 'oui', 'non', 'lecture'],
   roles: ['oui', 'non', 'non', 'non', 'non', 'non'],
   suivi_dashboard: ['oui', 'oui', 'oui', 'oui', 'oui', 'lecture'],
-  suivi_projets: ['oui', 'oui', 'oui', 'oui', 'non', 'lecture'],
   suivi_ressources: ['oui', 'oui', 'oui', 'oui', 'oui', 'lecture'],
   suivi_timesheet: ['oui', 'oui', 'oui', 'oui', 'non', 'non'],
   valider_timesheet: ['oui', 'oui', 'oui', 'non', 'non', 'non'],

@@ -119,7 +119,7 @@ function amorcer() {
   bd.membres_equipe = [];        // personnes rattachées à une autre équipe (migration 033)
   // Matrice des droits (migrations 031, 037 : droits par menu de Suivi de mes équipes, et 038 : droits par onglet) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
   const MATRICE = {
-    general: 'oui oui oui oui oui oui', suivi_dashboard: 'oui oui oui oui oui oui', suivi_projets: 'oui oui oui oui oui oui',
+    general: 'oui oui oui oui oui oui', suivi_dashboard: 'oui oui oui oui oui oui',
     suivi_ressources: 'oui oui oui oui oui oui', suivi_timesheet: 'oui oui oui oui oui oui',
     mon_dashboard: 'oui oui oui oui oui non', daily_equipes: 'oui oui oui oui oui non',
     conges_equipe: 'oui oui oui lecture non non', valider_timesheet: 'oui oui oui non non non', fiches_ressources: 'oui oui oui non non non',
