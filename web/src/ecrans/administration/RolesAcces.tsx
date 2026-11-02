@@ -2,7 +2,7 @@
    Administration › Ressources › Rôle (porteur, 2026-11-02, maquettes ressources-roles-profil/ et role-unique/) — lecture seule
    Les rôles sont fixes : le code (domaine/config.ts) et les règles de la base en dépendent, ils ne se renomment pas et on n'en ajoute pas.
    On les consulte ici : leur périmètre, ce que la matrice leur ouvre aujourd'hui (resumeDuRole, un seul calcul pour toute l'application) et le
-   nombre de personnes qui les ont. Pour donner un rôle : Administration › Rôles ; pour régler les droits : Matrice des droits.
+   nombre de personnes qui les ont. Pour donner un rôle : Administration › Ressources › Paramétrage des rôles ; pour régler les droits : Matrice des droits.
    ============================================================ */
 import { Badge, BadgeTon } from '../../composants/Badge';
 import { Carte } from '../../composants/Carte';
@@ -48,7 +48,7 @@ export function RolesAcces() {
         </tbody>
       </table>
       <div className="encart-compact discret texte-12">
-        Un rôle se donne dans Administration › Rôles ; ses droits se règlent dans la Matrice des droits (créateur).
+        Un rôle se donne dans Administration › Ressources › Paramétrage des rôles ; ses droits se règlent dans la Matrice des droits (créateur).
       </div>
     </Carte>
   );

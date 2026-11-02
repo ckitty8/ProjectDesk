@@ -28,6 +28,8 @@ interface PropsReferentiels {
   /** Référentiels cachés (ceux d'un autre onglet) */
   cacher?: readonly string[];
   extras?: readonly EntreeLecture[];
+  /** Entrée choisie à l'ouverture (identifiant d'un référentiel ou d'une entrée en lecture) ; la première sinon */
+  entreeInitiale?: string;
 }
 
 /** Valeurs d'un référentiel : tableau (renommer, recolorer, activer si modifiable) et ligne d'ajout */
@@ -98,9 +100,9 @@ function LienListe({ nom, compte, courant, onChoisir }: { nom: string; compte: n
 }
 
 /** Liste des référentiels à gauche, valeurs du référentiel choisi (ou contenu d'une entrée en lecture seule) à droite */
-export function Referentiels({ modifiable, montrer, cacher = [], extras = [] }: PropsReferentiels) {
+export function Referentiels({ modifiable, montrer, cacher = [], extras = [], entreeInitiale = '' }: PropsReferentiels) {
   const { donnees } = useSession();
-  const [choisi, setChoisi] = useState('');
+  const [choisi, setChoisi] = useState(entreeInitiale);
   if (!donnees) return null;
   const listes = referentielsAffiches(donnees.referentiels, montrer, cacher);
   const extra = extras.find(x => x.id === choisi);

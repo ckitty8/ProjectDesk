@@ -72,5 +72,5 @@ export const equipeVide = (ctx: ContexteDroits, equipeId: string): boolean => !c
 
 /* ---------- Rôle affiché ---------- */
 
-/** Rôle choisi dans Administration › Rôles : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
+/** Rôle choisi dans Administration › Ressources › Paramétrage des rôles : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
 export const roleChoisi = (ctx: ContexteDroits, r: Ressource): string => rolePrevu(ctx, r) ?? roleDeLaFiche(ctx, r);

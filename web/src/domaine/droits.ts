@@ -107,14 +107,14 @@ export const estResponsableDesigne = (ctx: ContexteDroits, r: Ressource): boolea
 export const estResponsableEquipe = (ctx: ContexteDroits, r: Ressource): boolean =>
   estResponsableDesigne(ctx, r) || ROLES_RESPONSABLE.includes(membreOrganisation(ctx, r)?.role ?? '');
 
-/** Rôle prévu d'une fiche (Administration › Rôles), en attente de la connexion de la personne, ou null */
+/** Rôle prévu d'une fiche (Administration › Ressources › Paramétrage des rôles), en attente de la connexion de la personne, ou null */
 export const rolePrevu = (ctx: ContexteDroits, r: Ressource): string | null => ctx.rolesPrevus.find(x => x.ressourceId === r.id)?.role ?? null;
 
 /** Rôle d'accès déclaré et appliqué d'une fiche (roles_acces, migration 030), ou null s'il est déduit */
 export const roleDeclare = (ctx: ContexteDroits, r: Ressource): string | null => ctx.rolesAcces.find(x => x.ressourceId === r.id)?.role ?? null;
 
 /** Rôle d'accès d'une fiche, compte relié ou non : déclaré, sinon déduit (responsable, utilisateur). L'administrateur n'est plus un rôle de la
- *  fiche : il se cumule avec un autre rôle (case « Administrateur » d'Administration › Rôles, porteur 2026-11-01) */
+ *  fiche : il se cumule avec un autre rôle (case « Administrateur » d'Administration › Ressources › Paramétrage des rôles, porteur 2026-11-01) */
 export function roleDeLaFiche(ctx: ContexteDroits, r: Ressource): string {
   const declare = roleDeclare(ctx, r);
   if (declare) return declare;

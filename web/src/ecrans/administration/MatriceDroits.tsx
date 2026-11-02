@@ -64,7 +64,7 @@ export function MatriceDroits() {
       </Carte>
       <div className="discret texte-12">
         Les droits de menu et d’onglet règlent l’affichage ; ce qu’on peut modifier est appliqué par la base. Un onglet « Non » disparaît de la
-        page ; si tous ses onglets sont « Non », le menu disparaît aussi. Un rôle se donne dans Mon dashboard › Administration › Rôles.
+        page ; si tous ses onglets sont « Non », le menu disparaît aussi. Un rôle se donne dans Mon dashboard › Ressources › Paramétrage des rôles.
       </div>
     </>
   );

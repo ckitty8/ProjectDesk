@@ -17,17 +17,17 @@ describe('comptes en attente', () => {
 });
 
 describe('onglets d\'Administration', () => {
-  const compteurs = { enAttente: 2, referentiels: 4, ressources: 3, feries: 11, envoisActifs: 1 };
+  const compteurs = { enAttente: 2, referentiels: 4, ressources: 4, feries: 11, envoisActifs: 1 };
   const ids = (ctx: ReturnType<typeof contexte>) => ongletsAdministration(ctx, compteurs).map(o => o.id);
-  it('un administrateur voit comptes, équipes, référentiels, ressources, jours fériés et rôles', () => {
+  it('un administrateur voit comptes, équipes, référentiels, ressources et jours fériés ; plus d\'onglet Rôles (dans Ressources depuis 2.98)', () => {
     const liste = ids(contexte({ estAdmin: true, estCreateur: true }));
-    expect(liste).toEqual(expect.arrayContaining(['comptes', 'equipes', 'referentiels', 'ressources', 'feries', 'roles']));
+    expect(liste).toEqual(expect.arrayContaining(['comptes', 'equipes', 'referentiels', 'ressources', 'feries']));
+    expect(liste).not.toContain('roles');
     expect(liste.indexOf('ressources')).toBe(liste.indexOf('referentiels') + 1);   // juste après Référentiels
   });
-  it('un simple membre ne gère ni comptes, ni équipes, ni rôles', () => {
+  it('un simple membre ne gère ni comptes, ni équipes, ni ressources', () => {
     const liste = ids(contexte());
     expect(liste).not.toEqual(expect.arrayContaining(['comptes']));
-    expect(liste).not.toContain('roles');
     expect(liste).not.toContain('equipes');
     expect(liste).not.toContain('ressources');
   });
@@ -35,7 +35,7 @@ describe('onglets d\'Administration', () => {
     const o = ongletsAdministration(contexte({ estAdmin: true, estCreateur: true }), compteurs);
     expect(o.find(x => x.id === 'comptes')?.compte).toBe(2);
     expect(o.find(x => x.id === 'feries')?.compte).toBe(11);
-    expect(o.find(x => x.id === 'ressources')?.compte).toBe(3);
+    expect(o.find(x => x.id === 'ressources')?.compte).toBe(4);
   });
 });
 

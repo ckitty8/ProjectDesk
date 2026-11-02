@@ -47,7 +47,7 @@ export const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_R
  *  Le code retrouve ces types par leur clé, jamais par leur libellé : le porteur peut les renommer (ex. « Congés payés » → « Congés validé »). */
 export const CLES_ABSENCE = { CP: 'cp', FERIE: 'ferie' };
 
-/** Clé du rôle d'une personne (Administration › Rôles) : un seul rôle par personne depuis le 2026-11-02 (ex-rôle d'accès + ex-rôle projet) */
+/** Clé du rôle d'une personne (Ressources › Paramétrage des rôles) : un seul rôle par personne depuis le 2026-11-02 (ex-rôle d'accès + ex-rôle projet) */
 export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'chef' | 'membre' | 'utilisateur' | 'lecture';
 
 /** Rôles d'accès choisissables, dans l'ordre de la matrice des droits */
@@ -57,7 +57,10 @@ export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 
  *  garde les autres listes. */
 export const REFERENTIELS_RESSOURCES: readonly string[] = ['poste'];
 
-/** Rôles qui s'attribuent à une personne (Administration › Rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
+/** Entrée « Paramétrage des rôles » d'Administration › Ressources (ex-onglet Rôles) : la fiche d'une personne y renvoie (« Modifier dans … ») */
+export const ENTREE_PARAMETRAGE_ROLES = 'parametrage';
+
+/** Rôles qui s'attribuent à une personne (Ressources › Paramétrage des rôles) : « Administrateur » s'y ajoute par une case, il se cumule avec l'un d'eux */
 export const ROLES_ATTRIBUABLES: readonly RoleAcces[] = ROLES_CHOISISSABLES.filter(r => r !== 'admin');
 
 /** Niveau d'un droit dans la matrice */
@@ -158,8 +161,8 @@ export const DROITS: readonly Droit[] = [
   { cle: 'piloter', section: 'dashboard', menu: 'Administration', libelle: 'Envoi du daily par e-mail' },
   { cle: 'onglet_admin_envoi_daily', section: 'dashboard', menu: 'Administration', onglet: 'Envoi du daily', ecran: 'monAdmin', id: 'envoiDaily',
     libelle: 'Envoi du daily par e-mail, projet par projet', repli: 'piloter' },
-  { cle: 'roles', section: 'dashboard', menu: 'Administration', onglet: 'Rôles', ecran: 'monAdmin', id: 'roles',
-    libelle: 'Rôles des utilisateurs et matrice des droits' },
+  { cle: 'roles', section: 'dashboard', menu: 'Administration', onglet: 'Paramétrage des rôles', ecran: 'monAdmin', id: 'roles',
+    libelle: 'Rôles des utilisateurs (Ressources › Paramétrage des rôles) et matrice des droits' },
   { cle: 'nommer_admin', section: 'dashboard', menu: 'Administration', onglet: 'Nommer un administrateur', libelle: 'Nommer ou retirer un administrateur' },
   // Trucs et astuces : un droit par thème (au départ comme l'ancien droit commun « general »)
   { cle: 'onglet_astuces_agile', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Agile', ecran: 'astuces', id: 'agile',

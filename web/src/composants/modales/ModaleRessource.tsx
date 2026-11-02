@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    Nom, poste, type de contrat, capacité, dates de présence, date de naissance (facultative, migration 036 : donnée personnelle, la date complète
    n'apparaît que dans la fiche), email (lien automatique avec son compte). Le rôle (unique, Direction… Lecture seule) est en lecture :
-   il se choisit dans Administration › Rôles
+   il se choisit dans Administration › Ressources › Paramétrage des rôles
    (porteur, 2026-10-13). Création depuis « + Membre » : retour à la fenêtre d'affectation avec la personne sélectionnée.
    ============================================================ */
 import type { FormEvent, ReactNode } from 'react';
@@ -124,7 +124,7 @@ export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffect
               <div>
                 <BadgeRole role={roleDeLaFiche(ctx, fiche)} />
                 {prevu && prevu !== roleDeLaFiche(ctx, fiche) && <> <span className="discret">rôle prévu : {LIBELLES_ROLES[prevu as RoleAcces] ?? prevu}</span></>}
-                {ctx.estAdmin && <> · <button type="button" className="lien-btn" onClick={onRoles}>Modifier dans Administration › Rôles</button></>}
+                {ctx.estAdmin && <> · <button type="button" className="lien-btn" onClick={onRoles}>Modifier dans Administration › Ressources › Paramétrage des rôles</button></>}
               </div>
             </div>
             <div className="projets-fiche">

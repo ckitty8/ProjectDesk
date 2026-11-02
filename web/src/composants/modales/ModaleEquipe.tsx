@@ -140,7 +140,7 @@ export function ModaleEquipe({ id, typeUnite = 'equipe', parentId = null, onFerm
               {id && (
                 <>
                   <div className="libelle">Responsable(s)</div>
-                  <div className="discret">{responsablesDe(ctx, id).map(r => r.nom).join(', ') || 'aucun'} — à choisir dans Administration › Rôles</div>
+                  <div className="discret">{responsablesDe(ctx, id).map(r => r.nom).join(', ') || 'aucun'} — à choisir dans Administration › Ressources › Paramétrage des rôles</div>
                 </>
               )}
             </div>

@@ -27,7 +27,7 @@ import { useSession } from '../donnees/SessionProvider';
 import { equipeVide, rattachesA, rolesDuProjet, selectionAnnuaire, unitesNavigation } from '../domaine/annuaire';
 import type { Choix } from '../domaine/annuaire';
 import { libellePresence } from '../domaine/calculs';
-import { LIBELLES_ROLES } from '../domaine/config';
+import { ENTREE_PARAMETRAGE_ROLES, LIBELLES_ROLES } from '../domaine/config';
 import { aujourdhui } from '../domaine/dates';
 import { estMembreDe, estResponsableDe, peutGererProjet, peutModifierFiche, peutRattacherA, responsablesDe } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
@@ -231,7 +231,7 @@ export function ListeRessources() {
         <ModaleRessource id={ouvert.id} equipeId={ouvert.equipeId} retourProjet={ouvert.retourProjet} onFermer={() => setOuvert(null)}
           onAffecter={id => setOuvert({ genre: 'affectation', ressourceId: id, projetId: null })}
           onRetourAffectation={(id, projetId) => setOuvert({ genre: 'affectation', ressourceId: id, projetId })}
-          onRoles={() => navigate('/administration', { state: { onglet: 'roles' } })} />
+          onRoles={() => navigate('/administration', { state: { onglet: 'ressources', entree: ENTREE_PARAMETRAGE_ROLES } })} />
       )}
       {ouvert?.genre === 'equipe' && <ModaleEquipe id={ouvert.id} typeUnite={ouvert.typeUnite} onFermer={() => setOuvert(null)} />}
     </div>

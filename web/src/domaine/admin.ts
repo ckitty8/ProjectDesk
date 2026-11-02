@@ -6,7 +6,6 @@
    ============================================================ */
 import { COULEURS, DROITS, ENVOI_DAILY_DEFAUT, ROLES_ACCES, ROLES_CHOISISSABLES, SECTIONS_DROITS, MENUS_SANS_DROIT } from './config';
 import type { Droit } from './config';
-import { aujourdhui } from './dates';
 import { ressourcesPresentes } from './vues';
 import { estResponsableDe, mesEquipes, ongletPermis, peutPiloterProjet } from './droits';
 import { resumeDuRole as resumeRoleDe } from './menus';
@@ -35,11 +34,10 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
     ...(ctx.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: n.enAttente }] : []),
     ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: ctx.equipes.length }] : []),
     { id: 'referentiels', libelle: 'Référentiels', compte: n.referentiels },
-    // Ressources (porteur, 2026-11-02) : rôles de projet, profils (postes) et rôles d'accès ; administrateurs
+    // Ressources (porteur, 2026-11-02) : profils (postes), rôles et paramétrage des rôles (ex-onglet Rôles) ; administrateurs
     ...(ctx.estAdmin ? [{ id: 'ressources', libelle: 'Ressources', compte: n.ressources }] : []),
     { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
-    ...(ctx.estAdmin ? [{ id: 'roles', libelle: 'Rôles', compte: ressourcesPresentes(ctx, aujourdhui()).length }] : []),
     // Matrice des droits : créateur seul (elle règle les droits de tous les rôles) ; pas de droit d'onglet dans la matrice
     ...(ctx.estCreateur ? [{ id: 'matrice', libelle: 'Matrice des droits', compte: undefined }] : [])
   ];

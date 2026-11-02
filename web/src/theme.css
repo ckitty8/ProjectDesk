@@ -417,6 +417,11 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .encart-createur { padding: 12px 16px; background: #F5F0FD; border-color: #D9C7F5; }
 /* Champs et boutons : liste déroulante compacte (en-têtes d'écran), bouton plein des écrans de connexion */
 input.champ-nom { width: 100px; height: 28px; font-weight: 600; }
+/* Paramétrage des rôles dans Ressources (2.98) : colonne de droite étroite, le tableau est resserré pour que Rôle et Administrateur restent visibles */
+.colonne-parametrage { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.colonne-parametrage input.champ-nom { width: 76px; }
+.colonne-parametrage .tableau th, .colonne-parametrage .tableau td { padding-left: 6px; padding-right: 6px; }
+.colonne-parametrage .badge { white-space: normal; }
 select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: auto; height: 28px; }
 .btn-connexion { height: 38px; justify-content: center; }
 

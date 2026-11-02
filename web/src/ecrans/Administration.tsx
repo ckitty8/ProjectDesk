@@ -1,7 +1,7 @@
 /* ============================================================
    Mon dashboard › Administration (maquette 10-mAdmin.png ; portage de app/js/ecrans/mon-admin.js — phase 5, vague D)
-   Onglets selon le périmètre puis le droit de chaque onglet (matrice, migration 038) : Comptes en attente et Rôles (administrateurs), Équipes
-   (administrateurs et responsables), Référentiels, Ressources (administrateurs : rôles de projet, profils, rôles d'accès), Jours fériés,
+   Onglets selon le périmètre puis le droit de chaque onglet (matrice, migration 038) : Comptes en attente (administrateurs), Équipes
+   (administrateurs et responsables), Référentiels, Ressources (administrateurs : profils, rôles, paramétrage des rôles), Jours fériés,
    Envoi du daily (projets que je pilote). Les demandes ne sont plus gérées ici (Azure DevOps,
    2026-10-05) ; les sprints sont dans Mon dashboard › Projet › Sprints. Accessible sans équipe ouverte pour un administrateur (création de la première équipe).
    ============================================================ */
@@ -12,7 +12,6 @@ import { EnvoiDaily } from './administration/EnvoiDaily';
 import { JoursFeries } from './administration/JoursFeries';
 import { Referentiels } from './administration/Referentiels';
 import { RessourcesAdmin } from './administration/RessourcesAdmin';
-import { Roles } from './administration/Roles';
 import { Equipes } from './administration/Equipes';
 import { AucunOnglet, EnteteEcran } from '../composants/Carte';
 import { MatriceDroits } from './administration/MatriceDroits';
@@ -26,13 +25,13 @@ import { aDroit } from '../domaine/droits';
 /** Écran Administration : onglets permis au rôle (ongletsAdministration), puis le contenu de l'onglet choisi */
 export function Administration() {
   const { ctx, donnees, comptesEnAttente } = useSession();
-  const { state } = useLocation() as { state: { onglet?: string } | null };
+  const { state } = useLocation() as { state: { onglet?: string; entree?: string } | null };
   const enAttente = comptesEnAttente.filter(c => !c.invite).length;
-  // Onglet par défaut : demandé par l'écran d'origine (fiche › « Modifier dans Administration › Rôles »), sinon les comptes en attente s'il y en a
+  // Onglet par défaut : demandé par l'écran d'origine (fiche › « Modifier dans Ressources › Paramétrage des rôles »), sinon les comptes en attente s'il y en a
   const [choix, setChoix] = useState(state?.onglet ?? '');
   if (!ctx || !donnees) return null;
   const liste = ongletsAdministration(ctx, { enAttente, referentiels: referentielsAffiches(donnees.referentiels, undefined, REFERENTIELS_RESSOURCES).length,
-    ressources: REFERENTIELS_RESSOURCES.length + 1, feries: donnees.joursFeries.length,
+    ressources: REFERENTIELS_RESSOURCES.length + 2, feries: donnees.joursFeries.length,
     envoisActifs: donnees.envoisDaily.filter(x => x.mode !== 'aucun').length });
   const parDefaut = ctx.estAdmin && enAttente ? 'comptes' : '';
   const onglet = (liste.find(o => o.id === (choix || parDefaut)) ?? liste[0])?.id;
@@ -46,10 +45,9 @@ export function Administration() {
           {onglet === 'comptes' && <Comptes />}
           {onglet === 'equipes' && <Equipes />}
           {onglet === 'referentiels' && <Referentiels modifiable={modifieReferentiels} cacher={REFERENTIELS_RESSOURCES} />}
-          {onglet === 'ressources' && <RessourcesAdmin modifiable={modifieReferentiels} />}
+          {onglet === 'ressources' && <RessourcesAdmin modifiable={modifieReferentiels} entreeInitiale={state?.entree} />}
           {onglet === 'feries' && <JoursFeries modifiable={modifieReferentiels} />}
           {onglet === 'envoiDaily' && <EnvoiDaily />}
-          {onglet === 'roles' && <Roles />}
           {onglet === 'matrice' && <MatriceDroits />}
         </>
       )}

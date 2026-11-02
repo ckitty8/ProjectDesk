@@ -177,6 +177,11 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const captureB = nom => page.screenshot({ path: path.join(VAGUE_B, nom + '.png') });
     const menu = fin => page.click(`.laterale a[href$="${fin}"]`);
     // Administration créateur : hors de la barre latérale, on y entre par « Mon profil »
+    // Administration › Ressources › Paramétrage des rôles (ex-onglet Rôles, 2.98)
+    const ouvrirParametrageRoles = async () => {
+      await page.click('[role=tab]:has-text("Ressources")'); await page.waitForSelector('.lien-referentiel');
+      await page.click('.lien-referentiel:has-text("Paramétrage des rôles")'); await page.waitForSelector('.tableau-roles-acces');
+    };
     const ouvrirAdminCreateur = async () => { await page.click('.bloc-moi .avatar'); await page.click('text=Ouvrir l’Administration créateur'); };
 
     // Dashboard : un projet à surveiller ouvre le panneau du projet (lecture seule)
@@ -625,8 +630,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/administration');
     await page.waitForSelector('.onglets');
     await captureD('14-mon-admin');
-    verifier('Administration : onglets de l\'administrateur (comptes, équipes, référentiels, jours fériés, rôles) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
-      && (await page.textContent('.onglets')).includes('Rôles') && (await page.textContent('.onglets')).includes('Référentiels'));
+    verifier('Administration : onglets de l\'administrateur (comptes, équipes, référentiels, ressources, jours fériés) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
+      && (await page.textContent('.onglets')).includes('Ressources') && (await page.textContent('.onglets')).includes('Référentiels'));
     verifier('Administration : l\'onglet « Comptes en attente » s\'ouvre d\'abord quand il y en a', await page.locator('[role=tab][aria-selected=true]:has-text("Comptes en attente")').count() === 1);
     await captureD('26-comptes-en-attente');
     const nbAttente = await page.locator('.tableau tbody tr').count();
@@ -667,15 +672,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[role=tab]:has-text("Ressources")');
     await page.waitForSelector('.lien-referentiel');
     await captureD('10c-ressources');
-    verifier('Administration › Ressources : profil et rôle (plus de rôles de projet)', await page.locator('.lien-referentiel').count() === 2
+    verifier('Administration › Ressources : Profil, Rôle et Paramétrage des rôles (plus de rôles de projet ni d\'onglet Rôles)', await page.locator('.lien-referentiel').count() === 3
       && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 0 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
-      && await page.locator('.lien-referentiel:has-text("Rôle")').count() === 1);
+      && await page.locator('.lien-referentiel:has(span:text-is("Rôle"))').count() === 1 && await page.locator('.lien-referentiel:has-text("Paramétrage des rôles")').count() === 1
+      && await page.locator('[role=tab]:text-is("Rôles")').count() === 0);
     await page.click('.lien-referentiel:has-text("Profil")');
     await page.waitForSelector('input[aria-label="Valeur 1"]');
     verifier('Administration › Ressources : le profil (postes) est une liste modifiable', await page.locator('.carte-titre h2:has-text("Profil")').count() === 1
       && await page.locator('input[aria-label="Nouvelle valeur"]').count() === 1);
-    await page.click('.lien-referentiel:has-text("Rôle")');
-    await page.waitForSelector('.carte-titre h2:has-text("Rôle")');
+    await page.click('.lien-referentiel:has(span:text-is("Rôle"))');
+    await page.waitForSelector('.carte-titre h2:text-is("Rôle")');
     verifier('Administration › Ressources : le rôle est en lecture seule (6 rôles, Administrateur, Créateur), avec périmètre et nombre de personnes', await page.locator('tbody tr').count() === 8
       && await page.locator('input').count() === 0 && (await page.textContent('tbody')).includes('Sa direction et ses équipes') && (await page.textContent('tbody')).includes('Lecture seule'));
     await page.click('[role=tab]:has-text("Référentiels")');
@@ -710,25 +716,24 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.keyboard.press('Escape');
     await page.locator('select[aria-label^="Mode"]').first().selectOption('aucun');
 
-    await page.click('[role=tab]:has-text("Rôles")');
-    await page.waitForSelector('.tableau-roles-acces');
+    await ouvrirParametrageRoles();
     await captureD('31-roles-administration');
-    verifier('Administration › Rôles : utilisateurs et rôles (équipe, projets, compte relié, poste)', await page.locator('.tableau-roles-acces tbody tr').count() >= 12);
+    verifier('Administration › Ressources › Paramétrage des rôles : utilisateurs et rôles (équipe, projets, compte relié, poste)', await page.locator('.tableau-roles-acces tbody tr').count() >= 12);
     await page.selectOption('select[aria-label="Rôle"]', 'lecture');
-    verifier('Administration › Rôles : filtre par rôle', await page.locator('.tableau-roles-acces tbody tr').count() < 12);
+    verifier('Administration › Ressources › Paramétrage des rôles : filtre par rôle', await page.locator('.tableau-roles-acces tbody tr').count() < 12);
     await page.selectOption('select[aria-label="Rôle"]', '');
     await page.fill('input[aria-label="Rechercher une personne"]', 'thomas');
-    verifier('Administration › Rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
+    verifier('Administration › Ressources › Paramétrage des rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
     await page.fill('input[aria-label="Rechercher une personne"]', '');
     // Prénom et nom séparés, modifiables dans la ligne (2.88, 2.89) : enregistrés en quittant le champ, le nom complet est recomposé ; remis ensuite
     const champNom = page.locator('input[aria-label="Nom de Léa Moreau"]');
-    verifier('Administration › Rôles : prénom et nom sont deux champs (découpage du nom complet existant)', await page.locator('input[aria-label="Prénom de Léa Moreau"]').inputValue() === 'Léa'
+    verifier('Administration › Ressources › Paramétrage des rôles : prénom et nom sont deux champs (découpage du nom complet existant)', await page.locator('input[aria-label="Prénom de Léa Moreau"]').inputValue() === 'Léa'
       && await champNom.inputValue() === 'Moreau');
     await champNom.fill('Moreau-Durand');
     await champNom.blur();
     await page.waitForSelector('.notification.visible:has-text("Nom enregistré")');
     await page.waitForSelector('input[aria-label="Nom de Léa Moreau-Durand"]');
-    verifier('Administration › Rôles : le nom se modifie dans la ligne, le nom complet est recomposé', await page.locator('input[aria-label="Prénom de Léa Moreau-Durand"]').inputValue() === 'Léa');
+    verifier('Administration › Ressources › Paramétrage des rôles : le nom se modifie dans la ligne, le nom complet est recomposé', await page.locator('input[aria-label="Prénom de Léa Moreau-Durand"]').inputValue() === 'Léa');
     await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').fill('Moreau');
     await page.locator('input[aria-label="Nom de Léa Moreau-Durand"]').blur();
     await page.waitForSelector('input[aria-label="Nom de Léa Moreau"]');
@@ -737,17 +742,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('input[aria-label="Nom de Camille Laurent"]').fill('Laurent-Test');
     await page.locator('input[aria-label="Nom de Camille Laurent"]').blur();
     await page.waitForFunction(() => document.querySelector('.moi-nom')?.textContent?.includes('Laurent-Test'));
-    verifier('Administration › Rôles : le nom du compte de connexion (sous le menu) suit la fiche', (await page.textContent('.notification')).includes('compte de connexion')
+    verifier('Administration › Ressources › Paramétrage des rôles : le nom du compte de connexion (sous le menu) suit la fiche', (await page.textContent('.notification')).includes('compte de connexion')
       && (await page.textContent('.moi-nom')).includes('Camille Laurent-Test') && nomAvant.includes('Camille'));
     await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').fill('Laurent');
     await page.locator('input[aria-label="Nom de Camille Laurent-Test"]').blur();
     await page.waitForFunction(() => !document.querySelector('.moi-nom')?.textContent?.includes('Laurent-Test'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'chef');
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
-    verifier('Administration › Rôles : un rôle se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
+    verifier('Administration › Ressources › Paramétrage des rôles : un rôle se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
     // Administrateur : la case est réservée au créateur (la base refuse les autres), elle est donc grisée pour une administratrice
-    verifier('Administration › Rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
+    verifier('Administration › Ressources › Paramétrage des rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
 
     /* ---------- Responsable : adresse non permise → redirection ---------- */
     // Le serveur de test ne réécrit pas les adresses (Vercel le fait) : navigation dans la page elle-même
@@ -873,18 +878,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Matrice des droits : un niveau se modifie sur place (enregistré en base, réservé au créateur)', await celluleDroit.inputValue() !== avantNiveau);
     await celluleDroit.selectOption(avantNiveau);
     verifier('Matrice des droits : Administrateur × Rôles figé', await page.locator('select[aria-label="roles · admin"]').isDisabled());
-    await page.click('[role=tab]:has-text("Rôles")');
-    await page.waitForSelector('.tableau-roles-acces');
+    await ouvrirParametrageRoles();
     // Administrateur prévu (migration 047), côté créateur : la case est cochable même pour une fiche sans compte, puis décochable
     const caseAdmin = page.locator('input[aria-label="Administrateur : Léa Moreau"]');
-    verifier('Administration › Rôles : la case Administrateur n\'est pas grisée pour une fiche sans compte (créateur)', await caseAdmin.isEnabled());
+    verifier('Administration › Ressources › Paramétrage des rôles : la case Administrateur n\'est pas grisée pour une fiche sans compte (créateur)', await caseAdmin.isEnabled());
     await caseAdmin.click();   // case contrôlée : son état change après l'enregistrement, d'où click() et non check()
     await page.waitForSelector('.notification.visible:has-text("Administrateur prévu")');
-    verifier('Administration › Rôles : administrateur prévu pour une fiche sans compte, appliqué à sa connexion',
+    verifier('Administration › Ressources › Paramétrage des rôles : administrateur prévu pour une fiche sans compte, appliqué à sa connexion',
       await caseAdmin.isChecked() && (await page.textContent('.tableau-roles-acces')).includes('administrateur prévu'));
     await caseAdmin.click();
     await page.waitForFunction(() => !document.querySelector('.tableau-roles-acces')?.textContent?.includes('administrateur prévu'));
-    verifier('Administration › Rôles : le statut d\'administrateur prévu se retire', !(await caseAdmin.isChecked()));
+    verifier('Administration › Ressources › Paramétrage des rôles : le statut d\'administrateur prévu se retire', !(await caseAdmin.isChecked()));
 
     await ouvrirAdminCreateur();
     await page.waitForSelector('.grille-simulation');

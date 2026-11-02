@@ -3,7 +3,7 @@
    — phase 5, vague D)
    ------------------------------------------------------------
    Assigner une ressource à des projets. « projetId » pré-coche le projet d'origine (« + Membre »). Pas de rôle par
-   affectation : le rôle est celui de la personne (rôle unique, Administration › Rôles, migration 054). Projets proposés : ceux que je peux
+   affectation : le rôle est celui de la personne (rôle unique, Ressources › Paramétrage des rôles, migration 054). Projets proposés : ceux que je peux
    gérer et où j'ai le droit d'affecter (peutAffecterSur), groupés par équipe.
    ============================================================ */
 import { useState } from 'react';

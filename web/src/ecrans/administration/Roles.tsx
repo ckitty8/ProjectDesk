@@ -1,6 +1,6 @@
 /* ============================================================
-   Administration › Rôles : « Utilisateurs et rôles » (administrateurs ; maquettes docs/maquettes/liste-roles/ et affecter-roles/ ; portage de
-   app/js/roles.js — phase 5, vague D)
+   Administration › Ressources › Paramétrage des rôles (ex-onglet Rôles) : « Utilisateurs et rôles » (administrateurs ; maquettes docs/maquettes/liste-roles/,
+   affecter-roles/ et roles-dans-ressources/ ; portage de app/js/roles.js — phase 5, vague D)
    Le rôle d'accès de chaque personne se choisit dans la liste de sa ligne et s'enregistre aussitôt (fonction affecter_role, migration 029). Personne
    pas encore connectée (ou email non vérifié) : rôle prévu, appliqué à sa connexion. Matrice et « qui a quel rôle » : Administration créateur.
    ============================================================ */
@@ -108,7 +108,7 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
         <label className="ligne-flex">
           <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || estLeCreateur} title={nommer ? undefined : 'Réservé au créateur'}
             onChange={e => void actions.definirAdministrateur(r, e.target.checked)} />
-          Administrateur {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
+          {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
         </label>
         {effetAdmin && <div className="discret texte-12">{effetAdmin}</div>}
       </td>
@@ -154,8 +154,8 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Profil</th>
-                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
+                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
+                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th>
               </tr>
             </thead>
             <tbody>

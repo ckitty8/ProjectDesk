@@ -33,7 +33,7 @@ export const AIDES = {
   statutPersonne: '« Actif » ou « Inactif » : une personne devient inactive dès qu’une date de fin est saisie (fiche), ou en cliquant sur « Actif ' +
     '» (date de fin = aujourd’hui) ; cliquer sur « Inactif » la réactive. Les inactifs sont regroupés dans la section repliable « Inactifs ».',
   roleAcces: 'Ce que la personne peut voir et faire : Direction, Responsable d’équipe, Chef de projet, Membre, Utilisateur ou Lecture seule (un seul rôle par personne, ' +
-    'le même sur tous ses projets). Il se choisit dans Administration › Rôles (administrateurs). Personne pas encore connectée, ' +
+    'le même sur tous ses projets). Il se choisit dans Administration › Ressources › Paramétrage des rôles (administrateurs). Personne pas encore connectée, ' +
     'ou email non vérifié : le rôle est prévu et s’applique à sa connexion.',
   valeursListe: 'Renommer une valeur met à jour toutes les fiches qui l’utilisent. Une valeur utilisée ne peut pas être supprimée : passez-la en Inactive.',
   completude: `Heures saisies ÷ heures attendues du mois. Attendu = jours de semaine hors fériés, ` +
@@ -103,10 +103,10 @@ export const GUIDES = {
   roles: { titre: 'Rôles et droits', paragraphes: [
     'Vue d’ensemble : tout le monde consulte tout ; seuls les responsables d’équipe y valident les feuilles de temps (menu Feuilles de temps).',
     'Mon dashboard : vous modifiez ce qui concerne vos équipes et vos projets.',
-    'Le rôle de la personne (Administration › Rôles) décide : Chef de projet gère le projet, Membre saisit ses sprints et mises en production, Utilisateur ne modifie rien.',
+    'Le rôle de la personne (Administration › Ressources › Paramétrage des rôles) décide : Chef de projet gère le projet, Membre saisit ses sprints et mises en production, Utilisateur ne modifie rien.',
     'Rôle dans une équipe : owner et admin invitent des membres et valident les feuilles de temps ; member travaille dans l’équipe.',
     'Administrateur : crée les directions et équipes, gère les listes (référentiels) et les jours fériés, donne l’accès aux comptes en attente.',
-    'Administrateurs : nomment les rôles d’accès de chacun (Administration › Rôles), y compris d’autres administrateurs.',
+    'Administrateurs : nomment les rôles d’accès de chacun (Administration › Ressources › Paramétrage des rôles), y compris d’autres administrateurs.',
     'Créateur (un seul compte, ★ dans le bloc utilisateur) : tous les droits sur toutes les équipes, même sans en être membre.',
     'Compte sans équipe : attend qu’un administrateur lui donne l’accès (Administration › Comptes en attente), puis entre directement.'] }
 } satisfies Record<string, { titre: string; paragraphes: readonly string[] }>;
