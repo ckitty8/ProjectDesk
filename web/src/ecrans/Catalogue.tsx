@@ -44,8 +44,8 @@ const PERSONNES = [
 ];
 
 const TYPES_ABSENCE = [
-  { libelle: 'Congés payés', couleur: '#0F8A6B', abrege: 'CP', actif: true },
-  { libelle: 'Jours férié', couleur: '#8A93A3', abrege: 'JF', actif: true }
+  { libelle: 'Congés payés', cle: 'cp', couleur: '#0F8A6B', abrege: 'CP', actif: true },
+  { libelle: 'Jours férié', cle: 'ferie', couleur: '#8A93A3', abrege: 'JF', actif: true }
 ];
 
 export function Catalogue() {

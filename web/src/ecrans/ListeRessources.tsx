@@ -45,6 +45,7 @@ type Ouvert =
   | { genre: 'equipe'; id: string | null; typeUnite?: string }
   | null;
 
+/** Mon dashboard › Liste des ressources : navigation (équipes, projets, profils, contrats) à gauche, détail de l'élément choisi à droite */
 export function ListeRessources() {
   const { ctx, donnees, equipeCourante, executer } = useSession();
   const navigate = useNavigate();

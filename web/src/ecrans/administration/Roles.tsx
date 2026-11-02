@@ -12,26 +12,16 @@ import { executer as appelerFonction, modifier } from '../../donnees/api';
 import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
 import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
-import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
+import { COULEURS, ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
 import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
 import { projetsAvecRoleDe, ressourcesPresentes } from '../../domaine/vues';
 
-export function Roles() {
-  const { ctx, donnees, notifier, actualiser, executer } = useSession();
-  const [recherche, setRecherche] = useState('');
-  const [equipe, setEquipe] = useState('');
-  const [role, setRole] = useState('');
-  if (!ctx || !donnees) return null;
-  const texte = recherche.trim().toLowerCase();
-  const personnes = ressourcesPresentes(donnees, aujourdhui())
-    .filter(r => !equipe || r.equipeId === equipe).filter(r => !role || roleChoisi(ctx, r) === role)
-    .filter(r => !texte || `${r.nom} ${r.email ?? ''}`.toLowerCase().includes(texte))
-    .sort((a, b) => (donnees.equipes.find(e => e.id === a.equipeId)?.nom ?? '').localeCompare(donnees.equipes.find(e => e.id === b.equipeId)?.nom ?? '') || a.nom.localeCompare(b.nom));
-  // Nommer un administrateur : droit de la matrice ET créateur (la fonction affecter_administrateur de la base est réservée au créateur)
-  const nommer = aDroit(ctx, 'nommer_admin') && ctx.estCreateur, verrou = !aDroit(ctx, 'roles');
+/** Actions de l'écran : chacune appelle la base (la base contrôle le droit), relit les données puis confirme par un message */
+function useActionsRoles() {
+  const { ctx, notifier, actualiser, executer } = useSession();
 
   // Rôle d'accès choisi dans la liste d'une ligne (administrateurs ; la base contrôle le droit)
   async function affecter(r: Ressource, nouveau: string) {
@@ -70,47 +60,78 @@ export function Roles() {
     } catch (e) { notifier((e as Error).message, 'erreur'); }
   }
 
-  const ligne = (r: Ressource) => {
-    const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
-    const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
-    // Administrateur : case à part, cumulée avec le rôle ; cochée ou décochée par le créateur seul, pour toute fiche : sans compte, le statut
-    // est « prévu » et s'applique à la première connexion (migration 047)
-    const adminPrevu = estAdministrateurPrevu(ctx, r), admin = estAdministrateur(ctx, r) || adminPrevu;
-    const estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
-    const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
-    const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
-    return (
-      <tr key={r.id}>
-        <td>
-          <span className="ligne-flex">
-            <Avatar nom={r.nom} />
-            <ChampsNom key={r.id + r.nom + (r.prenom ?? '') + (r.nomFamille ?? '')} r={r} modifiable={peutModifierFiche(ctx, r)} enregistrer={(p, n) => renommer(r, p, n)} />
-          </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
-        <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? '#8A93A3'} />{eq?.nom}</span></td>
-        <td>
-          {projetsAvecRoleDe(donnees, r.id).filter(x => donnees.affectations.some(a => a.ressourceId === r.id && a.projetId === x.projet.id))
-            .map(x => <div key={x.projet.id} className="ligne-flex projet-role">{x.projet.nom} <span className="discret texte-12">· {x.role}</span></div>)}
-          {!donnees.affectations.some(a => a.ressourceId === r.id) && <span className="pale">aucun projet</span>}
-        </td>
-        <td>{r.userId ? <BadgeTon texte="Compte lié" ton="succes" /> : <BadgeTon texte="Pas encore connecté" ton="attention" />}</td>
-        <td>{r.poste || '—'}</td>
-        <td>
-          <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={choisi} disabled={verrou} onChange={e => void affecter(r, e.target.value)}>
-            {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
-          </select>
-          {effet && <div className="discret texte-12">{effet}</div>}
-        </td>
-        <td>
-          <label className="ligne-flex">
-            <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || estLeCreateur} title={nommer ? undefined : 'Réservé au créateur'}
-              onChange={e => void definirAdministrateur(r, e.target.checked)} />
-            Administrateur {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
-          </label>
-          {effetAdmin && <div className="discret texte-12">{effetAdmin}</div>}
-        </td>
-      </tr>
-    );
-  };
+  return { affecter, renommer, definirAdministrateur };
+}
+
+interface PropsLigneRole {
+  r: Ressource;
+  /** Peut nommer un administrateur : droit de la matrice ET créateur (la fonction affecter_administrateur de la base est réservée au créateur) */
+  nommer: boolean;
+  /** Rôles verrouillés : le droit « roles » de la matrice n'est pas accordé */
+  verrou: boolean;
+  actions: ReturnType<typeof useActionsRoles>;
+}
+
+/** Une personne : nom et prénom modifiables, équipe, projets, compte, profil, rôle d'accès (liste) et case « Administrateur » */
+function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
+  const { ctx, donnees } = useSession();
+  if (!ctx || !donnees) return null;
+  const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
+  const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
+  // Administrateur : case à part, cumulée avec le rôle ; cochée ou décochée par le créateur seul, pour toute fiche : sans compte, le statut
+  // est « prévu » et s'applique à la première connexion (migration 047)
+  const adminPrevu = estAdministrateurPrevu(ctx, r), admin = estAdministrateur(ctx, r) || adminPrevu;
+  const estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
+  const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
+  const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
+  return (
+    <tr>
+      <td>
+        <span className="ligne-flex">
+          <Avatar nom={r.nom} />
+          <ChampsNom key={r.id + r.nom + (r.prenom ?? '') + (r.nomFamille ?? '')} r={r} modifiable={peutModifierFiche(ctx, r)} enregistrer={(p, n) => actions.renommer(r, p, n)} />
+        </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
+      <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? COULEURS.pale} />{eq?.nom}</span></td>
+      <td>
+        {projetsAvecRoleDe(donnees, r.id).filter(x => donnees.affectations.some(a => a.ressourceId === r.id && a.projetId === x.projet.id))
+          .map(x => <div key={x.projet.id} className="ligne-flex projet-role">{x.projet.nom} <span className="discret texte-12">· {x.role}</span></div>)}
+        {!donnees.affectations.some(a => a.ressourceId === r.id) && <span className="pale">aucun projet</span>}
+      </td>
+      <td>{r.userId ? <BadgeTon texte="Compte lié" ton="succes" /> : <BadgeTon texte="Pas encore connecté" ton="attention" />}</td>
+      <td>{r.poste || '—'}</td>
+      <td>
+        <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={choisi} disabled={verrou} onChange={e => void actions.affecter(r, e.target.value)}>
+          {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
+        </select>
+        {effet && <div className="discret texte-12">{effet}</div>}
+      </td>
+      <td>
+        <label className="ligne-flex">
+          <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!nommer || estLeCreateur} title={nommer ? undefined : 'Réservé au créateur'}
+            onChange={e => void actions.definirAdministrateur(r, e.target.checked)} />
+          Administrateur {estLeCreateur && <span className="discret texte-12">(créateur)</span>}
+        </label>
+        {effetAdmin && <div className="discret texte-12">{effetAdmin}</div>}
+      </td>
+    </tr>
+  );
+}
+
+/** Onglet Rôles : filtres (texte, équipe, rôle) puis une ligne par personne présente, triée par équipe puis par nom */
+export function Roles() {
+  const { ctx, donnees } = useSession();
+  const actions = useActionsRoles();
+  const [recherche, setRecherche] = useState('');
+  const [equipe, setEquipe] = useState('');
+  const [role, setRole] = useState('');
+  if (!ctx || !donnees) return null;
+  const texte = recherche.trim().toLowerCase();
+  const nomEquipe = (id: string) => donnees.equipes.find(e => e.id === id)?.nom ?? '';
+  const personnes = ressourcesPresentes(donnees, aujourdhui())
+    .filter(r => !equipe || r.equipeId === equipe).filter(r => !role || roleChoisi(ctx, r) === role)
+    .filter(r => !texte || `${r.nom} ${r.email ?? ''}`.toLowerCase().includes(texte))
+    .sort((a, b) => nomEquipe(a.equipeId).localeCompare(nomEquipe(b.equipeId)) || a.nom.localeCompare(b.nom));
+  const nommer = aDroit(ctx, 'nommer_admin') && ctx.estCreateur, verrou = !aDroit(ctx, 'roles');
 
   return (
     <>
@@ -138,7 +159,10 @@ export function Roles() {
                 <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
               </tr>
             </thead>
-            <tbody>{personnes.length === 0 ? <tr><td colSpan={7}><Vide texte="Personne ne correspond aux filtres." /></td></tr> : personnes.map(ligne)}</tbody>
+            <tbody>
+              {personnes.length === 0 ? <tr><td colSpan={7}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
+                : personnes.map(r => <LigneRole key={r.id} r={r} nommer={nommer} verrou={verrou} actions={actions} />)}
+            </tbody>
           </table>
         </div>
       </Carte>
@@ -146,9 +170,10 @@ export function Roles() {
   );
 }
 
+interface PropsNom { r: Ressource; modifiable: boolean; enregistrer: (prenom: string, nomFamille: string) => Promise<boolean> }
+
 /** Prénom et nom d'une personne dans sa ligne : deux champs enregistrés en quittant l'un d'eux (Entrée valide, Échap annule) ; remis à
  *  leur valeur si l'enregistrement échoue. Le composant est recréé (clé de la ligne) quand les données changent. */
-interface PropsNom { r: Ressource; modifiable: boolean; enregistrer: (prenom: string, nomFamille: string) => Promise<boolean> }
 function ChampsNom({ r, modifiable, enregistrer }: PropsNom) {
   const initial = prenomEtNom(r);
   const [prenom, setPrenom] = useState(initial.prenom);

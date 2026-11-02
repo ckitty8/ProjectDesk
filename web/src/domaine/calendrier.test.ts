@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { abregeAbsence, caseJour, contexteMois, totalAbsences } from './calendrier';
 import type { TypeAbsence } from './calendrier';
 
-const CP: TypeAbsence = { libelle: 'Congés payés', couleur: '#0F8A6B', abrege: 'CP', actif: true };
-const FERIE: TypeAbsence = { libelle: 'Jours férié', couleur: '#8A93A3', abrege: 'JF', actif: true };
+const CP: TypeAbsence = { libelle: 'Congés payés', cle: 'cp', couleur: '#0F8A6B', abrege: 'CP', actif: true };
+const FERIE: TypeAbsence = { libelle: 'Jours férié', cle: 'ferie', couleur: '#8A93A3', abrege: 'JF', actif: true };
 const thomas = { id: 'r-thomas', dateNaissance: '1990-11-05' };
 
 // Novembre 2026 : le 1er est un dimanche ; férié le mercredi 11
@@ -29,6 +29,8 @@ describe('calendrier mensuel', () => {
 
   it('retombe sur « F » (sans type) si le type « Jours férié » est désactivé', () => {
     expect(caseJour(ctx(false, [CP, { ...FERIE, actif: false }]), thomas, '2026-11-11').ferie?.type).toBeNull();
+    // Type renommé en Administration › Référentiels : reconnu par sa clé technique, pas par son libellé
+    expect(caseJour(ctx(false, [CP, { ...FERIE, libelle: 'Férié' }]), thomas, '2026-11-11').ferie?.type?.libelle).toBe('Férié');
   });
 
   it('décompte une journée entière et une demi-journée', () => {

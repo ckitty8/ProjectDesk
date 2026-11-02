@@ -7,7 +7,7 @@
    paramètre (compte connecté, simulation éventuelle, données chargées), jamais dans une variable globale.
    ============================================================ */
 import { DROITS, ROLES_CHOISISSABLES, ROLES_PROJET } from './config';
-import type { Niveau, RoleAcces } from './config';
+import type { Niveau } from './config';
 import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
 
 /** Simulation de rôle (créateur seul) : le rôle de la carte s'applique à la fiche choisie */
@@ -284,5 +284,3 @@ export function suisChefDuProjet(ctx: ContexteDroits, p: Projet): boolean {
 export const peutPiloterProjet = (ctx: ContexteDroits, p: Projet): boolean =>
   (ctx.estAdmin || suisChefDuProjet(ctx, p) || suisResponsableDuProjet(ctx, p)) && aDroit(ctx, 'piloter');
 
-/** Un rôle d'accès connu de la matrice ? */
-export const estRoleAcces = (role: string): role is RoleAcces => (ROLES_CHOISISSABLES as readonly string[]).includes(role);

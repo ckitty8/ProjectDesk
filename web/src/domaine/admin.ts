@@ -23,10 +23,11 @@ export interface CompteEnAttente { userId: string; nom: string; email: string; i
 
 export interface OngletAdmin { id: string; libelle: string; compte?: number }
 
-/** Onglets : d'abord le périmètre (comptes et rôles : administrateurs ; équipes : administrateurs et responsables ; envoi du daily : projets que
- *  je pilote), puis le droit de chaque onglet (matrice, migration 038). Les compteurs sont ceux de l'ancien écran. */
+/** Nombres affichés à côté des onglets (comptes en attente, référentiels, ressources, jours fériés, envois du daily actifs) */
 export interface CompteursAdmin { enAttente: number; referentiels: number; ressources: number; feries: number; envoisActifs: number }
 
+/** Onglets : d'abord le périmètre (comptes, ressources et rôles : administrateurs ; équipes : administrateurs et responsables ; envoi du daily :
+ *  projets que je pilote), puis le droit de chaque onglet (matrice, migration 038). Les compteurs sont ceux de l'ancien écran. */
 export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): OngletAdmin[] {
   const gereEquipes = ctx.estAdmin || mesEquipes(ctx).some(e => estResponsableDe(ctx, e.id));
   const regleEnvois = ctx.projets.some(p => projetEnCours(p) && peutPiloterProjet(ctx, p));
@@ -74,10 +75,11 @@ export function rolesAffiches(ctx: ContexteDroits): RoleAffiche[] {
   ];
 }
 
-/** Chaque fiche active est rangée sous le rôle choisi dans « Utilisateurs et rôles » (prévu s'il y en a un, sinon actuel), avec son équipe et l'état de
- *  son compte (lié, prévu, sans compte) ; les comptes en attente forment le dernier groupe. Présenté en tableau (porteur 2026-10-27). */
+/** Personnes rangées par rôle : nom, équipe et état du compte de chacune */
 export type GroupesParRole = Record<string, { nom: string; equipe: string; compte: string }[]>;
 
+/** Chaque fiche active est rangée sous le rôle choisi dans « Utilisateurs et rôles » (prévu s'il y en a un, sinon actuel), avec son équipe et l'état de
+ *  son compte (lié, prévu, sans compte) ; les comptes en attente forment le dernier groupe. Présenté en tableau (porteur 2026-10-27). */
 export function parRole(ctx: ContexteDroits, jour: Iso, enAttente: readonly CompteEnAttente[]): GroupesParRole {
   const groupes: GroupesParRole = Object.fromEntries([...ROLES_CHOISISSABLES, 'sansEquipe'].map(c => [c, []]));
   ressourcesPresentes(ctx, jour).forEach(r => {

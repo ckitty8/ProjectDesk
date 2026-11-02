@@ -17,6 +17,7 @@ import { aujourdhui } from '../domaine/dates';
 import { peutEditerProjet } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
 import { personnesProposees } from '../domaine/vues';
+import { COULEURS } from '../domaine/config';
 
 interface Props {
   projetId: string;
@@ -53,7 +54,7 @@ export function PanneauProjet({ projetId, onFermer, section = 'general', onAssig
     if (reussi) onFermer();
   }
 
-  const surtitre = equipe && <div className="ligne-flex discret"><Pastille couleur={equipe.couleur ?? '#8A93A3'} />{equipe.nom}</div>;
+  const surtitre = equipe && <div className="ligne-flex discret"><Pastille couleur={equipe.couleur ?? COULEURS.pale} />{equipe.nom}</div>;
   const corps = (
     <>
       {modifiable

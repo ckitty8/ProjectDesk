@@ -14,8 +14,9 @@ import { Carte } from '../../composants/Carte';
 import { creer, modifier } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { COULEURS } from '../../domaine/config';
-import { valeursDe } from '../../domaine/referentiels';
+import { referentielsAffiches, valeursDe } from '../../domaine/referentiels';
 import { AIDES } from '../../domaine/textes';
+import type { Referentiel } from '../../domaine/types';
 
 /** Entrée de la liste de gauche qui n'est pas un référentiel en base (ex. les rôles d'accès, fixes) : son contenu s'affiche à droite, en lecture seule */
 export interface EntreeLecture { id: string; nom: string; compte: number; contenu: ReactNode }
@@ -29,14 +30,11 @@ interface PropsReferentiels {
   extras?: readonly EntreeLecture[];
 }
 
-export function Referentiels({ modifiable, montrer, cacher = [], extras = [] }: PropsReferentiels) {
+/** Valeurs d'un référentiel : tableau (renommer, recolorer, activer si modifiable) et ligne d'ajout */
+function PanneauReferentiel({ referentiel, modifiable }: { referentiel: Referentiel; modifiable: boolean }) {
   const { donnees, executer } = useSession();
-  const [choisi, setChoisi] = useState('');
   if (!donnees) return null;
-  const listes = donnees.referentiels.filter(r => (!montrer || montrer.includes(r.id)) && !cacher.includes(r.id));
-  const extra = extras.find(x => x.id === choisi);
-  const ref = extra ? undefined : (listes.find(r => r.id === choisi) ?? listes[0]);
-  const valeurs = ref ? valeursDe(donnees.valeurs, ref.id, true) : [];
+  const valeurs = valeursDe(donnees.valeurs, referentiel.id, true);
 
   // Renommer : la base propage le nouveau libellé aux données (projets, affectations…)
   const renommer = (id: string, actuel: string, libelle: string) => {
@@ -45,62 +43,80 @@ export function Referentiels({ modifiable, montrer, cacher = [], extras = [] }: 
   async function ajouter(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, libelle = String(new FormData(form).get('libelle') ?? '').trim();
-    if (!ref || !libelle) return;
-    if (await executer(() => creer('valeurs_referentiel', { referentielId: ref.id, libelle, ordre: valeurs.length + 1, couleur: COULEURS.neutre }), 'valeurs')) form.reset();
+    if (!libelle) return;
+    if (await executer(() => creer('valeurs_referentiel', { referentielId: referentiel.id, libelle, ordre: valeurs.length + 1, couleur: COULEURS.neutre }), 'valeurs')) form.reset();
   }
 
+  return (
+    <Carte>
+      <div className="carte-titre"><h2>{referentiel.nom} {valeurs.some(v => v.systeme) && <Aide texte={AIDES.referentielSysteme} />}</h2></div>
+      <table className="tableau">
+        <thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead>
+        <tbody>
+          {valeurs.map((v, i) => (
+            <tr key={v.id ?? v.libelle}>
+              <td className="pale">{i + 1}</td>
+              <td>
+                {modifiable
+                  ? <input key={v.libelle} className="champ" defaultValue={v.libelle} aria-label={`Valeur ${i + 1}`} onBlur={e => renommer(v.id ?? '', v.libelle, e.target.value)} />
+                  : v.libelle}
+                {v.systeme && <span className="pale" title="Utilisée par les calculs : renommable (les données suivent), non supprimable"> · système</span>}
+              </td>
+              <td>
+                {modifiable
+                  ? <input type="color" className="couleur-choix" defaultValue={v.couleur} aria-label={`Couleur ${v.libelle}`}
+                    onBlur={e => { if (e.target.value !== v.couleur) void executer(() => modifier('valeurs_referentiel', { id: 'eq.' + v.id }, { couleur: e.target.value }), 'valeurs'); }} />
+                  : <Pastille couleur={v.couleur} />}
+              </td>
+              <td>
+                {modifiable
+                  ? <button type="button" className={'interrupteur' + (v.actif ? ' actif' : '')} aria-label={`Activer ${v.libelle}`} aria-pressed={v.actif}
+                    onClick={() => void executer(() => modifier('valeurs_referentiel', { id: 'eq.' + v.id }, { actif: !v.actif }), 'valeurs')} />
+                  : (v.actif ? 'Oui' : <span className="pale">Non</span>)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {modifiable && (
+        <form className="ligne-flex encart-compact" onSubmit={e => void ajouter(e)}>
+          <input className="champ" name="libelle" placeholder="Nouvelle valeur" required aria-label="Nouvelle valeur" /><Bouton type="submit">Ajouter</Bouton>
+        </form>
+      )}
+    </Carte>
+  );
+}
+
+/** Lien de la liste de gauche (référentiel ou entrée en lecture seule) : le clic choisit ce qui s'affiche à droite */
+function LienListe({ nom, compte, courant, onChoisir }: { nom: string; compte: number; courant: boolean; onChoisir: () => void }) {
+  return (
+    <a className={'menu-lien lien-referentiel' + (courant ? ' ligne-courante' : '')} role="button" tabIndex={0} onClick={onChoisir}
+      onKeyDown={e => { if (e.key === 'Enter') onChoisir(); }}>
+      <span>{nom}</span><span className="pale">{compte}</span>
+    </a>
+  );
+}
+
+/** Liste des référentiels à gauche, valeurs du référentiel choisi (ou contenu d'une entrée en lecture seule) à droite */
+export function Referentiels({ modifiable, montrer, cacher = [], extras = [] }: PropsReferentiels) {
+  const { donnees } = useSession();
+  const [choisi, setChoisi] = useState('');
+  if (!donnees) return null;
+  const listes = referentielsAffiches(donnees.referentiels, montrer, cacher);
+  const extra = extras.find(x => x.id === choisi);
+  const courant = extra ? undefined : (listes.find(r => r.id === choisi) ?? listes[0]);
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '240px minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
       <Carte classe="liste-referentiels"><div style={{ padding: 8 }}>
         {listes.map(r => (
-          <a key={r.id} className={'menu-lien lien-referentiel' + (r.id === ref?.id ? ' ligne-courante' : '')} role="button" tabIndex={0} onClick={() => setChoisi(r.id)}
-            onKeyDown={e => { if (e.key === 'Enter') setChoisi(r.id); }}>
-            <span>{r.nom}</span><span className="pale">{valeursDe(donnees.valeurs, r.id, true).length}</span>
-          </a>
+          <LienListe key={r.id} nom={r.nom} compte={valeursDe(donnees.valeurs, r.id, true).length} courant={r.id === courant?.id}
+            onChoisir={() => setChoisi(r.id)} />
         ))}
         {extras.map(x => (
-          <a key={x.id} className={'menu-lien lien-referentiel' + (x.id === extra?.id ? ' ligne-courante' : '')} role="button" tabIndex={0} onClick={() => setChoisi(x.id)}
-            onKeyDown={e => { if (e.key === 'Enter') setChoisi(x.id); }}>
-            <span>{x.nom}</span><span className="pale">{x.compte}</span>
-          </a>
+          <LienListe key={x.id} nom={x.nom} compte={x.compte} courant={x.id === extra?.id} onChoisir={() => setChoisi(x.id)} />
         ))}
       </div></Carte>
-      {extra ? extra.contenu : ref && (<Carte>
-        <div className="carte-titre"><h2>{ref.nom} {valeurs.some(v => v.systeme) && <Aide texte={AIDES.referentielSysteme} />}</h2></div>
-        <table className="tableau">
-          <thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead>
-          <tbody>
-            {valeurs.map((v, i) => (
-              <tr key={v.id ?? v.libelle}>
-                <td className="pale">{i + 1}</td>
-                <td>
-                  {modifiable
-                    ? <input key={v.libelle} className="champ" defaultValue={v.libelle} aria-label={`Valeur ${i + 1}`} onBlur={e => renommer(v.id ?? '', v.libelle, e.target.value)} />
-                    : v.libelle}
-                  {v.systeme && <span className="pale" title="Utilisée par les calculs : renommable (les données suivent), non supprimable"> · système</span>}
-                </td>
-                <td>
-                  {modifiable
-                    ? <input type="color" className="couleur-choix" defaultValue={v.couleur} aria-label={`Couleur ${v.libelle}`}
-                      onBlur={e => { if (e.target.value !== v.couleur) void executer(() => modifier('valeurs_referentiel', { id: 'eq.' + v.id }, { couleur: e.target.value }), 'valeurs'); }} />
-                    : <Pastille couleur={v.couleur} />}
-                </td>
-                <td>
-                  {modifiable
-                    ? <button type="button" className={'interrupteur' + (v.actif ? ' actif' : '')} aria-label={`Activer ${v.libelle}`} aria-pressed={v.actif}
-                      onClick={() => void executer(() => modifier('valeurs_referentiel', { id: 'eq.' + v.id }, { actif: !v.actif }), 'valeurs')} />
-                    : (v.actif ? 'Oui' : <span className="pale">Non</span>)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {modifiable && (
-          <form className="ligne-flex encart-compact" onSubmit={e => void ajouter(e)}>
-            <input className="champ" name="libelle" placeholder="Nouvelle valeur" required aria-label="Nouvelle valeur" /><Bouton type="submit">Ajouter</Bouton>
-          </form>
-        )}
-      </Carte>)}
+      {extra ? extra.contenu : courant && <PanneauReferentiel referentiel={courant} modifiable={modifiable} />}
     </div>
   );
 }

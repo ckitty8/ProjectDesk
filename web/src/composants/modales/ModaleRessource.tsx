@@ -32,6 +32,7 @@ interface Props {
   onRoles: () => void;
 }
 
+/** Fiche d'une personne (création ou modification) : prénom, nom, profil, contrat, dates, rôle d'accès en lecture et ses projets */
 export function ModaleRessource({ id, equipeId, retourProjet, onFermer, onAffecter, onRetourAffectation, onRoles }: Props) {
   const { ctx, donnees, executer, notifier, actualiser } = useSession();
   if (!ctx || !donnees) return null;

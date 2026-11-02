@@ -9,7 +9,7 @@
    - une demi-journée (durée 0,5) est marquée « ½ » et compte pour 0,5 ;
    - en lecture seule, un jour sans absence qui est l'anniversaire de la personne porte 🎂.
    ============================================================ */
-import { ABSENCES } from './config';
+import { CLES_ABSENCE } from './config';
 import { dureeAbsence, estAnniversaire } from './calculs';
 import { estJourOuvre, joursDuMois } from './dates';
 import type { Absence, Iso, Ressource } from './types';
@@ -17,6 +17,8 @@ import type { Absence, Iso, Ressource } from './types';
 /** Type d'absence (valeur du référentiel « abs ») */
 export interface TypeAbsence {
   libelle: string;
+  /** Clé technique d'un type système (CLES_ABSENCE) */
+  cle?: string | null;
   couleur: string;
   abrege?: string | null;
   actif: boolean;
@@ -66,7 +68,7 @@ export interface CaseJour {
 export function caseJour(ctx: ContexteMois, ressource: Pick<Ressource, 'id' | 'dateNaissance'>, jour: Iso): CaseJour {
   const libelleFerie = ctx.feries.get(jour);
   const ferme = !estJourOuvre(jour, new Set(ctx.feries.keys()));
-  const typeFerie = ctx.types.find(t => t.libelle === ABSENCES.FERIE && t.actif) ?? null;
+  const typeFerie = ctx.types.find(t => t.cle === CLES_ABSENCE.FERIE && t.actif) ?? null;
   const ferie = libelleFerie === undefined ? null : { libelle: libelleFerie, type: typeFerie };
   if (ferme) return { ferme, ferie, absence: null, anniversaire: false, jours: 0 };
   const saisie = ctx.absences.get(`${ressource.id}|${jour}`);

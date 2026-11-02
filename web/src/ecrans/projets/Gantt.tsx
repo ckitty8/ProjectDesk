@@ -40,8 +40,30 @@ function LosangeMep({ m, per }: { m: MepDatee; per: PeriodePlanning }) {
   return <div className="gantt-mep" style={{ left: `${per.position(m.jour)}%`, color: TONS[statut.ton].texte }} title={titre}><i className="losange" />{m.version || 'MEP'}</div>;
 }
 
+interface PropsLigne { p: Projet; per: PeriodePlanning; jour: string; onOuvrir: (projetId: string) => void }
+
+/** Ligne d'un projet : son nom (clic = panneau), puis sur la piste l'échelle, aujourd'hui, ses sprints et ses MEP de la période */
+function LigneGantt({ p, per, jour, onOuvrir }: PropsLigne) {
+  const { donnees } = useSession();
+  if (!donnees) return null;
+  const sprints = sprintsDuProjet(donnees.sprintsProjet, p.id).filter(s => dansPeriode(per, s.debut, s.fin));
+  const meps = misesEnProductionDe(donnees.misesEnProduction, [p]).filter(m => dansPeriode(per, m.jour, m.jour));
+  return (
+    <div className="gantt-ligne">
+      <div><button type="button" className="lien-btn gantt-projet" onClick={() => onOuvrir(p.id)}>{p.nom}</button></div>
+      <div className="gantt-piste">
+        {per.graduations.map(g => <div key={g.libelle + g.gauche} className="gantt-trait" style={{ left: `${g.gauche}%` }} />)}
+        {jour >= per.debut && jour <= per.fin && <div className="gantt-jour" style={{ left: `${per.position(jour)}%` }} />}
+        {sprints.map(s => <BarreSprint key={s.numero} s={s} per={per} jour={jour} />)}
+        {meps.map(m => <LosangeMep key={m.id ?? m.jour} m={m} per={per} />)}
+      </div>
+    </div>
+  );
+}
+
 interface PropsGantt { projets: readonly Projet[]; equipes: readonly Equipe[]; onOuvrir: (projetId: string) => void }
 
+/** Onglet Gantt : barre d'outils (période, zoom, filtre projet), puis les projets groupés par équipe, une ligne chacun */
 export function Gantt({ projets, equipes, onOuvrir }: PropsGantt) {
   const { donnees } = useSession();
   const [zoom, setZoom] = useState<ZoomGantt>('mois');
@@ -54,22 +76,6 @@ export function Gantt({ projets, equipes, onOuvrir }: PropsGantt) {
   const visibles = projets.filter(p => projetId === 'tous' || p.id === projetId);
   const groupes = equipes.map(e => ({ e, siens: visibles.filter(p => p.equipeId === e.id) })).filter(g => g.siens.length);
   const changerZoom = (z: ZoomGantt) => { setZoom(z); setChoisi(null); };
-
-  const ligne = (p: Projet) => {
-    const sprints = sprintsDuProjet(donnees.sprintsProjet, p.id).filter(s => dansPeriode(per, s.debut, s.fin));
-    const meps = misesEnProductionDe(donnees.misesEnProduction, [p]).filter(m => dansPeriode(per, m.jour, m.jour));
-    return (
-      <div key={p.id} className="gantt-ligne">
-        <div><button type="button" className="lien-btn gantt-projet" onClick={() => onOuvrir(p.id)}>{p.nom}</button></div>
-        <div className="gantt-piste">
-          {per.graduations.map(g => <div key={g.libelle + g.gauche} className="gantt-trait" style={{ left: `${g.gauche}%` }} />)}
-          {jour >= per.debut && jour <= per.fin && <div className="gantt-jour" style={{ left: `${per.position(jour)}%` }} />}
-          {sprints.map(s => <BarreSprint key={s.numero} s={s} per={per} jour={jour} />)}
-          {meps.map(m => <LosangeMep key={m.id ?? m.jour} m={m} per={per} />)}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <>
@@ -97,7 +103,7 @@ export function Gantt({ projets, equipes, onOuvrir }: PropsGantt) {
         {groupes.map(({ e, siens }) => (
           <div key={e.id}>
             <div className="gantt-groupe"><span className="ligne-flex"><Pastille couleur={e.couleur ?? COULEURS.pale} />{e.nom}<span className="discret poids-normal">{siens.length} projets</span></span></div>
-            {siens.map(ligne)}
+            {siens.map(p => <LigneGantt key={p.id} p={p} per={per} jour={jour} onOuvrir={onOuvrir} />)}
           </div>
         ))}
       </Carte>

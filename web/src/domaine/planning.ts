@@ -75,6 +75,7 @@ function segments(debut: Iso, zoom: ZoomGantt): { libelle: string; debut: Iso; f
   });
 }
 
+/** Période affichée à partir de son premier jour : dates de fin, graduations de l'échelle (selon le zoom) et position d'une date en % */
 export function periodePlanning(debut: Iso, zoom: ZoomGantt = 'mois'): PeriodePlanning {
   const parts = segments(debut, zoom);
   const fin = parts[parts.length - 1]?.fin ?? debut;

@@ -11,7 +11,8 @@ import { Carte, Vide } from '../../composants/Carte';
 import { creer, modifier, supprimer } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { feriePar } from '../../domaine/admin';
-import { ABSENCES } from '../../domaine/config';
+import { CLES_ABSENCE } from '../../domaine/config';
+import { valeurParCle } from '../../domaine/referentiels';
 import { aujourdhui, formatAvecAnnee } from '../../domaine/dates';
 import { AIDES } from '../../domaine/textes';
 
@@ -69,7 +70,7 @@ export function JoursFeries({ modifiable }: { modifiable: boolean }) {
         </form>
       )}
       <div className="discret" style={{ fontSize: 12, padding: '0 16px 14px' }}>
-        Affichés dans les calendriers avec le type « {ABSENCES.FERIE} » ; non comptés comme jours ouvrés (capacité, timesheet).
+        Affichés dans les calendriers avec le type « {valeurParCle(donnees.valeurs, 'abs', CLES_ABSENCE.FERIE)?.libelle ?? 'jour férié'} » ; non comptés comme jours ouvrés (capacité, timesheet).
       </div>
     </Carte>
   );

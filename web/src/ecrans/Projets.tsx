@@ -21,6 +21,7 @@ import { formatCourt, pourcent } from '../domaine/dates';
 import { AIDES } from '../domaine/textes';
 import type { Projet } from '../domaine/types';
 
+/** Menu Projet de Vue d’ensemble : onglet Gantt (sprints et MEP) ou Liste (avancement), filtre par équipe commun, panneau de détail au clic */
 export function Projets() {
   const { donnees } = useSession();
   const [equipeId, setEquipeId] = useState('toutes');

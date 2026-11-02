@@ -20,8 +20,10 @@ import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
 import { ongletsAdministration } from '../domaine/admin';
 import { REFERENTIELS_RESSOURCES } from '../domaine/config';
+import { referentielsAffiches } from '../domaine/referentiels';
 import { aDroit } from '../domaine/droits';
 
+/** Écran Administration : onglets permis au rôle (ongletsAdministration), puis le contenu de l'onglet choisi */
 export function Administration() {
   const { ctx, donnees, comptesEnAttente } = useSession();
   const { state } = useLocation() as { state: { onglet?: string } | null };
@@ -29,7 +31,7 @@ export function Administration() {
   // Onglet par défaut : demandé par l'écran d'origine (fiche › « Modifier dans Administration › Rôles »), sinon les comptes en attente s'il y en a
   const [choix, setChoix] = useState(state?.onglet ?? '');
   if (!ctx || !donnees) return null;
-  const liste = ongletsAdministration(ctx, { enAttente, referentiels: donnees.referentiels.filter(r => !REFERENTIELS_RESSOURCES.includes(r.id)).length,
+  const liste = ongletsAdministration(ctx, { enAttente, referentiels: referentielsAffiches(donnees.referentiels, undefined, REFERENTIELS_RESSOURCES).length,
     ressources: REFERENTIELS_RESSOURCES.length + 1, feries: donnees.joursFeries.length,
     envoisActifs: donnees.envoisDaily.filter(x => x.mode !== 'aucun').length });
   const parDefaut = ctx.estAdmin && enAttente ? 'comptes' : '';

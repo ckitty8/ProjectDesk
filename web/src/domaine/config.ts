@@ -46,8 +46,9 @@ export const STATUTS_PROJET = { PLANIFIE: 'Planifié', EN_COURS: 'En cours', A_R
 /** Libellés système des rôles sur un projet (référentiel « role ») */
 export const ROLES_PROJET = { CHEF: 'Chef de projet', MEMBRE: 'Membre', LECTEUR: 'Lecteur' };
 
-/** Types d'absence système (CP : décompté du droit annuel ; FERIE : affiché sur les jours fériés) */
-export const ABSENCES = { CP: 'Congés payés', FERIE: 'Jours férié' };
+/** Clés techniques (valeurs_referentiel.cle) des types d'absence système : CP = décompté du droit annuel, FERIE = affiché sur les jours fériés.
+ *  Le code retrouve ces types par leur clé, jamais par leur libellé : le porteur peut les renommer (ex. « Congés payés » → « Congés validé »). */
+export const CLES_ABSENCE = { CP: 'cp', FERIE: 'ferie' };
 
 /** Clé d'un rôle d'accès (Administration › Rôles) */
 export type RoleAcces = 'admin' | 'direction' | 'responsable' | 'projet' | 'utilisateur' | 'lecture';
@@ -198,9 +199,6 @@ export const STATUTS_FEUILLE = {
 export type StatutFeuille = keyof typeof STATUTS_FEUILLE;
 
 /* ---------- Méthodes de gestion de projet ---------- */
-
-/** Libellés système des méthodes (référentiel « methode »), choisies à la création du projet ; renommables en Administration › Référentiels */
-export const METHODES_PROJET = { SCRUM: 'Agile Scrum', KANBAN: 'Agile Kanban', CASCADE: 'Cascade', CYCLE_V: 'Cycle en V', TEST_LEARN: 'Test & Learn' };
 
 /** Description affichée sous chaque méthode dans le formulaire de création (clé technique → texte) */
 export const DESCRIPTIONS_METHODES: Record<string, string> = {

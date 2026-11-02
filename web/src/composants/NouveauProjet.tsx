@@ -12,7 +12,7 @@ import { Cadre } from './Fenetres';
 import { creer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { prochainCodeProjet } from '../domaine/calculs';
-import { DESCRIPTIONS_METHODES, ROLES_PROJET } from '../domaine/config';
+import { COULEURS, DESCRIPTIONS_METHODES, ROLES_PROJET } from '../domaine/config';
 import { aujourdhui } from '../domaine/dates';
 import { maRessource } from '../domaine/droits';
 import { valeursDe } from '../domaine/referentiels';
@@ -39,7 +39,7 @@ export function NouveauProjet({ equipeId, onFermer, onCree }: { equipeId: string
 
   return (
     <Cadre classe="panneau" titre="Nouveau projet" onFermer={onFermer}
-      surtitre={equipe && <div className="ligne-flex discret"><Pastille couleur={equipe.couleur ?? '#8A93A3'} />{equipe.nom}</div>}
+      surtitre={equipe && <div className="ligne-flex discret"><Pastille couleur={equipe.couleur ?? COULEURS.pale} />{equipe.nom}</div>}
       pied={<><Bouton onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" type="submit" form="nouveau-projet">Créer le projet</Bouton></>}>
       <form id="nouveau-projet" className="pile" onSubmit={e => void envoyer(e)}>
         <div><label className="libelle">Code<input className="champ" name="code" defaultValue={prochainCodeProjet(equipe?.prefixe ?? '??', donnees.projets)} required /></label></div>

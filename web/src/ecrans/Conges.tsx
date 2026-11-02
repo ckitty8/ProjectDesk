@@ -19,12 +19,12 @@ import { creer, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import type { Donnees } from '../donnees/tables';
 import { joursDuMois, estWeekend, aujourdhui, depuisIso, nombre } from '../domaine/dates';
-import { ABSENCES, COULEURS } from '../domaine/config';
+import { CLES_ABSENCE, COULEURS } from '../domaine/config';
 import { teinte } from '../domaine/couleurs';
 import { aDroit, maRessource, ongletPermis } from '../domaine/droits';
 import { modeleRecap } from '../domaine/recap';
 import type { ElementRecap } from '../domaine/recap';
-import { valeursDe } from '../domaine/referentiels';
+import { valeurParCle, valeursDe } from '../domaine/referentiels';
 import { actionAbsence, objectifValide } from '../domaine/saisies';
 import { AIDES } from '../domaine/textes';
 import { absenceDe, unitesRacines } from '../domaine/vues';
@@ -145,9 +145,11 @@ export function Conges() {
   const j = depuisIso(aujourdhui());
   const [mois, setMois] = useState({ annee: j.getFullYear(), mois: j.getMonth() });
   const [choix, setChoix] = useState('grille');
-  const [pinceau, setPinceau] = useState<string>(ABSENCES.CP);
+  const [pinceauChoisi, setPinceauChoisi] = useState<string | null>(null);
   const [duree, setDuree] = useState(1);
   if (!ctx || !donnees) return null;
+  // Pinceau par défaut : le type « congés » système, retrouvé par sa clé (son libellé est renommable)
+  const pinceau = pinceauChoisi ?? valeurParCle(donnees.valeurs, 'abs', CLES_ABSENCE.CP)?.libelle ?? '';
 
   const liste = [{ id: 'grille', libelle: 'Grille mensuelle' }, { id: 'recap', libelle: `Récap annuel ${mois.annee}` }].filter(o => ongletPermis(ctx, 'conges', o.id));
   const onglet = (liste.find(o => o.id === choix) ?? liste[0])?.id;
@@ -180,7 +182,7 @@ export function Conges() {
   const choixPinceau = (
     <div className="puces">
       {pinceaux.map(p => (
-        <button key={p.id} type="button" className={'puce' + (p.id === pinceau ? ' active' : '')} onClick={() => setPinceau(p.id)}>
+        <button key={p.id} type="button" className={'puce' + (p.id === pinceau ? ' active' : '')} onClick={() => setPinceauChoisi(p.id)}>
           <span className="pastille" style={{ background: teinte(p.couleur, 0.2), border: `1px solid ${p.couleur}` }} />{p.libelle}
         </button>
       ))}

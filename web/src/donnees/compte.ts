@@ -42,6 +42,7 @@ export interface RolesEquipes {
   membresEquipe: Record<string, { userId: string; role: string; nom: string }[]>;
 }
 
+/** Lit, pour chaque équipe du compte, son rôle (owner / admin / member) et la liste de ses membres ; une équipe illisible est ignorée */
 export async function chargerRoles(userId: string, equipeIds: readonly string[]): Promise<RolesEquipes> {
   const resultat: RolesEquipes = { rolesEquipe: {}, membresEquipe: {} };
   await Promise.all(equipeIds.map(async id => {

@@ -15,7 +15,7 @@ import { creer, executer as appelerFonction } from '../../donnees/api';
 import { adresses } from '../../donnees/adresses';
 import { useSession } from '../../donnees/SessionProvider';
 import { basculerJourEnvoi, reglageEnvoi } from '../../domaine/admin';
-import { MODES_ENVOI_DAILY } from '../../domaine/config';
+import { COULEURS, MODES_ENVOI_DAILY } from '../../domaine/config';
 import { peutPiloterProjet } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Projet } from '../../domaine/types';
@@ -105,7 +105,7 @@ export function EnvoiDaily() {
             const r = reglageEnvoi(donnees.envoisDaily, p.id), actif = r.mode !== 'aucun', jours = String(r.jours ?? '').split(',');
             return (
               <tr key={p.id}>
-                <td><span className="ligne-flex"><Pastille couleur={donnees.equipes.find(e => e.id === p.equipeId)?.couleur ?? '#8A93A3'} /><b>{p.nom}</b></span></td>
+                <td><span className="ligne-flex"><Pastille couleur={donnees.equipes.find(e => e.id === p.equipeId)?.couleur ?? COULEURS.pale} /><b>{p.nom}</b></span></td>
                 <td>
                   <select className="champ" style={{ height: 30, width: 150 }} aria-label={`Mode ${p.nom}`} value={r.mode} onChange={e => maj(p.id, 'mode', e.target.value)}>
                     {MODES_ENVOI_DAILY.map(m => <option key={m.valeur} value={m.valeur}>{m.libelle}</option>)}

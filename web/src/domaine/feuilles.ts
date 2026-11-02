@@ -16,8 +16,6 @@ import type { Equipe, FeuilleTemps, Iso, Projet, Ressource, TempsSaisi, Absence 
 import { projetsDe, ressourcesPresentes } from './vues';
 import type { DonneesVues } from './vues';
 
-export type StatutFeuilleTemps = 'en_saisie' | 'soumise' | 'validee' | 'a_completer';
-
 /** Statut de la feuille d'une personne pour un mois (« en_saisie » si aucune ligne) */
 export function statutFeuille(feuilles: readonly FeuilleTemps[], ressourceId: string, cle: Iso): string {
   return feuilles.find(f => f.ressourceId === ressourceId && f.semaine === cle)?.statut ?? 'en_saisie';

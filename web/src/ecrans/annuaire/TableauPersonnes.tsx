@@ -53,6 +53,7 @@ function CellulesIdentite({ r }: { r: Ressource }) {
   );
 }
 
+/** Tableau des personnes d'une équipe ou d'un projet : sections Actifs et Inactifs repliables puis personnes rattachées ; un clic ouvre la fiche */
 export function TableauPersonnes({ cle, lignes, texteVide, deProjet = false, onFiche }: Props) {
   const { ctx, donnees, executer } = useSession();
   const [replies, setReplies] = useState<Record<string, boolean>>({});

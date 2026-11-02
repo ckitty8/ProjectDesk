@@ -400,7 +400,7 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 .extensible { flex: 1; } .entre { justify-content: space-between; }
 /* Champs : « select. » / « input. » pour l'emporter sur la largeur 100 % de input.champ, select.champ */
 .largeur-auto, input.largeur-auto, select.largeur-auto { width: auto; }
-.colonne { display: flex; flex-direction: column; } .colonne-modale { display: flex; flex-direction: column; min-height: 0; }
+.colonne { display: flex; flex-direction: column; }
 .defilement { overflow: auto; } .ecran-large { max-width: 1500px; }
 .sans-marge { margin: 0; } .marge-bas { margin-bottom: 20px; } .ligne-liste { padding: 5px 0; }
 /* Encarts (cartes d'information) : marges intérieures ; variante orange d'alerte */

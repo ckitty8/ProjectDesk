@@ -1,6 +1,6 @@
 # Spécification — Un rôle unique par personne (fusion « rôle d'accès » + « rôle projet »)
 
-> **Statut : plan à valider par le porteur (2026-11-02). Rien n'est codé ni migré.**
+> **Statut : plan validé, maquettes validées, migration additive 052 appliquée (2026-11-02). La conversion des données (§ 3) attend l'accord du porteur.**
 > Les décisions ci-dessous viennent des réponses du porteur ; la conversion des données existantes (§ 3) demande son accord explicite avant toute écriture (règle n°8).
 
 | Date       | Décision du porteur |
@@ -75,7 +75,7 @@ Règle générale (nouvelles fiches et comptes) : rôle choisi dans Administrati
 ## 6. Livraison en étapes (chaque étape est validée avant la suivante)
 
 1. **Maquettes** des écrans du § 5, validées par le porteur — **produites le 2026-11-02** (`docs/maquettes/role-unique/` : Ressources › Rôle, Rôles, matrice, fiche, affectation, projet, panneau projet, simulation), **en attente de validation**.
-2. **Migration A** + code qui lit les deux modèles (aucun changement visible) — comptages vérifiés.
+2. **Migration A** (052) — **appliquée le 2026-11-02**, comptages inchangés ; les fonctions `peut_saisir_projet` et `peut_gerer_projet` attendent l'étape 4 pour être branchées. Le code qui lit les deux modèles vient avec l'étape 3.
 3. **Conversion des données** (accord sur le § 3) puis bascule du code sur le rôle unique.
 4. **Migration B** (règles de la base) + vérification des 6 rôles par la simulation.
 5. **Nettoyage** (retrait de `affectations.role`, du référentiel `role`, de `projet`).

@@ -19,7 +19,7 @@ import { IconeMenu } from './composants/IconeMenu';
 import { Marque, MentionPropriete } from './composants/Marque';
 import { useSession } from './donnees/SessionProvider';
 import { decoderChoixSimulation, libelleRoleSimule } from './donnees/simulation';
-import { CONFIG, LIBELLES_ROLES } from './domaine/config';
+import { CONFIG, COULEURS, LIBELLES_ROLES } from './domaine/config';
 import type { RoleAcces } from './domaine/config';
 import { maRessource, mesEquipes, monRoleSansAdmin } from './domaine/droits';
 import { menusDuRole } from './domaine/menus';
@@ -80,7 +80,7 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
       </nav>
       <div className="bloc-utilisateur">
         <div className="bloc-equipe">
-          {equipe && <Pastille couleur={equipe.couleur ?? '#8A93A3'} />}<span className="discret">Équipe</span><b>{equipe ? equipe.nom : 'aucune'}</b>
+          {equipe && <Pastille couleur={equipe.couleur ?? COULEURS.pale} />}<span className="discret">Équipe</span><b>{equipe ? equipe.nom : 'aucune'}</b>
           {unChoix && <Link to={cheminDe('choixEquipe')} state={{ retour: idActif }}>Changer</Link>}
         </div>
         <div className="bloc-moi">

@@ -4,7 +4,7 @@
    On les consulte ici : leur périmètre, ce que la matrice leur ouvre aujourd'hui (resumeDuRole, un seul calcul pour toute l'application) et le
    nombre de personnes qui les ont. Pour donner un rôle : Administration › Rôles ; pour régler les droits : Matrice des droits.
    ============================================================ */
-import { Badge } from '../../composants/Badge';
+import { Badge, BadgeTon } from '../../composants/Badge';
 import { Carte } from '../../composants/Carte';
 import { useSession } from '../../donnees/SessionProvider';
 import { parRole, rolesAffiches } from '../../domaine/admin';
@@ -15,6 +15,7 @@ import { aujourdhui } from '../../domaine/dates';
 /** Nombre de rôles listés (Créateur + les six rôles d'accès) : compteur de l'entrée dans la liste de gauche */
 export const NB_ROLES_ACCES = 7;
 
+/** Tableau des rôles d'accès : le Créateur puis les six rôles, avec périmètre, droits ouverts par la matrice et nombre de personnes */
 export function RolesAcces() {
   const { ctx, comptesEnAttente } = useSession();
   if (!ctx) return null;
@@ -28,7 +29,7 @@ export function RolesAcces() {
         <thead><tr><th>Rôle</th><th>Périmètre</th><th>Ce que la matrice lui ouvre</th><th className="num">Personnes</th></tr></thead>
         <tbody>
           <tr>
-            <td><Badge texte="★ Créateur" couleur="#8A5300" fond="#FFF1D6" /></td>
+            <td><BadgeTon texte="★ Créateur" ton="violet" /></td>
             <td>{PERIMETRES.createur}</td>
             <td className="discret">Droits fixes, hors matrice. Seul à régler la matrice et à nommer les administrateurs.</td>
             <td className="num">{ctx.createur.length}</td>

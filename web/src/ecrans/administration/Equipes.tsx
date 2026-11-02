@@ -13,6 +13,7 @@ import { aujourdhui } from '../../domaine/dates';
 import { peutGererEquipe, responsablesDe } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import { ressourcesPresentes } from '../../domaine/vues';
+import { COULEURS } from '../../domaine/config';
 
 export function Equipes() {
   const { ctx, donnees } = useSession();
@@ -31,7 +32,7 @@ export function Equipes() {
           {donnees.equipes.length === 0 && <tr><td colSpan={5}><Vide texte="Aucune équipe. Un administrateur crée la première équipe (Mon dashboard › Administration)." /></td></tr>}
           {donnees.equipes.map(e => (
             <tr key={e.id}>
-              <td><span className="ligne-flex"><Pastille couleur={e.couleur ?? '#8A93A3'} />{e.nom} <Code texte={e.prefixe ?? ''} /></span></td>
+              <td><span className="ligne-flex"><Pastille couleur={e.couleur ?? COULEURS.pale} />{e.nom} <Code texte={e.prefixe ?? ''} /></span></td>
               <td>{responsablesDe(ctx, e.id).map(r => r.nom).join(', ') || <span className="pale">—</span>}</td>
               <td>{actives.filter(r => r.equipeId === e.id).length}</td>
               <td>{donnees.projets.filter(p => p.equipeId === e.id).length}</td>
