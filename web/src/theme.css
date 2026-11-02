@@ -413,6 +413,7 @@ input.code-verification { height: 52px; text-align: center; font-size: 26px; fon
 /* Variante violette des onglets réservés au créateur (★ Rôles, ★ Simulation des rôles) */
 .encart-createur { padding: 12px 16px; background: #F5F0FD; border-color: #D9C7F5; }
 /* Champs et boutons : liste déroulante compacte (en-têtes d'écran), bouton plein des écrans de connexion */
+input.champ-nom { width: 170px; height: 28px; font-weight: 600; }
 select.champ-compact { width: auto; height: 30px; } select.champ-mini { width: auto; height: 28px; }
 .btn-connexion { height: 38px; justify-content: center; }
 

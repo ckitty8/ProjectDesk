@@ -686,6 +686,15 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.fill('input[aria-label="Rechercher une personne"]', 'thomas');
     verifier('Administration › Rôles : recherche par nom', await page.locator('.tableau-roles-acces tbody tr').count() === 1);
     await page.fill('input[aria-label="Rechercher une personne"]', '');
+    // Nom et prénom modifiables dans la ligne (2.88) : enregistré en quittant le champ, remis à l'identique ensuite
+    const champNom = page.locator('input[aria-label="Nom et prénom de Léa Moreau"]');
+    await champNom.fill('Léa Moreau-Durand');
+    await champNom.blur();
+    await page.waitForSelector('.notification.visible:has-text("Nom enregistré")');
+    verifier('Administration › Rôles : le nom et prénom se modifie dans la ligne et s\'enregistre', await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').count() === 1);
+    await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').fill('Léa Moreau');
+    await page.locator('input[aria-label="Nom et prénom de Léa Moreau-Durand"]').blur();
+    await page.waitForSelector('input[aria-label="Nom et prénom de Léa Moreau"]');
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'projet');
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Rôles : un rôle d\'accès se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));

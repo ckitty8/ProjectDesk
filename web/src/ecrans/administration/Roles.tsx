@@ -8,18 +8,18 @@ import { useState } from 'react';
 import { Aide } from '../../composants/Aide';
 import { Avatar, BadgeTon, Pastille } from '../../composants/Badge';
 import { BarreOutils, Carte, Vide } from '../../composants/Carte';
-import { executer as appelerFonction } from '../../donnees/api';
+import { executer as appelerFonction, modifier } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { roleChoisi } from '../../domaine/annuaire';
 import { ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
-import { aDroit, estAdministrateur, estAdministrateurPrevu, rolePrevu } from '../../domaine/droits';
+import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
 import { projetsAvecRoleDe, ressourcesPresentes } from '../../domaine/vues';
 
 export function Roles() {
-  const { ctx, donnees, notifier, actualiser } = useSession();
+  const { ctx, donnees, notifier, actualiser, executer } = useSession();
   const [recherche, setRecherche] = useState('');
   const [equipe, setEquipe] = useState('');
   const [role, setRole] = useState('');
@@ -39,6 +39,15 @@ export function Roles() {
       await actualiser();
       notifier(resultat === 'prevu' ? 'Rôle prévu : il s’appliquera à la connexion de la personne' : 'Rôle d’accès enregistré');
     } catch (e) { notifier((e as Error).message, 'erreur'); }
+  }
+
+  // Nom et prénom : la fiche n'a qu'un champ « nom » (« Prénom Nom »), modifiable ici comme dans la fiche de Liste des ressources.
+  // Même droit (peutModifierFiche, règle RLS de la table ressources) ; enregistré en quittant le champ ; un nom vide est refusé.
+  async function renommer(r: Ressource, saisi: string) {
+    const nom = saisi.trim();
+    if (!nom) { notifier('Le nom ne peut pas être vide', 'erreur'); return; }
+    if (nom === r.nom) return;
+    if (await executer(() => modifier('ressources', { id: 'eq.' + r.id }, { nom }), 'ressources')) notifier('Nom enregistré');
   }
 
   // Case « Administrateur » : cumule ou retire le statut sans toucher au rôle (fonction affecter_administrateur, migration 046)
@@ -63,7 +72,13 @@ export function Roles() {
     const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
     return (
       <tr key={r.id}>
-        <td><span className="ligne-flex"><Avatar nom={r.nom} /><b>{r.nom}</b></span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
+        <td>
+          <span className="ligne-flex">
+            <Avatar nom={r.nom} />
+            <input key={r.id + r.nom} className="champ champ-nom" aria-label={`Nom et prénom de ${r.nom}`} defaultValue={r.nom} disabled={!peutModifierFiche(ctx, r)}
+              onBlur={e => void renommer(r, e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = r.nom; e.currentTarget.blur(); } }} />
+          </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
         <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? '#8A93A3'} />{eq?.nom}</span></td>
         <td>
           {projetsAvecRoleDe(donnees, r.id).filter(x => donnees.affectations.some(a => a.ressourceId === r.id && a.projetId === x.projet.id))
@@ -112,7 +127,7 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Utilisateur</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
+                <th>Nom et prénom</th><th>Équipe</th><th>Projet(s)</th><th>Compte relié</th><th>Poste</th>
                 <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th>Administrateur</th>
               </tr>
             </thead>
