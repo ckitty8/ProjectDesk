@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contexte } from './__fixtures__/donnees';
-import { BLOCS_ROADMAP, ROLES_CHOISISSABLES } from './config';
+import { ROLES_CHOISISSABLES } from './config';
 import type { ContexteDroits } from './droits';
 import { menusDuRole, resumeDuRole } from './menus';
 import type { Menu } from './menus';
@@ -63,14 +63,6 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
       expect(suivi.indexOf('Roadmap'), role).toBe(suivi.indexOf('Projet') + 1);
     });
     expect(menusDuRole(contexte({ droitsRoles: [] }), 'utilisateur').suivi.map(m => m.libelle)).toContain('Roadmap');
-  });
-
-  it('Roadmap : 4 blocs et 19 colonnes du fichier CDO-ROADMAP-NEW, dont Rang et Score calculés', () => {
-    expect(BLOCS_ROADMAP.map(b => b.titre)).toEqual(['Identification de la demande', 'Priorisation', 'Cadrage AMOA', 'Développement & recette']);
-    const colonnes = BLOCS_ROADMAP.flatMap(b => b.colonnes);
-    expect(colonnes).toHaveLength(19);
-    expect(new Set(colonnes.map(c => c.cle)).size).toBe(19);
-    expect(colonnes.filter(c => c.calculee).map(c => c.titre)).toEqual(['Rang', 'Score']);
   });
 
   it('Lecture seule : Mon dashboard fermé, Suivi consultable', () => {

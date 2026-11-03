@@ -479,3 +479,11 @@ select.niveau-non { color: var(--pale); }
 /* ---------- Roadmap : en-tête des blocs du tableau (Identification, Priorisation, Cadrage, Développement & recette) ---------- */
 .tableau-roadmap tr.blocs-roadmap th { color: var(--texte); font-weight: 600; border-left: 1px solid var(--bordure); }
 .tableau-roadmap tr.blocs-roadmap th:first-child { border-left: none; }
+
+/* ---------- Administration › Roadmap : colonnes du tableau ---------- */
+.choix-type { flex-wrap: nowrap; } .choix-type .puce { height: 26px; white-space: nowrap; }
+.tableau-colonnes-roadmap td { padding: 6px 10px; } .tableau-colonnes-roadmap .champ { height: 28px; min-width: 150px; }
+.champ.champ-format { min-width: 110px; width: auto; }
+.badge-calculee { background: var(--violet-fond, #EDE6FA); color: #5B2DA0; }
+.ajout-colonne { padding: 12px 16px; border-top: 1px solid var(--bordure-fine); } .ajout-colonne input.champ { flex: 2; } .ajout-colonne select.champ { flex: 1.2; }
+.carte-titre .normal { font-weight: 400; }

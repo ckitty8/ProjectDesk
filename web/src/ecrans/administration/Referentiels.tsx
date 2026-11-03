@@ -32,8 +32,9 @@ interface PropsReferentiels {
   entreeInitiale?: string;
 }
 
-/** Valeurs d'un référentiel : tableau (renommer, recolorer, activer si modifiable) et ligne d'ajout */
-function PanneauReferentiel({ referentiel, modifiable }: { referentiel: Referentiel; modifiable: boolean }) {
+/** Valeurs d'un référentiel : tableau (renommer, recolorer, activer si modifiable) et ligne d'ajout ; réutilisé par Administration › Roadmap
+ *  (valeurs d'une liste déroulante, « titre » = nom de la colonne) */
+export function PanneauReferentiel({ referentiel, modifiable, titre }: { referentiel: Referentiel; modifiable: boolean; titre?: string }) {
   const { donnees, executer } = useSession();
   if (!donnees) return null;
   const valeurs = valeursDe(donnees.valeurs, referentiel.id, true);
@@ -51,7 +52,7 @@ function PanneauReferentiel({ referentiel, modifiable }: { referentiel: Referent
 
   return (
     <Carte>
-      <div className="carte-titre"><h2>{referentiel.nom} {valeurs.some(v => v.systeme) && <Aide texte={AIDES.referentielSysteme} />}</h2></div>
+      <div className="carte-titre"><h2>{titre ?? referentiel.nom} {valeurs.some(v => v.systeme) && <Aide texte={AIDES.referentielSysteme} />}</h2></div>
       <table className="tableau">
         <thead><tr><th>#</th><th>Valeur</th><th>Couleur</th><th>Active</th></tr></thead>
         <tbody>

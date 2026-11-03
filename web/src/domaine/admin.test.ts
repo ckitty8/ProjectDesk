@@ -17,7 +17,7 @@ describe('comptes en attente', () => {
 });
 
 describe('onglets d\'Administration', () => {
-  const compteurs = { enAttente: 2, referentiels: 4, ressources: 4, feries: 11, envoisActifs: 1 };
+  const compteurs = { enAttente: 2, referentiels: 4, ressources: 4, feries: 11, envoisActifs: 1, colonnesRoadmap: 19 };
   const ids = (ctx: ReturnType<typeof contexte>) => ongletsAdministration(ctx, compteurs).map(o => o.id);
   it('un administrateur voit comptes, équipes, référentiels, ressources et jours fériés ; plus d\'onglet Rôles (dans Ressources depuis 2.98)', () => {
     const liste = ids(contexte({ estAdmin: true, estCreateur: true }));
@@ -30,6 +30,11 @@ describe('onglets d\'Administration', () => {
     expect(liste).not.toEqual(expect.arrayContaining(['comptes']));
     expect(liste).not.toContain('equipes');
     expect(liste).not.toContain('ressources');
+    expect(liste).not.toContain('roadmap');
+  });
+  it('un administrateur règle les colonnes de la Roadmap (onglet Roadmap, avec leur nombre)', () => {
+    const o = ongletsAdministration(contexte({ estAdmin: true }), compteurs);
+    expect(o.find(x => x.id === 'roadmap')).toEqual({ id: 'roadmap', libelle: 'Roadmap', compte: 19 });
   });
   it('reprend les compteurs', () => {
     const o = ongletsAdministration(contexte({ estAdmin: true, estCreateur: true }), compteurs);

@@ -8,7 +8,7 @@
    ============================================================ */
 import { ajouterJours } from '../domaine/dates';
 import type {
-  Absence, AdminPrevu, Affectation, CompteAdmin, EnvoiDaily, Equipe, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, NoteDaily,
+  Absence, AdminPrevu, Affectation, ColonneRoadmap, CompteAdmin, EnvoiDaily, Equipe, FeuilleTemps, Iso, LigneDroit, MiseEnProduction, NoteDaily,
   ObjectifJoursTravail, Projet, Rattachement, Referentiel, ResponsableEquipe, Ressource, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel
 } from '../domaine/types';
 import type { JourFerie } from '../domaine/calendrier';
@@ -39,6 +39,7 @@ export interface Donnees {
   valeurs: readonly ValeurReferentiel[];
   joursFeries: readonly JourFerie[];
   notesProjet: readonly NoteDaily[];
+  colonnesRoadmap: readonly ColonneRoadmap[];
 }
 export type CleTable = keyof Donnees;
 
@@ -51,11 +52,11 @@ export const TABLES: Record<CleTable, string> = {
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   createur: 'createur',
   responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', administrateursPrevus: 'administrateurs_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
-  rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production'
+  rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production', colonnesRoadmap: 'colonnes_roadmap'
 };
 export const CLES_TABLES = Object.keys(TABLES) as CleTable[];
 
-const TRIS: Partial<Record<CleTable, string>> = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code' };
+const TRIS: Partial<Record<CleTable, string>> = { joursFeries: 'jour', equipes: 'nom', valeurs: 'ordre', referentiels: 'ordre', projets: 'code', colonnesRoadmap: 'ordre' };
 
 // Clé unique de chaque table (défaut : id), ajoutée à l'ordre de tri pour une pagination stable
 const CLES_UNIQUES: Partial<Record<CleTable, string>> = {

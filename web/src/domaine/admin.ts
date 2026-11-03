@@ -22,8 +22,8 @@ export interface CompteEnAttente { userId: string; nom: string; email: string; i
 
 export interface OngletAdmin { id: string; libelle: string; compte?: number }
 
-/** Nombres affichés à côté des onglets (comptes en attente, référentiels, ressources, jours fériés, envois du daily actifs) */
-export interface CompteursAdmin { enAttente: number; referentiels: number; ressources: number; feries: number; envoisActifs: number }
+/** Nombres affichés à côté des onglets (comptes en attente, référentiels, ressources, jours fériés, envois du daily actifs, colonnes de la Roadmap) */
+export interface CompteursAdmin { enAttente: number; referentiels: number; ressources: number; feries: number; envoisActifs: number; colonnesRoadmap: number }
 
 /** Onglets : d'abord le périmètre (comptes, ressources et rôles : administrateurs ; équipes : administrateurs et responsables ; envoi du daily :
  *  projets que je pilote), puis le droit de chaque onglet (matrice, migration 038). Les compteurs sont ceux de l'ancien écran. */
@@ -38,6 +38,8 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
     ...(ctx.estAdmin ? [{ id: 'ressources', libelle: 'Ressources', compte: n.ressources }] : []),
     { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
+    // Roadmap (porteur, 2026-11-03 ; maquette admin-roadmap-colonnes/) : colonnes du tableau de Vue d’ensemble › Roadmap ; administrateurs
+    ...(ctx.estAdmin ? [{ id: 'roadmap', libelle: 'Roadmap', compte: n.colonnesRoadmap }] : []),
     // Matrice des droits : créateur seul (elle règle les droits de tous les rôles) ; pas de droit d'onglet dans la matrice
     ...(ctx.estCreateur ? [{ id: 'matrice', libelle: 'Matrice des droits', compte: undefined }] : [])
   ];

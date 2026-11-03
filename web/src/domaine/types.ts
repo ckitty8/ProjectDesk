@@ -188,3 +188,20 @@ export interface Referentiel {
   id: string;
   nom: string;
 }
+
+/** Colonne du tableau Roadmap (table colonnes_roadmap, migration 056) : liste déroulante, saisie libre ou colonne calculée (Rang, Score) */
+export interface ColonneRoadmap {
+  id: string;
+  /** Clé technique des colonnes de départ (« rang », « score »…) ; absente pour une colonne ajoutée */
+  cle?: string | null;
+  libelle: string;
+  bloc: 'identification' | 'priorisation' | 'cadrage' | 'developpement';
+  type: 'liste' | 'libre' | 'calcul';
+  /** Format d'une saisie libre */
+  format?: 'texte' | 'nombre' | 'date' | null;
+  /** Liste déroulante des sprints du projet (Sprint DSI) au lieu d'un référentiel */
+  listeSprints?: boolean;
+  /** Référentiel des valeurs d'une liste déroulante (id préfixé « rdm_ ») */
+  referentielId?: string | null;
+  ordre: number;
+}

@@ -176,6 +176,18 @@ function amorcer() {
   Object.entries(V).forEach(([ref, vals]) => vals.forEach(([libelle, couleur, systeme, abrege], i) =>
     bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, abrege: abrege || null, couleur, actif: true, systeme: !!systeme, ordre: i + 1,
       cle: systeme ? CLES_SYSTEME[ref + ':' + libelle] : null })));
+  // Roadmap (migration 056) : 19 colonnes de départ et 12 listes déroulantes « rdm_ » vides
+  const COLONNES_ROADMAP = [['rang', 'Rang', 'identification', 'calcul'], ['demande', 'Demande', 'identification', 'libre', 'texte'],
+    ['demandeur', 'Demandeur', 'identification', 'liste'], ['parcours', 'Parcours', 'identification', 'liste'], ['categorie', 'Catégorie métier', 'identification', 'liste'],
+    ['thematique', 'Thématique', 'identification', 'liste'], ['us', 'US', 'identification', 'libre', 'texte'], ['strategique', 'Stratégique', 'priorisation', 'liste'],
+    ['priorite', 'Priorité demandeur', 'priorisation', 'liste'], ['impactClient', 'Impact client', 'priorisation', 'liste'],
+    ['impactCollaborateur', 'Impact collaborateur', 'priorisation', 'liste'], ['score', 'Score', 'priorisation', 'calcul'], ['cadrage', 'Cadrage AMOA', 'cadrage', 'liste'],
+    ['statut', 'Statut', 'developpement', 'liste'], ['complexite', 'Complexité', 'developpement', 'liste'], ['priseEnCharge', 'Pris en charge DSI', 'developpement', 'liste'],
+    ['chiffrage', 'Chiffrage DSI (j-h)', 'developpement', 'libre', 'nombre'], ['sprint', 'Sprint DSI', 'developpement', 'liste'], ['dateMep', 'Date de MEP', 'developpement', 'libre', 'date']];
+  const idListe = cle => 'rdm_' + cle.replace(/[A-Z]/g, l => '_' + l.toLowerCase());
+  bd.colonnes_roadmap = COLONNES_ROADMAP.map(([cle, libelle, bloc, type, format], i) => ({ id: uuid(), cle, libelle, bloc, type, format: format || null,
+    liste_sprints: cle === 'sprint', referentiel_id: type === 'liste' && cle !== 'sprint' ? idListe(cle) : null, ordre: i + 1 }));
+  bd.colonnes_roadmap.filter(c => c.referentiel_id).forEach((c, i) => bd.referentiels.push({ id: c.referentiel_id, nom: 'Roadmap · ' + c.libelle, ordre: 101 + i }));
   bd.jours_feries = [['2026-11-01', 'Toussaint'], ['2026-11-11', 'Armistice'], ['2026-12-25', 'Noël'], ['2026-08-15', 'Assomption'], ['2026-07-14', 'Fête nationale']].map(([jour, libelle]) => ({ jour, libelle }));
 
 
@@ -468,6 +480,14 @@ async function donnees(req, res, table, url) {
     const cibles0 = filtrer(bd[table], p);
     if (table === 'equipes' && cibles0.some(e => bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id) || bd.equipes.some(x => x.parent_id === e.id)))
       return envoyer(res, 400, { message: 'Unité non vide (ressources, projets ou équipes) : passez-la plutôt en « Inactive »' });
+  }
+  // Déclencheurs de colonnes_roadmap (migration 056) : colonne calculée non supprimable ; une colonne supprimée emporte sa liste « rdm_ » et ses valeurs
+  if (req.method === 'DELETE' && table === 'colonnes_roadmap') {
+    const cibles = filtrer(bd[table], p);
+    if (cibles.some(c => c.type === 'calcul')) return envoyer(res, 400, { message: 'Colonne calculée : suppression impossible' });
+    const listes = new Set(cibles.map(c => c.referentiel_id).filter(id => id && id.startsWith('rdm_')));
+    bd.referentiels = bd.referentiels.filter(r => !listes.has(r.id));
+    bd.valeurs_referentiel = bd.valeurs_referentiel.filter(v => !listes.has(v.referentiel_id));
   }
   if (req.method === 'DELETE') { const cibles = new Set(filtrer(bd[table], p)); bd[table] = bd[table].filter(l => !cibles.has(l)); return envoyer(res, 204); }
   const corps = await lireCorps(req);

@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-03 | Colonnes réglables dans Administration › Roadmap (version 3.05, migration 056) — § 5 |
 | 2026-11-03 | Reprise : menu **Roadmap** de Vue d’ensemble affiché avec le **tableau vide** (19 colonnes retenues du fichier, version 3.04) ; source des demandes à décider — § 4 |
 
 ## 1. Rang de traitement DSI (règle reprise du fichier Excel)
@@ -102,3 +103,18 @@ Planification (11 lignes sur 213), Mois de la demande (vide à 53 %), Atterrissa
 **Reste à décider** avant d'alimenter le tableau : source des demandes (saisie dans ProjectDesk, import du fichier ou
 Azure DevOps), rattachement à un projet, saisie dans Mon dashboard, et nettoyage des valeurs du fichier (doublons de
 demandeurs et de parcours, espaces en fin de valeur, statuts incohérents) — aucune donnée n'est importée sans accord (règle n°8).
+
+## 5. Colonnes réglables : Administration › Roadmap (2026-11-03, version 3.05)
+
+Porteur : « dans le menu administration, un onglet roadmap où je peux ajouter ou supprimer les colonnes de mon tableau ; pour chaque
+colonne, choisir si c'est une liste déroulante ou une saisie libre ». Maquette `docs/maquettes/admin-roadmap-colonnes/`, validée.
+
+- Colonnes en base : table `colonnes_roadmap` (migration 056), 19 colonnes de départ (§ 4) ; le tableau de Vue d’ensemble › Roadmap les suit.
+- Par colonne : nom, bloc, ordre dans le bloc, type **Liste déroulante** (valeurs dans un référentiel `rdm_…`, vide au départ) ou
+  **Saisie libre** (format Texte, Nombre ou Date). Sprint DSI : liste des sprints du projet (§ 2).
+- Rang et Score : colonnes calculées, ni supprimables ni changées de type.
+- Supprimer une colonne supprime sa liste déroulante et ses valeurs ; repasser en saisie libre garde les valeurs (retour en liste possible).
+- Réservé aux administrateurs (droit « administration »).
+
+Choix pris par défaut, faute de réponse explicite (modifiables) : formats Texte / Nombre / Date, 19 colonnes de départ, Sprint DSI = sprints du projet,
+administrateurs seulement.

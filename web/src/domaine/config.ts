@@ -175,41 +175,26 @@ export const DROITS: readonly Droit[] = [
     libelle: 'Fiche pratique Test & Learn', repli: 'general' }
 ];
 
-/* ---------- Roadmap fonctionnelle : colonnes du tableau ---------- */
+/* ---------- Roadmap fonctionnelle : blocs et types des colonnes du tableau ---------- */
 
-/** Une colonne du tableau Roadmap ; « calculee » = valeur calculée par l'application (domaine/), jamais saisie */
-export interface ColonneRoadmap { cle: string; titre: string; calculee?: boolean }
+/** Blocs du tableau Roadmap, dans l'ordre d'affichage (onglet « Roadmap fonctionnelle » du fichier CDO-ROADMAP-NEW.xlsm). Les colonnes
+ *  sont en base (table colonnes_roadmap, migration 056), réglées dans Administration › Roadmap ; les clés suivent la contrainte CHECK. */
+export const BLOCS_ROADMAP = [
+  { cle: 'identification', titre: 'Identification de la demande' },
+  { cle: 'priorisation', titre: 'Priorisation' },
+  { cle: 'cadrage', titre: 'Cadrage AMOA' },
+  { cle: 'developpement', titre: 'Développement & recette' }
+] as const;
+export type BlocRoadmap = typeof BLOCS_ROADMAP[number]['cle'];
 
-/** Colonnes du tableau Roadmap, rangées par bloc comme l'onglet « Roadmap fonctionnelle » du fichier CDO-ROADMAP-NEW.xlsm
- *  (porteur, 2026-11-03 : « construis le tableau sans alimenter les données »). Source : analyse du fichier, 17 colonnes
- *  saisies gardées + Score et Rang calculés (formules : docs/specifications/roadmap.md § 1). Écartées : Etat (déduit du
- *  statut), Avancement dév, Statut recette, Statut MEP, Planification, Mois de la demande, Atterrissage chiffrage, Estimé MEP,
- *  et les colonnes techniques Fixe et Clé. Commentaires : réservés à la fiche d'une demande. */
-export const BLOCS_ROADMAP: readonly { titre: string; colonnes: readonly ColonneRoadmap[] }[] = [
-  { titre: 'Identification de la demande', colonnes: [
-    { cle: 'rang', titre: 'Rang', calculee: true },
-    { cle: 'demande', titre: 'Demande' },
-    { cle: 'demandeur', titre: 'Demandeur' },
-    { cle: 'parcours', titre: 'Parcours' },
-    { cle: 'categorie', titre: 'Catégorie métier' },
-    { cle: 'thematique', titre: 'Thématique' },
-    { cle: 'us', titre: 'US' }] },
-  { titre: 'Priorisation', colonnes: [
-    { cle: 'strategique', titre: 'Stratégique' },
-    { cle: 'priorite', titre: 'Priorité demandeur' },
-    { cle: 'impactClient', titre: 'Impact client' },
-    { cle: 'impactCollaborateur', titre: 'Impact collaborateur' },
-    { cle: 'score', titre: 'Score', calculee: true }] },
-  { titre: 'Cadrage AMOA', colonnes: [
-    { cle: 'cadrage', titre: 'Cadrage AMOA' }] },
-  { titre: 'Développement & recette', colonnes: [
-    { cle: 'statut', titre: 'Statut' },
-    { cle: 'complexite', titre: 'Complexité' },
-    { cle: 'priseEnCharge', titre: 'Pris en charge DSI' },
-    { cle: 'chiffrage', titre: 'Chiffrage DSI (j-h)' },
-    { cle: 'sprint', titre: 'Sprint DSI' },
-    { cle: 'dateMep', titre: 'Date de MEP' }] }
-];
+/** Formats d'une colonne en saisie libre (contrainte CHECK de colonnes_roadmap.format) */
+export const FORMATS_SAISIE = [
+  { cle: 'texte', libelle: 'Texte' }, { cle: 'nombre', libelle: 'Nombre' }, { cle: 'date', libelle: 'Date' }
+] as const;
+export type FormatSaisie = typeof FORMATS_SAISIE[number]['cle'];
+
+/** Préfixe des référentiels des listes déroulantes de la Roadmap : ils se règlent dans Administration › Roadmap, pas dans Référentiels */
+export const PREFIXE_LISTE_ROADMAP = 'rdm_';
 
 /* ---------- Palette et tons (charte de la maquette pilotage-projet/) ---------- */
 

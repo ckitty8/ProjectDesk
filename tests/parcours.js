@@ -684,6 +684,50 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => ![...document.querySelectorAll('tr')].find(r => r.querySelector('input[value="Statut de test renommé"]'))?.querySelector('.interrupteur')?.classList.contains('actif'));
     verifier('Administration › Référentiels : renommer et désactiver une valeur', (await interrupteur.getAttribute('class')).includes('actif') === false && nomValeur.length > 0);
 
+    // Roadmap (3.05, maquette admin-roadmap-colonnes/) : colonnes du tableau de Vue d’ensemble › Roadmap
+    verifier('Administration › Référentiels : les listes de la Roadmap n\'y sont pas (réglées dans l\'onglet Roadmap)', await page.locator('.lien-referentiel:has-text("Roadmap")').count() === 0);
+    await page.click('[role=tab]:has-text("Roadmap")');
+    await page.waitForSelector('.tableau-colonnes-roadmap');
+    await captureD('37-admin-roadmap');
+    const lignesColonnes = () => page.locator('.tableau-colonnes-roadmap tbody tr').count();
+    verifier('Administration › Roadmap : 19 colonnes, Rang et Score calculés et verrouillés, Liste déroulante ou Saisie libre pour les autres', await lignesColonnes() === 19
+      && await page.locator('.badge-calculee').count() === 2 && await page.locator('.tableau-colonnes-roadmap button[aria-label^="Supprimer la colonne"]').count() === 17
+      && await page.locator('.tableau-colonnes-roadmap .choix-type .puce.active:has-text("Liste déroulante")').count() === 13 && await page.locator('select[aria-label^="Format de"]').count() === 4);
+    await page.fill('input[aria-label="Nom de la nouvelle colonne"]', 'Canal');
+    await page.click('button:has-text("Ajouter la colonne")');
+    await page.waitForSelector('input[aria-label="Nom de la colonne Canal"]');
+    const ligneCanal = page.locator('tr:has(input[aria-label="Nom de la colonne Canal"])');
+    verifier('Administration › Roadmap : ajout d\'une colonne en liste déroulante, rangée en fin de son bloc', await lignesColonnes() === 20
+      && (await ligneCanal.textContent()).includes('Aucune valeur') && await page.locator('.tableau-colonnes-roadmap tbody tr').last().locator('input[aria-label="Nom de la colonne Canal"]').count() === 1);
+    await ligneCanal.locator('button:has-text("Valeurs…")').click();
+    await page.waitForSelector('.panneau[role=dialog]');
+    await page.fill('.panneau input[name=libelle]', 'E-mail');
+    await page.click('.panneau button:has-text("Ajouter")');
+    await page.waitForSelector('.panneau input[value="E-mail"]');
+    await captureD('37b-admin-roadmap-valeurs');
+    await page.click('.panneau [aria-label=Fermer]');
+    verifier('Administration › Roadmap : les valeurs d\'une liste déroulante se saisissent dans le panneau', (await ligneCanal.textContent()).includes('E-mail'));
+    await ligneCanal.locator('button:has-text("Saisie libre")').click();
+    await page.waitForSelector('select[aria-label="Format de Canal"]');
+    await page.selectOption('select[aria-label="Format de Canal"]', 'nombre');
+    await page.waitForFunction(() => document.querySelector('select[aria-label="Format de Canal"]')?.value === 'nombre');
+    await ligneCanal.locator('button:has-text("Liste déroulante")').click();
+    await page.waitForFunction(() => [...document.querySelectorAll('tr')].some(r => r.querySelector('input[aria-label="Nom de la colonne Canal"]') && r.textContent.includes('E-mail')));
+    verifier('Administration › Roadmap : passer en saisie libre (format Nombre) puis revenir en liste garde ses valeurs', true);
+    await page.locator('button[aria-label="Monter Canal"]').click();
+    await page.waitForFunction(() => { const l = [...document.querySelectorAll('.tableau-colonnes-roadmap tbody tr')]; return l[l.length - 1].querySelector('input[aria-label="Nom de la colonne Date de MEP"]'); });
+    verifier('Administration › Roadmap : « ↑ » remonte la colonne dans son bloc', true);
+    await menu('/roadmap');
+    await page.waitForSelector('.tableau-roadmap');
+    verifier('Roadmap : le tableau suit les colonnes réglées dans Administration (20 colonnes, Canal avant Date de MEP)', await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 20
+      && (await page.locator('.tableau-roadmap thead tr:nth-child(2) th').nth(18).textContent()) === 'Canal');
+    await menu('/administration');
+    await page.click('[role=tab]:has-text("Roadmap")');
+    await page.waitForSelector('.tableau-colonnes-roadmap');
+    await page.locator('button[aria-label="Supprimer la colonne Canal"]').click();
+    await page.waitForFunction(() => !document.querySelector('input[aria-label="Nom de la colonne Canal"]'));
+    verifier('Administration › Roadmap : suppression d\'une colonne (et de sa liste)', await lignesColonnes() === 19);
+
     // Ressources (2.93, rôle unique 2.96) : profils (postes) et Rôle
     await page.click('[role=tab]:has-text("Ressources")');
     await page.waitForSelector('.lien-referentiel');
