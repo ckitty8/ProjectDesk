@@ -51,7 +51,7 @@ function CellulesIdentite({ r }: { r: Ressource }) {
 
 /** Tableau des personnes d'une équipe ou d'un projet : sections Actifs et Inactifs repliables puis personnes rattachées ; un clic ouvre la fiche */
 export function TableauPersonnes({ cle, lignes, texteVide, onFiche }: Props) {
-  const { ctx, donnees, executer } = useSession();
+  const { ctx, donnees, donneesCompletes, executer } = useSession();
   const [replies, setReplies] = useState<Record<string, boolean>>({});
   if (!ctx || !donnees) return null;
 
@@ -64,7 +64,8 @@ export function TableauPersonnes({ cle, lignes, texteVide, onFiche }: Props) {
 
   const ligne = ({ r, rattacheA, depuis }: LignePersonne) => {
     if (rattacheA) {
-      const origine = donnees.equipes.find(e => e.id === r.equipeId)?.nom ?? '—';
+      // Équipe d'origine : cherchée dans les données COMPLÈTES (les données réduites à l'équipe ouverte ne contiennent pas l'équipe d'origine : « — » à tort)
+      const origine = (donneesCompletes ?? donnees).equipes.find(e => e.id === r.equipeId)?.nom ?? '—';
       const accueil = donnees.equipes.find(e => e.id === rattacheA)?.nom ?? '—';
       return (
         <tr key={'rat' + r.id} data-ressource={r.id} data-rattachee={rattacheA}>

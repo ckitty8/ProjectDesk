@@ -580,7 +580,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.selectOption('.modale select[name=ressource]', { index: 1 });
     await page.click('.modale button:has-text("Ajouter à l’équipe")');
     await page.waitForSelector('tr[data-rattachee]');
-    verifier('Rattachement : la personne s\'affiche dans « Rattachées depuis une autre équipe » avec son équipe d\'origine', (await page.textContent('tr[data-rattachee]')).includes('Équipe d’origine'));
+    verifier('Rattachement : la personne s\'affiche dans « Rattachées depuis une autre équipe » avec son équipe d\'origine', (await page.textContent('tr[data-rattachee]')).includes('Équipe d’origine') && !(await page.textContent('tr[data-rattachee]')).includes('Équipe d’origine : —'));
     await page.click('tr[data-rattachee] >> text=Retirer');
     await page.waitForFunction(() => !document.querySelector('tr[data-rattachee]'));
     verifier('Rattachement : « Retirer » supprime le rattachement seulement', await page.locator('tr[data-rattachee]').count() === 0);

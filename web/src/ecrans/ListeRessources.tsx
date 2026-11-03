@@ -47,7 +47,7 @@ type Ouvert =
 
 /** Mon dashboard › Liste des ressources : navigation (équipes, projets, profils, contrats) à gauche, détail de l'élément choisi à droite */
 export function ListeRessources() {
-  const { ctx, donnees, equipeCourante, executer } = useSession();
+  const { ctx, ctxComplet, donnees, equipeCourante, executer } = useSession();
   const navigate = useNavigate();
   const [choixMemorise, setChoix] = useState<Choix | null>(null);
   const [q, setQ] = useState('');
@@ -63,7 +63,9 @@ export function ListeRessources() {
   const noms = (liste: readonly Ressource[]) => liste.map(r => r.nom).join(' ');
   const actif = (type: Choix['type'], id?: string) => (choix.type === type && choix.id === id ? ' actif' : '');
   const groupes = unites.map(({ equipe: e, niveau }) => {
-    const responsable = responsablesDe(ctx, e.id)[0];
+    // Responsable : cherché dans les données COMPLÈTES — sa fiche est souvent d'une autre équipe (ex. responsable d'IA dont la fiche est dans Applications),
+    // absente des données réduites à l'équipe ouverte (bug du 2026-11-03 : la carte du responsable disparaissait)
+    const responsable = responsablesDe(ctxComplet ?? ctx, e.id)[0];
     const personnes = donnees.ressources.filter(r => r.equipeId === e.id);
     const projets = donnees.projets.filter(p => p.equipeId === e.id).map(p => {
       const { productOwners, membres } = rolesDuProjet(ctx, p);
@@ -84,7 +86,7 @@ export function ListeRessources() {
     const membre = estMembreDe(ctx, e.id);
     const personnes = donnees.ressources.filter(r => r.equipeId === e.id), rattaches = rattachesA(ctx, e.id);
     const projets = donnees.projets.filter(p => p.equipeId === e.id);
-    const responsable = responsablesDe(ctx, e.id)[0];
+    const responsable = responsablesDe(ctxComplet ?? ctx, e.id)[0];
     const vide = equipeVide(ctx, e.id);
     const lignes: LignePersonne[] = [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ r: x.r, rattacheA: e.id, depuis: x.depuis }))];
     const supprimerEquipe = async () => {
