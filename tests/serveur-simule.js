@@ -179,11 +179,10 @@ function amorcer() {
   bd.jours_feries = [['2026-11-01', 'Toussaint'], ['2026-11-11', 'Armistice'], ['2026-12-25', 'Noël'], ['2026-08-15', 'Assomption'], ['2026-07-14', 'Fête nationale']].map(([jour, libelle]) => ({ jour, libelle }));
 
 
-  // Notes « du jour » pour les tests : dernier jour de semaine (un samedi ou un dimanche, le vendredi précédent),
-  // car Daily des équipes n'affiche que les jours du lundi au vendredi
-  const dateJ = new Date(), recul = { 0: 2, 6: 1 }[dateJ.getDay()] || 0;
-  dateJ.setDate(dateJ.getDate() - recul);
-  const jourJ = dateJ.toISOString().slice(0, 10);
+  // Notes « du jour » pour les tests : le parcours fige l'horloge du navigateur au samedi 31/10/2026 (tests/parcours.js) ; Daily des équipes n'affiche que
+  // les jours du lundi au vendredi, d'où le vendredi 30/10. Date FIXE (et non celle du jour réel : le parcours échouait les lundis et mardis, où les notes
+  // tombaient dans la semaine suivante de l'horloge figée).
+  const jourJ = '2026-10-30';
   // Daily par projet (migration 018) : une note par personne, jour et projet
   const idProjet = code => bd.projets.find(x => x.code === code).id;
   bd.envois_daily_projet = [{ projet_id: idProjet('PF-14'), mode: 'power_automate', heure: '09:30', jours: '1,2,3,4,5', sans_feries: true, destinataires: 'chef-projet@test.fr' },
