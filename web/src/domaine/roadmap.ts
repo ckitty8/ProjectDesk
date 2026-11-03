@@ -2,10 +2,11 @@
    Roadmap : colonnes du tableau (table colonnes_roadmap, migration 056)
    ------------------------------------------------------------
    Fonctions pures partagées par Vue d’ensemble › Roadmap (affichage du tableau) et Administration › Roadmap (réglage des
-   colonnes) : regroupement par bloc, déplacement d'une colonne, résumé des valeurs d'une liste déroulante.
+   colonnes) : regroupement par bloc, déplacement d'une colonne, résumé des valeurs d'une liste déroulante ; score et rang de
+   traitement DSI des demandes (table demandes_roadmap, migration 057).
    ============================================================ */
 import { BLOCS_ROADMAP, PREFIXE_LISTE_ROADMAP } from './config';
-import type { ColonneRoadmap, ValeurReferentiel } from './types';
+import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 /** Un bloc du tableau et ses colonnes, dans l'ordre d'affichage */
 export interface BlocDuTableau { cle: string; titre: string; colonnes: ColonneRoadmap[] }
@@ -49,3 +50,48 @@ export function resumeValeurs(valeurs: readonly ValeurReferentiel[]): string {
   if (!valeurs.length) return 'Aucune valeur';
   return valeurs.length <= 4 ? valeurs.map(v => v.libelle).join(', ') : `${valeurs.length} valeurs`;
 }
+
+/* ---------- Demandes : score et rang de traitement DSI (règle du fichier CDO-ROADMAP-NEW, docs/specifications/roadmap.md § 1) ---------- */
+
+/** Valeur d'une demande pour la colonne de clé technique « cle » (ex. « complexite ») ; undefined si la colonne n'existe plus ou est vide */
+export function valeurParCle(demande: DemandeRoadmap, colonnes: readonly ColonneRoadmap[], cle: string): string | undefined {
+  const colonne = colonnes.find(c => c.cle === cle);
+  const valeur = colonne ? demande.valeurs[colonne.id] : undefined;
+  return valeur === null || valeur === undefined || String(valeur).trim() === '' ? undefined : String(valeur).trim();
+}
+
+/** Nombre lu dans une valeur (« 1,5 » ou « 1.5 ») ; undefined si ce n'en est pas un */
+const nombre = (valeur: string | undefined): number | undefined => {
+  const n = valeur === undefined ? NaN : Number(valeur.replace(',', '.'));
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/** Score = (0,5 × impact client + 0,3 × impact collaborateur) ÷ (0,2 × complexité) : ce que la demande rapporte ÷ ce qu'elle coûte.
+ *  null si un des trois n'est pas saisi (l'écran affiche alors « complexité à saisir », au lieu du 0 de l'Excel) */
+export function scoreDemande(demande: DemandeRoadmap, colonnes: readonly ColonneRoadmap[]): number | null {
+  const client = nombre(valeurParCle(demande, colonnes, 'impactClient'));
+  const collaborateur = nombre(valeurParCle(demande, colonnes, 'impactCollaborateur'));
+  const complexite = nombre(valeurParCle(demande, colonnes, 'complexite'));
+  if (client === undefined || collaborateur === undefined || !complexite) return null;
+  return (0.5 * client + 0.3 * collaborateur) / (0.2 * complexite);
+}
+
+/** Demande classée : son rang (1 = à traiter en premier) et son score */
+export interface DemandeClassee { demande: DemandeRoadmap; rang: number; score: number | null }
+
+/** Demandes dans l'ordre de traitement DSI : stratégiques d'abord, puis priorité du demandeur (1, 2, 3 ; non saisie en dernier), puis
+ *  score décroissant (sans score : après celles qui en ont un) ; à égalité, la plus ancienne d'abord (ordre des lignes de l'Excel) */
+export function demandesClassees(demandes: readonly DemandeRoadmap[], colonnes: readonly ColonneRoadmap[]): DemandeClassee[] {
+  const cle = (d: DemandeRoadmap) => ({
+    strategique: valeurParCle(d, colonnes, 'strategique')?.toLowerCase() === 'oui' ? 0 : 1,
+    priorite: nombre(valeurParCle(d, colonnes, 'priorite')) ?? 99,
+    score: scoreDemande(d, colonnes)
+  });
+  return demandes.map(d => ({ d, k: cle(d) }))
+    .sort((a, b) => a.k.strategique - b.k.strategique || a.k.priorite - b.k.priorite
+      || (b.k.score ?? -1) - (a.k.score ?? -1) || String(a.d.creeLe ?? '').localeCompare(String(b.d.creeLe ?? '')))
+    .map(({ d, k }, i) => ({ demande: d, rang: i + 1, score: k.score }));
+}
+
+/** Score affiché : deux décimales au plus, virgule française (« 5,25 ») */
+export const scoreAffiche = (score: number): string => String(Math.round(score * 100) / 100).replace('.', ',');

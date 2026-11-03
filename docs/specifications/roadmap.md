@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-03 | 3 premières demandes (les plus récentes de 2026) en base, rang et score calculés (version 3.06, migration 057) — § 6 |
 | 2026-11-03 | Colonnes réglables dans Administration › Roadmap (version 3.05, migration 056) — § 5 |
 | 2026-11-03 | Reprise : menu **Roadmap** de Vue d’ensemble affiché avec le **tableau vide** (19 colonnes retenues du fichier, version 3.04) ; source des demandes à décider — § 4 |
 
@@ -118,3 +119,20 @@ colonne, choisir si c'est une liste déroulante ou une saisie libre ». Maquette
 
 Choix pris par défaut, faute de réponse explicite (modifiables) : formats Texte / Nombre / Date, 19 colonnes de départ, Sprint DSI = sprints du projet,
 administrateurs seulement.
+
+## 6. Premières demandes (2026-11-03, version 3.06)
+
+Porteur : « prends 3 lignes du fichier que je t'ai donné, les 3 plus récentes pour 2026, et alimente la partie [tableau] ».
+Table `demandes_roadmap` (migration 057) : les valeurs d'une demande sont rangées par colonne (id de `colonnes_roadmap`), donc une colonne
+ajoutée ou renommée dans Administration › Roadmap ne casse rien. Rang et Score ne sont pas stockés : `domaine/roadmap.ts` les calcule (§ 1).
+
+| Rang | Demande (fichier, ligne) | Mois | Stratégique | Score |
+|------|--------------------------|------|-------------|-------|
+| 1 | Ajouter priorité d'affichage au niveau du flux tranche commerciale (16) | 15/06/2026 | Oui | 5,25 |
+| 2 | Ajouter plusieurs liens vidéos dans CDO (illimités) (39) | 01/07/2026 | Non | 3,5 |
+| 3 | Modifier dans le template du mandat de com le montant de la prestation e-business (85) | 24/07/2026 | Non | complexité à saisir |
+
+Les valeurs de listes utilisées par ces 3 demandes ont été ajoutées aux listes déroulantes (26 valeurs).
+
+**À venir** : saisie des demandes par les chefs de projet dans Mon dashboard (droit déjà prévu en base : `peut_gerer_projet`) ; écran à maquetter
+(règle n°3), avec le choix du projet de rattachement (deux projets « CDO » existent : Applications et AMOA).

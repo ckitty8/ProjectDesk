@@ -188,6 +188,25 @@ function amorcer() {
   bd.colonnes_roadmap = COLONNES_ROADMAP.map(([cle, libelle, bloc, type, format], i) => ({ id: uuid(), cle, libelle, bloc, type, format: format || null,
     liste_sprints: cle === 'sprint', referentiel_id: type === 'liste' && cle !== 'sprint' ? idListe(cle) : null, ordre: i + 1 }));
   bd.colonnes_roadmap.filter(c => c.referentiel_id).forEach((c, i) => bd.referentiels.push({ id: c.referentiel_id, nom: 'Roadmap · ' + c.libelle, ordre: 101 + i }));
+  // Demandes de la Roadmap (migration 057) : les 3 demandes de 2026 du fichier CDO-ROADMAP-NEW et les valeurs de listes qu'elles utilisent
+  const DEMANDES_ROADMAP = [
+    ['2026-07-24', { demande: 'Modifier dans le template du mandat de com le montant de la prestation e-business : De 7500 HT à 15.000 HT', demandeur: 'Céline MASSON',
+      parcours: 'Distribution', categorie: 'COM', thematique: 'MANDAT DE COM INTERNE', strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3',
+      cadrage: 'En cours', statut: 'Nouveau', priseEnCharge: 'Non' }],
+    ['2026-07-01', { demande: 'Ajouter plusieurs liens vidéos dans CDO (illimités)', us: '30768', demandeur: 'Estelle Bailly', parcours: 'Publication', categorie: 'DIGITAL',
+      thematique: 'PUBLICATION', strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3', cadrage: 'Non démarré', statut: 'Recette DSI',
+      complexite: '2', priseEnCharge: 'Oui' }],
+    ['2026-06-15', { demande: 'Ajouter priorité d’affichage au niveau du flux tranche commerciale', us: '31716', demandeur: 'Sandie PIRON', parcours: 'Flux',
+      categorie: 'DIGITAL', thematique: 'IMAGINO', strategique: 'Oui', priorite: '1', impactClient: '3', impactCollaborateur: '2', cadrage: 'Non démarré',
+      statut: 'Annulée', complexite: '2', priseEnCharge: 'Non', chiffrage: '1.5' }]];
+  const colonneDe = cle => bd.colonnes_roadmap.find(c => c.cle === cle);
+  bd.demandes_roadmap = DEMANDES_ROADMAP.map(([cree_le, v]) => ({ id: uuid(), projet_id: null, cree_le,
+    valeurs: Object.fromEntries(Object.entries(v).map(([cle, val]) => [colonneDe(cle).id, val])) }));
+  DEMANDES_ROADMAP.forEach(([, v]) => Object.entries(v).forEach(([cle, libelle]) => {
+    const ref = colonneDe(cle).referentiel_id;
+    if (ref && !bd.valeurs_referentiel.some(x => x.referentiel_id === ref && x.libelle === libelle))
+      bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, couleur: '#4A5363', actif: true, systeme: false, ordre: bd.valeurs_referentiel.filter(x => x.referentiel_id === ref).length + 1, cle: null });
+  }));
   bd.jours_feries = [['2026-11-01', 'Toussaint'], ['2026-11-11', 'Armistice'], ['2026-12-25', 'Noël'], ['2026-08-15', 'Assomption'], ['2026-07-14', 'Fête nationale']].map(([jour, libelle]) => ({ jour, libelle }));
 
 

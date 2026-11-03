@@ -196,10 +196,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
     await captureB('36-roadmap');
-    verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 19 colonnes, vide (« Aucune demande »)',
-      await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
-      && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 19
-      && await page.locator('.tableau-roadmap tbody tr').count() === 0 && (await texte()).includes('Aucune demande pour le moment.'));
+    verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 19 colonnes', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
+      && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 19);
+    // 3 demandes de 2026 du fichier (migration 057) : la stratégique en 1er, puis la mieux notée ; sans complexité, « complexité à saisir » en dernier
+    const lignesRoadmap = page.locator('.tableau-roadmap tbody tr');
+    verifier('Roadmap : 3 demandes classées par rang de traitement DSI, score calculé', await lignesRoadmap.count() === 3
+      && (await lignesRoadmap.nth(0).textContent()).includes('flux tranche commerciale') && (await lignesRoadmap.nth(0).textContent()).includes('5,25')
+      && (await lignesRoadmap.nth(1).textContent()).includes('liens vidéos') && (await lignesRoadmap.nth(1).textContent()).includes('3,5')
+      && (await lignesRoadmap.nth(2).textContent()).includes('complexité à saisir') && !(await texte()).includes('Aucune demande pour le moment.'));
 
     // Projet (Vue d’ensemble) : onglets Gantt (par défaut) et Liste (2.91)
     await menu('/projets');

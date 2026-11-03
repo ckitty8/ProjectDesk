@@ -205,3 +205,12 @@ export interface ColonneRoadmap {
   referentielId?: string | null;
   ordre: number;
 }
+
+/** Demande de la Roadmap (table demandes_roadmap, migration 057) : une valeur par colonne, rangée sous l'id de la colonne */
+export interface DemandeRoadmap {
+  id: string;
+  projetId?: string | null;
+  /** { id de colonne : valeur } ; une liste déroulante stocke le libellé choisi */
+  valeurs: Record<string, string | null | undefined>;
+  creeLe?: string;
+}

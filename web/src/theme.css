@@ -487,3 +487,4 @@ select.niveau-non { color: var(--pale); }
 .badge-calculee { background: var(--violet-fond, #EDE6FA); color: #5B2DA0; }
 .ajout-colonne { padding: 12px 16px; border-top: 1px solid var(--bordure-fine); } .ajout-colonne input.champ { flex: 2; } .ajout-colonne select.champ { flex: 1.2; }
 .carte-titre .normal { font-weight: 400; }
+.tableau-roadmap td.cellule-demande { min-width: 280px; max-width: 420px; white-space: normal; }

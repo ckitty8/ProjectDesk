@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { blocsDuTableau, colonnesOrdonnees, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs } from './roadmap';
-import type { ColonneRoadmap, ValeurReferentiel } from './types';
+import { blocsDuTableau, colonnesOrdonnees, demandesClassees, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
+import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 const col = (id: string, bloc: ColonneRoadmap['bloc'], ordre: number, type: ColonneRoadmap['type'] = 'libre'): ColonneRoadmap =>
   ({ id, libelle: id, bloc, type, ordre, format: type === 'libre' ? 'texte' : null });
@@ -44,5 +44,36 @@ describe('colonnes du tableau Roadmap', () => {
     expect(resumeValeurs([])).toBe('Aucune valeur');
     expect(resumeValeurs(['Oui', 'Non'].map(valeur))).toBe('Oui, Non');
     expect(resumeValeurs(['1', '2', '3', '4', '5'].map(valeur))).toBe('5 valeurs');
+  });
+});
+
+describe('score et rang de traitement DSI des demandes', () => {
+  // Colonnes repérées par leur clé technique ; l'id est volontairement différent de la clé
+  const cles = ['strategique', 'priorite', 'impactClient', 'impactCollaborateur', 'complexite'];
+  const colonnes = cles.map((cle, i) => ({ ...col('c' + i, 'priorisation', i), cle }));
+  const demande = (id: string, v: Record<string, string>, creeLe = '2026-01-01'): DemandeRoadmap =>
+    ({ id, creeLe, valeurs: Object.fromEntries(Object.entries(v).map(([cle, val]) => ['c' + cles.indexOf(cle), val])) });
+  // Les 3 demandes de 2026 du fichier CDO-ROADMAP-NEW (migration 057)
+  const mandat = demande('mandat', { strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3' }, '2026-07-24');
+  const videos = demande('videos', { strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3', complexite: '2' }, '2026-07-01');
+  const flux = demande('flux', { strategique: 'Oui', priorite: '1', impactClient: '3', impactCollaborateur: '2', complexite: '2' }, '2026-06-15');
+
+  it('calcule le score comme l’Excel, et rien sans complexité', () => {
+    expect(scoreDemande(videos, colonnes)).toBeCloseTo(3.5);
+    expect(scoreDemande(flux, colonnes)).toBeCloseTo(5.25);
+    expect(scoreDemande(mandat, colonnes)).toBeNull();
+    expect(scoreAffiche(5.25)).toBe('5,25');
+    expect(scoreAffiche(3.4999999999999996)).toBe('3,5');
+  });
+
+  it('classe : stratégique d’abord, puis priorité, puis score, sans score en dernier', () => {
+    expect(demandesClassees([mandat, videos, flux], colonnes).map(x => [x.demande.id, x.rang])).toEqual([['flux', 1], ['videos', 2], ['mandat', 3]]);
+    const prio2 = demande('p2', { strategique: 'Non', priorite: '2', impactClient: '3', impactCollaborateur: '3', complexite: '1' });
+    expect(demandesClassees([prio2, mandat], colonnes).map(x => x.demande.id)).toEqual(['mandat', 'p2']);   // priorité avant score
+  });
+
+  it('à égalité, la plus ancienne d’abord', () => {
+    const a = demande('a', { priorite: '3' }, '2026-02-01'), b = demande('b', { priorite: '3' }, '2026-01-01');
+    expect(demandesClassees([a, b], colonnes).map(x => x.demande.id)).toEqual(['b', 'a']);
   });
 });
