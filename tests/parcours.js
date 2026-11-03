@@ -192,12 +192,21 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.textContent('.panneau')).includes('lecture seule') && (await page.textContent('.panneau')).includes('Équipe projet'));
     await page.keyboard.press('Escape');
 
+    // Roadmap (Vue d’ensemble, 3.04) : tableau des demandes, colonnes du fichier CDO-ROADMAP-NEW, sans données
+    await menu('/roadmap');
+    await page.waitForSelector('.tableau-roadmap');
+    await captureB('36-roadmap');
+    verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 19 colonnes, vide (« Aucune demande »)',
+      await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
+      && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 19
+      && await page.locator('.tableau-roadmap tbody tr').count() === 0 && (await texte()).includes('Aucune demande pour le moment.'));
+
     // Projet (Vue d’ensemble) : onglets Gantt (par défaut) et Liste (2.91)
     await menu('/projets');
     await page.waitForSelector('.gantt-carte');
     await captureB('04b-gantt');
-    verifier('Projet : deux onglets Gantt et Liste, plus de menu Roadmap', await page.locator('[role=tab]').count() === 2
-      && await page.locator('[role=tab][aria-selected=true]:has-text("Gantt")').count() === 1 && await page.locator('.laterale a[href$="/roadmap"]').count() === 0);
+    verifier('Projet : deux onglets Gantt et Liste', await page.locator('[role=tab]').count() === 2
+      && await page.locator('[role=tab][aria-selected=true]:has-text("Gantt")').count() === 1);
     verifier('Gantt : échelle de 6 mois, groupes par équipe, une ligne par projet et trait « aujourd\'hui »', await page.locator('.gantt-mois .mois > div').count() === 6
       && await page.locator('.gantt-groupe').count() >= 3 && await page.locator('.gantt-ligne').count() === 9 && await page.locator('.gantt-jour').count() >= 1);
     verifier('Gantt : sprints en barres et mises en production en losanges, détail en infobulle', await page.locator('.gantt-sprint').count() >= 2

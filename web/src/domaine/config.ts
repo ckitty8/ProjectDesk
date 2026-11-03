@@ -94,6 +94,8 @@ export const MENUS_SANS_DROIT: readonly { section: 'suivi' | 'dashboard'; menu: 
   // Projet (Vue d’ensemble) : visible de tous les profils et rôles (porteur, 2026-11-02) ; ce que chacun y voit suit son périmètre
   // (règles de lecture de la base)
   { section: 'suivi', menu: 'Projet', libelle: 'Gantt et liste des projets (selon le périmètre)', avant: 'Gestion des ressources' },
+  // Roadmap (Vue d’ensemble) : tableau des demandes, visible de tous comme Projet (porteur, 2026-11-03)
+  { section: 'suivi', menu: 'Roadmap', libelle: 'Tableau des demandes de la roadmap', avant: 'Gestion des ressources' },
   { section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques' }
 ];
 
@@ -171,6 +173,42 @@ export const DROITS: readonly Droit[] = [
     libelle: 'Fiche pratique Roadmap', repli: 'general' },
   { cle: 'onglet_astuces_test_learn', section: 'dashboard', menu: 'Trucs et astuces', onglet: 'Test & Learn', ecran: 'astuces', id: 'testLearn',
     libelle: 'Fiche pratique Test & Learn', repli: 'general' }
+];
+
+/* ---------- Roadmap fonctionnelle : colonnes du tableau ---------- */
+
+/** Une colonne du tableau Roadmap ; « calculee » = valeur calculée par l'application (domaine/), jamais saisie */
+export interface ColonneRoadmap { cle: string; titre: string; calculee?: boolean }
+
+/** Colonnes du tableau Roadmap, rangées par bloc comme l'onglet « Roadmap fonctionnelle » du fichier CDO-ROADMAP-NEW.xlsm
+ *  (porteur, 2026-11-03 : « construis le tableau sans alimenter les données »). Source : analyse du fichier, 17 colonnes
+ *  saisies gardées + Score et Rang calculés (formules : docs/specifications/roadmap.md § 1). Écartées : Etat (déduit du
+ *  statut), Avancement dév, Statut recette, Statut MEP, Planification, Mois de la demande, Atterrissage chiffrage, Estimé MEP,
+ *  et les colonnes techniques Fixe et Clé. Commentaires : réservés à la fiche d'une demande. */
+export const BLOCS_ROADMAP: readonly { titre: string; colonnes: readonly ColonneRoadmap[] }[] = [
+  { titre: 'Identification de la demande', colonnes: [
+    { cle: 'rang', titre: 'Rang', calculee: true },
+    { cle: 'demande', titre: 'Demande' },
+    { cle: 'demandeur', titre: 'Demandeur' },
+    { cle: 'parcours', titre: 'Parcours' },
+    { cle: 'categorie', titre: 'Catégorie métier' },
+    { cle: 'thematique', titre: 'Thématique' },
+    { cle: 'us', titre: 'US' }] },
+  { titre: 'Priorisation', colonnes: [
+    { cle: 'strategique', titre: 'Stratégique' },
+    { cle: 'priorite', titre: 'Priorité demandeur' },
+    { cle: 'impactClient', titre: 'Impact client' },
+    { cle: 'impactCollaborateur', titre: 'Impact collaborateur' },
+    { cle: 'score', titre: 'Score', calculee: true }] },
+  { titre: 'Cadrage AMOA', colonnes: [
+    { cle: 'cadrage', titre: 'Cadrage AMOA' }] },
+  { titre: 'Développement & recette', colonnes: [
+    { cle: 'statut', titre: 'Statut' },
+    { cle: 'complexite', titre: 'Complexité' },
+    { cle: 'priseEnCharge', titre: 'Pris en charge DSI' },
+    { cle: 'chiffrage', titre: 'Chiffrage DSI (j-h)' },
+    { cle: 'sprint', titre: 'Sprint DSI' },
+    { cle: 'dateMep', titre: 'Date de MEP' }] }
 ];
 
 /* ---------- Palette et tons (charte de la maquette pilotage-projet/) ---------- */

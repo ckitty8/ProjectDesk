@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-03 | Reprise : menu **Roadmap** de Vue d’ensemble affiché avec le **tableau vide** (19 colonnes retenues du fichier, version 3.04) ; source des demandes à décider — § 4 |
 
 ## 1. Rang de traitement DSI (règle reprise du fichier Excel)
 
@@ -81,3 +82,23 @@ Maquettes : `docs/maquettes/roadmap/retenu-1-vue-liste.png`, `retenu-2-fiche-dem
   parcours, sprint) ; glisser une carte change son statut.
 - Clic sur une ligne ou une carte : **fiche** dans le panneau latéral (identification,
   priorisation, développement et recette ; sprint en liste déroulante — § 2 ; score et rang calculés).
+
+## 4. Tableau livré vide (2026-11-03, version 3.04)
+
+Porteur : « construis le tableau sans alimenter les données ». Le menu **Roadmap** de Vue d’ensemble (juste après Projet, ouvert
+à tous) affiche l'en-tête du tableau, sans aucune demande ni table en base. Colonnes : `BLOCS_ROADMAP` (`web/src/domaine/config.ts`).
+
+| Bloc | Colonnes reprises du fichier |
+|------|------------------------------|
+| Identification de la demande | Rang (calculé), Demande, Demandeur, Parcours, Catégorie métier, Thématique, US |
+| Priorisation | Stratégique, Priorité demandeur, Impact client, Impact collaborateur, Score (calculé) |
+| Cadrage AMOA | Cadrage AMOA |
+| Développement & recette | Statut, Complexité, Pris en charge DSI, Chiffrage DSI (j-h), Sprint DSI, Date de MEP |
+
+Écartées : Etat (déduit du statut), Avancement dév (doublon du statut), Statut recette et Statut MEP (quasi constants),
+Planification (11 lignes sur 213), Mois de la demande (vide à 53 %), Atterrissage chiffrage, Estimé MEP, Fixe et Clé
+(colonnes techniques du rang). Commentaires : réservés à la fiche d'une demande.
+
+**Reste à décider** avant d'alimenter le tableau : source des demandes (saisie dans ProjectDesk, import du fichier ou
+Azure DevOps), rattachement à un projet, saisie dans Mon dashboard, et nettoyage des valeurs du fichier (doublons de
+demandeurs et de parcours, espaces en fin de valeur, statuts incohérents) — aucune donnée n'est importée sans accord (règle n°8).

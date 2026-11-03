@@ -33,14 +33,16 @@ export interface Menu {
   horsBarre?: boolean;
 }
 
-/** Vue d’ensemble : chaque menu est affiché si le droit de son menu n'est pas « Non » (matrice, migration 037) — sauf Projet, ouvert à tous — et si au
- *  moins un de ses onglets est permis (migration 038). Pas d'Administration dans cette section (porteur, 2026-10-22). */
+/** Vue d’ensemble : chaque menu est affiché si le droit de son menu n'est pas « Non » (matrice, migration 037) — sauf Projet et Roadmap,
+ *  ouverts à tous — et si au moins un de ses onglets est permis (migration 038). Pas d'Administration dans cette section (porteur, 2026-10-22). */
 export const MENU_GENERAL: readonly Menu[] = [
   { id: 'dashboard', libelle: 'Dashboard général', icone: 'dash', droit: 'suivi_dashboard' },
   { id: 'dailyEquipes', libelle: 'Daily des équipes', icone: 'daily', droit: 'daily_equipes' },
   // Projet (porteur, 2026-11-02) : le Gantt et la liste des projets, visibles de tous les profils et rôles ; chacun y voit ce que son périmètre
   // lui permet de lire (règles de lecture de la base : ses projets, ceux de ses unités…), sans droit de la matrice
   { id: 'projets', libelle: 'Projet', icone: 'proj', pourTous: true },
+  // Roadmap (porteur, 2026-11-03 : « tu peux désormais l'afficher sur le front ») : tableau des demandes, ouvert à tous comme Projet
+  { id: 'roadmap', libelle: 'Roadmap', icone: 'road', pourTous: true },
   { id: 'ressources', libelle: 'Gestion des ressources', icone: 'ress', droit: 'suivi_ressources' },
   { id: 'timesheet', libelle: 'Feuilles de temps', icone: 'time', droit: 'suivi_timesheet' }
 ];

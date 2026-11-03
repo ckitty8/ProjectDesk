@@ -58,6 +58,8 @@ export const GUIDE_ECRANS = {
   dashboard: ['Vue d’ensemble de toutes les équipes : indicateurs clés et projets à surveiller.',
     'Survolez les ⓘ pour le détail des calculs.'],
   projets: ['Tous les projets, groupés par équipe, en lecture seule.', 'Filtrez par équipe en haut à droite ; un clic sur une ligne ouvre le détail du projet.'],
+  roadmap: ['Le tableau des demandes de la roadmap fonctionnelle, avec les colonnes du fichier CDO-ROADMAP-NEW.',
+    'Il est vide pour le moment : la source des demandes (saisie, import ou Azure DevOps) reste à décider.'],
   ressources: ['Calendrier mensuel des absences et annuaire de toutes les personnes, en lecture seule.',
     'Pour poser un congé : Mon dashboard › Gestion des ressources › Congés.'],
   timesheet: ['Heures déclarées par personne sur un mois (saisie mensuelle), avec la complétude et le statut de chaque feuille.', 'Changez de mois avec les flèches.'],

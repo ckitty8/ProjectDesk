@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contexte } from './__fixtures__/donnees';
-import { ROLES_CHOISISSABLES } from './config';
+import { BLOCS_ROADMAP, ROLES_CHOISISSABLES } from './config';
 import type { ContexteDroits } from './droits';
 import { menusDuRole, resumeDuRole } from './menus';
 import type { Menu } from './menus';
@@ -18,6 +18,7 @@ function attendu(ctx: ContexteDroits, role: string) {
     'Feuilles de temps': ouvert('suivi_timesheet'),
     // Vue d’ensemble : le menu Projet (Gantt et Liste) est ouvert à tous les rôles (porteur, 2026-11-02) ; Mon dashboard : Sprints et Mises en production
     'Projet': true,
+    'Roadmap': true,
     'Mises en production': dashboard && ouvert('projets'),
     'Sprints': dashboard && ouvert('onglet_admin_sprints'),
     'Congés': dashboard && (ouvert('onglet_conges_grille') || ouvert('onglet_conges_recap')),
@@ -54,7 +55,22 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     ROLES_CHOISISSABLES.forEach(role => expect(menusDuRole(contexte(), role).suivi.map(m => m.libelle), role).toContain('Projet'));
     const sansDroits = contexte({ droitsRoles: [] });
     expect(menusDuRole(sansDroits, 'utilisateur').suivi.map(m => m.libelle)).toContain('Projet');
-    expect(menusDuRole(contexte(), 'admin').suivi.map(m => m.libelle)).not.toContain('Roadmap');
+  });
+
+  it('Vue d’ensemble : le menu Roadmap (tableau des demandes, 2026-11-03) suit Projet et est visible de tous les rôles, même sans droit', () => {
+    ROLES_CHOISISSABLES.forEach(role => {
+      const suivi = menusDuRole(contexte(), role).suivi.map(m => m.libelle);
+      expect(suivi.indexOf('Roadmap'), role).toBe(suivi.indexOf('Projet') + 1);
+    });
+    expect(menusDuRole(contexte({ droitsRoles: [] }), 'utilisateur').suivi.map(m => m.libelle)).toContain('Roadmap');
+  });
+
+  it('Roadmap : 4 blocs et 19 colonnes du fichier CDO-ROADMAP-NEW, dont Rang et Score calculés', () => {
+    expect(BLOCS_ROADMAP.map(b => b.titre)).toEqual(['Identification de la demande', 'Priorisation', 'Cadrage AMOA', 'Développement & recette']);
+    const colonnes = BLOCS_ROADMAP.flatMap(b => b.colonnes);
+    expect(colonnes).toHaveLength(19);
+    expect(new Set(colonnes.map(c => c.cle)).size).toBe(19);
+    expect(colonnes.filter(c => c.calculee).map(c => c.titre)).toEqual(['Rang', 'Score']);
   });
 
   it('Lecture seule : Mon dashboard fermé, Suivi consultable', () => {

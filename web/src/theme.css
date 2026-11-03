@@ -475,3 +475,7 @@ select.niveau-non { color: var(--pale); }
 .ligne-profil { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--bordure-fine, #e5e7eb); font-size: 14px; }
 .alerte-texte { color: #B25E09; }
 @media (max-width: 960px) { .grille-profil { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Roadmap : en-tête des blocs du tableau (Identification, Priorisation, Cadrage, Développement & recette) ---------- */
+.tableau-roadmap tr.blocs-roadmap th { color: var(--texte); font-weight: 600; border-left: 1px solid var(--bordure); }
+.tableau-roadmap tr.blocs-roadmap th:first-child { border-left: none; }

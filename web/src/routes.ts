@@ -18,6 +18,7 @@ export const ROUTES: readonly Route[] = [
   { id: 'dashboard', chemin: '/dashboard', titre: 'Dashboard général', section: 'general' },
   { id: 'dailyEquipes', chemin: '/daily-des-equipes', titre: 'Daily des équipes', section: 'general' },
   { id: 'projets', chemin: '/projets', titre: 'Projet', section: 'general' },
+  { id: 'roadmap', chemin: '/roadmap', titre: 'Roadmap', section: 'general' },
   { id: 'ressources', chemin: '/ressources', titre: 'Gestion des ressources', section: 'general' },
   { id: 'timesheet', chemin: '/timesheet', titre: 'Feuilles de temps', section: 'general' },
   { id: 'daily', chemin: '/daily', titre: 'Daily', section: 'moi' },
