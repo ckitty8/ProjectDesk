@@ -190,6 +190,8 @@ table.tableau { width: 100%; border-collapse: collapse; }
 .noeud.equipe { font-weight: 600; margin-top: 6px; } .noeud.projet, .noeud.personne { padding-left: 24px; }
 .noeud.actif { background: var(--primaire-clair); color: var(--primaire-texte); font-weight: 600; }
 .noeud .compte { margin-left: auto; color: var(--pale); font-size: 11.5px; font-weight: 400; }
+/* Équipes d'une direction (2026-11-03) : en retrait sous la direction, avec un filet à gauche (Direction › équipe › projet › membre) */
+.noeud-groupe.sous-unite { margin-left: 14px; border-left: 2px solid var(--bordure-fine); }
 .nav-separateur { border-top: 1px solid var(--bordure-fine); margin: 10px 0 6px; }
 .detail-ressources { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .detail-entete { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }

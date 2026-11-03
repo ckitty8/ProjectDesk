@@ -62,7 +62,7 @@ export function ListeRessources() {
   const recherche = q.trim().toLowerCase();
   const noms = (liste: readonly Ressource[]) => liste.map(r => r.nom).join(' ');
   const actif = (type: Choix['type'], id?: string) => (choix.type === type && choix.id === id ? ' actif' : '');
-  const groupes = unites.map(e => {
+  const groupes = unites.map(({ equipe: e, niveau }) => {
     const responsable = responsablesDe(ctx, e.id)[0];
     const personnes = donnees.ressources.filter(r => r.equipeId === e.id);
     const projets = donnees.projets.filter(p => p.equipeId === e.id).map(p => {
@@ -76,7 +76,7 @@ export function ListeRessources() {
     const texteEquipe = `${e.nom} ${noms(personnes.filter(r => !donnees.affectations.some(a => a.ressourceId === r.id)))}`.toLowerCase();
     const visible = equipeTrouvee || trouves.length > 0 || texteEquipe.includes(recherche);
     const responsableVisible = equipeTrouvee || (!!responsable && responsable.nom.toLowerCase().includes(recherche));
-    return { e, responsable, nbPersonnes: personnes.length + rattachesA(ctx, e.id).length, trouves, visible, responsableVisible };
+    return { e, niveau, responsable, nbPersonnes: personnes.length + rattachesA(ctx, e.id).length, trouves, visible, responsableVisible };
   }).filter(g => g.visible);
 
   /* ---------- Détail : équipe ---------- */
@@ -197,15 +197,15 @@ export function ListeRessources() {
 
   return (
     <div className="ecran" style={{ maxWidth: 1300 }}>
-      <EnteteEcran titre="Liste des ressources" sousTitre="Choisissez une équipe ou un projet à gauche : ses personnes s’affichent à droite"
+      <EnteteEcran titre="Liste des ressources" sousTitre="Choisissez une direction, une équipe ou un projet à gauche : ses personnes s’affichent à droite"
         actions={admin ? <Bouton variante="primaire" onClick={() => setOuvert({ genre: 'equipe', id: null, typeUnite: 'equipe' })}>+ Ajouter une équipe</Bouton> : undefined} />
       <div className="liste-ressources">
         <nav className="carte nav-ressources">
           <label className="recherche-champ"><Icone nom="recherche" /><input placeholder="Rechercher une personne, un projet" value={q} onChange={e => setQ(e.target.value)} /></label>
           {groupes.length === 0 && <Vide texte={admin ? 'Aucune équipe : « + Ajouter une équipe » pour commencer.' : 'Aucune équipe.'} />}
           {groupes.map(g => (
-            <div key={g.e.id} className="noeud-groupe">
-              {noeud('equipe', g.e.id, <>{g.e.nom} <span className="compte">{g.nbPersonnes}</span></>, 'equipe')}
+            <div key={g.e.id} className={'noeud-groupe' + (g.niveau ? ' sous-unite' : '')}>
+              {noeud('equipe', g.e.id, <>{g.e.nom} {g.e.type === 'direction' && <BadgeTon texte="Direction" ton="violet" />} <span className="compte">{g.nbPersonnes}</span></>, 'equipe')}
               {g.responsable && g.responsableVisible && noeud('equipe', g.e.id, <><Avatar nom={g.responsable.nom} /><span>{g.responsable.nom}</span> <span className="compte">responsable</span></>, 'personne')}
               {g.trouves.map(x => <span key={x.p.id} style={{ display: 'contents' }}>{noeud('projet', x.p.id, <>{x.p.nom} <span className="compte">{x.equipeProjet.length}</span></>, 'projet')}</span>)}
             </div>

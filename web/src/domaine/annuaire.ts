@@ -7,7 +7,9 @@
    ============================================================ */
 import { roleDeLaFiche, rolePrevu } from './droits';
 import type { ContexteDroits } from './droits';
-import type { Equipe, Projet, Ressource } from './types';
+import { arbreUnites } from './vues';
+import type { UniteNiveau } from './vues';
+import type { Projet, Ressource } from './types';
 
 /* ---------- Prénom et nom d'une personne (migration 048) ---------- */
 
@@ -25,24 +27,21 @@ export const nomComplet = (prenom: string, nomFamille: string): string => [preno
 /** Élément choisi dans la navigation de gauche */
 export type Choix = { type: 'equipe' | 'projet'; id: string } | { type: 'postes' | 'contrats' | 'aucun'; id?: undefined };
 
-/* Unités de la navigation. Le niveau « direction » n'est plus montré (consigne du porteur, 2026-10-09) : les équipes d'une direction sont listées
-   directement. Une direction reste listée si elle porte elle-même des projets ou des personnes (rien n'est caché) ou si elle est vide (pour
-   pouvoir la supprimer). Équipes d'abord, puis directions. */
-export function unitesNavigation(ctx: ContexteDroits): Equipe[] {
-  const { equipes, projets, ressources } = ctx;
-  const porteDuContenu = (e: Equipe) => projets.some(p => p.equipeId === e.id) || ressources.some(r => r.equipeId === e.id);
-  const affichee = (e: Equipe) => e.type !== 'direction' || porteDuContenu(e) || !equipes.some(x => x.parentId === e.id);
-  return [...equipes.filter(e => affichee(e) && e.type !== 'direction'), ...equipes.filter(e => affichee(e) && e.type === 'direction')];
-}
+/* Unités de la navigation, dans l'ordre de la hiérarchie du porteur Direction › équipe › projet › membre (maquette hierarchie-equipes/6-apres-liste-
+   ressources.png, 2026-11-03) : chaque direction en tête, cliquable (ses propres personnes et projets), puis ses équipes en retrait. Cela remplace la
+   consigne du 2026-10-09 qui masquait la direction. Les unités hors de mon périmètre ne figurent pas : une équipe dont la direction n'est pas visible
+   devient une racine. */
+export const unitesNavigation = (ctx: ContexteDroits): UniteNiveau[] => arbreUnites(ctx.equipes);
 
 /** Élément choisi : celui mémorisé s'il existe encore, sinon l'équipe ouverte, sinon la première unité de la navigation */
 export function selectionAnnuaire(ctx: ContexteDroits, choix: Choix | null, equipeCourante: string | null): Choix {
   const unites = unitesNavigation(ctx);
   const existe = (c: Choix | null): c is Choix => !!c && (c.type === 'postes' || c.type === 'contrats'
-    || (c.type === 'projet' && ctx.projets.some(p => p.id === c.id)) || (c.type === 'equipe' && unites.some(e => e.id === c.id)));
+    || (c.type === 'projet' && ctx.projets.some(p => p.id === c.id)) || (c.type === 'equipe' && unites.some(u => u.equipe.id === c.id)));
   if (existe(choix)) return choix;
-  const parDefaut = unites.find(e => e.id === equipeCourante) ?? unites[0];
-  return parDefaut ? { type: 'equipe', id: parDefaut.id } : { type: 'aucun' };
+  // Par défaut : l'équipe ouverte, sinon la première équipe (la direction est en tête de liste mais on s'ouvre sur du concret), sinon la première unité
+  const parDefaut = unites.find(u => u.equipe.id === equipeCourante) ?? unites.find(u => u.equipe.type !== 'direction') ?? unites[0];
+  return parDefaut ? { type: 'equipe', id: parDefaut.equipe.id } : { type: 'aucun' };
 }
 
 /** Équipe d'un projet : les chefs (Product Owners : chef désigné sur la fiche du projet, ou personne affectée dont le rôle est Chef de projet) puis les

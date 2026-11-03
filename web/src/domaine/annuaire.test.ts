@@ -3,20 +3,20 @@ import { EQUIPES, PROJETS, contexte } from './__fixtures__/donnees';
 import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
 
 describe('navigation de l\'annuaire', () => {
-  it('liste les équipes avant les directions, et cache une direction qui ne porte rien', () => {
+  it('liste la direction en tête (niveau 0), ses équipes en retrait (niveau 1), puis les équipes isolées', () => {
     const ctx = contexte({ equipes: [...EQUIPES.map(e => (e.id === 'pole' ? { ...e, type: 'direction' } : { ...e, type: 'equipe' }))] });
-    expect(unitesNavigation(ctx).map(e => e.id)).toEqual(['app', 'ia', 'amoa']);          // « pole » vide de contenu mais a des sous-équipes : masquée
+    // Direction › équipe : la direction « pole » en tête (niveau 0), ses équipes en retrait (niveau 1), puis l'équipe isolée
+    expect(unitesNavigation(ctx).map(u => `${u.niveau}:${u.equipe.id}`)).toEqual(['0:pole', '1:app', '1:ia', '0:amoa']);
   });
-  it('garde une direction qui porte des projets', () => {
-    const equipes = EQUIPES.map(e => ({ ...e, type: e.id === 'pole' ? 'direction' : 'equipe' }));
-    const ctx = contexte({ equipes, projets: [...PROJETS, { id: 'px', code: 'P-1', nom: 'X', equipeId: 'pole', statut: 'En cours' }] });
-    expect(unitesNavigation(ctx).map(e => e.id)).toEqual(['app', 'ia', 'amoa', 'pole']);
+  it('une équipe dont la direction est hors du périmètre devient une racine', () => {
+    const equipes = EQUIPES.filter(e => e.id !== 'pole').map(e => ({ ...e, type: 'equipe' }));
+    expect(unitesNavigation(contexte({ equipes })).map(u => `${u.niveau}:${u.equipe.id}`)).toEqual(['0:app', '0:ia', '0:amoa']);
   });
   it('sélection : le choix mémorisé s\'il existe, sinon l\'équipe ouverte, sinon la première', () => {
-    const ctx = contexte();
+    const ctx = contexte({ equipes: EQUIPES.map(e => ({ ...e, type: e.id === 'pole' ? 'direction' : 'equipe' })) });
     expect(selectionAnnuaire(ctx, { type: 'projet', id: 'p-ia1' }, null)).toEqual({ type: 'projet', id: 'p-ia1' });
     expect(selectionAnnuaire(ctx, { type: 'projet', id: 'disparu' }, 'ia')).toEqual({ type: 'equipe', id: 'ia' });
-    expect(selectionAnnuaire(ctx, null, null).type).toBe('equipe');
+    expect(selectionAnnuaire(ctx, null, null)).toEqual({ type: 'equipe', id: 'app' });   // la direction « pole » est en tête, mais on s'ouvre sur une équipe
     expect(selectionAnnuaire(ctx, { type: 'postes' }, null)).toEqual({ type: 'postes' });
     expect(selectionAnnuaire(contexte({ equipes: [] }), null, null)).toEqual({ type: 'aucun' });
   });

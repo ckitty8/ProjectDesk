@@ -511,6 +511,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.locator('.noeud.projet').count() >= 9 && (await page.textContent('.nav-ressources')).includes('Types de contrat'));
     verifier('Liste des ressources : l\'équipe ouverte est choisie, avec son responsable et ses personnes', (await page.textContent('.detail-ressources')).includes('Plateforme')
       && (await page.textContent('.detail-ressources')).includes('Responsable de l’équipe') && await page.locator('.tableau-personnes tr[data-ressource]').count() === 4);
+    verifier('Liste des ressources : la direction est en tête (badge), ses équipes en retrait dessous (Direction › équipe › projet)', await page.locator('.nav-ressources .noeud-groupe:not(.sous-unite) .badge:has-text("Direction")').count() === 1
+      && await page.locator('.nav-ressources .noeud-groupe.sous-unite').count() >= 3);
     await page.fill('.nav-ressources input', 'hugo');
     verifier('Liste des ressources : recherche dans la navigation (l\'équipe de la personne reste visible)', await page.locator('.noeud-groupe').count() === 1 && (await page.textContent('.nav-ressources')).includes('Data'));
     await page.fill('.nav-ressources input', '');
