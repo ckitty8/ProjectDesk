@@ -117,6 +117,7 @@ function amorcer() {
   bd.administrateurs_prevus = []; // administrateurs prévus : fiches sans compte (migration 047)
   bd.roles_acces = [];           // rôle d'accès déclaré de chaque fiche (migration 030)
   bd.membres_equipe = [];        // personnes rattachées à une autre équipe (migration 033)
+  bd.droits_equipes = [];        // écrans accessibles par équipe (migration 059) ; sans ligne, tout est accessible
   // Matrice des droits (migrations 031, 037 : droits par menu de Suivi de mes équipes, et 038 : droits par onglet) : mêmes valeurs de départ (admin, direction, responsable, projet, utilisateur, lecture)
   const MATRICE = {
     general: 'oui oui oui oui oui oui', suivi_dashboard: 'oui oui oui oui oui oui',

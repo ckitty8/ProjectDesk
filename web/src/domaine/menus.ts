@@ -5,7 +5,7 @@
    Un seul calcul sert à la barre latérale (mon rôle) et aux cartes des rôles (Simulation, Qui a quel rôle) : il n'y a donc
    jamais d'écart entre ce qui est décrit et ce qui est affiché. Chaque menu suit ses propres lignes de la matrice.
    ============================================================ */
-import { ecranOuvert, monRole, niveauPour } from './droits';
+import { ecranAutoriseEquipe, ecranOuvert, monRole, niveauPour } from './droits';
 import type { ContexteDroits } from './droits';
 
 export interface MenuEnfant {
@@ -69,14 +69,17 @@ export const MENU_MOI: readonly Menu[] = [
 const droitOuvert = (ctx: ContexteDroits, droit: string | readonly string[], role?: string): boolean =>
   ([] as string[]).concat(droit).some(d => niveauPour(ctx, d, role) !== 'non');
 
+/** Étape 1 (écrans par équipe, porteur 2026-11-04) : l'équipe active autorise l'écran ; ne s'applique pas à l'aperçu d'un rôle (cartes de simulation) */
+const equipeAutorise = (ctx: ContexteDroits, id: string, role?: string): boolean => !!role || ecranAutoriseEquipe(ctx, id);
+
 const enfantOuvert = (ctx: ContexteDroits, e: MenuEnfant, role?: string): boolean =>
-  (!e.droit || droitOuvert(ctx, e.droit, role)) && ecranOuvert(ctx, e.id, role);
+  (!e.droit || droitOuvert(ctx, e.droit, role)) && ecranOuvert(ctx, e.id, role) && equipeAutorise(ctx, e.id, role);
 
 /** Menu ouvert à un rôle (le mien si aucun rôle n'est précisé) : son écran (ou, pour un menu à sous-menus, l'un de ses
  *  sous-menus) a un onglet permis, et le droit propre du menu n'est pas « Non » */
 const menuOuvert = (ctx: ContexteDroits, item: Menu, role?: string): boolean => (item.enfants
   ? item.enfants.some(e => enfantOuvert(ctx, e, role))
-  : (!item.droit || droitOuvert(ctx, item.droit, role)) && ecranOuvert(ctx, item.id, role));
+  : (!item.droit || droitOuvert(ctx, item.droit, role)) && ecranOuvert(ctx, item.id, role) && equipeAutorise(ctx, item.id, role));
 
 /** Menus que voit un rôle, d'après la matrice : ceux de Vue d’ensemble, puis ceux de Mon dashboard avec leurs sous-menus
  *  ouverts. Mon dashboard est fermé en Lecture seule (migration 030). */
@@ -85,7 +88,8 @@ const menuOuvert = (ctx: ContexteDroits, item: Menu, role?: string): boolean => 
 export const estMenuVueEnsemble = (m: Pick<Menu, 'pourTous'>): boolean => !!m.pourTous;
 
 export function menusDuRole(ctx: ContexteDroits, role?: string): { vue: Menu[]; equipes: Menu[]; suivi: Menu[]; moi: Menu[] } {
-  const suivi = MENU_GENERAL.filter(item => (item.pourTous || (!!item.droit && droitOuvert(ctx, item.droit, role))) && ecranOuvert(ctx, item.id, role));
+  const suivi = MENU_GENERAL.filter(item => (item.pourTous || (!!item.droit && droitOuvert(ctx, item.droit, role))) && ecranOuvert(ctx, item.id, role)
+    && equipeAutorise(ctx, item.id, role));
   const lectureSeule = (role ?? monRole(ctx)) === 'lecture';
   const moi = lectureSeule ? [] : MENU_MOI
     .filter(item => (item.reserveCreateur ? !role && ctx.estCreateur : true) && (item.reserveAdmin ? (role ? role === 'admin' : ctx.estAdmin) : true)

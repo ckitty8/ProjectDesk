@@ -17,6 +17,7 @@ import { RessourcesAdmin } from './administration/RessourcesAdmin';
 import { Equipes } from './administration/Equipes';
 import { AucunOnglet, EnteteEcran } from '../composants/Carte';
 import { MatriceDroits } from './administration/MatriceDroits';
+import { MenusEquipes } from './administration/MenusEquipes';
 import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
 import { ongletsAdministration } from '../domaine/admin';
@@ -54,6 +55,7 @@ export function Administration() {
           {onglet === 'feries' && <JoursFeries modifiable={modifieReferentiels} />}
           {onglet === 'envoiDaily' && <EnvoiDaily />}
           {onglet === 'roadmap' && <RoadmapAdmin modifiable={modifieReferentiels} />}
+          {onglet === 'menusEquipes' && <MenusEquipes />}
           {onglet === 'matrice' && <MatriceDroits />}
         </>
       )}

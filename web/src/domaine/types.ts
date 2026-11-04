@@ -156,6 +156,13 @@ export interface RoleDeclare {
   role: string;
 }
 
+/** Écran autorisé ou écarté pour une équipe (table droits_equipes, migration 059) ; sans ligne, l'écran est accessible */
+export interface LigneEcranEquipe {
+  equipeId: string;
+  ecran: string;
+  acces: boolean;
+}
+
 /** Ligne de la matrice des droits (table droits_roles) */
 export interface LigneDroit {
   role: string;

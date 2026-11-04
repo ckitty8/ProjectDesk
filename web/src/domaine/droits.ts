@@ -8,7 +8,8 @@
    ============================================================ */
 import { DROITS, ROLES_CHOISISSABLES } from './config';
 import type { Niveau } from './config';
-import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, Projet, Rattachement, Ressource, ResponsableEquipe, RoleDeclare } from './types';
+import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, LigneEcranEquipe, Projet, Rattachement, Ressource, ResponsableEquipe,
+  RoleDeclare } from './types';
 
 /** Simulation de rôle (créateur seul) : le rôle de la carte s'applique à la fiche choisie */
 export interface Simulation {
@@ -46,6 +47,10 @@ export interface ContexteDroits {
   administrateurs: readonly CompteAdmin[];
   createur: readonly CompteAdmin[];
   droitsRoles: readonly LigneDroit[];
+  /** Écrans autorisés ou écartés par équipe (migration 059) */
+  droitsEquipes: readonly LigneEcranEquipe[];
+  /** Équipe ouverte (équipe active) : celle dont les écrans autorisés s'appliquent ; null = aucun filtre d'équipe */
+  equipeActive?: string | null;
 }
 
 const ROLES_RESPONSABLE = ['owner', 'admin'];
@@ -144,6 +149,14 @@ export function monRoleSansAdmin(ctx: ContexteDroits): string {
 }
 
 /* ---------- Matrice des droits ---------- */
+
+/** L'équipe active autorise-t-elle cet écran ? (étape 1 du choix des écrans, Administration › Menus par équipe, porteur 2026-11-04 ; l'étape 2 est la
+ *  matrice des droits par rôle). Sans ligne pour l'équipe et l'écran, il est accessible ; l'administrateur en mode administrateur voit tout. */
+export function ecranAutoriseEquipe(ctx: ContexteDroits, ecran: string): boolean {
+  if (ctx.estAdmin || !ctx.equipeActive) return true;
+  const ligne = ctx.droitsEquipes.find(l => l.equipeId === ctx.equipeActive && l.ecran === ecran);
+  return ligne ? ligne.acces : true;
+}
 
 /** Le droit existe-t-il dans la table droits_roles ? (droits par menu : migration 037) */
 export const droitEnBase = (ctx: ContexteDroits, droit: string): boolean => ctx.droitsRoles.some(d => d.droit === droit);

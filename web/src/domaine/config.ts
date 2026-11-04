@@ -99,6 +99,24 @@ export const MENUS_SANS_DROIT: readonly { section: 'suivi' | 'dashboard'; menu: 
   { section: 'dashboard', menu: 'Trucs et astuces', libelle: 'Fiches pratiques' }
 ];
 
+/** Écrans dont l'accès se règle PAR ÉQUIPE (Administration › Menus par équipe, migration 059). Administration, Trucs et astuces et Mon profil n'en font pas
+ *  partie : ils restent accessibles à toutes les équipes. « section » : celle de la barre latérale où l'écran s'affiche. */
+export const ECRANS_PAR_EQUIPE: readonly { id: string; libelle: string; section: 'vue' | 'equipes' | 'moi' }[] = [
+  { id: 'projets', libelle: 'Projet (Gantt et liste)', section: 'vue' },
+  { id: 'roadmap', libelle: 'Roadmap', section: 'vue' },
+  { id: 'dashboard', libelle: 'Dashboard général', section: 'equipes' },
+  { id: 'dailyEquipes', libelle: 'Daily des équipes', section: 'equipes' },
+  { id: 'ressources', libelle: 'Gestion des ressources', section: 'equipes' },
+  { id: 'timesheet', libelle: 'Feuilles de temps', section: 'equipes' },
+  { id: 'daily', libelle: 'Daily', section: 'moi' },
+  { id: 'mesSprints', libelle: 'Projet › Sprints', section: 'moi' },
+  { id: 'mesProjets', libelle: 'Projet › Mises en production', section: 'moi' },
+  { id: 'mesDemandes', libelle: 'Projet › Roadmap', section: 'moi' },
+  { id: 'conges', libelle: 'Gestion des ressources › Congés', section: 'moi' },
+  { id: 'listeRessources', libelle: 'Gestion des ressources › Liste des ressources', section: 'moi' },
+  { id: 'monTimesheet', libelle: 'Saisir mes heures', section: 'moi' }
+];
+
 /** Un droit de la matrice : menu ou onglet de la barre latérale (clés fixes, reliées aux règles de la base) */
 export interface Droit {
   cle: string;

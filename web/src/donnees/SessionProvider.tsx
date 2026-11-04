@@ -140,6 +140,9 @@ function Interne({ children }: { children: ReactNode }) {
     return equipeAOuvrir(equipes, lireEquipeMemorisee(), vue.ctx.estAdmin)?.id ?? null;
   }, [vue, equipeChoisie]);
 
+  // Contexte de droits + équipe active : les écrans autorisés pour cette équipe (Administration › Menus par équipe) s'appliquent aux menus
+  const ctxActif = useMemo(() => (vue ? { ...vue.ctx, equipeActive: equipeCourante } : null), [vue, equipeCourante]);
+
   // Sans compte, on est déconnecté même si une lecture de données en vol échoue juste après la déconnexion (« Non connecté » n'est pas une erreur)
   const etat: EtatSession = compteQ.isPending ? 'chargement'
     : compteQ.isError ? 'erreur'
@@ -162,9 +165,9 @@ function Interne({ children }: { children: ReactNode }) {
     etat,
     erreur: erreurBrute ? (erreurBrute as Error).message : null,
     compte,
-    ctx: vue?.ctx ?? null,
+    ctx: ctxActif,
     donnees: vue?.donnees ?? null,
-    ctxComplet: vue?.ctx ?? null,
+    ctxComplet: ctxActif,
     donneesCompletes: vue?.donnees ?? null,
     tablesEnEchec: donneesQ.data?.echecs ?? [],
     comptesEnAttente: simulation && !vue?.ctx.estAdmin ? [] : comptesQ.data ?? [],

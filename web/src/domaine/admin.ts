@@ -40,6 +40,8 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
     // Roadmap (porteur, 2026-11-03 ; maquette admin-roadmap-colonnes/) : colonnes du tableau de Vue d’ensemble › Roadmap ; administrateurs
     ...(ctx.estAdmin ? [{ id: 'roadmap', libelle: 'Roadmap', compte: n.colonnesRoadmap }] : []),
+    // Menus par équipe (porteur, 2026-11-04) : étape 1 du choix des écrans, par équipe ; administrateurs
+    ...(ctx.estAdmin ? [{ id: 'menusEquipes', libelle: 'Menus par équipe', compte: undefined }] : []),
     // Matrice des droits : créateur seul (elle règle les droits de tous les rôles) ; pas de droit d'onglet dans la matrice
     ...(ctx.estCreateur ? [{ id: 'matrice', libelle: 'Matrice des droits', compte: undefined }] : [])
   ];

@@ -717,6 +717,22 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('text=Accès donné à');
     verifier('Comptes en attente : « Donner l\'accès » crée la fiche et invite dans l\'équipe', (await toast()).includes('Accès donné à'));
 
+    // Administration › Menus par équipe (étape 1 : écrans accessibles par équipe) : une case écrit une ligne, relue au rechargement
+    await page.click('[role=tab]:has-text("Menus par équipe")');
+    await page.waitForSelector('.tableau-menus-equipes');
+    const caseCongesData = page.locator('input[aria-label="Gestion des ressources › Congés · Data"]');
+    verifier('Administration › Menus par équipe : tous les écrans sont accessibles par défaut', await caseCongesData.isChecked());
+    await caseCongesData.click();       // case pilotée par les données : l'état change après l'écriture
+    await page.waitForFunction(() => !document.querySelector('input[aria-label="Gestion des ressources › Congés · Data"]').checked);
+    await page.reload();
+    await page.waitForSelector('.laterale');
+    await page.click('.laterale a[href$="/administration"]');
+    await page.click('[role=tab]:has-text("Menus par équipe")');
+    await page.waitForSelector('.tableau-menus-equipes');
+    verifier('Administration › Menus par équipe : un écran décoché reste décoché après rechargement',
+      !(await page.locator('input[aria-label="Gestion des ressources › Congés · Data"]').isChecked()));
+    await page.locator('input[aria-label="Gestion des ressources › Congés · Data"]').click();
+    await page.waitForFunction(() => document.querySelector('input[aria-label="Gestion des ressources › Congés · Data"]').checked);
     await page.click('[role=tab]:has-text("Équipes")');
     verifier('Administration › Équipes : directions et équipes (la direction en ligne de groupe, ses équipes dessous), responsables, membres, projets, « Modifier »', await page.locator('.tableau tbody tr.groupe').count() === 1 && await page.locator('.tableau tbody tr').count() >= 4 && await page.locator('button:has-text("Modifier")').count() >= 4);
     await page.locator('button:has-text("Modifier")').first().click();

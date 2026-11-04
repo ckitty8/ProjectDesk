@@ -110,3 +110,28 @@ describe('description d’un rôle', () => {
     expect(resumeDuRole(contexte(), 'lecture')).toContain('Mon dashboard : aucun menu');
   });
 });
+
+describe('écrans par équipe (étape 1, porteur 2026-11-04)', () => {
+  const libellesMoi = (ctx: ReturnType<typeof contexte>) => libelles(menusDuRole(ctx).moi);
+
+  it('sans ligne, tous les écrans de l\'équipe sont accessibles', () => {
+    const ctx = contexte({ equipeActive: 'app', droitsEquipes: [] });
+    expect(libellesMoi(ctx)).toContain('Congés');
+  });
+
+  it('un écran écarté pour l\'équipe active disparaît du menu, un autre écran reste', () => {
+    const ctx = contexte({ equipeActive: 'app', droitsEquipes: [{ equipeId: 'app', ecran: 'conges', acces: false }] });
+    expect(libellesMoi(ctx)).not.toContain('Congés');
+    expect(libellesMoi(ctx)).toContain('Saisir mes heures');
+  });
+
+  it('le choix d\'une équipe ne touche pas les autres équipes', () => {
+    const ctx = contexte({ equipeActive: 'ia', droitsEquipes: [{ equipeId: 'app', ecran: 'conges', acces: false }] });
+    expect(libellesMoi(ctx)).toContain('Congés');
+  });
+
+  it('l\'administrateur en mode administrateur voit tout, quel que soit le choix', () => {
+    const ctx = contexte({ equipeActive: 'app', estAdmin: true, droitsEquipes: [{ equipeId: 'app', ecran: 'conges', acces: false }] });
+    expect(libellesMoi(ctx)).toContain('Congés');
+  });
+});
