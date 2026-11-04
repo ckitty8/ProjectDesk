@@ -11,11 +11,14 @@ import type { FormEvent } from 'react';
 import { Avatar, BadgeTon } from '../Badge';
 import { Bouton } from '../Bouton';
 import { Cadre } from '../Fenetres';
-import { creer, creerOrganisation, inviterMembre, lireOrganisation, modifier } from '../../donnees/api';
+import { creer, creerOrganisation, executer as appelerFonction, inviterMembre, lireOrganisation, modifier } from '../../donnees/api';
 import type { OrganisationDetaillee } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { COULEURS } from '../../domaine/config';
-import { peutGererEquipe, responsablesDe } from '../../domaine/droits';
+import { responsablesAffiches } from '../../domaine/annuaire';
+import { peutGererEquipe } from '../../domaine/droits';
+import { aujourdhui } from '../../domaine/dates';
+import { ressourcesPresentes } from '../../domaine/vues';
 
 interface Props {
   /** Équipe à modifier ; sinon création */
@@ -48,6 +51,19 @@ export function ModaleEquipe({ id, typeUnite = 'equipe', parentId = null, onFerm
 
   if (!ctx || !donnees) return null;
   const admin = ctx.estAdmin;
+  // Affecter un responsable : on choisit une personne de l'unité, qui reçoit le rôle Responsable d'équipe
+  // (Direction pour une direction) — rôle unique par personne
+  const roleResponsable = (equipe?.type ?? typeUnite) === 'direction' ? 'direction' : 'responsable';
+  const dejaResponsables = new Set(id ? responsablesAffiches(ctx, id).map(r => r.id) : []);
+  const candidats = id ? ressourcesPresentes(donnees, aujourdhui()).filter(r => r.equipeId === id && !dejaResponsables.has(r.id)) : [];
+  async function affecterResponsable(ressourceId: string) {
+    if (!ressourceId) return;
+    try {
+      const resultat = await appelerFonction('affecter_role', { p_ressource: ressourceId, p_role: roleResponsable });
+      await actualiser();
+      notifier(resultat === 'prevu' ? 'Responsable prévu : il le deviendra à sa connexion' : 'Responsable affecté');
+    } catch (e) { notifier((e as Error).message, 'erreur'); }
+  }
   const libelleType = type === 'direction' ? 'Direction' : 'Équipe';
   const directions = donnees.equipes.filter(x => x.type === 'direction' && x.id !== id);
   const invitations = (organisation?.invitations ?? []).filter(i => i.status === 'pending');
@@ -140,7 +156,12 @@ export function ModaleEquipe({ id, typeUnite = 'equipe', parentId = null, onFerm
               {id && (
                 <>
                   <div className="libelle">Responsable(s)</div>
-                  <div className="discret">{responsablesDe(ctx, id).map(r => r.nom).join(', ') || 'aucun'} — à choisir dans Administration › Ressources › Paramétrage des rôles</div>
+                  <div className="discret">{responsablesAffiches(ctx, id).map(r => r.nom).join(', ') || 'aucun'}</div>
+                  <select className="champ" aria-label="Affecter un responsable" value="" disabled={!admin || candidats.length === 0}
+                    onChange={e => void affecterResponsable(e.target.value)}>
+                    <option value="">{candidats.length ? '— affecter un responsable —' : 'aucune autre personne dans l’équipe'}</option>
+                    {candidats.map(r => <option key={r.id} value={r.id}>{r.nom}</option>)}
+                  </select>
                 </>
               )}
             </div>

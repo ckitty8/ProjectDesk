@@ -25,8 +25,8 @@ interface Props {
 }
 
 export function ModaleAffectation({ ressourceId, projetId, onFermer, onNouvellePersonne }: Props) {
-  /* Données complètes : on propose les personnes et les projets de toute l'application, pas seulement ceux de l'équipe active */
-  const { ctxComplet: ctx, donneesCompletes: donnees, equipeCourante, executer } = useSession();
+  // Données de l'équipe active : on n'affecte que sur ses projets (porteur, 2026-11-04 : « dans AMOA, je ne dois pas voir les projets d'IA et d'Applications »)
+  const { ctx, donnees, equipeCourante, executer } = useSession();
   const [choisie, setChoisie] = useState(ressourceId ?? '');
   if (!ctx || !donnees) return null;
   const projetOrigine = donnees.projets.find(p => p.id === projetId);

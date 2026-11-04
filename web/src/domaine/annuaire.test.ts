@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPES, PROJETS, contexte } from './__fixtures__/donnees';
-import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
+import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, responsablesAffiches, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
 
 describe('navigation de l\'annuaire', () => {
   it('liste la direction en tête (niveau 0), ses équipes en retrait (niveau 1), puis les équipes isolées', () => {
@@ -65,5 +65,17 @@ describe('prénom et nom (migration 048)', () => {
     expect(nomComplet(' Léa ', 'Moreau-Durand')).toBe('Léa Moreau-Durand');
     expect(nomComplet('Christelle', '')).toBe('Christelle');
     expect(nomComplet('', '')).toBe('');
+  });
+});
+
+describe('responsables affichés d’une unité (porteur, 2026-11-04)', () => {
+  it('une personne dont le rôle Responsable est seulement prévu (pas encore connectée) est affichée comme responsable', () => {
+    const ctx = contexte({ rolesPrevus: [{ ressourceId: 'r-thomas', role: 'responsable' }], responsablesEquipe: [] });
+    expect(responsablesAffiches(ctx, 'app').map(r => r.id)).toContain('r-thomas');
+  });
+
+  it('les responsables inscrits en base restent affichés, sans doublon', () => {
+    const ctx = contexte({ responsablesEquipe: [{ equipeId: 'app', ressourceId: 'r-thomas' }], rolesPrevus: [{ ressourceId: 'r-thomas', role: 'responsable' }] });
+    expect(responsablesAffiches(ctx, 'app').filter(r => r.id === 'r-thomas')).toHaveLength(1);
   });
 });

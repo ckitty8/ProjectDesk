@@ -12,7 +12,8 @@ import { Carte, Vide } from '../../composants/Carte';
 import { ModaleEquipe } from '../../composants/modales/ModaleEquipe';
 import { useSession } from '../../donnees/SessionProvider';
 import { aujourdhui } from '../../domaine/dates';
-import { peutGererEquipe, responsablesDe } from '../../domaine/droits';
+import { responsablesAffiches } from '../../domaine/annuaire';
+import { peutGererEquipe } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import { arbreUnites, ressourcesPresentes } from '../../domaine/vues';
 import { COULEURS } from '../../domaine/config';
@@ -45,7 +46,7 @@ export function Equipes() {
                   {e.type === 'direction' ? <BadgeTon texte="Direction" ton="violet" /> : <span className="discret texte-12">équipe</span>}
                 </span>
               </td>
-              <td>{responsablesDe(ctx, e.id).map(r => r.nom).join(', ') || <span className="pale">—</span>}</td>
+              <td>{responsablesAffiches(ctx, e.id).map(r => r.nom).join(', ') || <span className="pale">—</span>}</td>
               <td>{actives.filter(r => r.equipeId === e.id).length}</td>
               <td>{donnees.projets.filter(p => p.equipeId === e.id).length}</td>
               <td className="num">{peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}</td>

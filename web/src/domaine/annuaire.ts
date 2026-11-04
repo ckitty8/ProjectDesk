@@ -5,7 +5,7 @@
    Maquette docs/maquettes/liste-ressources-ux/3-navigation-detail.png (piste 3, porteur 2026-10-09). Le niveau « direction » n'est plus affiché
    dans la navigation (« on oublie la direction DSI »). Fonctions pures : l'écran dessine ce qu'elles décident.
    ============================================================ */
-import { roleDeLaFiche, rolePrevu } from './droits';
+import { responsablesDe, roleDeLaFiche, rolePrevu } from './droits';
 import type { ContexteDroits } from './droits';
 import { arbreUnites } from './vues';
 import type { UniteNiveau } from './vues';
@@ -70,6 +70,17 @@ export const equipeVide = (ctx: ContexteDroits, equipeId: string): boolean => !c
   && !ctx.projets.some(p => p.equipeId === equipeId) && !ctx.equipes.some(x => x.parentId === equipeId);
 
 /* ---------- Rôle affiché ---------- */
+
+/** Responsables à afficher pour une unité : ceux inscrits en base (responsables_equipe) ET les personnes de l'unité dont le rôle choisi est Responsable
+ *  d'équipe (ou Direction pour une direction), même si ce rôle est seulement prévu (personne pas encore connectée : la base ne l'a pas encore inscrit).
+ *  Porteur, 2026-11-04 : « Dina est responsable et dans Administration il n'y a pas de responsable » */
+export function responsablesAffiches(ctx: ContexteDroits, equipeId: string): Ressource[] {
+  const unite = ctx.equipes.find(e => e.id === equipeId);
+  const roleVoulu = unite?.type === 'direction' ? 'direction' : 'responsable';
+  const choisis = ctx.ressources.filter(r => r.equipeId === equipeId && roleChoisi(ctx, r) === roleVoulu);
+  const deja = new Set(choisis.map(r => r.id));
+  return [...choisis, ...responsablesDe(ctx, equipeId).filter(r => !deja.has(r.id))];
+}
 
 /** Rôle choisi dans Administration › Ressources › Paramétrage des rôles : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
 export const roleChoisi = (ctx: ContexteDroits, r: Ressource): string => rolePrevu(ctx, r) ?? roleDeLaFiche(ctx, r);

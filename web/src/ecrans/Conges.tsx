@@ -141,7 +141,7 @@ const FragmentHors = () => <><td className="pale">—</td><td className="conge p
 const FragmentTC = () => <><th>T</th><th className="conge">C</th></>;
 
 export function Conges() {
-  const { ctx, donnees, executer } = useSession();
+  const { ctx, donnees, ctxComplet, donneesCompletes, executer } = useSession();
   const j = depuisIso(aujourdhui());
   const [mois, setMois] = useState({ annee: j.getFullYear(), mois: j.getMonth() });
   const [choix, setChoix] = useState('grille');
@@ -154,10 +154,13 @@ export function Conges() {
   const liste = [{ id: 'grille', libelle: 'Grille mensuelle' }, { id: 'recap', libelle: `Récap annuel ${mois.annee}` }].filter(o => ongletPermis(ctx, 'conges', o.id));
   const onglet = (liste.find(o => o.id === choix) ?? liste[0])?.id;
   if (!onglet) return <div className="ecran"><EnteteEcran titre="Congés" /><AucunOnglet /></div>;
-  const moi = maRessource(ctx);
-  /* Hors administrateur, seule ma fiche est affichée (grille et récap) ; sans fiche reliée, rien à restreindre ni à saisir */
-  const soiSeul = !ctx.estAdmin && !!moi;
-  const vue = soiSeul ? { ...donnees, ressources: donnees.ressources.filter(r => r.id === moi?.id), projets: [] } : donnees;
+  /* Hors administrateur : SEULE MA FICHE, où qu'elle soit — jamais celle d'un autre, même de l'équipe active (porteur, 2026-11-04 : « j'ai accès à
+     l'ajout des congés de Dina »). Ma fiche est cherchée dans les données COMPLÈTES : l'équipe active peut ne pas être la mienne, et un contexte
+     réduit à cette équipe ne la contient pas (on retombait alors sur toute l'équipe). */
+  const moi = maRessource(ctxComplet ?? ctx);
+  const soiSeul = !ctx.estAdmin;
+  const sources = donneesCompletes ?? donnees;
+  const vue = soiSeul ? { ...sources, ressources: sources.ressources.filter(r => r.id === moi?.id), projets: [] } : donnees;
 
   /* Une case est modifiable : sur ma ligne, si mon rôle a le droit « Mon dashboard » ou l'onglet Grille mensuelle (la Direction n'a que ce dernier) ;
      sur celle des autres, seulement pour l'administrateur (droit « congés des autres ») */
@@ -168,6 +171,7 @@ export function Conges() {
   /* Clic sur un jour : pose le type et la durée choisis (journée ou demi-journée) ; retire l'absence si elle a déjà ce type et cette durée
      (ou avec « Effacer ») ; même type mais autre durée : la durée est changée */
   async function basculer(ressourceId: string, jour: string) {
+    if (!modifiable(ressourceId)) return;       // garde-fou : jamais d'écriture sur la fiche d'un autre hors administrateur
     if (!donnees) return;
     const existante = absenceDe(donnees.absences, ressourceId, jour);
     const action = actionAbsence(existante, pinceau, duree);
