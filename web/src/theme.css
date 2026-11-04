@@ -488,3 +488,13 @@ select.niveau-non { color: var(--pale); }
 .ajout-colonne { padding: 12px 16px; border-top: 1px solid var(--bordure-fine); } .ajout-colonne input.champ { flex: 2; } .ajout-colonne select.champ { flex: 1.2; }
 .carte-titre .normal { font-weight: 400; }
 .tableau-roadmap td.cellule-demande { min-width: 280px; max-width: 420px; white-space: normal; }
+
+/* ---------- Mon dashboard › Projet › Roadmap : liste et fiche des demandes ---------- */
+.tableau-demandes td.cellule-demande { min-width: 220px; max-width: 340px; white-space: normal; }
+.fiche-demande { display: grid; gap: 18px; }
+.bloc-fiche { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bloc-fiche legend { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--discret);
+  border-bottom: 1px solid var(--bordure-fine); padding-bottom: 4px; margin-bottom: 8px; width: 100%; }
+.champ-fiche { display: grid; gap: 4px; } .champ-fiche > span { font-size: 12px; color: var(--discret); }
+.champ-fiche.pleine-largeur { grid-column: 1 / -1; }
+.champ.champ-calcule { display: flex; align-items: center; color: var(--texte); }

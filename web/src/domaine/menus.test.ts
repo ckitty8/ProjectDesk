@@ -43,12 +43,12 @@ describe('menus de la barre latérale = ce que la matrice ouvre', () => {
     });
   });
 
-  it('Mon dashboard : le menu Projet a deux sous-menus, Sprints puis Mises en production, absent du rôle Utilisateur (Chef de projet et Membre l’ont)', () => {
+  it('Mon dashboard : le menu Projet a trois sous-menus, Sprints, Mises en production puis Roadmap, absent du rôle Utilisateur (Chef de projet et Membre l’ont)', () => {
     const ctx = contexte();
     expect(menusDuRole(ctx, 'utilisateur').moi.some(m => m.id === 'mesSprints')).toBe(false);
     const projet = menusDuRole(ctx, 'chef').moi.find(m => m.id === 'mesSprints');
     expect(projet?.libelle).toBe('Projet');
-    expect(projet?.enfants?.map(e => e.libelle)).toEqual(['Sprints', 'Mises en production']);
+    expect(projet?.enfants?.map(e => e.libelle)).toEqual(['Sprints', 'Mises en production', 'Roadmap']);
   });
 
   it('Vue d’ensemble : le menu Projet (le Gantt et la liste) est visible de tous les rôles, même sans aucun droit de la matrice', () => {

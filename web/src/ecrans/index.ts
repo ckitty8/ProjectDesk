@@ -11,6 +11,7 @@ import { Daily } from './Daily';
 import { DailyEquipes } from './DailyEquipes';
 import { Dashboard } from './Dashboard';
 import { ListeRessources } from './ListeRessources';
+import { MesDemandes } from './MesDemandes';
 import { MesProjets } from './MesProjets';
 import { Profil } from './Profil';
 import { Projets } from './Projets';
@@ -30,6 +31,7 @@ export const ECRANS: Record<string, ComponentType> = {
   daily: Daily,
   mesProjets: MesProjets,
   mesSprints: Sprints,
+  mesDemandes: MesDemandes,
   conges: Conges,
   listeRessources: ListeRessources,
   monTimesheet: SaisirHeures,

@@ -205,6 +205,52 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await lignesRoadmap.nth(1).textContent()).includes('liens vidéos') && (await lignesRoadmap.nth(1).textContent()).includes('3,5')
       && (await lignesRoadmap.nth(2).textContent()).includes('complexité à saisir') && !(await texte()).includes('Aucune demande pour le moment.'));
 
+    // Mon dashboard › Projet › Roadmap (3.07, maquette saisie-demandes-roadmap/) : saisie des demandes par les chefs de projet (ici en administrateur)
+    await page.click('.laterale a[href$="/mes-demandes"]');
+    await page.waitForSelector('select[aria-label="Projet"]');
+    await page.selectOption('select[aria-label="Projet"]', '');
+    await page.waitForSelector('.tableau-demandes');
+    await captureB('38-mes-demandes');
+    verifier('Mon dashboard › Projet › Roadmap : 3e sous-menu ; les 3 demandes sans projet (administrateur), rang global et score', await page.locator('.sous-menu a[href$="/mes-demandes"]').count() === 1
+      && await page.locator('.tableau-demandes tbody tr').count() === 3 && (await page.locator('.tableau-demandes tbody tr').first().textContent()).includes('5,25'));
+    await page.selectOption('select[aria-label="Projet"]', { index: 1 });
+    await page.waitForSelector('text=Aucune demande pour ce projet.');
+    await page.click('button:has-text("+ Nouvelle demande")');
+    await page.waitForSelector('.panneau[role=dialog] .fiche-demande');
+    await page.getByLabel('Demande', { exact: true }).fill('Afficher le nombre de lots disponibles sur la fiche programme');
+    await page.getByLabel('Stratégique', { exact: true }).selectOption('Oui');
+    await page.getByLabel('Priorité demandeur', { exact: true }).selectOption('1');
+    await page.getByLabel('Impact client', { exact: true }).selectOption('3');
+    await page.getByLabel('Impact collaborateur', { exact: true }).selectOption('3');
+    await page.getByLabel('Complexité', { exact: true }).selectOption('2');
+    await page.getByLabel('Chiffrage DSI (j-h)', { exact: true }).fill('2.5');
+    await captureB('38b-fiche-demande');
+    verifier('Fiche demande : champs par bloc, score et rang calculés en direct (score 6, rang 1)', (await page.textContent('.fiche-demande')).includes('6')
+      && await page.locator('.fiche-demande .champ-calcule').count() === 2 && (await page.locator('.fiche-demande .champ-calcule').first().textContent()) === '1'
+      && (await page.locator('.fiche-demande .champ-calcule').nth(1).textContent()) === '6');
+    await page.click('.panneau button:has-text("Enregistrer")');
+    await page.waitForSelector('.tableau-demandes tbody tr');
+    verifier('Fiche demande : la demande est enregistrée dans le projet, au rang 1', await page.locator('.tableau-demandes tbody tr').count() === 1
+      && (await page.locator('.tableau-demandes tbody tr td').first().textContent()) === '1');
+    await menu('/roadmap');
+    await page.waitForSelector('.tableau-roadmap tbody tr');
+    verifier('Roadmap : la nouvelle demande apparaît en tête (4 demandes)', await page.locator('.tableau-roadmap tbody tr').count() === 4
+      && (await page.locator('.tableau-roadmap tbody tr').first().textContent()).includes('lots disponibles') && (await page.locator('.tableau-roadmap tbody tr').first().textContent()).includes('2,5'));
+    await page.click('.laterale a[href$="/mes-demandes"]');
+    await page.waitForSelector('select[aria-label="Projet"]');
+    await page.selectOption('select[aria-label="Projet"]', { index: 1 });
+    await page.click('.tableau-demandes button:has-text("Modifier")');
+    await page.waitForSelector('.panneau[role=dialog] .fiche-demande');
+    await page.getByLabel('Stratégique', { exact: true }).selectOption('Non');
+    await page.click('.panneau button:has-text("Enregistrer")');
+    await page.waitForFunction(() => document.querySelector('.tableau-demandes tbody td')?.textContent === '2');
+    verifier('Fiche demande : modifier (plus stratégique) la fait passer au rang 2', true);
+    page.once('dialog', d => d.accept());      // confirmation de la suppression (le traitement général des fenêtres n'est posé que plus loin)
+    await page.click('.tableau-demandes button[aria-label="Supprimer la demande"]');
+    await page.waitForSelector('text=Aucune demande pour ce projet.');
+    verifier('Mon dashboard › Projet › Roadmap : suppression d\'une demande', await page.locator('.tableau-demandes').count() === 0);
+    await menu('/dashboard');
+
     // Projet (Vue d’ensemble) : onglets Gantt (par défaut) et Liste (2.91)
     await menu('/projets');
     await page.waitForSelector('.gantt-carte');

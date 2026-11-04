@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-04 | Saisie des demandes par les chefs de projet : Mon dashboard › Projet › Roadmap (version 3.07) — § 7 |
 | 2026-11-03 | 3 premières demandes (les plus récentes de 2026) en base, rang et score calculés (version 3.06, migration 057) — § 6 |
 | 2026-11-03 | Colonnes réglables dans Administration › Roadmap (version 3.05, migration 056) — § 5 |
 | 2026-11-03 | Reprise : menu **Roadmap** de Vue d’ensemble affiché avec le **tableau vide** (19 colonnes retenues du fichier, version 3.04) ; source des demandes à décider — § 4 |
@@ -136,3 +137,14 @@ Les valeurs de listes utilisées par ces 3 demandes ont été ajoutées aux list
 
 **À venir** : saisie des demandes par les chefs de projet dans Mon dashboard (droit déjà prévu en base : `peut_gerer_projet`) ; écran à maquetter
 (règle n°3), avec le choix du projet de rattachement (deux projets « CDO » existent : Applications et AMOA).
+
+## 7. Saisie par les chefs de projet (2026-11-04, version 3.07)
+
+Maquette `docs/maquettes/saisie-demandes-roadmap/` validée (« Go »). Mon dashboard › Projet › **Roadmap** (3e sous-menu) :
+
+- choix du projet parmi ceux que je gère (chef de projet affecté, responsable de l'unité, administrateur — règle `peut_gerer_projet`) ;
+- liste des demandes du projet, classées par rang de traitement DSI **global** (le rang compare toutes les demandes) ;
+- fiche : un champ par colonne d'Administration › Roadmap, au type de la colonne ; Rang et Score calculés en direct ; Demande obligatoire.
+
+Choix appliqués par défaut (modifiables) : les 3 demandes du 2026-11-03 restent **sans projet** (visibles des administrateurs sous
+« Sans projet ») ; les valeurs des listes déroulantes restent réglées par l'administrateur (Administration › Roadmap).

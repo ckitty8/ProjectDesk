@@ -71,6 +71,8 @@ export const GUIDE_ECRANS = {
     'Saisissez les mises en production (date, version, nombre de bugs, d’incidents et d’US livrés, statut) des projets que vous pouvez modifier ; ' +
     'chaque champ s’enregistre dès qu’il change.',
     'Tout le monde les voit dans Vue d’ensemble › Projet › Gantt (repères ▲).'],
+  mesDemandes: ['Saisissez les demandes de la roadmap de vos projets : choisissez le projet, puis « + Nouvelle demande » ou « Modifier ».',
+    'Rang et Score sont calculés ; les valeurs des listes déroulantes se règlent dans Administration › Roadmap.'],
   mesSprints: ['Créez les sprints de chaque projet : numéro, année, version, date de début et de fin ; chaque champ s’enregistre dès qu’il change.',
     'Ils s’affichent dans Vue d’ensemble › Projet › Gantt.'],
   conges: ['Deux onglets : la grille mensuelle (poser les absences) et le récap annuel (jours travaillés, congés, reste à prendre).',

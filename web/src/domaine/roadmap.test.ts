@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blocsDuTableau, colonnesOrdonnees, demandesClassees, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
+import { blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
 import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 const col = (id: string, bloc: ColonneRoadmap['bloc'], ordre: number, type: ColonneRoadmap['type'] = 'libre'): ColonneRoadmap =>
@@ -75,5 +75,28 @@ describe('score et rang de traitement DSI des demandes', () => {
   it('à égalité, la plus ancienne d’abord', () => {
     const a = demande('a', { priorite: '3' }, '2026-02-01'), b = demande('b', { priorite: '3' }, '2026-01-01');
     expect(demandesClassees([a, b], colonnes).map(x => x.demande.id)).toEqual(['b', 'a']);
+  });
+});
+
+describe('saisie des demandes', () => {
+  it('ne propose pas les colonnes calculées', () => {
+    expect(colonnesSaisissables(COLONNES).map(c => c.id)).toEqual(['demande', 'priorite', 'statut']);
+  });
+
+  it('enregistre les valeurs rognées, sans les vides ni les colonnes supprimées', () => {
+    expect(valeursAEnregistrer({ demande: '  Ajouter un flux ', statut: '', priorite: null, ancienne: 'x' }, COLONNES)).toEqual({ demande: 'Ajouter un flux' });
+  });
+
+  it('nomme un sprint par son nom, sinon par son numéro', () => {
+    expect(libelleSprint({ nom: 'V2.0', numeroSprint: 20, numero: 2 })).toBe('V2.0');
+    expect(libelleSprint({ nom: ' ', numeroSprint: 19, numero: 1 })).toBe('Sprint 19');
+    expect(libelleSprint({ nom: null, numeroSprint: null, numero: 3 })).toBe('Sprint n°3');
+  });
+
+  it('garde le rang global en filtrant par projet', () => {
+    const d = (id: string, projetId: string | null) => ({ demande: { id, projetId, valeurs: {} }, rang: 0, score: null });
+    const classees = [d('a', 'p1'), d('b', null), d('c', 'p1')].map((x, i) => ({ ...x, rang: i + 1 }));
+    expect(demandesDuProjet(classees, 'p1').map(x => [x.demande.id, x.rang])).toEqual([['a', 1], ['c', 3]]);
+    expect(demandesDuProjet(classees, null).map(x => x.demande.id)).toEqual(['b']);
   });
 });

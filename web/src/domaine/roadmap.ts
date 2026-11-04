@@ -6,7 +6,7 @@
    traitement DSI des demandes (table demandes_roadmap, migration 057).
    ============================================================ */
 import { BLOCS_ROADMAP, PREFIXE_LISTE_ROADMAP } from './config';
-import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
+import type { ColonneRoadmap, DemandeRoadmap, SprintProjet, ValeurReferentiel } from './types';
 
 /** Un bloc du tableau et ses colonnes, dans l'ordre d'affichage */
 export interface BlocDuTableau { cle: string; titre: string; colonnes: ColonneRoadmap[] }
@@ -95,3 +95,27 @@ export function demandesClassees(demandes: readonly DemandeRoadmap[], colonnes: 
 
 /** Score affiché : deux décimales au plus, virgule française (« 5,25 ») */
 export const scoreAffiche = (score: number): string => String(Math.round(score * 100) / 100).replace('.', ',');
+
+/* ---------- Saisie des demandes (Mon dashboard › Projet › Roadmap) ---------- */
+
+/** Colonnes résumées dans la liste de saisie (clés techniques des colonnes de départ ; une colonne supprimée est simplement omise) */
+export const CLES_RESUME_SAISIE = ['rang', 'demande', 'demandeur', 'parcours', 'strategique', 'priorite', 'score', 'statut'] as const;
+
+/** Colonnes saisissables d'une fiche : toutes sauf les colonnes calculées (Rang, Score), dans l'ordre du tableau */
+export const colonnesSaisissables = (colonnes: readonly ColonneRoadmap[]): ColonneRoadmap[] => colonnesOrdonnees(colonnes).filter(c => c.type !== 'calcul');
+
+/** Valeurs à enregistrer : texte rogné, champs vides retirés, seulement les colonnes qui existent encore */
+export function valeursAEnregistrer(saisie: Record<string, string | null | undefined>, colonnes: readonly ColonneRoadmap[]): Record<string, string> {
+  const ids = new Set(colonnes.map(c => c.id));
+  return Object.fromEntries(Object.entries(saisie)
+    .map(([id, v]) => [id, (v ?? '').trim()] as const)
+    .filter(([id, v]) => ids.has(id) && v !== ''));
+}
+
+/** Libellé d'un sprint dans la liste déroulante Sprint DSI (c'est aussi la valeur enregistrée) : son nom, sinon « Sprint 19 » ou « Sprint n°2 » */
+export const libelleSprint = (s: Pick<SprintProjet, 'nom' | 'numeroSprint' | 'numero'>): string =>
+  (s.nom ?? '').trim() || (s.numeroSprint ? `Sprint ${s.numeroSprint}` : `Sprint n°${s.numero}`);
+
+/** Demandes d'un projet (null : demandes sans projet), avec leur rang dans le classement de TOUTES les demandes (le rang DSI est global) */
+export const demandesDuProjet = (classees: readonly DemandeClassee[], projetId: string | null): DemandeClassee[] =>
+  classees.filter(l => (l.demande.projetId ?? null) === projetId);

@@ -50,9 +50,11 @@ export const MENU_GENERAL: readonly Menu[] = [
 /** Mon dashboard : Daily et Saisir mes heures suivent le droit « mon_dashboard » ; chaque autre menu suit ses propres lignes */
 export const MENU_MOI: readonly Menu[] = [
   { id: 'daily', libelle: 'Daily', icone: 'daily', droit: 'mon_dashboard' },
-  // Projet (porteur, 2026-11-02) : Sprints (droit d'onglet « onglet_admin_sprints ») et Mises en production (droit « projets »)
+  // Projet (porteur, 2026-11-02) : Sprints (droit d'onglet « onglet_admin_sprints »), Mises en production (droit « projets ») et Roadmap (saisie des
+  // demandes par les chefs de projet, porteur 2026-11-04, maquette saisie-demandes-roadmap/ ; droit « projets »)
   { id: 'mesSprints', libelle: 'Projet', icone: 'proj',
-    enfants: [{ id: 'mesSprints', libelle: 'Sprints' }, { id: 'mesProjets', libelle: 'Mises en production', droit: 'projets' }] },
+    enfants: [{ id: 'mesSprints', libelle: 'Sprints' }, { id: 'mesProjets', libelle: 'Mises en production', droit: 'projets' },
+      { id: 'mesDemandes', libelle: 'Roadmap', droit: 'projets' }] },
   { id: 'conges', libelle: 'Gestion des ressources', icone: 'ress',
     enfants: [{ id: 'conges', libelle: 'Congés' },
       // Liste des ressources : ouverte si le rôle a l'un de ses deux droits (fiches, affectations)

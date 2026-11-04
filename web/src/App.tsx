@@ -25,7 +25,7 @@ function Racine() {
 /* Écrans qui suivent l'équipe active (porteur, 2026-10-31) : Vue d’ensemble et les écrans de saisie de Mon dashboard ;
    Administration et Trucs et astuces gardent leur portée habituelle. Le menu Projet de Vue d’ensemble n'en fait plus partie : il montre les projets
    de toutes les équipes (porteur, 2026-11-02) */
-const ECRANS_DE_L_EQUIPE = ['dashboard', 'dailyEquipes', 'ressources', 'timesheet', 'daily', 'mesProjets', 'mesSprints', 'conges', 'listeRessources', 'monTimesheet'];
+const ECRANS_DE_L_EQUIPE = ['dashboard', 'dailyEquipes', 'ressources', 'timesheet', 'daily', 'mesProjets', 'mesSprints', 'mesDemandes', 'conges', 'listeRessources', 'monTimesheet'];
 
 /** Écrans de l'application, selon l'état de la session : chargement, erreur, connexion, ou les adresses de routes.ts */
 function Contenu() {
