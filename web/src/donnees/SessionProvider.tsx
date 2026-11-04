@@ -16,7 +16,7 @@ import { chargerComptesEnAttente, chargerRoles, equipeAOuvrir, lireEquipeMemoris
 import type { Compte, CompteEnAttente, RolesEquipes } from './compte';
 import { chargerDonnees } from './chargement';
 import { lireModeAdmin, memoriserModeAdmin } from './modeAdmin';
-import { restreindreEquipe } from '../domaine/perimetre';
+import { restreindreEquipe, restreindreMesProjets } from '../domaine/perimetre';
 import { lireTable } from './chargement';
 import type { ResultatChargement } from './chargement';
 import { construireVue, identiteReelle } from './contexte';
@@ -225,11 +225,13 @@ export function SessionProvider({ children, client }: { children: ReactNode; cli
 /** Réduit les écrans enfants à l'équipe active (Mon dashboard) : mêmes données et mêmes droits, limités à l'équipe choisie et à ses sous-unités */
 export function PorteeEquipe({ children }: { children: ReactNode }) {
   const valeur = useSession();
-  const { ctx, donnees, equipeCourante } = valeur;
+  const { ctx, donnees, ctxComplet, equipeCourante } = valeur;
   const reduit = useMemo(() => {
     if (!ctx || !donnees || !equipeCourante) return null;
-    return restreindreEquipe(donnees, equipeCourante);
-  }, [ctx, donnees, equipeCourante]);
+    const equipe = restreindreEquipe(donnees, equipeCourante);
+    // Hors administrateur : seulement mes projets (où je suis affecté(e) ou chef, ou d'une unité que je gère) ; ma fiche est cherchée dans le contexte complet
+    return ctx.estAdmin || !ctxComplet ? equipe : restreindreMesProjets(equipe, ctxComplet);
+  }, [ctx, donnees, ctxComplet, equipeCourante]);
   if (!ctx || !donnees || !reduit) return <>{children}</>;
   return <Contexte.Provider value={{ ...valeur, ctx: { ...ctx, ...reduit }, donnees: reduit }}>{children}</Contexte.Provider>;
 }

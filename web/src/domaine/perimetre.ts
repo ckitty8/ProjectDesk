@@ -100,3 +100,26 @@ export function restreindreEquipe<T extends DonneesPerimetre & { equipes: readon
     rattachements: brut.rattachements.filter(x => unites.has(x.equipeId))
   };
 }
+
+/* ---------- Mes projets (hors administrateur) ---------- */
+
+/** Projets visibles sur les écrans « équipe » hors administrateur (porteur, 2026-11-04 : « en tant que chef de projet je ne dois voir les projets que
+ *  lorsque le responsable m'a affecté à un projet, sinon cela doit être vide ») : ceux des unités que je gère, ceux dont je suis chef, ceux où je suis
+ *  affecté(e). Les lignes qui dépendent d'un projet (affectations, sprints, mises en production…) suivent. Ne donne aucun droit : ne fait que réduire. */
+export function restreindreMesProjets<T extends DonneesPerimetre>(brut: T, ctx: ContexteDroits): T {
+  const moi = maRessource(ctx);
+  const moiId = moi ? moi.id : null;
+  const gerees = equipesGerees(ctx);
+  const mes = new Set(brut.affectations.filter(a => a.ressourceId === moiId).map(a => a.projetId));
+  const vus = new Set(brut.projets.filter(p => gerees.has(p.equipeId) || (!!moiId && p.chefId === moiId) || mes.has(p.id)).map(p => p.id));
+  const parProjet = <L extends { projetId: string }>(lignes: readonly L[]): L[] => lignes.filter(x => vus.has(x.projetId));
+  return {
+    ...brut,
+    projets: brut.projets.filter(p => vus.has(p.id)),
+    affectations: parProjet(brut.affectations),
+    sprintsProjet: parProjet(brut.sprintsProjet),
+    repartitionsSprint: parProjet(brut.repartitionsSprint),
+    misesEnProduction: parProjet(brut.misesEnProduction),
+    envoisDaily: parProjet(brut.envoisDaily)
+  };
+}

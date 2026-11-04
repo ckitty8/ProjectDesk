@@ -188,8 +188,14 @@ export const ecranAccueil = (ctx: ContexteDroits): 'dashboard' | 'daily' => (niv
 export function equipesGerees(ctx: ContexteDroits): Set<string> {
   if (ctx.estAdmin || ctx.estCreateur) return new Set(ctx.equipes.map(e => e.id));
   const moi = maRessource(ctx);
+  /* Propriétaire ou administrateur de l'organisation Neon Auth d'une équipe = responsable, SAUF si la personne a un rôle déclaré plus modeste
+     (Chef de projet, Membre, Utilisateur, Lecture seule) : avec le rôle unique, c'est le rôle qui compte (porteur, 2026-11-04 : « en tant que chef
+     de projet je ne dois voir que mes projets »). La base garde ses propres règles ; ceci ne règle que ce que l'écran montre. */
+  const declare = moi ? roleDeclare(ctx, moi) : null;
+  const roleOrganisationCompte = !declare || ['responsable', 'direction'].includes(declare);
   const gerees = new Set(ctx.equipes
-    .filter(e => (!!moi && responsablesDe(ctx, e.id).some(r => r.id === moi.id)) || ROLES_RESPONSABLE.includes(ctx.rolesEquipe[e.id] ?? ''))
+    .filter(e => (!!moi && responsablesDe(ctx, e.id).some(r => r.id === moi.id))
+      || (roleOrganisationCompte && ROLES_RESPONSABLE.includes(ctx.rolesEquipe[e.id] ?? '')))
     .map(e => e.id));
   // Simulation : le rôle de la carte s'applique à la fiche choisie (Direction : son unité parente, comme appliquer_role)
   if (ctx.simulation && moi && ['responsable', 'direction'].includes(ctx.simulation.cle)) {

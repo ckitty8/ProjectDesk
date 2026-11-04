@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DONNEES, EQUIPES, contexte } from './__fixtures__/donnees';
-import { appliquerPerimetre, restreindreEquipe } from './perimetre';
+import { equipesGerees } from './droits';
+import { appliquerPerimetre, restreindreEquipe, restreindreMesProjets } from './perimetre';
 
 const ids = <T extends { id: string }>(lignes: readonly T[]) => lignes.map(l => l.id).sort();
 
@@ -77,5 +78,27 @@ describe('équipe active (Mon dashboard)', () => {
     const projets = new Set(v.projets.map(p => p.id));
     expect(v.affectations.every(a => projets.has(a.projetId))).toBe(true);
     expect(v.equipes.map(e => e.id)).toContain('app');
+  });
+});
+
+describe('mes projets hors administrateur (porteur, 2026-11-04)', () => {
+  it('un chef de projet, même propriétaire de l’organisation de son équipe, ne voit que les projets où il est affecté ou chef', () => {
+    const ctx = contexte({ rolesEquipe: { app: 'owner' }, rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }] });
+    expect(equipesGerees(ctx).has('app')).toBe(false);
+    const v = restreindreMesProjets({ ...DONNEES, equipes: EQUIPES }, ctx);
+    const mes = new Set(DONNEES.affectations.filter(a => a.ressourceId === 'r-thomas').map(a => a.projetId));
+    expect(v.projets.every(p => mes.has(p.id) || p.chefId === 'r-thomas')).toBe(true);
+    expect(v.projets.length).toBeLessThan(DONNEES.projets.filter(p => p.equipeId === 'app').length + 1);
+  });
+
+  it('sans aucune affectation, la liste des projets est vide', () => {
+    const ctx = contexte({ userId: 'personne', rolesEquipe: {}, ressources: [] });
+    expect(restreindreMesProjets({ ...DONNEES, equipes: EQUIPES }, ctx).projets).toEqual([]);
+  });
+
+  it('un responsable d’équipe garde tous les projets de son équipe', () => {
+    const ctx = contexte({ rolesEquipe: { app: 'owner' } });
+    const v = restreindreMesProjets({ ...DONNEES, equipes: EQUIPES }, ctx);
+    expect(v.projets.filter(p => p.equipeId === 'app').length).toBe(DONNEES.projets.filter(p => p.equipeId === 'app').length);
   });
 });
