@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-04 | Détail des calculs dans Administration › Roadmap › Calculs, exemple sur les 3 premières demandes (version 3.08) — § 1 |
 | 2026-11-04 | Saisie des demandes par les chefs de projet : Mon dashboard › Projet › Roadmap (version 3.07) — § 7 |
 | 2026-11-03 | 3 premières demandes (les plus récentes de 2026) en base, rang et score calculés (version 3.06, migration 057) — § 6 |
 | 2026-11-03 | Colonnes réglables dans Administration › Roadmap (version 3.05, migration 056) — § 5 |

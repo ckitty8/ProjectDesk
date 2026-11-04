@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
+import { NB_DEMANDES_EXEMPLE, detailScore, raisonDuRang, blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
 import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 const col = (id: string, bloc: ColonneRoadmap['bloc'], ordre: number, type: ColonneRoadmap['type'] = 'libre'): ColonneRoadmap =>
@@ -70,6 +70,22 @@ describe('score et rang de traitement DSI des demandes', () => {
     expect(demandesClassees([mandat, videos, flux], colonnes).map(x => [x.demande.id, x.rang])).toEqual([['flux', 1], ['videos', 2], ['mandat', 3]]);
     const prio2 = demande('p2', { strategique: 'Non', priorite: '2', impactClient: '3', impactCollaborateur: '3', complexite: '1' });
     expect(demandesClassees([prio2, mandat], colonnes).map(x => x.demande.id)).toEqual(['mandat', 'p2']);   // priorité avant score
+  });
+
+  it('détaille le calcul du score et la raison de chaque rang (exemple d’Administration › Roadmap › Calculs)', () => {
+    expect(detailScore(flux, colonnes)).toBe('(0,5 × 3 + 0,3 × 2) ÷ (0,2 × 2) = 2,1 ÷ 0,4 = 5,25');
+    expect(detailScore(videos, colonnes)).toBe('(0,5 × 1 + 0,3 × 3) ÷ (0,2 × 2) = 1,4 ÷ 0,4 = 3,5');
+    expect(detailScore(mandat, colonnes)).toBeNull();
+    const classees = demandesClassees([mandat, videos, flux], colonnes);
+    expect(classees.map((_, i) => raisonDuRang(classees, i, colonnes))).toEqual([
+      'Stratégique : passe en tête',
+      'Non stratégique : après les demandes stratégiques (priorité 1, score 3,5)',
+      'Même priorité, mais sans score : après celles qui en ont un']);
+    const p2 = demande('p2', { strategique: 'Non', priorite: '2' });
+    const autres = demandesClassees([videos, p2], colonnes);
+    expect(raisonDuRang(autres, 0, colonnes)).toBe('En tête : priorité 1, score 3,5');
+    expect(raisonDuRang(autres, 1, colonnes)).toBe('Priorité 2 : après les priorités plus hautes');
+    expect(NB_DEMANDES_EXEMPLE).toBe(3);
   });
 
   it('à égalité, la plus ancienne d’abord', () => {

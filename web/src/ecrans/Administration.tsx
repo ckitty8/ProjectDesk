@@ -8,7 +8,7 @@
    ============================================================ */
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ColonnesRoadmap } from './administration/ColonnesRoadmap';
+import { RoadmapAdmin } from './administration/RoadmapAdmin';
 import { Comptes } from './administration/Comptes';
 import { EnvoiDaily } from './administration/EnvoiDaily';
 import { JoursFeries } from './administration/JoursFeries';
@@ -53,7 +53,7 @@ export function Administration() {
           {onglet === 'ressources' && <RessourcesAdmin modifiable={modifieReferentiels} entreeInitiale={state?.entree} />}
           {onglet === 'feries' && <JoursFeries modifiable={modifieReferentiels} />}
           {onglet === 'envoiDaily' && <EnvoiDaily />}
-          {onglet === 'roadmap' && <ColonnesRoadmap modifiable={modifieReferentiels} />}
+          {onglet === 'roadmap' && <RoadmapAdmin modifiable={modifieReferentiels} />}
           {onglet === 'matrice' && <MatriceDroits />}
         </>
       )}

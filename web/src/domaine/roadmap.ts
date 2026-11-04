@@ -76,18 +76,22 @@ export function scoreDemande(demande: DemandeRoadmap, colonnes: readonly Colonne
   return (0.5 * client + 0.3 * collaborateur) / (0.2 * complexite);
 }
 
+/** Critères du classement d'une demande : stratégique (0 = oui, en tête), priorité (99 = non saisie, en dernier), score (null = sans score) */
+export interface CriteresRang { strategique: 0 | 1; priorite: number; score: number | null }
+
+export const criteresDe = (d: DemandeRoadmap, colonnes: readonly ColonneRoadmap[]): CriteresRang => ({
+  strategique: valeurParCle(d, colonnes, 'strategique')?.toLowerCase() === 'oui' ? 0 : 1,
+  priorite: nombre(valeurParCle(d, colonnes, 'priorite')) ?? 99,
+  score: scoreDemande(d, colonnes)
+});
+
 /** Demande classée : son rang (1 = à traiter en premier) et son score */
 export interface DemandeClassee { demande: DemandeRoadmap; rang: number; score: number | null }
 
 /** Demandes dans l'ordre de traitement DSI : stratégiques d'abord, puis priorité du demandeur (1, 2, 3 ; non saisie en dernier), puis
  *  score décroissant (sans score : après celles qui en ont un) ; à égalité, la plus ancienne d'abord (ordre des lignes de l'Excel) */
 export function demandesClassees(demandes: readonly DemandeRoadmap[], colonnes: readonly ColonneRoadmap[]): DemandeClassee[] {
-  const cle = (d: DemandeRoadmap) => ({
-    strategique: valeurParCle(d, colonnes, 'strategique')?.toLowerCase() === 'oui' ? 0 : 1,
-    priorite: nombre(valeurParCle(d, colonnes, 'priorite')) ?? 99,
-    score: scoreDemande(d, colonnes)
-  });
-  return demandes.map(d => ({ d, k: cle(d) }))
+  return demandes.map(d => ({ d, k: criteresDe(d, colonnes) }))
     .sort((a, b) => a.k.strategique - b.k.strategique || a.k.priorite - b.k.priorite
       || (b.k.score ?? -1) - (a.k.score ?? -1) || String(a.d.creeLe ?? '').localeCompare(String(b.d.creeLe ?? '')))
     .map(({ d, k }, i) => ({ demande: d, rang: i + 1, score: k.score }));
@@ -119,3 +123,35 @@ export const libelleSprint = (s: Pick<SprintProjet, 'nom' | 'numeroSprint' | 'nu
 /** Demandes d'un projet (null : demandes sans projet), avec leur rang dans le classement de TOUTES les demandes (le rang DSI est global) */
 export const demandesDuProjet = (classees: readonly DemandeClassee[], projetId: string | null): DemandeClassee[] =>
   classees.filter(l => (l.demande.projetId ?? null) === projetId);
+
+/* ---------- Administration › Roadmap › Calculs : le détail sur un exemple ---------- */
+
+/** Nombre affiché à la française : deux décimales au plus, virgule (« 2,1 ») */
+const fr = (n: number): string => String(Math.round(n * 100) / 100).replace('.', ',');
+
+/** Détail du calcul du score d'une demande : « (0,5 × 3 + 0,3 × 2) ÷ (0,2 × 2) = 2,1 ÷ 0,4 = 5,25 » ; null s'il manque un terme */
+export function detailScore(demande: DemandeRoadmap, colonnes: readonly ColonneRoadmap[]): string | null {
+  const client = nombre(valeurParCle(demande, colonnes, 'impactClient'));
+  const collaborateur = nombre(valeurParCle(demande, colonnes, 'impactCollaborateur'));
+  const complexite = nombre(valeurParCle(demande, colonnes, 'complexite'));
+  if (client === undefined || collaborateur === undefined || !complexite) return null;
+  const haut = 0.5 * client + 0.3 * collaborateur, bas = 0.2 * complexite;
+  return `(0,5 × ${fr(client)} + 0,3 × ${fr(collaborateur)}) ÷ (0,2 × ${fr(complexite)}) = ${fr(haut)} ÷ ${fr(bas)} = ${fr(haut / bas)}`;
+}
+
+/** Pourquoi une demande est à ce rang : le premier critère qui la sépare de la précédente (ou ce qui la met en tête) */
+export function raisonDuRang(classees: readonly DemandeClassee[], index: number, colonnes: readonly ColonneRoadmap[]): string {
+  const moi = criteresDe(classees[index]!.demande, colonnes);
+  const priorite = moi.priorite === 99 ? 'priorité non saisie' : `priorité ${moi.priorite}`;
+  const score = moi.score === null ? 'sans score' : `score ${fr(moi.score)}`;
+  if (index === 0) return moi.strategique === 0 ? 'Stratégique : passe en tête' : `En tête : ${priorite}, ${score}`;
+  const avant = criteresDe(classees[index - 1]!.demande, colonnes);
+  if (moi.strategique !== avant.strategique) return `Non stratégique : après les demandes stratégiques (${priorite}, ${score})`;
+  if (moi.priorite !== avant.priorite) return `${priorite.charAt(0).toUpperCase()}${priorite.slice(1)} : après les priorités plus hautes`;
+  if (moi.score === null && avant.score !== null) return 'Même priorité, mais sans score : après celles qui en ont un';
+  if (moi.score !== avant.score) return `Même priorité, ${score} : après un score plus élevé`;
+  return 'Égalité : la plus ancienne passe avant';
+}
+
+/** Nombre de demandes montrées en exemple dans Administration › Roadmap › Calculs (porteur, 2026-11-04 : « les 3 premières ») */
+export const NB_DEMANDES_EXEMPLE = 3;

@@ -777,6 +777,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('button[aria-label="Supprimer la colonne Canal"]').click();
     await page.waitForFunction(() => !document.querySelector('input[aria-label="Nom de la colonne Canal"]'));
     verifier('Administration › Roadmap : suppression d\'une colonne (et de sa liste)', await lignesColonnes() === 19);
+    // Sous-onglet Calculs (3.08, maquette admin-roadmap-calculs/) : formule du score, critères du rang, exemple sur les 3 premières demandes
+    await page.click('.onglets-secondaires [role=tab]:has-text("Calculs")');
+    await page.waitForSelector('.calculs-roadmap');
+    await captureD('37c-admin-roadmap-calculs');
+    const exemple = page.locator('.tableau-exemple-calcul tbody tr');
+    verifier('Administration › Roadmap › Calculs : formule, 4 critères du rang, exemple détaillé des 3 premières demandes', (await page.textContent('.formule')).includes('0,5 × Impact client')
+      && await page.locator('.calculs-roadmap ol li').count() === 4 && await exemple.count() === 3
+      && (await exemple.first().textContent()).includes('(0,5 × 3 + 0,3 × 2) ÷ (0,2 × 2) = 2,1 ÷ 0,4 = 5,25') && (await exemple.first().textContent()).includes('Stratégique : passe en tête')
+      && (await exemple.nth(2).textContent()).includes('sans score'));
+    await page.click('.onglets-secondaires [role=tab]:has-text("Colonnes")');
+    await page.waitForSelector('.tableau-colonnes-roadmap');
 
     // Ressources (2.93, rôle unique 2.96) : profils (postes) et Rôle
     await page.click('[role=tab]:has-text("Ressources")');
