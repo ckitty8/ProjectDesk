@@ -183,7 +183,12 @@ function amorcer() {
     ['priorite', 'Priorité demandeur', 'priorisation', 'liste'], ['impactClient', 'Impact client', 'priorisation', 'liste'],
     ['impactCollaborateur', 'Impact collaborateur', 'priorisation', 'liste'], ['score', 'Score', 'priorisation', 'calcul'], ['cadrage', 'Cadrage AMOA', 'cadrage', 'liste'],
     ['statut', 'Statut', 'developpement', 'liste'], ['complexite', 'Complexité', 'developpement', 'liste'], ['priseEnCharge', 'Pris en charge DSI', 'developpement', 'liste'],
-    ['chiffrage', 'Chiffrage DSI (j-h)', 'developpement', 'libre', 'nombre'], ['sprint', 'Sprint DSI', 'developpement', 'liste'], ['dateMep', 'Date de MEP', 'developpement', 'libre', 'date']];
+    ['chiffrage', 'Chiffrage DSI (j-h)', 'developpement', 'libre', 'nombre'], ['sprint', 'Sprint DSI', 'developpement', 'liste'], ['dateMep', 'Date de MEP', 'developpement', 'libre', 'date'],
+    // Migration 058 : les 9 colonnes du fichier ajoutées en 3.09, en fin de leur bloc
+    ['moisDemande', 'Mois de la demande', 'identification', 'libre', 'date'], ['commentaires', 'Commentaires', 'identification', 'libre', 'texte'],
+    ['etat', 'Etat', 'priorisation', 'liste'], ['planification', 'Planification', 'priorisation', 'liste'],
+    ['atterrissage', 'Atterrissage chiffrage', 'developpement', 'libre', 'nombre'], ['avancement', 'Avancement dév', 'developpement', 'libre', 'nombre'],
+    ['estimeMep', 'Estimé MEP', 'developpement', 'libre', 'date'], ['statutRecette', 'Statut Recette', 'developpement', 'liste'], ['statutMep', 'Statut MEP', 'developpement', 'liste']];
   const idListe = cle => 'rdm_' + cle.replace(/[A-Z]/g, l => '_' + l.toLowerCase());
   bd.colonnes_roadmap = COLONNES_ROADMAP.map(([cle, libelle, bloc, type, format], i) => ({ id: uuid(), cle, libelle, bloc, type, format: format || null,
     liste_sprints: cle === 'sprint', referentiel_id: type === 'liste' && cle !== 'sprint' ? idListe(cle) : null, ordre: i + 1 }));
@@ -192,14 +197,19 @@ function amorcer() {
   const DEMANDES_ROADMAP = [
     ['2026-07-24', { demande: 'Modifier dans le template du mandat de com le montant de la prestation e-business : De 7500 HT à 15.000 HT', demandeur: 'Céline MASSON',
       parcours: 'Distribution', categorie: 'COM', thematique: 'MANDAT DE COM INTERNE', strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3',
-      cadrage: 'En cours', statut: 'Nouveau', priseEnCharge: 'Non' }],
+      cadrage: 'En cours', statut: 'Nouveau', priseEnCharge: 'Non', moisDemande: '2026-07-24', etat: 'Ouvert', planification: 'T4 2026' }],
     ['2026-07-01', { demande: 'Ajouter plusieurs liens vidéos dans CDO (illimités)', us: '30768', demandeur: 'Estelle Bailly', parcours: 'Publication', categorie: 'DIGITAL',
       thematique: 'PUBLICATION', strategique: 'Non', priorite: '1', impactClient: '1', impactCollaborateur: '3', cadrage: 'Non démarré', statut: 'Recette DSI',
-      complexite: '2', priseEnCharge: 'Oui' }],
+      complexite: '2', priseEnCharge: 'Oui', moisDemande: '2026-07-01', etat: 'Ouvert', planification: 'T3 2026' }],
     ['2026-06-15', { demande: 'Ajouter priorité d’affichage au niveau du flux tranche commerciale', us: '31716', demandeur: 'Sandie PIRON', parcours: 'Flux',
       categorie: 'DIGITAL', thematique: 'IMAGINO', strategique: 'Oui', priorite: '1', impactClient: '3', impactCollaborateur: '2', cadrage: 'Non démarré',
-      statut: 'Annulée', complexite: '2', priseEnCharge: 'Non', chiffrage: '1.5' }]];
+      statut: 'Annulée', complexite: '2', priseEnCharge: 'Non', chiffrage: '1.5', moisDemande: '2026-06-15', etat: 'Annulé' }]];
   const colonneDe = cle => bd.colonnes_roadmap.find(c => c.cle === cle);
+  // Listes complètes de la migration 058 (onglet « Listes » du fichier)
+  const LISTES_058 = { rdm_etat: ['Ouvert', 'Fermé', 'Annulé'], rdm_planification: [2026, 2027, 2028].flatMap(a => [1, 2, 3, 4].map(t => `T${t} ${a}`)),
+    rdm_statut_recette: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => 'Itération ' + i), rdm_statut_mep: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => 'Itération ' + i) };
+  Object.entries(LISTES_058).forEach(([ref, libelles]) => libelles.forEach((libelle, i) =>
+    bd.valeurs_referentiel.push({ id: uuid(), referentiel_id: ref, libelle, couleur: '#4A5363', actif: true, systeme: false, ordre: i + 1, cle: null })));
   bd.demandes_roadmap = DEMANDES_ROADMAP.map(([cree_le, v]) => ({ id: uuid(), projet_id: null, cree_le,
     valeurs: Object.fromEntries(Object.entries(v).map(([cle, val]) => [colonneDe(cle).id, val])) }));
   DEMANDES_ROADMAP.forEach(([, v]) => Object.entries(v).forEach(([cle, libelle]) => {

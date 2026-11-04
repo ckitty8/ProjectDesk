@@ -13,6 +13,7 @@
 | 2026-10-05 | Maquettes de design à valider : `docs/maquettes/roadmap/` (4 pistes) |
 | 2026-10-05 | Design retenu : **vue Liste + vue Kanban** — § 3 |
 | 2026-10-08 | Spécification mise en attente : demandes gérées dans Azure DevOps (retrait du 2026-10-05) |
+| 2026-11-04 | Bug : les 9 colonnes écartées sont ajoutées (toutes celles du fichier sauf Fixe et Clé) ; Sprint / version = sprints et MEP du projet (version 3.09, migration 058) — § 8 |
 | 2026-11-04 | Détail des calculs dans Administration › Roadmap › Calculs, exemple sur les 3 premières demandes (version 3.08) — § 1 |
 | 2026-11-04 | Saisie des demandes par les chefs de projet : Mon dashboard › Projet › Roadmap (version 3.07) — § 7 |
 | 2026-11-03 | 3 premières demandes (les plus récentes de 2026) en base, rang et score calculés (version 3.06, migration 057) — § 6 |
@@ -149,3 +150,14 @@ Maquette `docs/maquettes/saisie-demandes-roadmap/` validée (« Go »). Mon dash
 
 Choix appliqués par défaut (modifiables) : les 3 demandes du 2026-11-03 restent **sans projet** (visibles des administrateurs sous
 « Sans projet ») ; les valeurs des listes déroulantes restent réglées par l'administrateur (Administration › Roadmap).
+
+## 8. Toutes les colonnes du fichier ; Sprint / version (2026-11-04, version 3.09)
+
+Bug du porteur : « tous les champs du excel ne sont pas présents dans l'application ». Le § 4 (3.04) avait écarté 9 colonnes ; elles sont
+ajoutées (migration 058) : Mois de la demande, Commentaires, Etat, Planification, Atterrissage chiffrage, Avancement dév, Estimé MEP,
+Statut Recette, Statut MEP. Seules **Fixe** et **Clé** restent hors de l'application : ce sont les étapes du calcul du rang dans l'Excel
+(§ 1), remplacées par la colonne Rang. Les listes Etat, Planification, Statut Recette et Statut MEP reprennent l'onglet « Listes » du fichier.
+
+Sprint DSI (« Sprint / version ») : « il faut reprendre les sprints et MEP présents dans Projet ». La liste propose les sprints du projet
+(Mon dashboard › Projet › Sprints) puis ses mises en production (Mon dashboard › Projet › Mises en production, « MEP V2.0 du 9 oct. 2026 ») ;
+choisir une MEP remplit la Date de MEP si elle est vide. Une demande sans projet n'a pas de choix (rattacher la demande à un projet).

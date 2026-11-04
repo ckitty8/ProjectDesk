@@ -199,7 +199,7 @@ export interface ColonneRoadmap {
   type: 'liste' | 'libre' | 'calcul';
   /** Format d'une saisie libre */
   format?: 'texte' | 'nombre' | 'date' | null;
-  /** Liste déroulante des sprints du projet (Sprint DSI) au lieu d'un référentiel */
+  /** Liste déroulante des sprints et mises en production du projet (Sprint DSI, 3.09) au lieu d'un référentiel */
   listeSprints?: boolean;
   /** Référentiel des valeurs d'une liste déroulante (id préfixé « rdm_ ») */
   referentielId?: string | null;

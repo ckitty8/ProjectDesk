@@ -6,7 +6,8 @@
    traitement DSI des demandes (table demandes_roadmap, migration 057).
    ============================================================ */
 import { BLOCS_ROADMAP, PREFIXE_LISTE_ROADMAP } from './config';
-import type { ColonneRoadmap, DemandeRoadmap, SprintProjet, ValeurReferentiel } from './types';
+import { formatAvecAnnee } from './dates';
+import type { ColonneRoadmap, DemandeRoadmap, Iso, MiseEnProduction, SprintProjet, ValeurReferentiel } from './types';
 
 /** Un bloc du tableau et ses colonnes, dans l'ordre d'affichage */
 export interface BlocDuTableau { cle: string; titre: string; colonnes: ColonneRoadmap[] }
@@ -119,6 +120,25 @@ export function valeursAEnregistrer(saisie: Record<string, string | null | undef
 /** Libellé d'un sprint dans la liste déroulante Sprint DSI (c'est aussi la valeur enregistrée) : son nom, sinon « Sprint 19 » ou « Sprint n°2 » */
 export const libelleSprint = (s: Pick<SprintProjet, 'nom' | 'numeroSprint' | 'numero'>): string =>
   (s.nom ?? '').trim() || (s.numeroSprint ? `Sprint ${s.numeroSprint}` : `Sprint n°${s.numero}`);
+
+/** Un choix de la liste Sprint / version : un sprint ou une mise en production du projet (porteur, 2026-11-04 : « pour la partie Sprint/version,
+ *  il faut reprendre les sprints et MEP présents dans Projet ») ; « jour » = date d'une MEP (reprise dans Date de MEP si elle est vide) */
+export interface ChoixSprintVersion { groupe: 'Sprints' | 'Mises en production'; libelle: string; jour?: Iso }
+
+/** Libellé (et valeur enregistrée) d'une mise en production : « MEP V2.0 du 9 oct. 2026 », ou « MEP du 9 oct. 2026 » sans version */
+export const libelleMep = (m: Pick<MiseEnProduction, 'version' | 'jour'>): string =>
+  ['MEP', (m.version ?? '').trim(), 'du', formatAvecAnnee(m.jour)].filter(Boolean).join(' ');
+
+/** Choix de la liste Sprint / version d'un projet : ses sprints (par date de début), puis ses mises en production (par date) */
+export function choixSprintVersion(sprints: readonly SprintProjet[], meps: readonly MiseEnProduction[], projetId: string | null): ChoixSprintVersion[] {
+  const parDate = (a?: string | null, b?: string | null) => String(a ?? '').localeCompare(String(b ?? ''));
+  return [
+    ...sprints.filter(s => s.projetId === projetId).sort((a, b) => parDate(a.debut, b.debut) || a.numero - b.numero)
+      .map(s => ({ groupe: 'Sprints' as const, libelle: libelleSprint(s) })),
+    ...meps.filter(m => m.projetId === projetId && m.jour).sort((a, b) => parDate(a.jour, b.jour))
+      .map(m => ({ groupe: 'Mises en production' as const, libelle: libelleMep(m), jour: m.jour }))
+  ];
+}
 
 /** Demandes d'un projet (null : demandes sans projet), avec leur rang dans le classement de TOUTES les demandes (le rang DSI est global) */
 export const demandesDuProjet = (classees: readonly DemandeClassee[], projetId: string | null): DemandeClassee[] =>

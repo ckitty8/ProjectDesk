@@ -196,14 +196,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
     await captureB('36-roadmap');
-    verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 19 colonnes', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
-      && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 19);
+    verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 28 colonnes (toutes celles du fichier, 3.09)', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
+      && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 28);
     // 3 demandes de 2026 du fichier (migration 057) : la stratégique en 1er, puis la mieux notée ; sans complexité, « complexité à saisir » en dernier
     const lignesRoadmap = page.locator('.tableau-roadmap tbody tr');
     verifier('Roadmap : 3 demandes classées par rang de traitement DSI, score calculé', await lignesRoadmap.count() === 3
       && (await lignesRoadmap.nth(0).textContent()).includes('flux tranche commerciale') && (await lignesRoadmap.nth(0).textContent()).includes('5,25')
       && (await lignesRoadmap.nth(1).textContent()).includes('liens vidéos') && (await lignesRoadmap.nth(1).textContent()).includes('3,5')
       && (await lignesRoadmap.nth(2).textContent()).includes('complexité à saisir') && !(await texte()).includes('Aucune demande pour le moment.'));
+    verifier('Roadmap : les colonnes ajoutées en 3.09 portent les valeurs du fichier (Mois de la demande, Etat, Planification)',
+      (await lignesRoadmap.nth(2).textContent()).includes('24 juil. 2026') && (await lignesRoadmap.nth(2).textContent()).includes('Ouvert')
+      && (await lignesRoadmap.nth(2).textContent()).includes('T4 2026') && (await lignesRoadmap.nth(0).textContent()).includes('Annulé'));
 
     // Mon dashboard › Projet › Roadmap (3.07, maquette saisie-demandes-roadmap/) : saisie des demandes par les chefs de projet (ici en administrateur)
     await page.click('.laterale a[href$="/mes-demandes"]');
@@ -224,6 +227,13 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.getByLabel('Impact collaborateur', { exact: true }).selectOption('3');
     await page.getByLabel('Complexité', { exact: true }).selectOption('2');
     await page.getByLabel('Chiffrage DSI (j-h)', { exact: true }).fill('2.5');
+    // Sprint / version (3.09) : sprints et mises en production du projet ; choisir une MEP reprend sa date dans « Date de MEP »
+    const sprintVersion = page.getByLabel('Sprint DSI', { exact: true });
+    const mep = await sprintVersion.locator('optgroup[label="Mises en production"] option').first();
+    const libelleMep = await mep.textContent();
+    await sprintVersion.selectOption(libelleMep);
+    verifier('Fiche demande : Sprint / version propose les sprints et les MEP du projet ; une MEP remplit la Date de MEP',
+      await sprintVersion.locator('optgroup').count() === 2 && libelleMep.startsWith('MEP ') && (await page.getByLabel('Date de MEP', { exact: true }).inputValue()) !== '');
     await captureB('38b-fiche-demande');
     verifier('Fiche demande : champs par bloc, score et rang calculés en direct (score 6, rang 1)', (await page.textContent('.fiche-demande')).includes('6')
       && await page.locator('.fiche-demande .champ-calcule').count() === 2 && (await page.locator('.fiche-demande .champ-calcule').first().textContent()) === '1'
@@ -740,14 +750,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.tableau-colonnes-roadmap');
     await captureD('37-admin-roadmap');
     const lignesColonnes = () => page.locator('.tableau-colonnes-roadmap tbody tr').count();
-    verifier('Administration › Roadmap : 19 colonnes, Rang et Score calculés et verrouillés, Liste déroulante ou Saisie libre pour les autres', await lignesColonnes() === 19
-      && await page.locator('.badge-calculee').count() === 2 && await page.locator('.tableau-colonnes-roadmap button[aria-label^="Supprimer la colonne"]').count() === 17
-      && await page.locator('.tableau-colonnes-roadmap .choix-type .puce.active:has-text("Liste déroulante")').count() === 13 && await page.locator('select[aria-label^="Format de"]').count() === 4);
+    verifier('Administration › Roadmap : 28 colonnes, Rang et Score calculés et verrouillés, Liste déroulante ou Saisie libre pour les autres', await lignesColonnes() === 28
+      && await page.locator('.badge-calculee').count() === 2 && await page.locator('.tableau-colonnes-roadmap button[aria-label^="Supprimer la colonne"]').count() === 26
+      && await page.locator('.tableau-colonnes-roadmap .choix-type .puce.active:has-text("Liste déroulante")').count() === 17 && await page.locator('select[aria-label^="Format de"]').count() === 9);
     await page.fill('input[aria-label="Nom de la nouvelle colonne"]', 'Canal');
     await page.click('button:has-text("Ajouter la colonne")');
     await page.waitForSelector('input[aria-label="Nom de la colonne Canal"]');
     const ligneCanal = page.locator('tr:has(input[aria-label="Nom de la colonne Canal"])');
-    verifier('Administration › Roadmap : ajout d\'une colonne en liste déroulante, rangée en fin de son bloc', await lignesColonnes() === 20
+    verifier('Administration › Roadmap : ajout d\'une colonne en liste déroulante, rangée en fin de son bloc', await lignesColonnes() === 29
       && (await ligneCanal.textContent()).includes('Aucune valeur') && await page.locator('.tableau-colonnes-roadmap tbody tr').last().locator('input[aria-label="Nom de la colonne Canal"]').count() === 1);
     await ligneCanal.locator('button:has-text("Valeurs…")').click();
     await page.waitForSelector('.panneau[role=dialog]');
@@ -765,18 +775,19 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => [...document.querySelectorAll('tr')].some(r => r.querySelector('input[aria-label="Nom de la colonne Canal"]') && r.textContent.includes('E-mail')));
     verifier('Administration › Roadmap : passer en saisie libre (format Nombre) puis revenir en liste garde ses valeurs', true);
     await page.locator('button[aria-label="Monter Canal"]').click();
-    await page.waitForFunction(() => { const l = [...document.querySelectorAll('.tableau-colonnes-roadmap tbody tr')]; return l[l.length - 1].querySelector('input[aria-label="Nom de la colonne Date de MEP"]'); });
+    await page.waitForFunction(() => { const l = [...document.querySelectorAll('.tableau-colonnes-roadmap tbody tr')]; return l[l.length - 1].querySelector('input[aria-label="Nom de la colonne Statut MEP"]'); });
     verifier('Administration › Roadmap : « ↑ » remonte la colonne dans son bloc', true);
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
-    verifier('Roadmap : le tableau suit les colonnes réglées dans Administration (20 colonnes, Canal avant Date de MEP)', await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 20
-      && (await page.locator('.tableau-roadmap thead tr:nth-child(2) th').nth(18).textContent()) === 'Canal');
+    const titres = await page.locator('.tableau-roadmap thead tr:nth-child(2) th').allTextContents();
+    verifier('Roadmap : le tableau suit les colonnes réglées dans Administration (29 colonnes, Canal avant Statut MEP)', titres.length === 29
+      && titres.indexOf('Canal') === titres.indexOf('Statut MEP') - 1);
     await menu('/administration');
     await page.click('[role=tab]:has-text("Roadmap")');
     await page.waitForSelector('.tableau-colonnes-roadmap');
     await page.locator('button[aria-label="Supprimer la colonne Canal"]').click();
     await page.waitForFunction(() => !document.querySelector('input[aria-label="Nom de la colonne Canal"]'));
-    verifier('Administration › Roadmap : suppression d\'une colonne (et de sa liste)', await lignesColonnes() === 19);
+    verifier('Administration › Roadmap : suppression d\'une colonne (et de sa liste)', await lignesColonnes() === 28);
     // Sous-onglet Calculs (3.08, maquette admin-roadmap-calculs/) : formule du score, critères du rang, exemple sur les 3 premières demandes
     await page.click('.onglets-secondaires [role=tab]:has-text("Calculs")');
     await page.waitForSelector('.calculs-roadmap');

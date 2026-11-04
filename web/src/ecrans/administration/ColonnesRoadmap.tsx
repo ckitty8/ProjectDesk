@@ -120,7 +120,7 @@ export function ColonnesRoadmap({ modifiable }: { modifiable: boolean }) {
         </select>
         : FORMATS_SAISIE.find(x => x.cle === c.format)?.libelle;
     }
-    if (c.listeSprints) return <span className="pale">Sprints du projet (Mon dashboard › Projet › Sprints)</span>;
+    if (c.listeSprints) return <span className="pale">Sprints et mises en production du projet (Mon dashboard › Projet)</span>;
     return (
       <span className="ligne-flex">
         <span>{resumeValeurs(valeursDe(donnees!.valeurs, c.referentielId ?? '', true))}</span>

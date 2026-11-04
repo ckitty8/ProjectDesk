@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NB_DEMANDES_EXEMPLE, detailScore, raisonDuRang, blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
+import { NB_DEMANDES_EXEMPLE, choixSprintVersion, libelleMep, detailScore, raisonDuRang, blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
 import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 const col = (id: string, bloc: ColonneRoadmap['bloc'], ordre: number, type: ColonneRoadmap['type'] = 'libre'): ColonneRoadmap =>
@@ -114,5 +114,19 @@ describe('saisie des demandes', () => {
     const classees = [d('a', 'p1'), d('b', null), d('c', 'p1')].map((x, i) => ({ ...x, rang: i + 1 }));
     expect(demandesDuProjet(classees, 'p1').map(x => [x.demande.id, x.rang])).toEqual([['a', 1], ['c', 3]]);
     expect(demandesDuProjet(classees, null).map(x => x.demande.id)).toEqual(['b']);
+  });
+});
+
+describe('liste Sprint / version : sprints et mises en production du projet', () => {
+  const sprints = [{ projetId: 'p1', numero: 2, nom: 'V2.0', debut: '2026-09-28' }, { projetId: 'p1', numero: 1, nom: 'V1.9', debut: '2026-09-14' },
+    { projetId: 'p2', numero: 1, nom: 'Autre', debut: '2026-09-01' }];
+  const meps = [{ projetId: 'p1', jour: '2026-11-06', version: 'V2.1' }, { projetId: 'p1', jour: '2026-10-09', version: null }, { projetId: 'p2', jour: '2026-10-01', version: 'X' }];
+  it('liste les sprints puis les MEP du projet, chacun dans l’ordre des dates', () => {
+    expect(choixSprintVersion(sprints, meps, 'p1')).toEqual([
+      { groupe: 'Sprints', libelle: 'V1.9' }, { groupe: 'Sprints', libelle: 'V2.0' },
+      { groupe: 'Mises en production', libelle: 'MEP du 9 oct. 2026', jour: '2026-10-09' },
+      { groupe: 'Mises en production', libelle: 'MEP V2.1 du 6 nov. 2026', jour: '2026-11-06' }]);
+    expect(choixSprintVersion(sprints, meps, null)).toEqual([]);
+    expect(libelleMep({ version: ' V3 ', jour: '2026-12-01' })).toBe('MEP V3 du 1 déc. 2026');
   });
 });
