@@ -25,13 +25,16 @@ interface Props {
 }
 
 export function ModaleAffectation({ ressourceId, projetId, onFermer, onNouvellePersonne }: Props) {
-  // Données de l'équipe active : on n'affecte que sur ses projets (porteur, 2026-11-04 : « dans AMOA, je ne dois pas voir les projets d'IA et d'Applications »)
-  const { ctx, donnees, equipeCourante, executer } = useSession();
+  /* Projets : ceux de l'équipe active seulement (porteur, 2026-11-04 : « dans AMOA, je ne dois pas voir les projets d'IA et d'Applications »).
+     Personnes proposées : TOUTES celles de l'application (chefs de projet et membres d'autres équipes comprises, porteur 2026-10-13 et 2026-11-04 :
+     « il y a plein de chefs de projet dans la base ») : on les cherche dans les données complètes. */
+  const { ctx, donnees, donneesCompletes, equipeCourante, executer } = useSession();
   const [choisie, setChoisie] = useState(ressourceId ?? '');
   if (!ctx || !donnees) return null;
   const projetOrigine = donnees.projets.find(p => p.id === projetId);
-  const personnes = personnesProposees(donnees, projetOrigine?.equipeId ?? '', aujourdhui());
-  const ressource = donnees.ressources.find(r => r.id === choisie);
+  const toutesLesPersonnes = donneesCompletes ?? donnees;
+  const personnes = personnesProposees(toutesLesPersonnes, projetOrigine?.equipeId ?? '', aujourdhui());
+  const ressource = toutesLesPersonnes.ressources.find(r => r.id === choisie);
   const actuelles = choisie ? donnees.affectations.filter(a => a.ressourceId === choisie) : [];
   // Équipe où créer une nouvelle personne : celle du projet d'origine, sinon l'équipe ouverte
   const equipeNouvelle = projetOrigine?.equipeId ?? equipeCourante;
