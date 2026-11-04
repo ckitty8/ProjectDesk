@@ -97,9 +97,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await capture('03-dashboard');
     verifier('Dashboard : 4 indicateurs', await page.locator('.grille-kpi .kpi').count() === 4);
     verifier('Dashboard : projets à surveiller', await page.locator('.carte-titre', { hasText: 'Projets à surveiller' }).count() === 1);
-    verifier('Barre latérale : sections Vue d’ensemble et Mon dashboard, lien actif', (await page.textContent('.laterale')).includes('Vue d’ensemble')
+    verifier('Barre latérale : sections Vue d’ensemble, Suivi de mes équipes et Mon dashboard, lien actif', (await page.textContent('.laterale')).includes('Vue d’ensemble') && (await page.textContent('.laterale')).includes('Suivi de mes équipes')
       && (await page.textContent('.laterale')).includes('Mon dashboard') && await page.locator('.menu-lien.actif', { hasText: 'Dashboard général' }).count() === 1);
-    verifier('En-tête : fil d\'Ariane et badge Lecture seule', (await page.textContent('.fil')).includes('Vue d’ensemble') && (await page.textContent('.fil')).includes('Lecture seule'));
+    verifier('En-tête : fil d\'Ariane et badge Lecture seule', (await page.textContent('.fil')).includes('Suivi de mes équipes') && (await page.textContent('.fil')).includes('Lecture seule'));
+    // Sections repliables : un clic sur le titre replie ses menus, un second les déplie
+    await page.click('.menu-titre-bouton:has-text("Suivi de mes équipes")');
+    verifier('Barre latérale : un clic sur le titre d\'une section la replie, un second la déplie',
+      await page.locator('.laterale a[href$="/timesheet"]').count() === 0 && (await page.click('.menu-titre-bouton:has-text("Suivi de mes équipes")'), true)
+      && await page.locator('.laterale a[href$="/timesheet"]').count() === 1);
     verifier('Barre latérale : bloc utilisateur (équipe, nom, mention)', (await page.textContent('.bloc-utilisateur')).includes('Plateforme') && (await page.textContent('.bloc-utilisateur')).includes('Camille Laurent')
       && (await page.textContent('.bloc-utilisateur')).includes('CIRITEC'));
     verifier('Titre de l\'onglet du navigateur', (await page.title()) === 'Dashboard général · ProjectDesk');

@@ -9,6 +9,7 @@ import { CONFIG } from './config';
 /** Bulles d'information « ⓘ » : un seul endroit pour les textes ; une valeur peut être une fonction quand le texte dépend d'un libellé */
 
 export const AIDES = {
+  sectionVue: 'Projet (Gantt et liste des projets) et Roadmap (demandes) : ouverts à tous, en lecture ; chacun y voit ce que son périmètre lui permet de lire.',
   sectionGeneral: 'Vue consolidée de toutes les équipes, en lecture seule — seule exception : ' +
     'les responsables d’équipe y valident les feuilles de temps de leurs équipes (menu Feuilles de temps).',
   sectionMoi: 'Ce que vous modifiez : vos notes, vos projets, les congés et l’organisation de vos équipes, vos heures, les sprints des projets.',

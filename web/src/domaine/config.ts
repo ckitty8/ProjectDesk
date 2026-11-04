@@ -86,7 +86,7 @@ export const STATUTS_MEP: readonly { valeur: string; libelle: string; ton: Ton }
 ];
 
 /** Sections de la matrice des droits */
-export const SECTIONS_DROITS = [{ cle: 'suivi', libelle: 'Vue d’ensemble' }, { cle: 'dashboard', libelle: 'Mon dashboard' }] as const;
+export const SECTIONS_DROITS = [{ cle: 'suivi', libelle: 'Vue d’ensemble et Suivi de mes équipes' }, { cle: 'dashboard', libelle: 'Mon dashboard' }] as const;
 
 /** Menus ouverts à tous, sans droit de menu (leurs onglets ont un droit). « avant » : menu devant lequel la ligne s'affiche dans la matrice
  *  (par défaut, juste avant les droits de ses propres onglets, ou à la fin de la section). */

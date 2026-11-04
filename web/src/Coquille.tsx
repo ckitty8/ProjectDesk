@@ -22,7 +22,8 @@ import { decoderChoixSimulation, libelleRoleSimule } from './donnees/simulation'
 import { CONFIG, COULEURS, LIBELLES_ROLES } from './domaine/config';
 import type { RoleAcces } from './domaine/config';
 import { maRessource, mesEquipes, monRoleSansAdmin } from './domaine/droits';
-import { menusDuRole } from './domaine/menus';
+import { estMenuVueEnsemble, menusDuRole } from './domaine/menus';
+import { lireSectionsRepliees, memoriserSectionsRepliees } from './donnees/sectionsRepliees';
 import type { Menu } from './domaine/menus';
 import { AIDES, GUIDES, GUIDE_ECRANS } from './domaine/textes';
 import { cheminDe } from './routes';
@@ -49,8 +50,29 @@ function LienMenu({ menu, idActif, alerte }: { menu: Menu; idActif: string; aler
   );
 }
 
+/** Titre d'une section de la barre latérale : un clic la replie ou la déplie (flèche ▾ / ▸) */
+function TitreSection({ cle, titre, aide, mention, repliee, onBasculer }:
+  { cle: string; titre: string; aide: string; mention: string; repliee: ReadonlySet<string>; onBasculer: (cle: string) => void }) {
+  return (
+    <div className="menu-titre">
+      <button type="button" className="menu-titre-bouton" aria-expanded={!repliee.has(cle)} onClick={() => onBasculer(cle)}>
+        <span className="menu-titre-fleche">{repliee.has(cle) ? '▸' : '▾'}</span>{titre}
+      </button>
+      <span><Aide texte={aide} /> {mention}</span>
+    </div>
+  );
+}
+
 function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean }) {
   const { ctx, compte, equipeCourante, comptesEnAttente, simulation, modeAdmin, seDeconnecter } = useSession();
+  // Sections repliables (porteur, 2026-11-04) : l'état est mémorisé sur ce poste
+  const [repliee, setRepliee] = useState<ReadonlySet<string>>(lireSectionsRepliees);
+  const basculer = (cle: string) => setRepliee(avant => {
+    const suite = new Set(avant);
+    if (!suite.delete(cle)) suite.add(cle);
+    memoriserSectionsRepliees(suite);
+    return suite;
+  });
   if (!ctx || !compte) return null;
   const equipes = mesEquipes(ctx);
   const equipe = ctx.equipes.find(e => e.id === equipeCourante);
@@ -65,16 +87,22 @@ function BarreLaterale({ idActif, ouverte }: { idActif: string; ouverte: boolean
     <aside className={'laterale' + (ouverte ? ' ouverte' : '')}>
       <Marque />
       <nav>
-        {menus.suivi.length > 0 && (
+        {menus.vue.length > 0 && (
           <>
-            <div className="menu-titre"><span>Vue d’ensemble <Aide texte={AIDES.sectionGeneral} /></span><span>lecture</span></div>
-            {menus.suivi.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={0} />)}
+            <TitreSection repliee={repliee} onBasculer={basculer} cle="vue" titre="Vue d’ensemble" aide={AIDES.sectionVue} mention="lecture" />
+            {!repliee.has('vue') && menus.vue.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={0} />)}
+          </>
+        )}
+        {menus.equipes.length > 0 && (
+          <>
+            <TitreSection repliee={repliee} onBasculer={basculer} cle="equipes" titre="Suivi de mes équipes" aide={AIDES.sectionGeneral} mention="lecture" />
+            {!repliee.has('equipes') && menus.equipes.map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={0} />)}
           </>
         )}
         {menus.moi.some(m => !m.horsBarre) && (
           <>
-            <div className="menu-titre"><span>Mon dashboard <Aide texte={AIDES.sectionMoi} /></span><span>édition</span></div>
-            {menus.moi.filter(m => !m.horsBarre).map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={m.id === 'monAdmin' ? enAttente : 0} />)}
+            <TitreSection repliee={repliee} onBasculer={basculer} cle="moi" titre="Mon dashboard" aide={AIDES.sectionMoi} mention="édition" />
+            {!repliee.has('moi') && menus.moi.filter(m => !m.horsBarre).map(m => <LienMenu key={m.id} menu={m} idActif={idActif} alerte={m.id === 'monAdmin' ? enAttente : 0} />)}
           </>
         )}
       </nav>
@@ -219,7 +247,7 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
           <div className="fil">
             {route.id === 'profil' ? <b>{route.titre}</b> : (
               <>
-                <span className="discret">{general ? 'Vue d’ensemble' : 'Mon dashboard'}</span><span className="sep">/</span><b>{route.titre}</b>
+                <span className="discret">{!general ? 'Mon dashboard' : estMenuVueEnsemble(menus.vue.find(v => v.id === route.id) ?? { pourTous: false }) ? 'Vue d’ensemble' : 'Suivi de mes équipes'}</span><span className="sep">/</span><b>{route.titre}</b>
                 {general ? <BadgeTon texte="Lecture seule" ton="neutre" /> : <BadgeTon texte="Édition" ton="info" />}
               </>
             )}

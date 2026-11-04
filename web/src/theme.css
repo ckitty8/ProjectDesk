@@ -506,3 +506,7 @@ select.niveau-non { color: var(--pale); }
 .corps-calcul ol { padding-left: 20px; display: grid; gap: 4px; }
 .formule { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--fond); border: 1px solid var(--bordure-fine); border-radius: 8px; padding: 12px 14px; font-size: 14px; }
 .tableau-exemple-calcul td.cellule-texte { min-width: 200px; max-width: 300px; white-space: normal; }
+
+/* ---------- Sections repliables de la barre latérale ---------- */
+.menu-titre-bouton { background: none; border: 0; padding: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; text-align: left; }
+.menu-titre-bouton:hover { color: #fff; } .menu-titre-fleche { display: inline-block; width: 14px; }

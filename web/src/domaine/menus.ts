@@ -80,19 +80,26 @@ const menuOuvert = (ctx: ContexteDroits, item: Menu, role?: string): boolean => 
 
 /** Menus que voit un rôle, d'après la matrice : ceux de Vue d’ensemble, puis ceux de Mon dashboard avec leurs sous-menus
  *  ouverts. Mon dashboard est fermé en Lecture seule (migration 030). */
-export function menusDuRole(ctx: ContexteDroits, role?: string): { suivi: Menu[]; moi: Menu[] } {
+/** Menus de la section « Vue d'ensemble » (Projet et Roadmap, ouverts à tous) : les autres menus de lecture sont dans « Suivi de mes équipes »
+ *  (porteur, 2026-11-04) */
+export const estMenuVueEnsemble = (m: Pick<Menu, 'pourTous'>): boolean => !!m.pourTous;
+
+export function menusDuRole(ctx: ContexteDroits, role?: string): { vue: Menu[]; equipes: Menu[]; suivi: Menu[]; moi: Menu[] } {
   const suivi = MENU_GENERAL.filter(item => (item.pourTous || (!!item.droit && droitOuvert(ctx, item.droit, role))) && ecranOuvert(ctx, item.id, role));
   const lectureSeule = (role ?? monRole(ctx)) === 'lecture';
   const moi = lectureSeule ? [] : MENU_MOI
     .filter(item => (item.reserveCreateur ? !role && ctx.estCreateur : true) && (item.reserveAdmin ? (role ? role === 'admin' : ctx.estAdmin) : true)
       && menuOuvert(ctx, item, role))
     .map(item => ({ ...item, enfants: item.enfants?.filter(e => enfantOuvert(ctx, e, role)) }));
-  return { suivi, moi };
+  // « suivi » = les deux sections de lecture ensemble (contrôle d'accès aux écrans) ;
+  // « vue » et « equipes » = leur affichage dans la barre latérale
+  return { vue: suivi.filter(estMenuVueEnsemble), equipes: suivi.filter(x => !estMenuVueEnsemble(x)), suivi, moi };
 }
 
-/** « Vue d’ensemble : Dashboard général, Feuilles de temps · Mon dashboard : Daily, Gestion des ressources (Congés, …) » pour un rôle */
+/** « Vue d’ensemble : Projet, Roadmap · Suivi de mes équipes : Dashboard général, Feuilles de temps · Mon dashboard : Daily,
+ *  Gestion des ressources (Congés, …) » pour un rôle */
 export function resumeDuRole(ctx: ContexteDroits, role: string): string {
-  const { suivi, moi } = menusDuRole(ctx, role);
+  const { vue, equipes, moi } = menusDuRole(ctx, role);
   const nom = (m: Menu): string => m.libelle + (m.enfants ? ` (${m.enfants.map(e => e.libelle).join(', ')})` : '');
-  return `Vue d’ensemble : ${suivi.map(nom).join(', ') || 'aucun menu'} · Mon dashboard : ${moi.map(nom).join(', ') || 'aucun menu'}`;
+  return `Vue d’ensemble : ${vue.map(nom).join(', ') || 'aucun menu'} · Suivi de mes équipes : ${equipes.map(nom).join(', ') || 'aucun menu'} · Mon dashboard : ${moi.map(nom).join(', ') || 'aucun menu'}`;
 }
