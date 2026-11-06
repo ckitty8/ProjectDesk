@@ -24,7 +24,7 @@ import { arbreUnites, ressourcesPresentes } from '../../domaine/vues';
 import { COULEURS } from '../../domaine/config';
 
 export function Equipes() {
-  const { ctx, donnees, executer } = useSession();
+  const { ctx, donnees, executer, notifier } = useSession();
   const [modale, setModale] = useState<{ id: string | null; typeUnite?: string } | null>(null);
   // Projets : ouverts ici aussi (porteur, 2026-11-06 : directions, équipes ET projets s'ajoutent, se modifient et se suppriment depuis ce seul onglet)
   const [projetOuvert, setProjetOuvert] = useState<string | null>(null);
@@ -34,6 +34,14 @@ export function Equipes() {
   // Ajouter et supprimer des directions et équipes : ici seulement, en mode administrateur (porteur, 2026-11-06). Suppression d'une unité vide :
   // ligne « equipes » (contrôlée en base), puis organisation Neon Auth
   async function supprimerUnite(id: string, nom: string) {
+    // La base refuse de supprimer une unité qui n'est pas vide (protège les données) : on explique ce qui bloque au lieu de ne rien faire
+    if (!equipeVide(ctx!, id)) {
+      const membres = donnees!.ressources.filter(r => r.equipeId === id).length, projets = donnees!.projets.filter(p => p.equipeId === id).length;
+      const sousUnites = donnees!.equipes.filter(x => x.parentId === id).length;
+      notifier(`« ${nom} » n’est pas vide (${membres} membre(s), ${projets} projet(s), ${sousUnites} sous-unité(s)) : supprimez d’abord ses projets et ses sous-unités, `
+        + 'et retirez ses membres.', 'erreur');
+      return;
+    }
     if (!window.confirm(`Supprimer « ${nom} » (vide) ?`)) return;
     if (await executer(() => supprimer('equipes', { id: 'eq.' + id }), 'equipes')) await supprimerOrganisation(id).catch(() => undefined);
   }
@@ -72,8 +80,8 @@ export function Equipes() {
                 {peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}
                 {ctx.estAdmin && e.type !== 'direction' && <button type="button" className="lien-btn" onClick={() => setNouveauProjet(e.id)}>+ Projet</button>}
                 {ctx.estAdmin && (
-                  <button type="button" className="lien-btn" disabled={!equipeVide(ctx, e.id)} onClick={() => void supprimerUnite(e.id, e.nom)}
-                    title={equipeVide(ctx, e.id) ? 'Supprimer (vide)' : 'Non vide : retirez d’abord ses projets, ses membres et ses sous-unités'}>Supprimer</button>
+                  <button type="button" className={'lien-btn' + (equipeVide(ctx, e.id) ? '' : ' pale')} onClick={() => void supprimerUnite(e.id, e.nom)}
+                    title={equipeVide(ctx, e.id) ? 'Supprimer (vide)' : 'Non vide : cliquez pour voir ce qui bloque'}>Supprimer</button>
                 )}
               </td>
             </tr>
