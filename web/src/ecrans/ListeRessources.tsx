@@ -13,7 +13,7 @@ import { TableauPersonnes } from './annuaire/TableauPersonnes';
 import type { LignePersonne } from './annuaire/TableauPersonnes';
 import { Aide } from '../composants/Aide';
 import { Avatar, BadgeActif, BadgeRef, BadgeTon, Code } from '../composants/Badge';
-import { Bouton, BoutonIcone } from '../composants/Bouton';
+import { Bouton } from '../composants/Bouton';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
 import { Icone } from '../composants/Icone';
 import { ModaleAffectation } from '../composants/modales/ModaleAffectation';
@@ -22,9 +22,8 @@ import { ModaleRattachement } from '../composants/modales/ModaleRattachement';
 import { ModaleRessource } from '../composants/modales/ModaleRessource';
 import { NouveauProjet } from '../composants/NouveauProjet';
 import { PanneauProjet } from '../composants/PanneauProjet';
-import { supprimer, supprimerOrganisation } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
-import { equipeVide, rattachesA, rolesDuProjet, selectionAnnuaire, unitesNavigation } from '../domaine/annuaire';
+import { rattachesA, rolesDuProjet, selectionAnnuaire, unitesNavigation } from '../domaine/annuaire';
 import type { Choix } from '../domaine/annuaire';
 import { libellePresence } from '../domaine/calculs';
 import { ENTREE_PARAMETRAGE_ROLES, LIBELLES_ROLES } from '../domaine/config';
@@ -47,7 +46,7 @@ type Ouvert =
 
 /** Mon dashboard › Liste des ressources : navigation (équipes, projets, profils, contrats) à gauche, détail de l'élément choisi à droite */
 export function ListeRessources() {
-  const { ctx, ctxComplet, donnees, equipeCourante, executer } = useSession();
+  const { ctx, ctxComplet, donnees, equipeCourante } = useSession();
   const navigate = useNavigate();
   const [choixMemorise, setChoix] = useState<Choix | null>(null);
   const [q, setQ] = useState('');
@@ -87,13 +86,7 @@ export function ListeRessources() {
     const personnes = donnees.ressources.filter(r => r.equipeId === e.id), rattaches = rattachesA(ctx, e.id);
     const projets = donnees.projets.filter(p => p.equipeId === e.id);
     const responsable = responsablesDe(ctxComplet ?? ctx, e.id)[0];
-    const vide = equipeVide(ctx, e.id);
     const lignes: LignePersonne[] = [...personnes.map(r => ({ r })), ...rattaches.map(x => ({ r: x.r, rattacheA: e.id, depuis: x.depuis }))];
-    const supprimerEquipe = async () => {
-      if (!window.confirm(`Supprimer « ${e.nom} » (vide) ?`)) return;
-      // Suppression d'une unité vide : ligne « equipes » (contrôlée en base), puis organisation Neon Auth
-      if (await executer(() => supprimer('equipes', { id: 'eq.' + e.id }), 'equipes')) await supprimerOrganisation(e.id).catch(() => undefined);
-    };
     return (
       <>
         <Carte classe="detail-entete">
@@ -103,7 +96,6 @@ export function ListeRessources() {
           </div>
           <span className="extensible" />
           {(admin || estResponsableDe(ctx, e.id)) && <Bouton onClick={() => setOuvert({ genre: 'equipe', id: e.id })}>Modifier l’équipe</Bouton>}
-          {admin && <BoutonIcone icone="supprimer" titre={vide ? 'Supprimer l’équipe' : 'Équipe non vide : retirez d’abord ses projets et ses membres'} disabled={!vide} onClick={() => void supprimerEquipe()} />}
         </Carte>
         {responsable && <CarteResponsable r={responsable} affecte={donnees.affectations.some(a => a.ressourceId === responsable.id)} onFiche={id => setOuvert({ genre: 'ressource', id, equipeId: null, retourProjet: '' })} />}
         <Carte>
@@ -200,11 +192,11 @@ export function ListeRessources() {
   return (
     <div className="ecran" style={{ maxWidth: 1300 }}>
       <EnteteEcran titre="Liste des ressources" sousTitre="Choisissez une direction, une équipe ou un projet à gauche : ses personnes s’affichent à droite"
-        actions={admin ? <Bouton variante="primaire" onClick={() => setOuvert({ genre: 'equipe', id: null, typeUnite: 'equipe' })}>+ Ajouter une équipe</Bouton> : undefined} />
+        actions={undefined} />
       <div className="liste-ressources">
         <nav className="carte nav-ressources">
           <label className="recherche-champ"><Icone nom="recherche" /><input placeholder="Rechercher une personne, un projet" value={q} onChange={e => setQ(e.target.value)} /></label>
-          {groupes.length === 0 && <Vide texte={admin ? 'Aucune équipe : « + Ajouter une équipe » pour commencer.' : 'Aucune équipe.'} />}
+          {groupes.length === 0 && <Vide texte={admin ? 'Aucune équipe : créez-la dans Administration › Équipes.' : 'Aucune équipe.'} />}
           {groupes.map(g => (
             <div key={g.e.id} className={'noeud-groupe' + (g.niveau ? ' sous-unite' : '')}>
               {noeud('equipe', g.e.id, <>{g.e.nom} {g.e.type === 'direction' && <BadgeTon texte="Direction" ton="violet" />} <span className="compte">{g.nbPersonnes}</span></>, 'equipe')}

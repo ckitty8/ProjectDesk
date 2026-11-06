@@ -163,6 +163,12 @@ export interface LigneEcranEquipe {
   acces: boolean;
 }
 
+/** Étape de la configuration initiale confirmée ou passée par l'administrateur (table etapes_configuration, migration 060) */
+export interface EtapeConfiguration {
+  etape: string;
+  statut: 'confirmee' | 'ignoree';
+}
+
 /** Ligne de la matrice des droits (table droits_roles) */
 export interface LigneDroit {
   role: string;

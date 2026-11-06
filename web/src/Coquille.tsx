@@ -23,6 +23,7 @@ import { CONFIG, COULEURS, LIBELLES_ROLES } from './domaine/config';
 import type { RoleAcces } from './domaine/config';
 import { maRessource, mesEquipes, monRoleSansAdmin } from './domaine/droits';
 import { estMenuVueEnsemble, menusDuRole } from './domaine/menus';
+import { PastilleConfiguration } from './composants/PastilleConfiguration';
 import { lireSectionsRepliees, memoriserSectionsRepliees } from './donnees/sectionsRepliees';
 import type { Menu } from './domaine/menus';
 import { AIDES, GUIDES, GUIDE_ECRANS } from './domaine/textes';
@@ -258,6 +259,7 @@ export function Page({ route, children }: { route: Route; children: ReactNode })
           </div>
         </header>
         <div className="contenu"><BandeauConnecte />{contenu}</div>
+        <PastilleConfiguration />
       </main>
     </div>
   );

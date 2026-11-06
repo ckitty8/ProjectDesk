@@ -28,7 +28,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Date figée au 31/10/2026 (les contrôles et les captures supposent octobre 2026 comme mois courant) ; les minuteurs restent réels
     await contexte.clock.setFixedTime(new Date('2026-10-31T10:00:00'));
     // Les contrôles supposent la vue administrateur (la vue par défaut d'un administrateur est son rôle : voir le contrôle « Mode administrateur »)
-    await contexte.addInitScript(() => { try { if (localStorage.getItem('pp_mode_admin') === null) localStorage.setItem('pp_mode_admin', '1'); } catch { /* sans stockage */ } });
+    await contexte.addInitScript(() => { try { if (localStorage.getItem('pp_mode_admin') === null) localStorage.setItem('pp_mode_admin', '1');
+      // La pastille « Configuration » (bas droite) recouvrirait des éléments cliqués par les contrôles : fermée par défaut
+      if (localStorage.getItem('pp_config_fermee') === null) localStorage.setItem('pp_config_fermee', '1'); } catch { /* sans stockage */ } });
     await contexte.addInitScript(base => { window.CONFIG_SURCHARGE = { NEON_AUTH_URL: base + '/auth', DATA_API_URL: base + '/rest/v1' }; }, BASE);
     page = await contexte.newPage();
     const erreurs = [];
@@ -687,16 +689,24 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.modale >> text=invitation en attente');
     verifier('Fenêtre équipe : invitation par email, affichée « en attente »', (await page.textContent('.modale')).includes('nouveau.compte@test.fr'));
     await page.keyboard.press('Escape');
-    await page.click('text=+ Ajouter une équipe');
+    verifier('Liste des ressources : plus de bouton pour ajouter une équipe (réservé à Administration › Équipes)',
+      await page.locator('button:has-text("+ Ajouter une équipe")').count() === 0 && await page.locator('button[title="Supprimer l’équipe"]').count() === 0);
+    // Ajout et suppression de directions et d'équipes : Administration › Équipes seulement (porteur, 2026-11-06)
+    await menu('/administration');
+    await page.waitForSelector('.onglets');
+    await page.click('[role=tab]:has-text("Équipes")');
+    verifier('Administration › Équipes : les projets de chaque équipe sont listés (ajout, modification, suppression depuis ce seul onglet)',
+      await page.locator('tr.ligne-projet').count() > 0 && await page.locator('button:has-text("+ Projet")').count() > 0
+      && await page.locator('tr.ligne-projet button:has-text("Supprimer")').count() > 0);
+    await page.click('button:has-text("+ Nouvelle équipe")');
     await page.fill('.modale input[name=nom]', 'Équipe Test');
     await page.fill('.modale input[name=prefixe]', 'et');
     await page.click('.modale button:has-text("Créer")');
-    await page.waitForSelector('.noeud.equipe:has-text("Équipe Test")');
-    verifier('Nouvelle équipe : créée (organisation et ligne equipes), visible dans la navigation', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 1);
-    await page.click('.noeud.equipe:has-text("Équipe Test")');
-    await page.click('.detail-entete button[title="Supprimer l’équipe"]');
-    await page.waitForFunction(() => ![...document.querySelectorAll('.noeud.equipe')].some(n => n.textContent.includes('Équipe Test')));
-    verifier('Équipe vide : suppression possible (après confirmation)', await page.locator('.noeud.equipe:has-text("Équipe Test")').count() === 0);
+    await page.waitForSelector('tr:has-text("Équipe Test")');
+    verifier('Nouvelle équipe : créée depuis Administration › Équipes (organisation et ligne equipes)', await page.locator('tr:has-text("Équipe Test")').count() === 1);
+    await page.locator('tr:has-text("Équipe Test") button:has-text("Supprimer")').click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr')].some(n => n.textContent.includes('Équipe Test')));
+    verifier('Équipe vide : suppression possible depuis Administration › Équipes (après confirmation)', await page.locator('tr:has-text("Équipe Test")').count() === 0);
     // La création a rendu « Équipe Test » active : on revient à Plateforme (la suite des contrôles couvre toutes les équipes)
     await page.click('.bloc-equipe >> text=Changer');
     await page.click('.carte-choix:has-text("Plateforme") >> text=Ouvrir');

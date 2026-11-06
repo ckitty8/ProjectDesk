@@ -73,6 +73,7 @@ export function contexte(surcharge: Partial<ContexteDroits> = {}): ContexteDroit
     createur: [{ userId: 'u-christelle' }],
     droitsRoles: MATRICE_PRODUCTION,
     droitsEquipes: [],
+    etapesConfiguration: [],
     ...surcharge
   };
 }

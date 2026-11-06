@@ -510,3 +510,15 @@ select.niveau-non { color: var(--pale); }
 /* ---------- Sections repliables de la barre latérale ---------- */
 .menu-titre-bouton { background: none; border: 0; padding: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; text-align: left; }
 .menu-titre-bouton:hover { color: #fff; } .menu-titre-fleche { display: inline-block; width: 14px; }
+
+/* ---------- Pastille « Configuration » et liste des étapes (configuration initiale) ---------- */
+.pastille-config { position: fixed; right: 20px; bottom: 20px; width: 330px; max-height: 80vh; overflow-y: auto; z-index: 20; background: #fff; border: 1px solid var(--bordure-fine, #e5e7eb); border-radius: 12px; padding: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .15); font-size: 13px; }
+.pastille-config.terminee { background: #F0FDF4; border-color: #86EFAC; display: flex; flex-direction: column; gap: 8px; }
+.pastille-entete { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.barre-config { height: 6px; background: #E5E7EB; border-radius: 4px; margin: 8px 0 10px; } .barre-config i { display: block; height: 6px; background: var(--primaire, #1D4ED8); border-radius: 4px; }
+.liste-etapes .etape { padding: 2px 0; } .etape-ligne { display: flex; gap: 8px; align-items: baseline; width: 100%; background: none; border: 0; padding: 3px 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.etape-fait .etape-symbole { color: #15803D; } .etape-ignoree { color: #6B7280; } .etape-ignoree .etape-libelle { text-decoration: line-through; } .etape-a_faire .etape-symbole { color: #6B7280; }
+.etape.en-cours .etape-symbole, .etape.en-cours .etape-libelle { color: var(--primaire, #1D4ED8); font-weight: 600; }
+.etape-ici { margin-left: auto; font-size: 11px; text-decoration: underline; color: var(--primaire, #1D4ED8); } .etape-detail { margin: 0 0 4px 22px; } .etape-corps { margin: 2px 0 8px 22px; display: grid; gap: 8px; }
+.etape-actions { gap: 10px; flex-wrap: wrap; margin-top: 8px; } .liste-etapes:not(.compacte) .etape { padding: 10px 0; border-bottom: 1px solid var(--bordure-fine, #e5e7eb); }
+@media (max-width: 960px) { .pastille-config { right: 8px; bottom: 8px; width: calc(100vw - 16px); max-width: 330px; } }

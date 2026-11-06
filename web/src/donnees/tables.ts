@@ -9,7 +9,7 @@
 import { ajouterJours } from '../domaine/dates';
 import type {
   Absence, AdminPrevu, Affectation, ColonneRoadmap, CompteAdmin, DemandeRoadmap, EnvoiDaily, Equipe, FeuilleTemps, Iso, LigneDroit,
-  LigneEcranEquipe, MiseEnProduction, NoteDaily,
+  EtapeConfiguration, LigneEcranEquipe, MiseEnProduction, NoteDaily,
   ObjectifJoursTravail, Projet, Rattachement, Referentiel, ResponsableEquipe, Ressource, RoleDeclare, SprintProjet, TempsSaisi, ValeurReferentiel
 } from '../domaine/types';
 import type { JourFerie } from '../domaine/calendrier';
@@ -35,6 +35,7 @@ export interface Donnees {
   rolesAcces: readonly RoleDeclare[];
   droitsRoles: readonly LigneDroit[];
   droitsEquipes: readonly LigneEcranEquipe[];
+  etapesConfiguration: readonly EtapeConfiguration[];
   administrateurs: readonly CompteAdmin[];
   createur: readonly CompteAdmin[];
   referentiels: readonly Referentiel[];
@@ -55,7 +56,7 @@ export const TABLES: Record<CleTable, string> = {
   notesProjet: 'notes_daily_projet', administrateurs: 'administrateurs', envoisDaily: 'envois_daily_projet',
   createur: 'createur',
   responsablesEquipe: 'responsables_equipe', rolesPrevus: 'roles_prevus', administrateursPrevus: 'administrateurs_prevus', rolesAcces: 'roles_acces', droitsRoles: 'droits_roles',
-  droitsEquipes: 'droits_equipes',
+  droitsEquipes: 'droits_equipes', etapesConfiguration: 'etapes_configuration',
   rattachements: 'membres_equipe', misesEnProduction: 'mises_en_production', colonnesRoadmap: 'colonnes_roadmap', demandesRoadmap: 'demandes_roadmap'
 };
 export const CLES_TABLES = Object.keys(TABLES) as CleTable[];
@@ -68,7 +69,7 @@ const CLES_UNIQUES: Partial<Record<CleTable, string>> = {
   repartitionsSprint: 'projet_id,numero,categorie', joursFeries: 'jour', feuilles: 'ressource_id,semaine',
   notesProjet: 'user_id,jour,projet_id', administrateurs: 'user_id', createur: 'user_id',
   responsablesEquipe: 'equipe_id,ressource_id', rolesPrevus: 'ressource_id', administrateursPrevus: 'ressource_id', rolesAcces: 'ressource_id', droitsRoles: 'role,droit',
-  droitsEquipes: 'equipe_id,ecran',
+  droitsEquipes: 'equipe_id,ecran', etapesConfiguration: 'etape',
   rattachements: 'equipe_id,ressource_id'
 };
 

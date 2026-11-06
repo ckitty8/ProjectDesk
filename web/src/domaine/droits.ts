@@ -8,8 +8,8 @@
    ============================================================ */
 import { DROITS, ROLES_CHOISISSABLES } from './config';
 import type { Niveau } from './config';
-import type { AdminPrevu, Affectation, CompteAdmin, Equipe, LigneDroit, LigneEcranEquipe, Projet, Rattachement, Ressource, ResponsableEquipe,
-  RoleDeclare } from './types';
+import type { AdminPrevu, Affectation, CompteAdmin, Equipe, EtapeConfiguration, LigneDroit, LigneEcranEquipe, Projet, Rattachement, Ressource,
+  ResponsableEquipe, RoleDeclare } from './types';
 
 /** Simulation de rôle (créateur seul) : le rôle de la carte s'applique à la fiche choisie */
 export interface Simulation {
@@ -49,6 +49,8 @@ export interface ContexteDroits {
   droitsRoles: readonly LigneDroit[];
   /** Écrans autorisés ou écartés par équipe (migration 059) */
   droitsEquipes: readonly LigneEcranEquipe[];
+  /** Étapes de la configuration initiale confirmées ou passées (migration 060) */
+  etapesConfiguration: readonly EtapeConfiguration[];
   /** Équipe ouverte (équipe active) : celle dont les écrans autorisés s'appliquent ; null = aucun filtre d'équipe */
   equipeActive?: string | null;
 }
