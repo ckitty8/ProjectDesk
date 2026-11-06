@@ -126,8 +126,11 @@ function Interne({ children }: { children: ReactNode }) {
 
   const vue = useMemo(() => {
     if (!brutes || !identite) return null;
-    return construireVue({ ...identite, rolesEquipe }, brutes, membresEquipe, simulation, modeAdmin);
-  }, [brutes, identite, rolesEquipe, membresEquipe, simulation, modeAdmin]);
+    // Un administrateur sans aucune équipe (ex. après avoir supprimé la sienne) n'a pas de rôle à afficher : il est en mode administrateur d'office,
+    // sinon il resterait bloqué sur « Votre compte est créé » sans accès à Administration
+    const sansEquipe = (compte?.organisations ?? []).length === 0;
+    return construireVue({ ...identite, rolesEquipe }, brutes, membresEquipe, simulation, modeAdmin || sansEquipe);
+  }, [brutes, identite, rolesEquipe, membresEquipe, simulation, modeAdmin, compte]);
 
   // Lecture seule pendant une simulation : le client API refuse alors toute écriture
   useEffect(() => { definirSimulationActive(!!simulation); }, [simulation]);
