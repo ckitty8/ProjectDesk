@@ -34,16 +34,24 @@ export function Equipes() {
   // Ajouter et supprimer des directions et équipes : ici seulement, en mode administrateur (porteur, 2026-11-06). Suppression d'une unité vide :
   // ligne « equipes » (contrôlée en base), puis organisation Neon Auth
   async function supprimerUnite(id: string, nom: string) {
-    // La base refuse de supprimer une unité qui n'est pas vide (protège les données) : on explique ce qui bloque au lieu de ne rien faire
-    if (!equipeVide(ctx!, id)) {
-      const membres = donnees!.ressources.filter(r => r.equipeId === id).length, projets = donnees!.projets.filter(p => p.equipeId === id).length;
-      const sousUnites = donnees!.equipes.filter(x => x.parentId === id).length;
-      notifier(`« ${nom} » n’est pas vide (${membres} membre(s), ${projets} projet(s), ${sousUnites} sous-unité(s)) : supprimez d’abord ses projets et ses sous-unités, `
-        + 'et retirez ses membres.', 'erreur');
-      return;
+    const unite = donnees!.equipes.find(x => x.id === id);
+    const membres = donnees!.ressources.filter(r => r.equipeId === id), projets = donnees!.projets.filter(p => p.equipeId === id).length;
+    const sousUnites = donnees!.equipes.filter(x => x.parentId === id);
+    // Direction (porteur, 2026-11-06 : « les utilisateurs se retrouvent sans direction, c'est tout ») : ses équipes sont détachées, seules ses propres
+    // fiches rattachées sont supprimées avec elle ; une équipe, elle, doit être vide (la base protège les données)
+    if (unite?.type === 'direction') {
+      const detail = `${sousUnites.length ? `Ses équipes (${sousUnites.map(x => x.nom).join(', ')}) se retrouveront sans direction. ` : ''}`
+        + `${membres.length ? `Sont supprimées avec elle : ${membres.map(r => r.nom).join(', ')}. ` : ''}`;
+      if (!window.confirm(`Supprimer la direction « ${nom} » ? ${detail}`)) return;
+    } else {
+      if (membres.length || projets || sousUnites.length) {
+        notifier(`« ${nom} » n’est pas vide (${membres.length} membre(s), ${projets} projet(s), ${sousUnites.length} sous-unité(s)) : supprimez d’abord ses projets `
+          + 'et ses sous-unités, et retirez ses membres.', 'erreur');
+        return;
+      }
+      if (!window.confirm(`Supprimer « ${nom} » (vide) ?`)) return;
     }
-    if (!window.confirm(`Supprimer « ${nom} » (vide) ?`)) return;
-    if (await executer(() => supprimer('equipes', { id: 'eq.' + id }), 'equipes')) await supprimerOrganisation(id).catch(() => undefined);
+    if (await executer(() => supprimer('equipes', { id: 'eq.' + id }), 'equipes', 'ressources')) await supprimerOrganisation(id).catch(() => undefined);
   }
   async function supprimerProjet(id: string, nom: string) {
     if (!window.confirm(`Supprimer le projet « ${nom} » ?`)) return;
@@ -80,8 +88,8 @@ export function Equipes() {
                 {peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}
                 {ctx.estAdmin && e.type !== 'direction' && <button type="button" className="lien-btn" onClick={() => setNouveauProjet(e.id)}>+ Projet</button>}
                 {ctx.estAdmin && (
-                  <button type="button" className={'lien-btn' + (equipeVide(ctx, e.id) ? '' : ' pale')} onClick={() => void supprimerUnite(e.id, e.nom)}
-                    title={equipeVide(ctx, e.id) ? 'Supprimer (vide)' : 'Non vide : cliquez pour voir ce qui bloque'}>Supprimer</button>
+                  <button type="button" className={'lien-btn' + (e.type === 'direction' || equipeVide(ctx, e.id) ? '' : ' pale')} onClick={() => void supprimerUnite(e.id, e.nom)}
+                    title={e.type === 'direction' ? 'Supprimer la direction (ses équipes se retrouvent sans direction)' : equipeVide(ctx, e.id) ? 'Supprimer (vide)' : 'Non vide : cliquez pour voir ce qui bloque'}>Supprimer</button>
                 )}
               </td>
             </tr>

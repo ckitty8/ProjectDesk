@@ -509,8 +509,18 @@ async function donnees(req, res, table, url) {
   // Contrôles de suppression des migrations 005-006 (unité non vide : refus)
   if (req.method === 'DELETE') {
     const cibles0 = filtrer(bd[table], p);
-    if (table === 'equipes' && cibles0.some(e => bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id) || bd.equipes.some(x => x.parent_id === e.id)))
-      return envoyer(res, 400, { message: 'Unité non vide (ressources, projets ou équipes) : passez-la plutôt en « Inactive »' });
+    // Migration 061 : une DIRECTION se supprime (ses équipes sont détachées, ses fiches propres supprimées), sauf si elle porte des projets ; une équipe doit être vide
+    if (table === 'equipes') {
+      for (const e of cibles0) {
+        if (e.type === 'direction') {
+          if (bd.projets.some(x => x.equipe_id === e.id)) return envoyer(res, 400, { message: 'Direction avec des projets : déplacez ou supprimez ses projets avant de la supprimer' });
+          bd.equipes.filter(x => x.parent_id === e.id).forEach(x => { x.parent_id = null; });
+          bd.ressources = bd.ressources.filter(r => r.equipe_id !== e.id);
+        } else if (bd.ressources.some(r => r.equipe_id === e.id) || bd.projets.some(x => x.equipe_id === e.id) || bd.equipes.some(x => x.parent_id === e.id)) {
+          return envoyer(res, 400, { message: 'Unité non vide (ressources, projets ou équipes) : passez-la plutôt en « Inactive »' });
+        }
+      }
+    }
   }
   // Déclencheurs de colonnes_roadmap (migration 056) : colonne calculée non supprimable ; une colonne supprimée emporte sa liste « rdm_ » et ses valeurs
   if (req.method === 'DELETE' && table === 'colonnes_roadmap') {

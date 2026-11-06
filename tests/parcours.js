@@ -707,6 +707,17 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.locator('tr:has-text("Équipe Test") button:has-text("Supprimer")').click();
     await page.waitForFunction(() => ![...document.querySelectorAll('tr')].some(n => n.textContent.includes('Équipe Test')));
     verifier('Équipe vide : suppression possible depuis Administration › Équipes (après confirmation)', await page.locator('tr:has-text("Équipe Test")').count() === 0);
+    // Direction : se supprime même non vide (ses équipes se retrouvent sans direction) — migration 061
+    const nbUnitesAvant = await page.locator('table.tableau tbody tr:not(.ligne-projet)').count();
+    await page.click('button:has-text("+ Nouvelle direction")');
+    await page.fill('.modale input[name=nom]', 'Direction Test');
+    await page.fill('.modale input[name=prefixe]', 'dt');
+    await page.click('.modale button:has-text("Créer")');
+    await page.waitForSelector('tr:has-text("Direction Test")');
+    await page.locator('tr:has-text("Direction Test") button:has-text("Supprimer")').click();
+    await page.waitForFunction(() => ![...document.querySelectorAll('tr')].some(n => n.textContent.includes('Direction Test')));
+    verifier('Direction : création puis suppression depuis Administration › Équipes',
+      await page.locator('table.tableau tbody tr:not(.ligne-projet)').count() === nbUnitesAvant);
     // La création a rendu « Équipe Test » active : on revient à Plateforme (la suite des contrôles couvre toutes les équipes)
     await page.click('.bloc-equipe >> text=Changer');
     await page.click('.carte-choix:has-text("Plateforme") >> text=Ouvrir');
