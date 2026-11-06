@@ -597,8 +597,8 @@ Fonctions pures et testées (Vitest, `*.test.ts`) ; la colonne « Fonction » ci
 | Outil | Contenu |
 |-------|---------|
 | `tests/serveur-simule.js` | Neon Auth + Data API simulés en mémoire, identifiants numérotés (et non aléatoires) pour des captures reproductibles, données de la maquette (comptes `camille@test.fr` administratrice/owner, `thomas@test.fr` membre, `elodie@test.fr` demandeuse, `admin@test.fr` administratrice sans équipe ; mot de passe `motdepasse`) |
-| `tests/parcours.js` | Parcours Playwright de bout en bout sur `/app/` (178 contrôles : connexion, droits, lecture seule de « Vue d’ensemble », simulation de rôle, tous les écrans) + captures `docs/maquettes/etat-actuel/`. Prérequis : `npm --prefix web run build` |
-| `npm --prefix web run verifier` | Types (tsc), lint (ESLint), tests unitaires (Vitest, 280 tests sur `web/src/domaine/` et les composants) et build |
+| `tests/parcours.js` | Parcours Playwright de bout en bout sur `/app/` (205 contrôles : connexion, droits, lecture seule de « Vue d’ensemble », simulation de rôle, tous les écrans) + captures `docs/maquettes/etat-actuel/`. Prérequis : `npm --prefix web run build` |
+| `npm --prefix web run verifier` | Types (tsc), lint (ESLint), tests unitaires (Vitest, 311 tests sur `web/src/domaine/` et les composants) et build |
 | `scripts/verifier-docs.js` | Cohérence documentation ↔ code après chaque commit (§ 11) |
 
 Les règles RLS ne sont pas simulées : elles sont vérifiées en base et lors de la recette réelle.
