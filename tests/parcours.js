@@ -596,6 +596,14 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await captureD('12b-liste-projet');
     verifier('Liste des ressources : détail d\'un projet (Product Owners, membres, indicateurs)', (await page.textContent('.detail-ressources')).includes('Product Owners')
       && await page.locator('.carte-po:not(.ajout)').count() >= 1 && await page.locator('.detail-kpi b').count() === 3);
+    // « + Product Owner » : affecte la personne au projet ET lui donne le rôle Chef de projet, elle apparaît alors dans les Product Owners (porteur, 2026-11-09)
+    const nbPoAvant = await page.locator('.carte-po:not(.ajout)').count();
+    await page.click('.detail-ressources >> text=+ Product Owner');
+    await page.waitForSelector('.modale[role=dialog]');
+    await page.selectOption('.modale select[name=ressource]', { label: 'Julien Dubois — Plateforme · DevOps' });
+    await page.click('.modale button:has-text("Ajouter")');
+    await page.waitForFunction(n => document.querySelectorAll('.carte-po:not(.ajout)').length > n, nbPoAvant);
+    verifier('Liste des ressources : « + Product Owner » ajoute la personne dans les Product Owners du projet', await page.locator('.carte-po:not(.ajout)').count() === nbPoAvant + 1);
     await page.click('.detail-ressources >> text=+ Membre');
     await page.waitForSelector('.modale[role=dialog]');
     await captureD('11b-affectation');

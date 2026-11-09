@@ -18,6 +18,7 @@ import { Carte, EnteteEcran, Vide } from '../composants/Carte';
 import { Icone } from '../composants/Icone';
 import { ModaleAffectation } from '../composants/modales/ModaleAffectation';
 import { ModaleEquipe } from '../composants/modales/ModaleEquipe';
+import { ModaleProductOwner } from '../composants/modales/ModaleProductOwner';
 import { ModaleRattachement } from '../composants/modales/ModaleRattachement';
 import { ModaleRessource } from '../composants/modales/ModaleRessource';
 import { NouveauProjet } from '../composants/NouveauProjet';
@@ -40,6 +41,7 @@ type Ouvert =
   | { genre: 'nouveauProjet'; equipeId: string }
   | { genre: 'affectation'; ressourceId: string | null; projetId: string | null }
   | { genre: 'rattachement'; equipeId: string }
+  | { genre: 'productOwner'; projetId: string }
   | { genre: 'ressource'; id: string | null; equipeId: string | null; retourProjet: string }
   | { genre: 'equipe'; id: string | null; typeUnite?: string }
   | null;
@@ -153,7 +155,10 @@ export function ListeRessources() {
           <Bouton onClick={() => setOuvert({ genre: 'projet', id: p.id })}>{editable ? 'Modifier le projet' : 'Voir le projet'}</Bouton>
         </Carte>
         <Carte>
-          <div className="carte-titre"><h2>Product Owners <Aide texte={AIDES.productOwners} /></h2><span className="discret">rôle « {LIBELLES_ROLES.chef} »</span></div>
+          <div className="carte-titre"><h2>Product Owners <Aide texte={AIDES.productOwners} /></h2>
+            <span className="ligne-flex"><span className="discret">rôle « {LIBELLES_ROLES.chef} »</span>
+              {editable && <button type="button" className="lien-btn" onClick={() => setOuvert({ genre: 'productOwner', projetId: p.id })}>+ Product Owner</button>}
+            </span></div>
           <div className="cartes-po">
             {productOwners.length === 0 && <span className="pale">Aucun Product Owner.</span>}
             {productOwners.map(r => (
@@ -227,6 +232,7 @@ export function ListeRessources() {
           onRetourAffectation={(id, projetId) => setOuvert({ genre: 'affectation', ressourceId: id, projetId })}
           onRoles={() => navigate('/administration', { state: { onglet: 'ressources', entree: ENTREE_PARAMETRAGE_ROLES } })} />
       )}
+      {ouvert?.genre === 'productOwner' && <ModaleProductOwner projetId={ouvert.projetId} onFermer={() => setOuvert(null)} />}
       {ouvert?.genre === 'equipe' && <ModaleEquipe id={ouvert.id} typeUnite={ouvert.typeUnite} onFermer={() => setOuvert(null)} />}
     </div>
   );
