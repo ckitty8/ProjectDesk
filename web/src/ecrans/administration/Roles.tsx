@@ -15,6 +15,7 @@ import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
 import { COULEURS, ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
 import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
+import { valeursDe } from '../../domaine/referentiels';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
 import { optionsUnites, projetsDe, ressourcesPresentes } from '../../domaine/vues';
@@ -60,7 +61,13 @@ function useActionsRoles() {
     } catch (e) { notifier((e as Error).message, 'erreur'); }
   }
 
-  return { affecter, renommer, definirAdministrateur };
+  // Profil (poste, référentiel « poste ») et équipe d'une personne : listes de sa ligne (porteur, 2026-11-12 : « en tant qu'administrateur je dois pouvoir
+  // configurer tous les rôles, équipes, profils »). Même droit que la fiche (règle RLS de la table ressources), enregistré aussitôt.
+  async function changerFiche(r: Ressource, champs: { poste?: string | null; equipeId?: string }, message: string) {
+    if (await executer(() => modifier('ressources', { id: 'eq.' + r.id }, champs), 'ressources')) notifier(message);
+  }
+
+  return { affecter, renommer, definirAdministrateur, changerFiche };
 }
 
 interface PropsLigneRole {
@@ -82,6 +89,9 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
   // est « prévu » et s'applique à la première connexion (migration 047)
   const adminPrevu = estAdministrateurPrevu(ctx, r), admin = estAdministrateur(ctx, r) || adminPrevu;
   const estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
+  // Profil et équipe : listes modifiables pour qui peut modifier la fiche ; le profil actuel est gardé même s'il n'est plus dans le référentiel
+  const modifiable = peutModifierFiche(ctx, r);
+  const profilsProposes = [...new Set([...valeursDe(donnees.valeurs, 'poste').map(v => v.libelle), ...(r.poste ? [r.poste] : [])])];
   const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
   const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
   return (
@@ -91,13 +101,32 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
           <Avatar nom={r.nom} />
           <ChampsNom key={r.id + r.nom + (r.prenom ?? '') + (r.nomFamille ?? '')} r={r} modifiable={peutModifierFiche(ctx, r)} enregistrer={(p, n) => actions.renommer(r, p, n)} />
         </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
-      <td><span className="ligne-flex"><Pastille couleur={eq?.couleur ?? COULEURS.pale} />{eq?.nom}</span></td>
+      <td>
+        {modifiable
+          ? (
+            <select className="champ champ-mini" aria-label={`Équipe de ${r.nom}`} value={r.equipeId} disabled={!ctx.estAdmin}
+              onChange={e => void actions.changerFiche(r, { equipeId: e.target.value }, 'Équipe enregistrée')}>
+              {optionsUnites(donnees.equipes).map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
+            </select>
+          )
+          : <span className="ligne-flex"><Pastille couleur={eq?.couleur ?? COULEURS.pale} />{eq?.nom}</span>}
+      </td>
       <td>
         {projetsDe(donnees, r.id).map(p => <div key={p.id} className="ligne-flex projet-role">{p.nom}</div>)}
         {!donnees.affectations.some(a => a.ressourceId === r.id) && <span className="pale">aucun projet</span>}
       </td>
       <td>{r.userId ? <BadgeTon texte="Compte lié" ton="succes" /> : <BadgeTon texte="Pas encore connecté" ton="attention" />}</td>
-      <td>{r.poste || '—'}</td>
+      <td>
+        {modifiable
+          ? (
+            <select className="champ champ-mini" aria-label={`Profil de ${r.nom}`} value={r.poste ?? ''}
+              onChange={e => void actions.changerFiche(r, { poste: e.target.value || null }, 'Profil enregistré')}>
+              <option value="">—</option>
+              {profilsProposes.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )
+          : r.poste || '—'}
+      </td>
       <td>
         <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={choisi} disabled={verrou} onChange={e => void actions.affecter(r, e.target.value)}>
           {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}

@@ -933,6 +933,12 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Ressources › Paramétrage des rôles : un rôle se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
+    // Profil et équipe d'une personne se règlent depuis sa ligne (porteur, 2026-11-12)
+    const optionsProfil = await page.locator('select[aria-label="Profil de Léa Moreau"] option').count();
+    await page.selectOption('select[aria-label="Profil de Léa Moreau"]', { index: optionsProfil - 1 });
+    await page.waitForSelector('.notification.visible:has-text("Profil enregistré")');
+    verifier('Administration › Ressources › Paramétrage des rôles : le profil se choisit dans la liste de la ligne et s\'enregistre',
+      optionsProfil > 1 && (await toast()).includes('Profil enregistré') && await page.locator('select[aria-label="Équipe de Léa Moreau"]').count() === 1);
     // Administrateur : la case est réservée au créateur (la base refuse les autres), elle est donc grisée pour une administratrice
     verifier('Administration › Ressources › Paramétrage des rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
 
