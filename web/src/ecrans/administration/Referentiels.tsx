@@ -28,6 +28,8 @@ interface PropsReferentiels {
   /** Référentiels cachés (ceux d'un autre onglet) */
   cacher?: readonly string[];
   extras?: readonly EntreeLecture[];
+  /** Entrées en lecture placées AVANT les listes (la première est l'entrée affichée par défaut) */
+  avant?: readonly EntreeLecture[];
   /** Entrée choisie à l'ouverture (identifiant d'un référentiel ou d'une entrée en lecture) ; la première sinon */
   entreeInitiale?: string;
 }
@@ -101,16 +103,19 @@ function LienListe({ nom, compte, courant, onChoisir }: { nom: string; compte: n
 }
 
 /** Liste des référentiels à gauche, valeurs du référentiel choisi (ou contenu d'une entrée en lecture seule) à droite */
-export function Referentiels({ modifiable, montrer, cacher = [], extras = [], entreeInitiale = '' }: PropsReferentiels) {
+export function Referentiels({ modifiable, montrer, cacher = [], extras = [], avant = [], entreeInitiale = '' }: PropsReferentiels) {
   const { donnees } = useSession();
-  const [choisi, setChoisi] = useState(entreeInitiale);
+  const [choisi, setChoisi] = useState(entreeInitiale || avant[0]?.id || '');
   if (!donnees) return null;
   const listes = referentielsAffiches(donnees.referentiels, montrer, cacher);
-  const extra = extras.find(x => x.id === choisi);
+  const extra = [...avant, ...extras].find(x => x.id === choisi);
   const courant = extra ? undefined : (listes.find(r => r.id === choisi) ?? listes[0]);
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '240px minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
       <Carte classe="liste-referentiels"><div style={{ padding: 8 }}>
+        {avant.map(x => (
+          <LienListe key={x.id} nom={x.nom} compte={x.compte} courant={x.id === extra?.id} onChoisir={() => setChoisi(x.id)} />
+        ))}
         {listes.map(r => (
           <LienListe key={r.id} nom={r.nom} compte={valeursDe(donnees.valeurs, r.id, true).length} courant={r.id === courant?.id}
             onChoisir={() => setChoisi(r.id)} />

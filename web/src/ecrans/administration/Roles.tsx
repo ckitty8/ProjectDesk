@@ -21,7 +21,7 @@ import type { Ressource } from '../../domaine/types';
 import { optionsUnites, projetsDe, ressourcesPresentes } from '../../domaine/vues';
 
 /** Actions de l'écran : chacune appelle la base (la base contrôle le droit), relit les données puis confirme par un message */
-function useActionsRoles() {
+export function useActionsRoles() {
   const { ctx, notifier, actualiser, executer } = useSession();
 
   // Rôle d'accès choisi dans la liste d'une ligne (administrateurs ; la base contrôle le droit)

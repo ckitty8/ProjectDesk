@@ -14,14 +14,13 @@ import { EnvoiDaily } from './administration/EnvoiDaily';
 import { JoursFeries } from './administration/JoursFeries';
 import { Referentiels } from './administration/Referentiels';
 import { RessourcesAdmin } from './administration/RessourcesAdmin';
-import { Equipes } from './administration/Equipes';
 import { AucunOnglet, EnteteEcran } from '../composants/Carte';
 import { MatriceDroits } from './administration/MatriceDroits';
 import { MenusEquipes } from './administration/MenusEquipes';
 import { Onglets } from '../composants/Onglets';
 import { useSession } from '../donnees/SessionProvider';
 import { ongletsAdministration } from '../domaine/admin';
-import { REFERENTIELS_RESSOURCES } from '../domaine/config';
+import { ENTREE_UNITES, REFERENTIELS_RESSOURCES } from '../domaine/config';
 import { referentielsAffiches } from '../domaine/referentiels';
 import { estListeRoadmap } from '../domaine/roadmap';
 import { aDroit } from '../domaine/droits';
@@ -32,7 +31,10 @@ export function Administration() {
   const { state } = useLocation() as { state: { onglet?: string; entree?: string } | null };
   const enAttente = comptesEnAttente.filter(c => !c.invite).length;
   // Onglet par défaut : demandé par l'écran d'origine (fiche › « Modifier dans Ressources › Paramétrage des rôles »), sinon les comptes en attente s'il y en a
-  const [choix, setChoix] = useState(state?.onglet ?? '');
+  // Anciennes adresses « Équipes » et « Ressources » : elles ouvrent l'onglet « Équipes et ressources » (porteur, 2026-11-12), sur l'entrée voulue
+  const alias: Record<string, string> = { equipes: 'equipesRessources', ressources: 'equipesRessources' };
+  const [choix, setChoix] = useState(alias[state?.onglet ?? ''] ?? state?.onglet ?? '');
+  const entreeInitiale = state?.onglet === 'equipes' ? ENTREE_UNITES : state?.entree;
   if (!ctx || !donnees) return null;
   // Référentiels montrés ailleurs : ceux de l'onglet Ressources, et les listes déroulantes de la Roadmap (réglées dans l'onglet Roadmap)
   const autresOnglets = [...REFERENTIELS_RESSOURCES, ...donnees.referentiels.filter(r => estListeRoadmap(r.id)).map(r => r.id)];
@@ -49,9 +51,8 @@ export function Administration() {
         <>
           <Onglets liste={liste} actif={onglet} onChoisir={setChoix} />
           {onglet === 'comptes' && <Comptes />}
-          {onglet === 'equipes' && <Equipes />}
+          {onglet === 'equipesRessources' && <RessourcesAdmin modifiable={modifieReferentiels} entreeInitiale={entreeInitiale} />}
           {onglet === 'referentiels' && <Referentiels modifiable={modifieReferentiels} cacher={autresOnglets} />}
-          {onglet === 'ressources' && <RessourcesAdmin modifiable={modifieReferentiels} entreeInitiale={state?.entree} />}
           {onglet === 'feries' && <JoursFeries modifiable={modifieReferentiels} />}
           {onglet === 'envoiDaily' && <EnvoiDaily />}
           {onglet === 'roadmap' && <RoadmapAdmin modifiable={modifieReferentiels} />}

@@ -32,10 +32,10 @@ export function ongletsAdministration(ctx: ContexteDroits, n: CompteursAdmin): O
   const regleEnvois = ctx.projets.some(p => projetEnCours(p) && peutPiloterProjet(ctx, p));
   const liste: OngletAdmin[] = [
     ...(ctx.estAdmin ? [{ id: 'comptes', libelle: 'Comptes en attente', compte: n.enAttente }] : []),
-    ...(gereEquipes ? [{ id: 'equipes', libelle: 'Équipes', compte: ctx.equipes.length }] : []),
+    // Équipes et ressources (porteur, 2026-11-12) : directions, équipes, projets, profils, rôles et personnes au même endroit (ex-onglets Équipes et
+    // Ressources) ; administrateurs
+    ...(ctx.estAdmin || gereEquipes ? [{ id: 'equipesRessources', libelle: 'Équipes et ressources', compte: ctx.equipes.length }] : []),
     { id: 'referentiels', libelle: 'Référentiels', compte: n.referentiels },
-    // Ressources (porteur, 2026-11-02) : profils (postes), rôles et paramétrage des rôles (ex-onglet Rôles) ; administrateurs
-    ...(ctx.estAdmin ? [{ id: 'ressources', libelle: 'Ressources', compte: n.ressources }] : []),
     { id: 'feries', libelle: 'Jours fériés', compte: n.feries },
     ...(regleEnvois ? [{ id: 'envoiDaily', libelle: 'Envoi du daily', compte: n.envoisActifs }] : []),
     // Roadmap (porteur, 2026-11-03 ; maquette admin-roadmap-colonnes/) : colonnes du tableau de Vue d’ensemble › Roadmap ; administrateurs

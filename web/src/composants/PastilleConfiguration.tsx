@@ -27,7 +27,8 @@ export function ListeEtapes({ etapes, compacte }: { etapes: readonly EtapeEtat[]
   const [ouverte, setOuverte] = useState<string | null>(null);
   if (!ctx) return null;
   const { suivante } = progressionConfiguration(etapes);
-  const ouvrir = (e: EtapeEtat) => navigate(cheminDe(e.cible.ecran), { state: e.cible.onglet ? { onglet: e.cible.onglet } : undefined });
+  const aller = (c: EtapeEtat['cible']) => navigate(cheminDe(c.ecran), { state: c.onglet ? { onglet: c.onglet, entree: c.entree } : undefined });
+  const ouvrir = (e: EtapeEtat) => aller(e.cible);
   const retenir = (e: EtapeEtat, statut: 'confirmee' | 'ignoree') => executer(() => creer('etapes_configuration', { etape: e.id, statut }, 'etape'), 'etapesConfiguration');
   const rouvrir = (e: EtapeEtat) => executer(() => supprimer('etapes_configuration', { etape: 'eq.' + e.id }), 'etapesConfiguration');
   return (
@@ -69,9 +70,10 @@ export function PastilleConfiguration() {
   if (!ctx || !ctx.estAdmin || simulation || fermee) return null;
   const etapes = etatsConfiguration(ctx);
   const { faites, total, terminee, suivante } = progressionConfiguration(etapes);
+  const aller = (c: EtapeEtat['cible']) => navigate(cheminDe(c.ecran), { state: c.onglet ? { onglet: c.onglet, entree: c.entree } : undefined });
   const basculer = () => { memoriser(CLE_REDUITE, !reduite); setReduite(!reduite); };
   const fermer = () => { memoriser(CLE_FERMEE, true); setFermee(true); };
-  const aller = () => suivante && navigate(cheminDe(suivante.cible.ecran), { state: suivante.cible.onglet ? { onglet: suivante.cible.onglet } : undefined });
+  const allerSuivante = () => { if (suivante) aller(suivante.cible); };
   const barre = <div className="barre-config"><i style={{ width: `${Math.round(faites / total * 100)}%` }} /></div>;
   if (terminee) {
     return (
@@ -93,7 +95,7 @@ export function PastilleConfiguration() {
         : (
           <>
             <ListeEtapes etapes={etapes} compacte />
-            <div className="ligne-flex etape-actions"><Bouton variante="primaire" petit onClick={aller}>Étape suivante ›</Bouton></div>
+            <div className="ligne-flex etape-actions"><Bouton variante="primaire" petit onClick={allerSuivante}>Étape suivante ›</Bouton></div>
           </>
         )}
     </div>

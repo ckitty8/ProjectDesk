@@ -17,11 +17,13 @@ import { PanneauProjet } from '../../composants/PanneauProjet';
 import { supprimer, supprimerOrganisation } from '../../donnees/api';
 import { useSession } from '../../donnees/SessionProvider';
 import { aujourdhui } from '../../domaine/dates';
-import { equipeVide, responsablesAffiches } from '../../domaine/annuaire';
-import { peutGererEquipe } from '../../domaine/droits';
+import { equipeVide, responsablesAffiches, roleChoisi } from '../../domaine/annuaire';
+import { aDroit, estAdministrateur, estAdministrateurPrevu, peutGererEquipe, peutModifierFiche } from '../../domaine/droits';
 import { AIDES } from '../../domaine/textes';
 import { arbreUnites, ressourcesPresentes } from '../../domaine/vues';
-import { COULEURS } from '../../domaine/config';
+import { COULEURS, ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
+import { valeursDe } from '../../domaine/referentiels';
+import { useActionsRoles } from './Roles';
 
 export function Equipes() {
   const { ctx, donnees, executer, notifier } = useSession();
@@ -29,6 +31,11 @@ export function Equipes() {
   // Projets : ouverts ici aussi (porteur, 2026-11-06 : directions, équipes ET projets s'ajoutent, se modifient et se suppriment depuis ce seul onglet)
   const [projetOuvert, setProjetOuvert] = useState<string | null>(null);
   const [nouveauProjet, setNouveauProjet] = useState<string | null>(null);
+  // Équipes dépliées : leurs personnes s'affichent dessous, avec profil, rôle et case Administrateur
+  // (porteur, 2026-11-12 : équipes et ressources au même endroit)
+  const [depliees, setDepliees] = useState<ReadonlySet<string>>(new Set());
+  const basculerEquipe = (id: string) => setDepliees(avant => { const suite = new Set(avant); if (!suite.delete(id)) suite.add(id); return suite; });
+  const actions = useActionsRoles();
   if (!ctx || !donnees) return null;
   const actives = ressourcesPresentes(donnees, aujourdhui());
   // Ajouter et supprimer des directions et équipes : ici seulement, en mode administrateur (porteur, 2026-11-06). Suppression d'une unité vide :
@@ -82,7 +89,15 @@ export function Equipes() {
                 </span>
               </td>
               <td>{responsablesAffiches(ctx, e.id).map(r => r.nom).join(', ') || <span className="pale">—</span>}</td>
-              <td>{actives.filter(r => r.equipeId === e.id).length}</td>
+              <td>
+                {actives.some(r => r.equipeId === e.id)
+                  ? (
+                    <button type="button" className="lien-btn" aria-expanded={depliees.has(e.id)} onClick={() => basculerEquipe(e.id)}>
+                      {actives.filter(r => r.equipeId === e.id).length} {depliees.has(e.id) ? '▾' : '▸'}
+                    </button>
+                  )
+                  : 0}
+              </td>
               <td>{donnees.projets.filter(p => p.equipeId === e.id).length}</td>
               <td className="num ligne-flex">
                 {peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}
@@ -93,6 +108,34 @@ export function Equipes() {
                 )}
               </td>
             </tr>
+            {depliees.has(e.id) && actives.filter(r => r.equipeId === e.id).sort((a, b) => a.nom.localeCompare(b.nom)).map(r => {
+              const admin = estAdministrateur(ctx, r) || estAdministrateurPrevu(ctx, r), estLeCreateur = ctx.createur.some(c => c.userId === r.userId);
+              const profils = [...new Set([...valeursDe(donnees.valeurs, 'poste').map(v => v.libelle), ...(r.poste ? [r.poste] : [])])];
+              return (
+                <tr key={r.id} className="ligne-personne-equipe">
+                  <td style={{ paddingLeft: 12 + 24 * (niveau + 1) }}><span className="ligne-flex">{r.nom}<span className="discret texte-12">personne</span></span></td>
+                  <td>
+                    <select className="champ champ-mini" aria-label={`Profil de ${r.nom}`} value={r.poste ?? ''} disabled={!peutModifierFiche(ctx, r)}
+                      onChange={ev => void actions.changerFiche(r, { poste: ev.target.value || null }, 'Profil enregistré')}>
+                      <option value="">—</option>{profils.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={roleChoisi(ctx, r)} disabled={!aDroit(ctx, 'roles')}
+                      onChange={ev => void actions.affecter(r, ev.target.value)}>
+                      {ROLES_ATTRIBUABLES.map(c => <option key={c} value={c}>{ROLES_ACCES[c].libelle}</option>)}
+                    </select>
+                  </td>
+                  <td />
+                  <td className="num">
+                    <label className="ligne-flex">
+                      <input type="checkbox" aria-label={`Administrateur : ${r.nom}`} checked={admin} disabled={!(aDroit(ctx, 'nommer_admin') && ctx.estCreateur) || estLeCreateur}
+                        onChange={ev => void actions.definirAdministrateur(r, ev.target.checked)} />Admin
+                    </label>
+                  </td>
+                </tr>
+              );
+            })}
             {donnees.projets.filter(p => p.equipeId === e.id).sort((a, b) => a.code.localeCompare(b.code)).map(p => (
               <tr key={p.id} className="ligne-projet">
                 <td style={{ paddingLeft: 12 + 24 * (niveau + 1) }}>

@@ -230,7 +230,7 @@ export function ListeRessources() {
         <ModaleRessource id={ouvert.id} equipeId={ouvert.equipeId} retourProjet={ouvert.retourProjet} onFermer={() => setOuvert(null)}
           onAffecter={id => setOuvert({ genre: 'affectation', ressourceId: id, projetId: null })}
           onRetourAffectation={(id, projetId) => setOuvert({ genre: 'affectation', ressourceId: id, projetId })}
-          onRoles={() => navigate('/administration', { state: { onglet: 'ressources', entree: ENTREE_PARAMETRAGE_ROLES } })} />
+          onRoles={() => navigate('/administration', { state: { onglet: 'equipesRessources', entree: ENTREE_PARAMETRAGE_ROLES } })} />
       )}
       {ouvert?.genre === 'productOwner' && <ModaleProductOwner projetId={ouvert.projetId} onFermer={() => setOuvert(null)} />}
       {ouvert?.genre === 'equipe' && <ModaleEquipe id={ouvert.id} typeUnite={ouvert.typeUnite} onFermer={() => setOuvert(null)} />}

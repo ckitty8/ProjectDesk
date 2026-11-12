@@ -12,7 +12,7 @@ import type { ContexteDroits } from './droits';
 export type EtatEtape = 'fait' | 'a_faire' | 'ignoree';
 
 /** Où l'étape se règle : un écran, et l'onglet d'Administration à ouvrir le cas échéant */
-export interface CibleEtape { ecran: string; onglet?: string }
+export interface CibleEtape { ecran: string; onglet?: string; entree?: string }
 
 export interface DefinitionEtape {
   id: string;
@@ -27,13 +27,13 @@ export interface DefinitionEtape {
 
 /** Les neuf étapes, dans l'ordre */
 export const ETAPES_CONFIGURATION: readonly DefinitionEtape[] = [
-  { id: 'equipes', libelle: 'Créer une direction / des équipes', cible: { ecran: 'monAdmin', onglet: 'equipes' }, libelleBouton: 'Ouvrir Administration › Équipes',
+  { id: 'equipes', libelle: 'Créer une direction / des équipes', cible: { ecran: 'monAdmin', onglet: 'equipesRessources', entree: 'unites' }, libelleBouton: 'Ouvrir Administration › Équipes et ressources',
     pourquoi: 'Les équipes sont les espaces de travail : personnes, projets et écrans y sont rattachés.', confirmable: false },
-  { id: 'referentiels', libelle: 'Vérifier les référentiels', cible: { ecran: 'monAdmin', onglet: 'ressources' }, libelleBouton: 'Ouvrir Administration › Ressources',
+  { id: 'referentiels', libelle: 'Vérifier les référentiels', cible: { ecran: 'monAdmin', onglet: 'equipesRessources', entree: 'poste' }, libelleBouton: 'Ouvrir Administration › Équipes et ressources',
     pourquoi: 'Profils, types de contrat, d’absence, statuts : des valeurs par défaut sont proposées, adaptez-les à votre métier.', confirmable: true },
   { id: 'ressources', libelle: 'Ajouter les ressources', cible: { ecran: 'listeRessources' }, libelleBouton: 'Ouvrir la Liste des ressources',
     pourquoi: 'Chaque équipe a besoin de ses personnes (fiches ressources) pour les congés, les heures et les projets.', confirmable: false },
-  { id: 'responsables', libelle: 'Nommer les responsables', cible: { ecran: 'monAdmin', onglet: 'equipes' }, libelleBouton: 'Ouvrir Administration › Équipes',
+  { id: 'responsables', libelle: 'Nommer les responsables', cible: { ecran: 'monAdmin', onglet: 'equipesRessources', entree: 'unites' }, libelleBouton: 'Ouvrir Administration › Équipes et ressources',
     pourquoi: 'Un responsable voit tout son équipe, valide les feuilles de temps et affecte les chefs de projet.', confirmable: false },
   { id: 'menusEquipes', libelle: 'Écrans de chaque équipe', cible: { ecran: 'monAdmin', onglet: 'menusEquipes' }, libelleBouton: 'Ouvrir Menus par équipe',
     pourquoi: 'Chaque équipe n’a pas besoin de tous les écrans : choisissez ceux qui lui sont accessibles (étape 1 des accès).', confirmable: true },
@@ -44,7 +44,7 @@ export const ETAPES_CONFIGURATION: readonly DefinitionEtape[] = [
     pourquoi: 'Les jours fériés réduisent les heures attendues et les jours travaillés : vérifiez l’année en cours.', confirmable: true },
   { id: 'projet', libelle: 'Créer un premier projet', cible: { ecran: 'listeRessources' }, libelleBouton: 'Ouvrir la Liste des ressources',
     pourquoi: 'Un projet permet d’affecter des personnes, de saisir des sprints et de lire le daily.', confirmable: false },
-  { id: 'invitations', libelle: 'Inviter les membres', cible: { ecran: 'monAdmin', onglet: 'equipes' }, libelleBouton: 'Ouvrir Administration › Équipes',
+  { id: 'invitations', libelle: 'Inviter les membres', cible: { ecran: 'monAdmin', onglet: 'equipesRessources', entree: 'unites' }, libelleBouton: 'Ouvrir Administration › Équipes et ressources',
     pourquoi: 'Les membres invités créent leur compte avec leur email et retrouvent leur fiche automatiquement.', confirmable: false }
 ];
 

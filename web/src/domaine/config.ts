@@ -57,6 +57,9 @@ export const ROLES_CHOISISSABLES: readonly RoleAcces[] = ['admin', 'direction', 
  *  garde les autres listes. */
 export const REFERENTIELS_RESSOURCES: readonly string[] = ['poste'];
 
+/** Entrée « Directions, équipes et projets » de l'onglet Administration › Équipes et ressources (ex-onglet Équipes) */
+export const ENTREE_UNITES = 'unites';
+
 /** Entrée « Paramétrage des rôles » d'Administration › Ressources (ex-onglet Rôles) : la fiche d'une personne y renvoie (« Modifier dans … ») */
 export const ENTREE_PARAMETRAGE_ROLES = 'parametrage';
 

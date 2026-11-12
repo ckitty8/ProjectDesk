@@ -187,7 +187,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Administration › Ressources › Paramétrage des rôles (ex-onglet Rôles, 2.98)
     const ouvrirParametrageRoles = async () => {
       await page.click('[role=tab]:has-text("Ressources")'); await page.waitForSelector('.lien-referentiel');
-      await page.click('.lien-referentiel:has-text("Paramétrage des rôles")'); await page.waitForSelector('.tableau-roles-acces');
+      await page.click('.lien-referentiel:has-text("Personnes et rôles")'); await page.waitForSelector('.tableau-roles-acces');
     };
     const ouvrirAdminCreateur = async () => { await page.click('.bloc-moi .avatar'); await page.click('text=Ouvrir l’Administration créateur'); };
 
@@ -735,8 +735,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/administration');
     await page.waitForSelector('.onglets');
     await captureD('14-mon-admin');
-    verifier('Administration : onglets de l\'administrateur (comptes, équipes, référentiels, ressources, jours fériés) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
-      && (await page.textContent('.onglets')).includes('Ressources') && (await page.textContent('.onglets')).includes('Référentiels'));
+    verifier('Administration : onglets de l\'administrateur (comptes, équipes et ressources, référentiels, jours fériés) avec compteurs', (await page.textContent('.onglets')).includes('Comptes en attente')
+      && (await page.textContent('.onglets')).includes('Équipes et ressources') && !(await page.textContent('.onglets')).includes('Ressources') && (await page.textContent('.onglets')).includes('Référentiels'));
     verifier('Administration : l\'onglet « Comptes en attente » s\'ouvre d\'abord quand il y en a', await page.locator('[role=tab][aria-selected=true]:has-text("Comptes en attente")').count() === 1);
     await captureD('26-comptes-en-attente');
     const nbAttente = await page.locator('.tableau tbody tr').count();
@@ -854,9 +854,9 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.click('[role=tab]:has-text("Ressources")');
     await page.waitForSelector('.lien-referentiel');
     await captureD('10c-ressources');
-    verifier('Administration › Ressources : Profil, Rôle et Paramétrage des rôles (plus de rôles de projet ni d\'onglet Rôles)', await page.locator('.lien-referentiel').count() === 3
+    verifier('Administration › Équipes et ressources : Directions/équipes/projets, Profil, Rôle et Personnes et rôles (plus de rôles de projet ni d\'onglet Rôles)', await page.locator('.lien-referentiel').count() === 4
       && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 0 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
-      && await page.locator('.lien-referentiel:has(span:text-is("Rôle"))').count() === 1 && await page.locator('.lien-referentiel:has-text("Paramétrage des rôles")').count() === 1
+      && await page.locator('.lien-referentiel:has(span:text-is("Rôle"))').count() === 1 && await page.locator('.lien-referentiel:has-text("Personnes et rôles")').count() === 1
       && await page.locator('[role=tab]:text-is("Rôles")').count() === 0);
     await page.click('.lien-referentiel:has-text("Profil")');
     await page.waitForSelector('input[aria-label="Valeur 1"]');
@@ -933,12 +933,18 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForSelector('.notification.visible:has-text("Rôle")');
     verifier('Administration › Ressources › Paramétrage des rôles : un rôle se choisit dans la liste de la ligne et s\'enregistre', (await toast()).includes('Rôle'));
     await page.selectOption('select[aria-label="Rôle de Léa Moreau"]', 'utilisateur');
+    await page.waitForFunction(() => document.querySelector('select[aria-label="Rôle de Léa Moreau"]')?.value === 'utilisateur');
+    await page.waitForTimeout(700);        // laisse finir la relecture des données avant de changer autre chose sur la même ligne
     // Profil et équipe d'une personne se règlent depuis sa ligne (porteur, 2026-11-12)
-    const optionsProfil = await page.locator('select[aria-label="Profil de Léa Moreau"] option').count();
-    await page.selectOption('select[aria-label="Profil de Léa Moreau"]', { index: optionsProfil - 1 });
-    await page.waitForSelector('.notification.visible:has-text("Profil enregistré")');
+    // On choisit un profil différent de l'actuel (sinon aucun changement, donc aucun enregistrement)
+    const profils = await page.locator('select[aria-label="Profil de Léa Moreau"] option').evaluateAll(o => o.map(x => x.value).filter(Boolean));
+    const profilActuel = await page.locator('select[aria-label="Profil de Léa Moreau"]').inputValue();
+    await page.selectOption('select[aria-label="Profil de Léa Moreau"]', profils.find(v => v !== profilActuel));
+    await page.waitForSelector('.notification.visible');
+    await page.waitForFunction(() => /Profil enregistré/i.test(document.querySelector('.notification')?.textContent ?? ''), null, { timeout: 5000 }).catch(() => undefined);   // le contrôle suivant dit ce qui s'est affiché
     verifier('Administration › Ressources › Paramétrage des rôles : le profil se choisit dans la liste de la ligne et s\'enregistre',
-      optionsProfil > 1 && (await toast()).includes('Profil enregistré') && await page.locator('select[aria-label="Équipe de Léa Moreau"]').count() === 1);
+      profils.length > 1 && (await toast()).includes('Profil enregistré') && await page.locator('select[aria-label^="Équipe de Léa Moreau"]').count() >= 1,
+      `profils=${profils.length} toast=${await toast()}`);
     // Administrateur : la case est réservée au créateur (la base refuse les autres), elle est donc grisée pour une administratrice
     verifier('Administration › Ressources › Paramétrage des rôles : la case Administrateur est grisée pour qui n\'est pas le créateur', await page.locator('input[aria-label="Administrateur : Léa Moreau"]').isDisabled());
 
