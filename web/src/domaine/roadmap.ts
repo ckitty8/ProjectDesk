@@ -99,35 +99,36 @@ export function demandesClassees(demandes: readonly DemandeRoadmap[], colonnes: 
     .map(({ d, k }, i) => ({ demande: d, rang: i + 1, score: k.score }));
 }
 
-/* ---------- Une roadmap par équipe (Vue d'ensemble › Roadmap ; porteur 2026-11-13 : pas toutes les roadmaps en même temps) ---------- */
+/* ---------- Une roadmap par projet (Vue d'ensemble › Roadmap ; porteur 2026-11-13 : « il n'y a pas de roadmap AMOA : une roadmap par projet »,
+   et jamais toutes les roadmaps en même temps) ---------- */
 
-/** Identifiant de la pastille des demandes sans projet (donc sans équipe) */
+/** Identifiant de la pastille des demandes sans projet */
 export const ROADMAP_SANS_PROJET = 'sans-projet';
 
-/** Une pastille de choix : une équipe (ou la direction), ou « Sans projet », avec le nombre de ses demandes */
-export interface ChoixRoadmap { id: string; libelle: string; nombre: number }
+/** Une pastille de choix : un projet (ou « Sans projet »), avec le nombre de ses demandes ; equipeId sert à ouvrir la roadmap d'un projet de l'équipe active */
+export interface ChoixRoadmap { id: string; libelle: string; nombre: number; equipeId?: string }
 
-/** Équipe d'une demande : celle de son projet ; ROADMAP_SANS_PROJET sans projet (ou projet inconnu) */
-const uniteDeLaDemande = (d: DemandeRoadmap, projets: readonly Projet[]): string => projets.find(p => p.id === d.projetId)?.equipeId ?? ROADMAP_SANS_PROJET;
+/** Pastille de la demande : son projet ; ROADMAP_SANS_PROJET sans projet (ou projet inconnu) */
+const pastilleDeLaDemande = (d: DemandeRoadmap, projets: readonly Projet[]): string => projets.find(p => p.id === d.projetId)?.id ?? ROADMAP_SANS_PROJET;
 
-/** Pastilles dans l'ordre de l'arborescence (direction puis ses équipes) : toutes les équipes, mais la direction seulement si elle a des projets en propre ;
- *  « Sans projet » à la fin, seulement s'il y a de telles demandes */
+/** Pastilles : un projet chacune (« CDO · CDO-01 » : nom et code, deux projets pouvant porter le même nom), rangés dans l'ordre de l'arborescence
+ *  (direction, équipes) puis par code ; « Sans projet » à la fin, seulement s'il y a de telles demandes */
 export function choixRoadmap(equipes: readonly Equipe[], projets: readonly Projet[], demandes: readonly DemandeRoadmap[]): ChoixRoadmap[] {
-  const nombre = (id: string) => demandes.filter(d => uniteDeLaDemande(d, projets) === id).length;
-  const unites = arbreUnites(equipes).map(u => u.equipe)
-    .filter(e => e.type !== 'direction' || projets.some(p => p.equipeId === e.id))
-    .map(e => ({ id: e.id, libelle: e.type === 'direction' ? `${e.nom} (direction)` : e.nom, nombre: nombre(e.id) }));
+  const nombre = (id: string) => demandes.filter(d => pastilleDeLaDemande(d, projets) === id).length;
+  const parProjet = arbreUnites(equipes).flatMap(u => projets.filter(p => p.equipeId === u.equipe.id).sort((a, b) => a.code.localeCompare(b.code)))
+    .map(p => ({ id: p.id, libelle: `${p.nom} · ${p.code}`, nombre: nombre(p.id), equipeId: p.equipeId }));
   const sans = nombre(ROADMAP_SANS_PROJET);
-  return sans > 0 ? [...unites, { id: ROADMAP_SANS_PROJET, libelle: 'Sans projet', nombre: sans }] : unites;
+  return sans > 0 ? [...parProjet, { id: ROADMAP_SANS_PROJET, libelle: 'Sans projet', nombre: sans }] : parProjet;
 }
 
-/** Demandes d'une pastille (équipe, direction ou « Sans projet ») */
+/** Demandes d'une pastille (un projet, ou « Sans projet ») */
 export const demandesDeLaPastille = (demandes: readonly DemandeRoadmap[], projets: readonly Projet[], choix: string): DemandeRoadmap[] =>
-  demandes.filter(d => uniteDeLaDemande(d, projets) === choix);
+  demandes.filter(d => pastilleDeLaDemande(d, projets) === choix);
 
-/** Pastille ouverte au départ : l'équipe active si elle est proposée, sinon la première qui a des demandes, sinon la première */
+/** Pastille ouverte au départ : un projet de l'équipe active qui a des demandes, sinon un projet de l'équipe active, sinon la première qui a des demandes */
 export function pastilleParDefaut(choix: readonly ChoixRoadmap[], equipeActive: string | null): string {
-  return (choix.find(c => c.id === equipeActive) ?? choix.find(c => c.nombre > 0) ?? choix[0])?.id ?? '';
+  const deLEquipe = choix.filter(c => c.equipeId === equipeActive);
+  return (deLEquipe.find(c => c.nombre > 0) ?? deLEquipe[0] ?? choix.find(c => c.nombre > 0) ?? choix[0])?.id ?? '';
 }
 
 /** Score affiché : deux décimales au plus, virgule française (« 5,25 ») */

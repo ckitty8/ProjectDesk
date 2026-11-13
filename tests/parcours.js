@@ -203,7 +203,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
     await captureB('36-roadmap');
-    verifier('Roadmap : une pastille par équipe, une seule roadmap affichée à la fois (3.26)', await page.locator('.onglets [role=tab]').count() > 1 && await page.locator('.tableau-roadmap').count() === 1);
+    verifier('Roadmap : une pastille par projet, une seule roadmap affichée à la fois (3.31)', await page.locator('.onglets [role=tab]').count() > 1 && await page.locator('.tableau-roadmap').count() === 1);
     await page.click('.onglets [role=tab]:has-text("Sans projet")');   // les 3 demandes d'exemple n'ont pas de projet
     verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 28 colonnes (toutes celles du fichier, 3.09)', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
       && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 28);

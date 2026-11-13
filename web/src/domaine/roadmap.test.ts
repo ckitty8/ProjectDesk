@@ -131,27 +131,23 @@ describe('liste Sprint / version : sprints et mises en production du projet', ()
   });
 });
 
-describe('une roadmap par équipe', () => {
+describe('une roadmap par projet', () => {
   const eq = (id: string, nom: string, type: string, parentId: string | null = null) => ({ id, nom, type, parentId } as never);
   const equipes = [eq('d', 'DSI', 'direction'), eq('a', 'AMOA', 'equipe', 'd'), eq('c', 'CDO', 'equipe', 'd')];
-  const projets = [{ id: 'p1', equipeId: 'c' }, { id: 'p2', equipeId: 'a' }] as never;
+  const projets = [{ id: 'p1', code: 'CDO-01', nom: 'CDO', equipeId: 'c' }, { id: 'p2', code: 'AMOA-02', nom: 'VISTA', equipeId: 'a' }] as never;
   const dem = (id: string, projetId: string | null) => ({ id, projetId, valeurs: {} } as DemandeRoadmap);
   const demandes = [dem('1', 'p1'), dem('2', 'p1'), dem('3', null)];
 
-  it('une pastille par équipe avec son nombre, la direction sans projet est omise, « Sans projet » en dernier', () => {
-    expect(choixRoadmap(equipes, projets, demandes).map(c => [c.libelle, c.nombre])).toEqual([['AMOA', 0], ['CDO', 2], ['Sans projet', 1]]);
+  it('une pastille par projet (nom et code), dans l\'ordre des équipes, « Sans projet » en dernier ; pas de pastille d\'équipe', () => {
+    expect(choixRoadmap(equipes, projets, demandes).map(c => [c.libelle, c.nombre])).toEqual([['VISTA · AMOA-02', 0], ['CDO · CDO-01', 2], ['Sans projet', 1]]);
   });
 
-  it('la direction a sa pastille si elle a des projets en propre', () => {
-    const avec = [...(projets as never[]), { id: 'p3', equipeId: 'd' }] as never;
-    expect(choixRoadmap(equipes, avec, demandes).map(c => c.libelle)).toEqual(['DSI (direction)', 'AMOA', 'CDO', 'Sans projet']);
-  });
-
-  it('les demandes d\'une pastille et la pastille ouverte au départ', () => {
-    expect(demandesDeLaPastille(demandes, projets, 'c').map(d => d.id)).toEqual(['1', '2']);
+  it('les demandes d\'une pastille et la pastille ouverte au départ (projet de l\'équipe active avec demandes, sinon projet de l\'équipe)', () => {
+    expect(demandesDeLaPastille(demandes, projets, 'p1').map(d => d.id)).toEqual(['1', '2']);
     expect(demandesDeLaPastille(demandes, projets, 'sans-projet').map(d => d.id)).toEqual(['3']);
     const choix = choixRoadmap(equipes, projets, demandes);
-    expect(pastilleParDefaut(choix, 'a')).toBe('a');
-    expect(pastilleParDefaut(choix, null)).toBe('c');
+    expect(pastilleParDefaut(choix, 'a')).toBe('p2');
+    expect(pastilleParDefaut(choix, 'c')).toBe('p1');
+    expect(pastilleParDefaut(choix, null)).toBe('p1');
   });
 });
