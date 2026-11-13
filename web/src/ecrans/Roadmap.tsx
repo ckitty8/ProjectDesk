@@ -5,22 +5,30 @@
    lignes : « les 3 plus récentes pour 2026 » du fichier CDO-ROADMAP-NEW (3.06, table demandes_roadmap, migration 057). L'en-tête suit les colonnes
    en base, regroupées par bloc ; les demandes sont classées par rang de traitement DSI, Rang et Score étant calculés (domaine/roadmap.ts).
    ============================================================ */
+import { useState } from 'react';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
+import { Onglets } from '../composants/Onglets';
 import { CelluleDemande } from './roadmap/CelluleDemande';
 import { useSession } from '../donnees/SessionProvider';
-import { blocsDuTableau, demandesClassees } from '../domaine/roadmap';
+import { blocsDuTableau, choixRoadmap, demandesClassees, demandesDeLaPastille, pastilleParDefaut } from '../domaine/roadmap';
 
 /** Menu Roadmap : en-tête à deux niveaux (bloc, puis colonne) et une ligne par demande, dans l'ordre de traitement DSI */
 export function Roadmap() {
-  const { donnees } = useSession();
+  const { donnees, equipeCourante } = useSession();
+  // Une seule roadmap à la fois : pastille choisie (au départ : l'équipe active)
+  const [choisie, setChoisie] = useState<string | null>(null);
   if (!donnees) return null;
+  const pastilles = choixRoadmap(donnees.equipes, donnees.projets, donnees.demandesRoadmap);
+  const actif = pastilles.some(p => p.id === choisie) ? choisie! : pastilleParDefaut(pastilles, equipeCourante);
   const blocs = blocsDuTableau(donnees.colonnesRoadmap);
   const colonnes = blocs.flatMap(b => b.colonnes);
-  const lignes = demandesClassees(donnees.demandesRoadmap, donnees.colonnesRoadmap);
+  const lignes = demandesClassees(demandesDeLaPastille(donnees.demandesRoadmap, donnees.projets, actif), donnees.colonnesRoadmap);
   return (
     <div className="ecran ecran-large">
       <EnteteEcran titre="Roadmap"
         sousTitre={`${lignes.length} demande${lignes.length > 1 ? 's' : ''} · classées par rang de traitement DSI · Rang et Score calculés par l’application`} />
+      {pastilles.length > 1
+        && <Onglets liste={pastilles.map(p => ({ id: p.id, libelle: p.libelle, compte: p.nombre }))} actif={actif} onChoisir={setChoisie} />}
       <Carte>
         {colonnes.length === 0 ? <Vide texte="Aucune colonne : elles se règlent dans Mon dashboard › Administration › Roadmap." /> : <>
           <div className="defilement-x">

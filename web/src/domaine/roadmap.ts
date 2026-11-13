@@ -7,7 +7,8 @@
    ============================================================ */
 import { BLOCS_ROADMAP, PREFIXE_LISTE_ROADMAP } from './config';
 import { formatAvecAnnee } from './dates';
-import type { ColonneRoadmap, DemandeRoadmap, Iso, MiseEnProduction, SprintProjet, ValeurReferentiel } from './types';
+import type { ColonneRoadmap, DemandeRoadmap, Equipe, Iso, MiseEnProduction, Projet, SprintProjet, ValeurReferentiel } from './types';
+import { arbreUnites } from './vues';
 
 /** Un bloc du tableau et ses colonnes, dans l'ordre d'affichage */
 export interface BlocDuTableau { cle: string; titre: string; colonnes: ColonneRoadmap[] }
@@ -96,6 +97,37 @@ export function demandesClassees(demandes: readonly DemandeRoadmap[], colonnes: 
     .sort((a, b) => a.k.strategique - b.k.strategique || a.k.priorite - b.k.priorite
       || (b.k.score ?? -1) - (a.k.score ?? -1) || String(a.d.creeLe ?? '').localeCompare(String(b.d.creeLe ?? '')))
     .map(({ d, k }, i) => ({ demande: d, rang: i + 1, score: k.score }));
+}
+
+/* ---------- Une roadmap par équipe (Vue d'ensemble › Roadmap ; porteur 2026-11-13 : pas toutes les roadmaps en même temps) ---------- */
+
+/** Identifiant de la pastille des demandes sans projet (donc sans équipe) */
+export const ROADMAP_SANS_PROJET = 'sans-projet';
+
+/** Une pastille de choix : une équipe (ou la direction), ou « Sans projet », avec le nombre de ses demandes */
+export interface ChoixRoadmap { id: string; libelle: string; nombre: number }
+
+/** Équipe d'une demande : celle de son projet ; ROADMAP_SANS_PROJET sans projet (ou projet inconnu) */
+const uniteDeLaDemande = (d: DemandeRoadmap, projets: readonly Projet[]): string => projets.find(p => p.id === d.projetId)?.equipeId ?? ROADMAP_SANS_PROJET;
+
+/** Pastilles dans l'ordre de l'arborescence (direction puis ses équipes) : toutes les équipes, mais la direction seulement si elle a des projets en propre ;
+ *  « Sans projet » à la fin, seulement s'il y a de telles demandes */
+export function choixRoadmap(equipes: readonly Equipe[], projets: readonly Projet[], demandes: readonly DemandeRoadmap[]): ChoixRoadmap[] {
+  const nombre = (id: string) => demandes.filter(d => uniteDeLaDemande(d, projets) === id).length;
+  const unites = arbreUnites(equipes).map(u => u.equipe)
+    .filter(e => e.type !== 'direction' || projets.some(p => p.equipeId === e.id))
+    .map(e => ({ id: e.id, libelle: e.type === 'direction' ? `${e.nom} (direction)` : e.nom, nombre: nombre(e.id) }));
+  const sans = nombre(ROADMAP_SANS_PROJET);
+  return sans > 0 ? [...unites, { id: ROADMAP_SANS_PROJET, libelle: 'Sans projet', nombre: sans }] : unites;
+}
+
+/** Demandes d'une pastille (équipe, direction ou « Sans projet ») */
+export const demandesDeLaPastille = (demandes: readonly DemandeRoadmap[], projets: readonly Projet[], choix: string): DemandeRoadmap[] =>
+  demandes.filter(d => uniteDeLaDemande(d, projets) === choix);
+
+/** Pastille ouverte au départ : l'équipe active si elle est proposée, sinon la première qui a des demandes, sinon la première */
+export function pastilleParDefaut(choix: readonly ChoixRoadmap[], equipeActive: string | null): string {
+  return (choix.find(c => c.id === equipeActive) ?? choix.find(c => c.nombre > 0) ?? choix[0])?.id ?? '';
 }
 
 /** Score affiché : deux décimales au plus, virgule française (« 5,25 ») */

@@ -203,6 +203,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
     await captureB('36-roadmap');
+    verifier('Roadmap : une pastille par équipe, une seule roadmap affichée à la fois (3.26)', await page.locator('.onglets [role=tab]').count() > 1 && await page.locator('.tableau-roadmap').count() === 1);
+    await page.click('.onglets [role=tab]:has-text("Sans projet")');   // les 3 demandes d'exemple n'ont pas de projet
     verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 28 colonnes (toutes celles du fichier, 3.09)', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
       && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 28);
     // 3 demandes de 2026 du fichier (migration 057) : la stratégique en 1er, puis la mieux notée ; sans complexité, « complexité à saisir » en dernier
@@ -250,9 +252,16 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Fiche demande : la demande est enregistrée dans le projet, au rang 1', await page.locator('.tableau-demandes tbody tr').count() === 1
       && (await page.locator('.tableau-demandes tbody tr td').first().textContent()) === '1');
     await menu('/roadmap');
-    await page.waitForSelector('.tableau-roadmap tbody tr');
-    verifier('Roadmap : la nouvelle demande apparaît en tête (4 demandes)', await page.locator('.tableau-roadmap tbody tr').count() === 4
-      && (await page.locator('.tableau-roadmap tbody tr').first().textContent()).includes('lots disponibles') && (await page.locator('.tableau-roadmap tbody tr').first().textContent()).includes('2,5'));
+    await page.waitForSelector('.tableau-roadmap');
+    // Une roadmap par pastille (3.26) : on parcourt les pastilles ; la nouvelle demande est dans l'équipe de son projet, en tête de sa roadmap
+    let totalDemandes = 0, premiereLigne = '';
+    for (let i = 0, n = await page.locator('.onglets [role=tab]').count(); i < n; i++) {
+      await page.locator('.onglets [role=tab]').nth(i).click();
+      const lignes = page.locator('.tableau-roadmap tbody tr:has(td.cellule-demande)');
+      totalDemandes += await lignes.count();
+      if (await lignes.count() && (await lignes.first().textContent()).includes('lots disponibles')) premiereLigne = await lignes.first().textContent();
+    }
+    verifier('Roadmap : la nouvelle demande apparaît en tête de la roadmap de son équipe (4 demandes au total)', totalDemandes === 4 && premiereLigne.includes('2,5'));
     await page.click('.laterale a[href$="/mes-demandes"]');
     await page.waitForSelector('select[aria-label="Projet"]');
     await page.selectOption('select[aria-label="Projet"]', { index: 1 });

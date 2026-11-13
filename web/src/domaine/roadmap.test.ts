@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NB_DEMANDES_EXEMPLE, choixSprintVersion, libelleMep, detailScore, raisonDuRang, blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
+import { NB_DEMANDES_EXEMPLE, choixSprintVersion, libelleMep, detailScore, raisonDuRang, blocsDuTableau, colonnesOrdonnees, colonnesSaisissables, demandesClassees, demandesDuProjet, libelleSprint, valeursAEnregistrer, echangeOrdre, choixRoadmap, demandesDeLaPastille, pastilleParDefaut, estListeRoadmap, nouvelIdListe, ordreEnFin, resumeValeurs, scoreAffiche, scoreDemande } from './roadmap';
 import type { ColonneRoadmap, DemandeRoadmap, ValeurReferentiel } from './types';
 
 const col = (id: string, bloc: ColonneRoadmap['bloc'], ordre: number, type: ColonneRoadmap['type'] = 'libre'): ColonneRoadmap =>
@@ -128,5 +128,30 @@ describe('liste Sprint / version : sprints et mises en production du projet', ()
       { groupe: 'Mises en production', libelle: 'MEP V2.1 du 6 nov. 2026', jour: '2026-11-06' }]);
     expect(choixSprintVersion(sprints, meps, null)).toEqual([]);
     expect(libelleMep({ version: ' V3 ', jour: '2026-12-01' })).toBe('MEP V3 du 1 déc. 2026');
+  });
+});
+
+describe('une roadmap par équipe', () => {
+  const eq = (id: string, nom: string, type: string, parentId: string | null = null) => ({ id, nom, type, parentId } as never);
+  const equipes = [eq('d', 'DSI', 'direction'), eq('a', 'AMOA', 'equipe', 'd'), eq('c', 'CDO', 'equipe', 'd')];
+  const projets = [{ id: 'p1', equipeId: 'c' }, { id: 'p2', equipeId: 'a' }] as never;
+  const dem = (id: string, projetId: string | null) => ({ id, projetId, valeurs: {} } as DemandeRoadmap);
+  const demandes = [dem('1', 'p1'), dem('2', 'p1'), dem('3', null)];
+
+  it('une pastille par équipe avec son nombre, la direction sans projet est omise, « Sans projet » en dernier', () => {
+    expect(choixRoadmap(equipes, projets, demandes).map(c => [c.libelle, c.nombre])).toEqual([['AMOA', 0], ['CDO', 2], ['Sans projet', 1]]);
+  });
+
+  it('la direction a sa pastille si elle a des projets en propre', () => {
+    const avec = [...(projets as never[]), { id: 'p3', equipeId: 'd' }] as never;
+    expect(choixRoadmap(equipes, avec, demandes).map(c => c.libelle)).toEqual(['DSI (direction)', 'AMOA', 'CDO', 'Sans projet']);
+  });
+
+  it('les demandes d\'une pastille et la pastille ouverte au départ', () => {
+    expect(demandesDeLaPastille(demandes, projets, 'c').map(d => d.id)).toEqual(['1', '2']);
+    expect(demandesDeLaPastille(demandes, projets, 'sans-projet').map(d => d.id)).toEqual(['3']);
+    const choix = choixRoadmap(equipes, projets, demandes);
+    expect(pastilleParDefaut(choix, 'a')).toBe('a');
+    expect(pastilleParDefaut(choix, null)).toBe('c');
   });
 });
