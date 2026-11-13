@@ -141,10 +141,11 @@ export function monRole(ctx: ContexteDroits): string {
   return ctx.estAdmin ? 'admin' : monRoleSansAdmin(ctx);
 }
 
-/** Mon rôle hors mode administrateur : déclaré sur ma fiche, sinon responsable ou utilisateur (déduits) — le rôle auquel « Revenir à mon rôle » ramène */
+/** Mon rôle hors mode administrateur : déclaré sur ma fiche, sinon prévu (choisi dans Personnes et rôles, pas encore appliqué), sinon responsable ou
+ *  utilisateur (déduits) — le rôle auquel « Revenir à mon rôle » ramène (porteur, 2026-11-13 : « je suis chef de projet, pas responsable d'équipe ») */
 export function monRoleSansAdmin(ctx: ContexteDroits): string {
   const moi = maRessource(ctx);
-  const declare = moi ? roleDeclare(ctx, moi) : null;
+  const declare = moi ? roleDeclare(ctx, moi) ?? rolePrevu(ctx, moi) : null;
   if (declare) return declare;
   const responsable = (!!moi && estResponsableEquipe(ctx, moi)) || Object.values(ctx.rolesEquipe).some(r => ROLES_RESPONSABLE.includes(r));
   return responsable ? 'responsable' : 'utilisateur';

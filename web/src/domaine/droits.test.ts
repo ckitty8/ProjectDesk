@@ -225,6 +225,11 @@ describe('administrateur cumulable (porteur, 2026-11-01)', () => {
     expect(monRoleSansAdmin(ctx)).toBe('chef');
   });
 
+  it('« revenir à mon rôle » tient compte du rôle prévu (choisi, pas encore appliqué) avant le rôle déduit', () => {
+    const ctx = contexte({ peutAdministrer: true, estAdmin: true, rolesPrevus: [{ ressourceId: 'r-thomas', role: 'chef' }] });
+    expect(monRoleSansAdmin(ctx)).toBe('chef');
+  });
+
   it('le rôle d\'une fiche n\'est plus déduit « administrateur » : le statut est à part', () => {
     const ctx = contexte({ administrateurs: [{ userId: 'u-thomas' }] });
     expect(roleDeLaFiche(ctx, maRessource(ctx) as Ressource)).not.toBe('admin');

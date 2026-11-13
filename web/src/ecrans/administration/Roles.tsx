@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Aide } from '../../composants/Aide';
 import { Avatar, BadgeTon, Pastille } from '../../composants/Badge';
 import { BarreOutils, Carte, Vide } from '../../composants/Carte';
-import { executer as appelerFonction, modifier } from '../../donnees/api';
+import { executer as appelerFonction, modifier, supprimer } from '../../donnees/api';
 import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
 import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
@@ -67,7 +67,14 @@ export function useActionsRoles() {
     if (await executer(() => modifier('ressources', { id: 'eq.' + r.id }, champs), 'ressources')) notifier(message);
   }
 
-  return { affecter, renommer, definirAdministrateur, changerFiche };
+  // Suppression d'une fiche (porteur, 2026-11-13 : « je ne peux pas supprimer de ressources ») : même appel que la fiche de Liste des ressources ;
+  // les affectations, absences et temps de la personne sont supprimés avec elle (clés étrangères en cascade). La base contrôle le droit.
+  async function supprimerFiche(r: Ressource) {
+    if (!window.confirm(`Supprimer ${r.nom} ? Ses affectations, absences et temps seront supprimés.`)) return;
+    if (await executer(() => supprimer('ressources', { id: 'eq.' + r.id }), 'ressources', 'affectations', 'absences', 'temps')) notifier('Personne supprimée');
+  }
+
+  return { affecter, renommer, definirAdministrateur, changerFiche, supprimerFiche };
 }
 
 interface PropsLigneRole {
@@ -141,6 +148,11 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
         </label>
         {effetAdmin && <div className="discret texte-12">{effetAdmin}</div>}
       </td>
+      <td>
+        {/* Ni le créateur ni sa propre fiche : on ne se supprime pas soi-même */}
+        {ctx.estAdmin && !estLeCreateur && r.userId !== ctx.userId
+          && <button type="button" className="lien-btn" aria-label={`Supprimer ${r.nom}`} onClick={() => void actions.supprimerFiche(r)}>Supprimer</button>}
+      </td>
     </tr>
   );
 }
@@ -184,11 +196,11 @@ export function Roles() {
             <thead>
               <tr>
                 <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
-                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th>
+                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {personnes.length === 0 ? <tr><td colSpan={7}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
+              {personnes.length === 0 ? <tr><td colSpan={8}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
                 : personnes.map(r => <LigneRole key={r.id} r={r} nommer={nommer} verrou={verrou} actions={actions} />)}
             </tbody>
           </table>

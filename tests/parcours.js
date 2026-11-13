@@ -860,6 +860,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.locator('.lien-referentiel:has-text("Rôles projet")').count() === 0 && await page.locator('.lien-referentiel:has-text("Profil")').count() === 1
       && await page.locator('.lien-referentiel:has(span:text-is("Rôle"))').count() === 1 && await page.locator('.lien-referentiel:has-text("Personnes et rôles")').count() === 1
       && await page.locator('[role=tab]:text-is("Rôles")').count() === 0);
+    await page.click('.lien-referentiel:has-text("Personnes et rôles")'); await page.waitForSelector('.tableau-roles-acces');
+    verifier('Administration › Personnes et rôles : bouton « Supprimer » par personne (3.24)', await page.locator('.tableau-roles-acces button:has-text("Supprimer")').count() > 0);
     await page.click('.lien-referentiel:has-text("Profil")');
     await page.waitForSelector('input[aria-label="Valeur 1"]');
     verifier('Administration › Ressources : le profil (postes) est une liste modifiable', await page.locator('.carte-titre h2:has-text("Profil")').count() === 1
