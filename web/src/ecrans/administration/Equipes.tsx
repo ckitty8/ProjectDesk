@@ -13,6 +13,7 @@ import { Bouton } from '../../composants/Bouton';
 import { Carte, Vide } from '../../composants/Carte';
 import { ModaleAffectation } from '../../composants/modales/ModaleAffectation';
 import { ModaleEquipe } from '../../composants/modales/ModaleEquipe';
+import { ModaleRattachement } from '../../composants/modales/ModaleRattachement';
 import { ModaleRessource } from '../../composants/modales/ModaleRessource';
 import { NouveauProjet } from '../../composants/NouveauProjet';
 import { PanneauProjet } from '../../composants/PanneauProjet';
@@ -36,6 +37,7 @@ export function Equipes() {
   // Créer des personnes pour chaque direction, équipe et projet (porteur, 2026-11-13) : « + Personne » ouvre la fiche dans l'unité ; depuis un projet, la
   // personne est ensuite affectée à ce projet (fenêtre d'affectation)
   const [fiche, setFiche] = useState<{ equipeId: string; projetId: string } | null>(null);
+  const [rattache, setRattache] = useState<string | null>(null);   // « + Personne existante » d'une direction ou d'une équipe : rattachement (membres_equipe)
   const [affectation, setAffectation] = useState<{ ressourceId: string | null; projetId: string | null } | null>(null);
   // Équipes dépliées : leurs personnes s'affichent dessous, avec profil, rôle et case Administrateur
   // (porteur, 2026-11-12 : équipes et ressources au même endroit)
@@ -108,6 +110,7 @@ export function Equipes() {
               <td className="num ligne-flex">
                 {peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}
                 {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setFiche({ equipeId: e.id, projetId: '' })}>+ Personne</button>}
+                {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setRattache(e.id)}>+ Personne existante</button>}
                 {ctx.estAdmin && e.type !== 'direction' && <button type="button" className="lien-btn" onClick={() => setNouveauProjet(e.id)}>+ Projet</button>}
                 {ctx.estAdmin && (
                   <button type="button" className={'lien-btn' + (e.type === 'direction' || equipeVide(ctx, e.id) ? '' : ' pale')} onClick={() => void supprimerUnite(e.id, e.nom)}
@@ -153,6 +156,7 @@ export function Equipes() {
                 <td />
                 <td className="num ligne-flex">
                   {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setFiche({ equipeId: e.id, projetId: p.id })}>+ Personne</button>}
+                  {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setAffectation({ ressourceId: null, projetId: p.id })}>+ Personne existante</button>}
                   <button type="button" className="lien-btn" onClick={() => setProjetOuvert(p.id)}>Modifier</button>
                   {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => void supprimerProjet(p.id, p.nom)}>Supprimer</button>}
                 </td>
@@ -172,6 +176,7 @@ export function Equipes() {
           onRetourAffectation={(id, projetId) => { setFiche(null); setAffectation({ ressourceId: id, projetId }); }}
           onRoles={() => setFiche(null)} />
       )}
+      {rattache && <ModaleRattachement equipeId={rattache} onFermer={() => setRattache(null)} />}
       {affectation && <ModaleAffectation ressourceId={affectation.ressourceId} projetId={affectation.projetId} onFermer={() => setAffectation(null)} />}
       {modale && <ModaleEquipe id={modale.id} typeUnite={modale.typeUnite} onFermer={() => setModale(null)} />}
     </Carte>
