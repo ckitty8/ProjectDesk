@@ -143,6 +143,8 @@ export interface Rattachement {
   ressourceId: string;
   /** Horodatage du rattachement */
   creeLe?: string | null;
+  /** Rôle de la personne dans cette équipe (migration 062) ; vide : elle y garde le rôle de son équipe principale */
+  role?: string | null;
 }
 
 /** Administrateur prévu : fiche sans compte dont le statut s'appliquera à la première connexion (table administrateurs_prevus, migration 047) */

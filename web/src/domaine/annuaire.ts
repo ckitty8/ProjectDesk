@@ -84,3 +84,14 @@ export function responsablesAffiches(ctx: ContexteDroits, equipeId: string): Res
 
 /** Rôle choisi dans Administration › Ressources › Paramétrage des rôles : le rôle prévu s'il y en a un, sinon le rôle actuel, compte relié ou non */
 export const roleChoisi = (ctx: ContexteDroits, r: Ressource): string => rolePrevu(ctx, r) ?? roleDeLaFiche(ctx, r);
+
+/** Un rôle de la personne dans une équipe : « principale » = l'équipe de sa fiche ; « herite » = rattachée sans rôle propre, elle y garde son rôle principal */
+export interface RoleEquipe { equipeId: string; role: string; principale: boolean; herite: boolean }
+
+/** Équipes et rôles d'une personne (porteur, 2026-11-13 : « un rôle différent par équipe », migration 062) : l'équipe principale, puis ses rattachements */
+export function rolesParEquipe(ctx: ContexteDroits, r: Ressource): RoleEquipe[] {
+  const principal = roleChoisi(ctx, r);
+  const autres = ctx.rattachements.filter(x => x.ressourceId === r.id && x.equipeId !== r.equipeId)
+    .map(x => ({ equipeId: x.equipeId, role: x.role ?? principal, principale: false, herite: !x.role }));
+  return [{ equipeId: r.equipeId, role: principal, principale: true, herite: false }, ...autres];
+}

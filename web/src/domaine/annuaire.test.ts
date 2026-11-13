@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPES, PROJETS, contexte } from './__fixtures__/donnees';
-import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, responsablesAffiches, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
+import { equipeVide, nomComplet, prenomEtNom, rattachesA, roleChoisi, rolesParEquipe, responsablesAffiches, rolesDuProjet, selectionAnnuaire, unitesNavigation } from './annuaire';
 
 describe('navigation de l\'annuaire', () => {
   it('liste la direction en tête (niveau 0), ses équipes en retrait (niveau 1), puis les équipes isolées', () => {
@@ -77,5 +77,17 @@ describe('responsables affichés d’une unité (porteur, 2026-11-04)', () => {
   it('les responsables inscrits en base restent affichés, sans doublon', () => {
     const ctx = contexte({ responsablesEquipe: [{ equipeId: 'app', ressourceId: 'r-thomas' }], rolesPrevus: [{ ressourceId: 'r-thomas', role: 'responsable' }] });
     expect(responsablesAffiches(ctx, 'app').filter(r => r.id === 'r-thomas')).toHaveLength(1);
+  });
+});
+
+describe('un rôle par équipe', () => {
+  it('l\'équipe principale d\'abord, puis les rattachements : rôle propre ou hérité du rôle principal', () => {
+    const ctx = contexte({
+      rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }],
+      rattachements: [{ equipeId: 'ia', ressourceId: 'r-thomas', role: 'responsable' }, { equipeId: 'amoa', ressourceId: 'r-thomas', role: null }]
+    });
+    const thomas = ctx.ressources.find(r => r.id === 'r-thomas')!;
+    expect(rolesParEquipe(ctx, thomas).map(x => [x.equipeId, x.role, x.principale, x.herite]))
+      .toEqual([['app', 'chef', true, false], ['ia', 'responsable', false, false], ['amoa', 'chef', false, true]]);
   });
 });

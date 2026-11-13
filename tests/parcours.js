@@ -870,6 +870,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && await page.locator('.lien-referentiel:has(span:text-is("Rôle"))').count() === 1 && await page.locator('.lien-referentiel:has-text("Personnes et rôles")').count() === 1
       && await page.locator('[role=tab]:text-is("Rôles")').count() === 0);
     await page.click('.lien-referentiel:has-text("Personnes et rôles")'); await page.waitForSelector('.tableau-roles-acces');
+    verifier('Administration › Personnes et rôles : « + Ajouter à une équipe » (rôle par équipe, 3.27)', await page.locator('.tableau-roles-acces select[aria-label^="Ajouter"]').count() > 0);
     verifier('Administration › Personnes et rôles : bouton « Supprimer » par personne (3.24)', await page.locator('.tableau-roles-acces button:has-text("Supprimer")').count() > 0);
     await page.click('.lien-referentiel:has-text("Profil")');
     await page.waitForSelector('input[aria-label="Valeur 1"]');

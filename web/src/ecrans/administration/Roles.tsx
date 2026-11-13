@@ -11,10 +11,10 @@ import { BarreOutils, Carte, Vide } from '../../composants/Carte';
 import { executer as appelerFonction, modifier, supprimer } from '../../donnees/api';
 import { renommerCompte } from '../../donnees/compte';
 import { useSession } from '../../donnees/SessionProvider';
-import { nomComplet, prenomEtNom, roleChoisi } from '../../domaine/annuaire';
+import { nomComplet, prenomEtNom, roleChoisi, rolesParEquipe } from '../../domaine/annuaire';
 import { COULEURS, ROLES_ACCES, ROLES_ATTRIBUABLES } from '../../domaine/config';
 import { aujourdhui } from '../../domaine/dates';
-import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu } from '../../domaine/droits';
+import { aDroit, estAdministrateur, estAdministrateurPrevu, peutModifierFiche, rolePrevu, trouverEquipe } from '../../domaine/droits';
 import { valeursDe } from '../../domaine/referentiels';
 import { AIDES } from '../../domaine/textes';
 import type { Ressource } from '../../domaine/types';
@@ -50,6 +50,22 @@ export function useActionsRoles() {
     return reussi;
   }
 
+  // Rôle par équipe (migration 062) : rôle d'une personne dans une équipe autre que la sienne (elle y est rattachée si besoin), et retrait de cette équipe
+  async function affecterEquipe(r: Ressource, equipeId: string, role: string) {
+    try {
+      await appelerFonction('affecter_role_equipe', { p_ressource: r.id, p_equipe: equipeId, p_role: role });
+      await actualiser();
+      notifier('Rôle de l’équipe enregistré');
+    } catch (e) { notifier((e as Error).message, 'erreur'); }
+  }
+  async function retirerDeEquipe(r: Ressource, equipeId: string) {
+    try {
+      await appelerFonction('retirer_de_equipe', { p_ressource: r.id, p_equipe: equipeId });
+      await actualiser();
+      notifier('Personne retirée de l’équipe');
+    } catch (e) { notifier((e as Error).message, 'erreur'); }
+  }
+
   // Case « Administrateur » : cumule ou retire le statut sans toucher au rôle (fonction affecter_administrateur, migration 046)
   async function definirAdministrateur(r: Ressource, actif: boolean) {
     try {
@@ -74,7 +90,7 @@ export function useActionsRoles() {
     if (await executer(() => supprimer('ressources', { id: 'eq.' + r.id }), 'ressources', 'affectations', 'absences', 'temps')) notifier('Personne supprimée');
   }
 
-  return { affecter, renommer, definirAdministrateur, changerFiche, supprimerFiche };
+  return { affecter, affecterEquipe, retirerDeEquipe, renommer, definirAdministrateur, changerFiche, supprimerFiche };
 }
 
 interface PropsLigneRole {
@@ -99,6 +115,8 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
   // Profil et équipe : listes modifiables pour qui peut modifier la fiche ; le profil actuel est gardé même s'il n'est plus dans le référentiel
   const modifiable = peutModifierFiche(ctx, r);
   const profilsProposes = [...new Set([...valeursDe(donnees.valeurs, 'poste').map(v => v.libelle), ...(r.poste ? [r.poste] : [])])];
+  const autresEquipes = rolesParEquipe(ctx, r).filter(x => !x.principale);
+  const equipesProposees = optionsUnites(donnees.equipes).filter(o => o.valeur !== r.equipeId && !autresEquipes.some(x => x.equipeId === o.valeur));
   const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
   const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
   return (
@@ -139,6 +157,24 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
           {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
         </select>
         {effet && <div className="discret texte-12">{effet}</div>}
+        {/* Autres équipes de la personne, chacune avec son rôle (porteur, 2026-11-13 : « un rôle différent par équipe ») */}
+        {autresEquipes.map(x => (
+          <div key={x.equipeId} className="ligne-flex projet-role">
+            <Pastille couleur={trouverEquipe(ctx, x.equipeId)?.couleur ?? COULEURS.pale} />
+            <span>{trouverEquipe(ctx, x.equipeId)?.nom}</span>
+            <select className="champ champ-mini" aria-label={`Rôle de ${r.nom} dans ${trouverEquipe(ctx, x.equipeId)?.nom}`} value={x.role} disabled={verrou}
+              onChange={e => void actions.affecterEquipe(r, x.equipeId, e.target.value)}>
+              {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
+            </select>
+            {!verrou && <button type="button" className="lien-btn" onClick={() => void actions.retirerDeEquipe(r, x.equipeId)}>Retirer</button>}
+          </div>
+        ))}
+        {!verrou && ctx.estAdmin && equipesProposees.length > 0 && (
+          <select className="champ champ-mini" aria-label={`Ajouter ${r.nom} à une équipe`} value="" onChange={e => e.target.value && void actions.affecterEquipe(r, e.target.value, 'membre')}>
+            <option value="">+ Ajouter à une équipe</option>
+            {equipesProposees.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
+          </select>
+        )}
       </td>
       <td>
         <label className="ligne-flex">
@@ -196,7 +232,7 @@ export function Roles() {
             <thead>
               <tr>
                 <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
-                <th>Rôle <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
+                <th>Rôle par équipe <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
               </tr>
             </thead>
             <tbody>

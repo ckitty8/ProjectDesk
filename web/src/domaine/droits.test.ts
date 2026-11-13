@@ -247,3 +247,11 @@ describe('administrateur prévu (migration 047)', () => {
     expect(estAdministrateurPrevu(contexte({ administrateursPrevus: [{ ressourceId: avecCompte.id }] }), avecCompte)).toBe(false);
   });
 });
+
+describe('un rôle par équipe (porteur, 2026-11-13)', () => {
+  it('dans une équipe où je suis rattaché avec un rôle, c\'est ce rôle ; ailleurs, celui de ma fiche', () => {
+    const base = { rolesAcces: [{ ressourceId: 'r-thomas', role: 'chef' }], rattachements: [{ equipeId: 'e-autre', ressourceId: 'r-thomas', role: 'responsable' }] };
+    expect(monRoleSansAdmin(contexte({ ...base, equipeActive: 'e-autre' }))).toBe('responsable');
+    expect(monRoleSansAdmin(contexte({ ...base, equipeActive: 'app' }))).toBe('chef');
+  });
+});

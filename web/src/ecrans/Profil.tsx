@@ -10,6 +10,7 @@ import { Carte, EnteteEcran } from '../composants/Carte';
 import { useSession } from '../donnees/SessionProvider';
 import { LIBELLES_ROLES } from '../domaine/config';
 import type { RoleAcces } from '../domaine/config';
+import { rolesParEquipe } from '../domaine/annuaire';
 import { formatAvecAnnee } from '../domaine/dates';
 import { maRessource, mesEquipes, monRole, monRoleSansAdmin, trouverEquipe } from '../domaine/droits';
 import { projetsDe } from '../domaine/vues';
@@ -32,6 +33,7 @@ export function Profil() {
   const roleLibelle = ctx.estCreateur && !simulation ? 'Créateur (tous les droits)' : LIBELLES_ROLES[role as RoleAcces] ?? role;
   const roleHabituel = LIBELLES_ROLES[monRoleSansAdmin(ctx) as RoleAcces] ?? '—';
   const equipes = mesEquipes(ctx).map(e => e.nom + (ctx.rolesEquipe[e.id] === 'owner' ? ' (propriétaire)' : '')).join(', ');
+  const rolesEquipes = fiche ? rolesParEquipe(ctx, fiche) : [];
   const projets = fiche ? projetsDe(donnees, fiche.id).map(p => p.nom).join(', ') : '';
   const emailNonVerifie = utilisateur.emailVerified === false && !simulation;
   return (
@@ -66,6 +68,12 @@ export function Profil() {
         <Carte classe="carte-profil">
           <h3 className="sans-marge">Mon accès</h3>
           <Ligne libelle="Rôle" valeur={roleLibelle} />
+          {/* Un rôle par équipe (porteur, 2026-11-13, migration 062) : détaillé dès que la personne est dans plusieurs équipes */}
+          {rolesEquipes.length > 1 && rolesEquipes.map(x => (
+            <Ligne key={x.equipeId} libelle={`Rôle · ${trouverEquipe(ctx, x.equipeId)?.nom ?? '—'}`}
+              valeur={(LIBELLES_ROLES[x.role as RoleAcces] ?? x.role) + (x.principale ? ' (équipe principale)' : '')} />
+          ))}
+          {rolesEquipes.length > 1 && <p className="discret texte-12">Vos droits suivent le rôle de l’équipe active (sélecteur « Équipe » sous le menu).</p>}
           <Ligne libelle="Équipes" valeur={equipes} />
           <Ligne libelle="Projets" valeur={projets} />
         </Carte>
