@@ -173,6 +173,11 @@ export function choixSprintVersion(sprints: readonly SprintProjet[], meps: reado
   ];
 }
 
+/** Versions proposées pour une mise en production (porteur, 2026-11-13 : « le nom de la version est une liste déroulante des versions du menu Sprints ») :
+ *  les noms des sprints du projet (par date de début), sans doublon */
+export const versionsDuProjet = (sprints: readonly SprintProjet[], projetId: string | null): string[] =>
+  [...new Set(choixSprintVersion(sprints, [], projetId).map(c => c.libelle))];
+
 /** Demandes d'un projet (null : demandes sans projet), avec leur rang dans le classement de TOUTES les demandes (le rang DSI est global) */
 export const demandesDuProjet = (classees: readonly DemandeClassee[], projetId: string | null): DemandeClassee[] =>
   classees.filter(l => (l.demande.projetId ?? null) === projetId);

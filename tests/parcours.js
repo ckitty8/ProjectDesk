@@ -537,22 +537,25 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
 
     // Mises en production
     await menu('/mes-projets');
-    await page.waitForSelector('.formulaire-mep');
+    await page.waitForSelector('.tableau-sprints tr.ligne-ajout');
     await captureC('09-mes-projets');
     const nbMep = await page.locator('.tableau-sprints tbody tr').count();
-    await page.fill('.formulaire-mep input[type=date]', '2026-12-01');
-    await page.fill('.formulaire-mep input[name=version]', 'V9.9');
-    await page.fill('.formulaire-mep input[name=bugs]', '2');
-    await page.click('.formulaire-mep >> text=Ajouter');
+    await page.fill('.tableau-sprints tr.ligne-ajout input[type=date]', '2026-12-01');
+    // La version est une liste : les noms des sprints du projet choisi (menu Sprints)
+    await page.selectOption('.tableau-sprints tr.ligne-ajout select[name=projet]', { label: 'SSO & gestion des droits' });
+    await page.selectOption('.tableau-sprints tr.ligne-ajout select[name=version]', 'V1.9');
+    await page.fill('.tableau-sprints tr.ligne-ajout input[name=bugs]', '2');
+    await page.click('.tableau-sprints tr.ligne-ajout >> text=Ajouter');
     await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n + 1, nbMep);
-    verifier('Mises en production : ajout (date, version, tickets livrés, statut)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 1);
-    const ligneMep = page.locator('.tableau-sprints tbody tr', { has: page.locator('input[value="V9.9"]') });
-    await ligneMep.locator('select').selectOption('faite');
-    await page.waitForFunction(() => [...document.querySelectorAll('.tableau-sprints tr')].some(r => r.querySelector('input[value="V9.9"]') && r.querySelector('select').value === 'faite'));
-    verifier('Mises en production : le statut se modifie sur place', await ligneMep.locator('select').inputValue() === 'faite');
+    verifier('Mises en production : ajout (date, version, tickets livrés, statut)', await page.locator('.tableau-sprints tr:not(.ligne-ajout) input[value="2026-12-01"]').count() === 1);
+    const ligneMep = page.locator('.tableau-sprints tbody tr:not(.ligne-ajout)', { has: page.locator('input[value="2026-12-01"]') });
+    verifier('Mises en production : la version est une liste des versions du menu Sprints', await ligneMep.locator('select[aria-label="Version"]').inputValue() === 'V1.9');
+    await ligneMep.locator('select[aria-label="Statut"]').selectOption('faite');
+    await page.waitForFunction(() => [...document.querySelectorAll('.tableau-sprints tr:not(.ligne-ajout)')].some(r => r.querySelector('input[value="2026-12-01"]') && r.querySelector('select[aria-label="Statut"]').value === 'faite'));
+    verifier('Mises en production : le statut se modifie sur place', await ligneMep.locator('select[aria-label="Statut"]').inputValue() === 'faite');
     await ligneMep.locator('button[title="Supprimer cette mise en production"]').click();
     await page.waitForFunction(n => document.querySelectorAll('.tableau-sprints tbody tr').length === n, nbMep);
-    verifier('Mises en production : suppression (après confirmation)', await page.locator('.tableau-sprints input[value="V9.9"]').count() === 0);
+    verifier('Mises en production : suppression (après confirmation)', await page.locator('.tableau-sprints tr:not(.ligne-ajout) input[value="2026-12-01"]').count() === 0);
 
     // Nouveau projet, puis panneau modifiable
     await page.click('text=+ Nouveau projet');

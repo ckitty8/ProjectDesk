@@ -16,6 +16,7 @@ import { creer, modifier, supprimer } from '../donnees/api';
 import { useSession } from '../donnees/SessionProvider';
 import { STATUTS_MEP } from '../domaine/config';
 import { peutSaisirProjet } from '../domaine/droits';
+import { versionsDuProjet } from '../domaine/roadmap';
 import { COMPTEURS_MEP, nombreEntier } from '../domaine/saisies';
 import type { MiseEnProduction } from '../domaine/types';
 import { misesEnProductionDe } from '../domaine/vues';
@@ -25,10 +26,17 @@ type Panneau = { genre: 'nouveau' } | { genre: 'projet'; id: string } | { genre:
 export function MesProjets() {
   const { ctx, donnees, executer, notifier } = useSession();
   const [panneau, setPanneau] = useState<Panneau>(null);
+  const [projetAjout, setProjetAjout] = useState('');   // projet de la ligne d'ajout : ses sprints donnent la liste des versions
   if (!ctx || !donnees) return null;
   // Projets dont je saisis les sprints et MEP (miroir de la règle RLS de mises_en_production), triés par code
   const projets = donnees.projets.filter(p => peutSaisirProjet(ctx, p)).sort((a, b) => a.code.localeCompare(b.code));
   const meps = misesEnProductionDe(donnees.misesEnProduction, projets);
+  // Versions = noms des sprints du projet (menu Sprints) ; la version déjà saisie reste proposée même si son sprint a disparu
+  const versionsAjout = versionsDuProjet(donnees.sprintsProjet, projetAjout || projets[0]?.id || null);
+  const versionsDe = (m: MiseEnProduction): { valeur: string; libelle: string }[] => {
+    const noms = versionsDuProjet(donnees.sprintsProjet, m.projetId);
+    return ['', ...(m.version && !noms.includes(m.version) ? [m.version] : []), ...noms].map(v => ({ valeur: v, libelle: v || '—' }));
+  };
 
   async function ajouter(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,14 +67,8 @@ export function MesProjets() {
           <>
             <Carte>
               <div className="carte-titre"><h2>Mises en production de mes projets</h2></div>
-              <form className="ligne-flex formulaire-mep" onSubmit={e => void ajouter(e)}>
-                <select className="champ champ-compact" name="projet" aria-label="Projet">{projets.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select>
-                <input className="champ champ-date" type="date" name="jour" required aria-label="Date" />
-                <input className="champ champ-version" name="version" placeholder="Version" maxLength={40} aria-label="Version" />
-                {COMPTEURS_MEP.map(c => <input key={c.cle} className="champ champ-nombre" type="number" min={0} name={c.cle} defaultValue={0} title={c.titre} aria-label={c.titre} />)}
-                <select className="champ champ-compact" name="statut" defaultValue="prevue" aria-label="Statut">{STATUTS_MEP.map(s => <option key={s.valeur} value={s.valeur}>{s.libelle}</option>)}</select>
-                <Bouton variante="primaire" type="submit">Ajouter</Bouton>
-              </form>
+              {/* Formulaire d'ajout vide : ses champs sont la première ligne du tableau (attribut form), donc alignés sur les titres des colonnes */}
+              <form id="ajout-mep" onSubmit={e => void ajouter(e)} />
               <table className="tableau tableau-sprints">
                 <thead>
                   <tr>
@@ -76,12 +78,28 @@ export function MesProjets() {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr className="ligne-ajout">
+                    <td><input className="champ champ-date" type="date" name="jour" form="ajout-mep" required aria-label="Date" /></td>
+                    <td><select className="champ champ-compact" name="projet" form="ajout-mep" aria-label="Projet" value={projetAjout || projets[0]?.id || ''}
+                      onChange={e => setProjetAjout(e.target.value)}>{projets.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></td>
+                    <td>
+                      <select className="champ champ-version" name="version" form="ajout-mep" aria-label="Version" defaultValue="" key={projetAjout}>
+                        <option value="">{versionsAjout.length ? '— version —' : '— aucune version (menu Sprints) —'}</option>
+                        {versionsAjout.map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </td>
+                    {COMPTEURS_MEP.map(c => (
+                      <td key={c.cle}><input className="champ champ-nombre" type="number" min={0} name={c.cle} form="ajout-mep" defaultValue={0} title={c.titre} aria-label={c.titre} /></td>
+                    ))}
+                    <td><select className="champ champ-compact" name="statut" form="ajout-mep" defaultValue="prevue" aria-label="Statut">{STATUTS_MEP.map(s => <option key={s.valeur} value={s.valeur}>{s.libelle}</option>)}</select></td>
+                    <td><Bouton variante="primaire" type="submit" form="ajout-mep">Ajouter</Bouton></td>
+                  </tr>
                   {meps.length === 0 && <tr><td colSpan={8} className="pale">Aucune mise en production saisie.</td></tr>}
                   {meps.map(m => (
                     <tr key={m.id}>
                       <td><input key={m.jour} className="champ champ-date" type="date" defaultValue={m.jour} aria-label="Date" onBlur={e => { if (e.target.value !== m.jour) void majMep(m, 'jour', e.target.value, v => { e.target.value = v; }); }} /></td>
                       <td>{projets.find(p => p.id === m.projetId)?.nom}</td>
-                      <td><input key={m.version} className="champ champ-version" defaultValue={m.version ?? ''} maxLength={40} aria-label="Version" onBlur={e => { if (e.target.value.trim() !== (m.version ?? '')) void majMep(m, 'version', e.target.value); }} /></td>
+                      <td><Liste className="champ champ-version" aria-label="Version" valeur={m.version ?? ''} onChoisir={v => void majMep(m, 'version', v)} options={versionsDe(m)} /></td>
                       {COMPTEURS_MEP.map(c => (
                         <td key={c.cle}>
                           <input key={m[c.champ] ?? 0} className="champ champ-nombre" type="number" min={0} defaultValue={m[c.champ] ?? 0} aria-label={c.titre}
