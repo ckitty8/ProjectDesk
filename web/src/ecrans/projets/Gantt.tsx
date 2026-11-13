@@ -39,7 +39,7 @@ function LosangeMep({ m, per }: { m: MepDatee; per: PeriodePlanning }) {
   // Tickets livrés (migration 044) : « 5 US · 3 bugs · 1 incidents », vide si aucun
   const tickets = m.nbBugs || m.nbIncidents || m.nbUs ? ` : ${m.nbUs || 0} US · ${m.nbBugs || 0} bugs · ${m.nbIncidents || 0} incidents` : '';
   const titre = `MEP ${m.version || ''} · ${formatCourt(m.jour)} · ${statut.libelle}${tickets}`;
-  return <div className="gantt-mep" style={{ left: `${per.position(m.jour)}%`, color: TONS[statut.ton].texte }} title={titre}><i className="losange" />{m.version || 'MEP'}</div>;
+  return <div className="gantt-mep" style={{ left: `${per.position(m.jour)}%`, color: TONS[statut.ton].texte }} title={titre}><i className="losange" />{m.version || 'MEP'} · {formatCourt(m.jour)}</div>;
 }
 
 interface PropsLigne { p: Projet; per: PeriodePlanning; jour: string; onOuvrir: (projetId: string) => void }

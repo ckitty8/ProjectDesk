@@ -19,7 +19,7 @@ import { peutSaisirProjet } from '../domaine/droits';
 import { versionsDuProjet } from '../domaine/roadmap';
 import { COMPTEURS_MEP, nombreEntier } from '../domaine/saisies';
 import type { MiseEnProduction } from '../domaine/types';
-import { misesEnProductionDe } from '../domaine/vues';
+import { libelleProjetEquipe, misesEnProductionDe } from '../domaine/vues';
 
 type Panneau = { genre: 'nouveau' } | { genre: 'projet'; id: string } | { genre: 'affectation'; projetId: string } | null;
 
@@ -81,7 +81,9 @@ export function MesProjets() {
                   <tr className="ligne-ajout">
                     <td><input className="champ champ-date" type="date" name="jour" form="ajout-mep" required aria-label="Date" /></td>
                     <td><select className="champ champ-compact" name="projet" form="ajout-mep" aria-label="Projet" value={projetAjout || projets[0]?.id || ''}
-                      onChange={e => setProjetAjout(e.target.value)}>{projets.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></td>
+                      onChange={e => setProjetAjout(e.target.value)}>
+                      {projets.map(p => <option key={p.id} value={p.id}>{libelleProjetEquipe(donnees.equipes, p)}</option>)}
+                    </select></td>
                     <td>
                       <select className="champ champ-version" name="version" form="ajout-mep" aria-label="Version" defaultValue="" key={projetAjout}>
                         <option value="">{versionsAjout.length ? '— version —' : '— aucune version (menu Sprints) —'}</option>
@@ -98,7 +100,7 @@ export function MesProjets() {
                   {meps.map(m => (
                     <tr key={m.id}>
                       <td><input key={m.jour} className="champ champ-date" type="date" defaultValue={m.jour} aria-label="Date" onBlur={e => { if (e.target.value !== m.jour) void majMep(m, 'jour', e.target.value, v => { e.target.value = v; }); }} /></td>
-                      <td>{projets.find(p => p.id === m.projetId)?.nom}</td>
+                      <td>{(() => { const p = projets.find(x => x.id === m.projetId); return p ? libelleProjetEquipe(donnees.equipes, p) : ''; })()}</td>
                       <td><Liste className="champ champ-version" aria-label="Version" valeur={m.version ?? ''} onChoisir={v => void majMep(m, 'version', v)} options={versionsDe(m)} /></td>
                       {COMPTEURS_MEP.map(c => (
                         <td key={c.cle}>

@@ -7,19 +7,20 @@
    ============================================================ */
 import { useState } from 'react';
 import { Carte, EnteteEcran, Vide } from '../composants/Carte';
-import { Onglets } from '../composants/Onglets';
+import { Liste } from '../composants/Liste';
 import { CelluleDemande } from './roadmap/CelluleDemande';
+import { ecrireChoixRoadmap, lireChoixRoadmap } from '../donnees/roadmapChoix';
 import { useSession } from '../donnees/SessionProvider';
 import { blocsDuTableau, choixRoadmap, demandesClassees, demandesDeLaPastille, pastilleParDefaut } from '../domaine/roadmap';
 
 /** Menu Roadmap : en-tête à deux niveaux (bloc, puis colonne) et une ligne par demande, dans l'ordre de traitement DSI */
 export function Roadmap() {
   const { donnees, equipeCourante } = useSession();
-  // Une seule roadmap à la fois : pastille choisie (au départ : l'équipe active)
-  const [choisie, setChoisie] = useState<string | null>(null);
+  // Une seule roadmap à la fois : projet choisi dans la liste (au départ : le dernier choix, sinon un projet de l'équipe active)
+  const [choisie, setChoisie] = useState<string | null>(lireChoixRoadmap);
   if (!donnees) return null;
-  const pastilles = choixRoadmap(donnees.equipes, donnees.projets, donnees.demandesRoadmap);
-  const actif = pastilles.some(p => p.id === choisie) ? choisie! : pastilleParDefaut(pastilles, equipeCourante);
+  const projetsChoix = choixRoadmap(donnees.equipes, donnees.projets, donnees.demandesRoadmap);
+  const actif = projetsChoix.some(p => p.id === choisie) ? choisie! : pastilleParDefaut(projetsChoix, equipeCourante);
   const blocs = blocsDuTableau(donnees.colonnesRoadmap);
   const colonnes = blocs.flatMap(b => b.colonnes);
   const lignes = demandesClassees(demandesDeLaPastille(donnees.demandesRoadmap, donnees.projets, actif), donnees.colonnesRoadmap);
@@ -27,8 +28,13 @@ export function Roadmap() {
     <div className="ecran ecran-large">
       <EnteteEcran titre="Roadmap"
         sousTitre={`${lignes.length} demande${lignes.length > 1 ? 's' : ''} · classées par rang de traitement DSI · Rang et Score calculés par l’application`} />
-      {pastilles.length > 1
-        && <Onglets liste={pastilles.map(p => ({ id: p.id, libelle: p.libelle, compte: p.nombre }))} actif={actif} onChoisir={setChoisie} />}
+      {projetsChoix.length > 1 && (
+        <div className="ligne-flex encart-compact">
+          <span className="libelle">Projet</span>
+          <Liste className="champ" aria-label="Projet" valeur={actif} onChoisir={id => { setChoisie(id); ecrireChoixRoadmap(id); }}
+            options={projetsChoix.map(p => ({ valeur: p.id, libelle: `${p.libelle} (${p.nombre} demande${p.nombre > 1 ? 's' : ''})` }))} />
+        </div>
+      )}
       <Carte>
         {colonnes.length === 0 ? <Vide texte="Aucune colonne : elles se règlent dans Mon dashboard › Administration › Roadmap." /> : <>
           <div className="defilement-x">

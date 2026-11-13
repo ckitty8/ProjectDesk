@@ -19,7 +19,7 @@ import { maRessource } from '../domaine/droits';
 import { decalerMois, statutFeuille } from '../domaine/feuilles';
 import { couleurDe } from '../domaine/referentiels';
 import { lireHeures } from '../domaine/saisies';
-import { absenceDe } from '../domaine/vues';
+import { absenceDe, libelleProjetEquipe } from '../domaine/vues';
 
 export function SaisirHeures() {
   // Données complètes : mes heures portent sur tous mes projets, quelle que soit l'équipe active (porteur, 2026-11-13 : « je ne peux pas saisir mes heures »)
@@ -104,7 +104,7 @@ export function SaisirHeures() {
               {mesProjets.length === 0 && <tr><td colSpan={jours.length + 2}><Vide texte="Aucun projet : vous n’êtes affecté(e) à aucun projet." /></td></tr>}
               {mesProjets.map(p => (
                 <tr key={p.id}>
-                  <td className="col-projet">{p.nom}</td>
+                  <td className="col-projet">{libelleProjetEquipe(donnees.equipes, p)}</td>
                   {jours.map(jour => caseJour(p.id, jour))}
                   <td className="num"><b>{nombre(jours.reduce((s, jour) => s + heure(p.id, jour), 0))} h</b></td>
                 </tr>

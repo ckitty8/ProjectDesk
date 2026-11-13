@@ -203,8 +203,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
     await captureB('36-roadmap');
-    verifier('Roadmap : une pastille par projet, une seule roadmap affichée à la fois (3.31)', await page.locator('.onglets [role=tab]').count() > 1 && await page.locator('.tableau-roadmap').count() === 1);
-    await page.click('.onglets [role=tab]:has-text("Sans projet")');   // les 3 demandes d'exemple n'ont pas de projet
+    verifier('Roadmap : liste de projets (équipe › projet), une seule roadmap affichée à la fois (3.35)', await page.locator('select[aria-label="Projet"] option').count() > 1 && await page.locator('.tableau-roadmap').count() === 1);
+    await page.selectOption('select[aria-label="Projet"]', await page.locator('select[aria-label="Projet"] option', { hasText: 'Sans projet' }).getAttribute('value'));   // les 3 demandes d'exemple n'ont pas de projet
     verifier('Roadmap : menu juste après Projet, tableau à 4 blocs et 28 colonnes (toutes celles du fichier, 3.09)', await page.locator('.laterale a[href$="/projets"] + a[href$="/roadmap"]').count() === 1
       && await page.locator('.tableau-roadmap tr.blocs-roadmap th').count() === 4 && await page.locator('.tableau-roadmap thead tr:nth-child(2) th').count() === 28);
     // 3 demandes de 2026 du fichier (migration 057) : la stratégique en 1er, puis la mieux notée ; sans complexité, « complexité à saisir » en dernier
@@ -253,10 +253,10 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
       && (await page.locator('.tableau-demandes tbody tr td').first().textContent()) === '1');
     await menu('/roadmap');
     await page.waitForSelector('.tableau-roadmap');
-    // Une roadmap par pastille (3.26) : on parcourt les pastilles ; la nouvelle demande est dans l'équipe de son projet, en tête de sa roadmap
+    // Une roadmap par projet (liste, 3.35) : on parcourt les projets ; la nouvelle demande est dans l'équipe de son projet, en tête de sa roadmap
     let totalDemandes = 0, premiereLigne = '';
-    for (let i = 0, n = await page.locator('.onglets [role=tab]').count(); i < n; i++) {
-      await page.locator('.onglets [role=tab]').nth(i).click();
+    for (let i = 0, n = await page.locator('select[aria-label="Projet"] option').count(); i < n; i++) {
+      await page.selectOption('select[aria-label="Projet"]', { index: i });
       const lignes = page.locator('.tableau-roadmap tbody tr:has(td.cellule-demande)');
       totalDemandes += await lignes.count();
       if (await lignes.count() && (await lignes.first().textContent()).includes('lots disponibles')) premiereLigne = await lignes.first().textContent();
@@ -542,7 +542,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     const nbMep = await page.locator('.tableau-sprints tbody tr').count();
     await page.fill('.tableau-sprints tr.ligne-ajout input[type=date]', '2026-12-01');
     // La version est une liste : les noms des sprints du projet choisi (menu Sprints)
-    await page.selectOption('.tableau-sprints tr.ligne-ajout select[name=projet]', { label: 'SSO & gestion des droits' });
+    const valeurPf14 = await page.locator('.tableau-sprints tr.ligne-ajout select[name=projet] option', { hasText: 'SSO & gestion des droits' }).getAttribute('value');
+    await page.selectOption('.tableau-sprints tr.ligne-ajout select[name=projet]', valeurPf14);
     await page.selectOption('.tableau-sprints tr.ligne-ajout select[name=version]', 'V1.9');
     await page.fill('.tableau-sprints tr.ligne-ajout input[name=bugs]', '2');
     await page.click('.tableau-sprints tr.ligne-ajout >> text=Ajouter');

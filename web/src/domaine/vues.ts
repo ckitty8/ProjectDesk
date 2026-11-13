@@ -46,6 +46,10 @@ const parCode = (a: Projet, b: Projet): number => a.code.localeCompare(b.code);
 export const projetsDailyVisibles = (ctx: ContexteDroits, projets: readonly Projet[]): Projet[] =>
   projets.filter(p => projetEnCours(p) && peutLireDailyProjet(ctx, p)).sort(parCode);
 
+/** Libellé d'un projet quand son nom seul prête à confusion : « équipe › projet » (« AMOA › CDO », « CDO › CDO » : deux projets au même nom) */
+export const libelleProjetEquipe = (equipes: readonly Equipe[], p: Pick<Projet, 'nom' | 'equipeId'>): string =>
+  [equipes.find(e => e.id === p.equipeId)?.nom, p.nom].filter(Boolean).join(' › ');
+
 /** Projets où la personne est affectée (étiquettes « VISTA Digital »), dans l'ordre de ses affectations */
 export const projetsDe = (d: DonneesVues, ressourceId: string): Projet[] => d.affectations.filter(a => a.ressourceId === ressourceId)
   .flatMap(a => d.projets.filter(p => p.id === a.projetId));
