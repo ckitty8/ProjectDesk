@@ -111,12 +111,12 @@ export interface ChoixRoadmap { id: string; libelle: string; nombre: number; equ
 /** Pastille de la demande : son projet ; ROADMAP_SANS_PROJET sans projet (ou projet inconnu) */
 const pastilleDeLaDemande = (d: DemandeRoadmap, projets: readonly Projet[]): string => projets.find(p => p.id === d.projetId)?.id ?? ROADMAP_SANS_PROJET;
 
-/** Pastilles : un projet chacune (« CDO · CDO-01 » : nom et code, deux projets pouvant porter le même nom), rangés dans l'ordre de l'arborescence
- *  (direction, équipes) puis par code ; « Sans projet » à la fin, seulement s'il y a de telles demandes */
+/** Pastilles : un projet chacune, nommé « équipe › projet » (« AMOA › CDO » et « CDO › CDO » : deux projets peuvent porter le même nom), rangés dans l'ordre
+ *  de l'arborescence (direction, équipes) puis par code ; « Sans projet » à la fin, seulement s'il y a de telles demandes */
 export function choixRoadmap(equipes: readonly Equipe[], projets: readonly Projet[], demandes: readonly DemandeRoadmap[]): ChoixRoadmap[] {
   const nombre = (id: string) => demandes.filter(d => pastilleDeLaDemande(d, projets) === id).length;
-  const parProjet = arbreUnites(equipes).flatMap(u => projets.filter(p => p.equipeId === u.equipe.id).sort((a, b) => a.code.localeCompare(b.code)))
-    .map(p => ({ id: p.id, libelle: `${p.nom} · ${p.code}`, nombre: nombre(p.id), equipeId: p.equipeId }));
+  const parProjet = arbreUnites(equipes).flatMap(u => projets.filter(p => p.equipeId === u.equipe.id).sort((a, b) => a.code.localeCompare(b.code))
+    .map(p => ({ id: p.id, libelle: `${u.equipe.nom} › ${p.nom}`, nombre: nombre(p.id), equipeId: p.equipeId })));
   const sans = nombre(ROADMAP_SANS_PROJET);
   return sans > 0 ? [...parProjet, { id: ROADMAP_SANS_PROJET, libelle: 'Sans projet', nombre: sans }] : parProjet;
 }

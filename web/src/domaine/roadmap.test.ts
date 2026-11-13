@@ -138,8 +138,8 @@ describe('une roadmap par projet', () => {
   const dem = (id: string, projetId: string | null) => ({ id, projetId, valeurs: {} } as DemandeRoadmap);
   const demandes = [dem('1', 'p1'), dem('2', 'p1'), dem('3', null)];
 
-  it('une pastille par projet (nom et code), dans l\'ordre des équipes, « Sans projet » en dernier ; pas de pastille d\'équipe', () => {
-    expect(choixRoadmap(equipes, projets, demandes).map(c => [c.libelle, c.nombre])).toEqual([['VISTA · AMOA-02', 0], ['CDO · CDO-01', 2], ['Sans projet', 1]]);
+  it('une pastille par projet (« équipe › projet »), dans l\'ordre des équipes, « Sans projet » en dernier ; pas de pastille d\'équipe', () => {
+    expect(choixRoadmap(equipes, projets, demandes).map(c => [c.libelle, c.nombre])).toEqual([['AMOA › VISTA', 0], ['CDO › CDO', 2], ['Sans projet', 1]]);
   });
 
   it('les demandes d\'une pastille et la pastille ouverte au départ (projet de l\'équipe active avec demandes, sinon projet de l\'équipe)', () => {
