@@ -40,9 +40,11 @@ export function MesProjets() {
 
   async function ajouter(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
-    await executer(() => creer('mises_en_production', { projetId: f.projet, jour: f.jour, version: (f.version ?? '').trim() || null,
+    const form = e.currentTarget, f = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    const reussi = await executer(() => creer('mises_en_production', { projetId: f.projet, jour: f.jour, version: (f.version ?? '').trim() || null,
       ...Object.fromEntries(COMPTEURS_MEP.map(c => [c.champ, nombreEntier(f[c.cle] ?? '')])), statut: f.statut }), 'misesEnProduction');
+    // Ligne d'ajout vidée une fois la MEP enregistrée (porteur, 2026-11-13) : date, version, compteurs et statut reviennent à leur valeur de départ
+    if (reussi) { form.reset(); setProjetAjout(''); }
   }
   // Modification d'un champ ; la date est obligatoire (on remet l'ancienne valeur si elle est vidée)
   async function majMep(m: MiseEnProduction, champ: string, brut: string, restaurer?: (ancienne: string) => void) {

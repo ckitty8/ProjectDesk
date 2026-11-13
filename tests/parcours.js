@@ -500,7 +500,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     // Sprints
     await menu('/sprints');
     await page.waitForSelector('.tableau-sprints');
-    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    await page.selectOption('select[aria-label="Projet"]', await page.locator('select[aria-label="Projet"] option', { hasText: 'SSO & gestion des droits' }).getAttribute('value'));
     await captureC('09c-sprints');
     const lignesSprint = () => page.locator('.tableau-sprints tbody tr:not(.ligne-ajout)').count();
     verifier('Sprints : les sprints du projet par année, modifiables, avec ligne d\'ajout', await lignesSprint() === 2 && await page.locator('tr.ligne-ajout').count() === 1
@@ -529,7 +529,7 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     await page.waitForFunction(() => [...document.querySelectorAll('input[aria-label="Version"]')].some(i => i.value === 'V2.2-corrigée'));
     await page.reload();
     await page.waitForSelector('.tableau-sprints');
-    await page.selectOption('select[aria-label="Projet"]', { label: 'SSO & gestion des droits' });
+    await page.selectOption('select[aria-label="Projet"]', await page.locator('select[aria-label="Projet"] option', { hasText: 'SSO & gestion des droits' }).getAttribute('value'));
     verifier('Sprints : la modification d\'un champ est enregistrée', await page.locator('input[aria-label="Version"]').last().inputValue() === 'V2.2-corrigée');
     await page.locator('button[title="Supprimer ce sprint"]').last().click();
     await page.waitForFunction(() => document.querySelectorAll('.tableau-sprints tbody tr:not(.ligne-ajout)').length === 2);
