@@ -706,6 +706,8 @@ const verifier = (nom, condition, detail = '') => { resultats.push({ nom, ok: !!
     verifier('Administration › Équipes : les projets de chaque équipe sont listés (ajout, modification, suppression depuis ce seul onglet)',
       await page.locator('tr.ligne-projet').count() > 0 && await page.locator('button:has-text("+ Projet")').count() > 0
       && await page.locator('tr.ligne-projet button:has-text("Supprimer")').count() > 0);
+    verifier('Administration › Équipes : « + Personne » sur les directions, équipes et projets (3.23)',
+      await page.locator('tr.ligne-projet button:has-text("+ Personne")').count() > 0 && await page.locator('tr:not(.ligne-projet) button:has-text("+ Personne")').count() > 0);
     await page.click('button:has-text("+ Nouvelle équipe")');
     await page.fill('.modale input[name=nom]', 'Équipe Test');
     await page.fill('.modale input[name=prefixe]', 'et');

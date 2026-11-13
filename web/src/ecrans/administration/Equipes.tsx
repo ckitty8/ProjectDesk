@@ -11,7 +11,9 @@ import { Aide } from '../../composants/Aide';
 import { BadgeTon, Code, Pastille } from '../../composants/Badge';
 import { Bouton } from '../../composants/Bouton';
 import { Carte, Vide } from '../../composants/Carte';
+import { ModaleAffectation } from '../../composants/modales/ModaleAffectation';
 import { ModaleEquipe } from '../../composants/modales/ModaleEquipe';
+import { ModaleRessource } from '../../composants/modales/ModaleRessource';
 import { NouveauProjet } from '../../composants/NouveauProjet';
 import { PanneauProjet } from '../../composants/PanneauProjet';
 import { supprimer, supprimerOrganisation } from '../../donnees/api';
@@ -31,6 +33,10 @@ export function Equipes() {
   // Projets : ouverts ici aussi (porteur, 2026-11-06 : directions, équipes ET projets s'ajoutent, se modifient et se suppriment depuis ce seul onglet)
   const [projetOuvert, setProjetOuvert] = useState<string | null>(null);
   const [nouveauProjet, setNouveauProjet] = useState<string | null>(null);
+  // Créer des personnes pour chaque direction, équipe et projet (porteur, 2026-11-13) : « + Personne » ouvre la fiche dans l'unité ; depuis un projet, la
+  // personne est ensuite affectée à ce projet (fenêtre d'affectation)
+  const [fiche, setFiche] = useState<{ equipeId: string; projetId: string } | null>(null);
+  const [affectation, setAffectation] = useState<{ ressourceId: string | null; projetId: string | null } | null>(null);
   // Équipes dépliées : leurs personnes s'affichent dessous, avec profil, rôle et case Administrateur
   // (porteur, 2026-11-12 : équipes et ressources au même endroit)
   const [depliees, setDepliees] = useState<ReadonlySet<string>>(new Set());
@@ -101,6 +107,7 @@ export function Equipes() {
               <td>{donnees.projets.filter(p => p.equipeId === e.id).length}</td>
               <td className="num ligne-flex">
                 {peutGererEquipe(ctx, e.id) && <button type="button" className="lien-btn" onClick={() => setModale({ id: e.id })}>Modifier</button>}
+                {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setFiche({ equipeId: e.id, projetId: '' })}>+ Personne</button>}
                 {ctx.estAdmin && e.type !== 'direction' && <button type="button" className="lien-btn" onClick={() => setNouveauProjet(e.id)}>+ Projet</button>}
                 {ctx.estAdmin && (
                   <button type="button" className={'lien-btn' + (e.type === 'direction' || equipeVide(ctx, e.id) ? '' : ' pale')} onClick={() => void supprimerUnite(e.id, e.nom)}
@@ -145,6 +152,7 @@ export function Equipes() {
                 <td>{donnees.affectations.filter(a => a.projetId === p.id).length}</td>
                 <td />
                 <td className="num ligne-flex">
+                  {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => setFiche({ equipeId: e.id, projetId: p.id })}>+ Personne</button>}
                   <button type="button" className="lien-btn" onClick={() => setProjetOuvert(p.id)}>Modifier</button>
                   {ctx.estAdmin && <button type="button" className="lien-btn" onClick={() => void supprimerProjet(p.id, p.nom)}>Supprimer</button>}
                 </td>
@@ -158,6 +166,13 @@ export function Equipes() {
       {nouveauProjet && (
         <NouveauProjet equipeId={nouveauProjet} onFermer={() => setNouveauProjet(null)} onCree={id => { setNouveauProjet(null); setProjetOuvert(id); }} />
       )}
+      {fiche && (
+        <ModaleRessource id={null} equipeId={fiche.equipeId} retourProjet={fiche.projetId} onFermer={() => setFiche(null)}
+          onAffecter={id => { setFiche(null); setAffectation({ ressourceId: id, projetId: null }); }}
+          onRetourAffectation={(id, projetId) => { setFiche(null); setAffectation({ ressourceId: id, projetId }); }}
+          onRoles={() => setFiche(null)} />
+      )}
+      {affectation && <ModaleAffectation ressourceId={affectation.ressourceId} projetId={affectation.projetId} onFermer={() => setAffectation(null)} />}
       {modale && <ModaleEquipe id={modale.id} typeUnite={modale.typeUnite} onFermer={() => setModale(null)} />}
     </Carte>
   );
