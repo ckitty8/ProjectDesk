@@ -20,7 +20,7 @@ import { anneeSprint, erreurModificationSprint, lireChampSprint, numeroSprintSui
 import type { ChampSprint } from '../domaine/saisies';
 import { AIDES } from '../domaine/textes';
 import type { Projet } from '../domaine/types';
-import { sprintsDuProjet } from '../domaine/vues';
+import { libelleProjetEquipe, sprintsDuProjet } from '../domaine/vues';
 import type { SprintDatee } from '../domaine/vues';
 
 /** Sprints d'un projet pour une année : une ligne par sprint (n°, année, version, début, fin), puis une ligne d'ajout */
@@ -132,7 +132,7 @@ export function Sprints() {
         <div className="carte-titre">
           <div className="ligne-flex">
             <h2>Sprints</h2>
-            <Liste className="champ champ-compact" aria-label="Projet" valeur={projet.id} onChoisir={setProjetId} options={projets.map(p => ({ valeur: p.id, libelle: p.nom }))} />
+            <Liste className="champ champ-compact" aria-label="Projet" valeur={projet.id} onChoisir={setProjetId} options={projets.map(p => ({ valeur: p.id, libelle: libelleProjetEquipe(donnees.equipes, p) }))} />
             <div className="puces">
               {annees.map(a => <button key={a} type="button" className={'puce' + (a === annee ? ' active' : '')} onClick={() => setAnnee(a)}>{a}</button>)}
             </div>
