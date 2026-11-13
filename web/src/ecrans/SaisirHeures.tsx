@@ -22,7 +22,8 @@ import { lireHeures } from '../domaine/saisies';
 import { absenceDe } from '../domaine/vues';
 
 export function SaisirHeures() {
-  const { ctx, donnees, executer, notifier } = useSession();
+  // Données complètes : mes heures portent sur tous mes projets, quelle que soit l'équipe active (porteur, 2026-11-13 : « je ne peux pas saisir mes heures »)
+  const { ctxComplet: ctx, donneesCompletes: donnees, executer, notifier } = useSession();
   const j = depuisIso(aujourdhui());
   const [mois, setMois] = useState({ annee: j.getFullYear(), mois: j.getMonth() });
   if (!ctx || !donnees) return null;
