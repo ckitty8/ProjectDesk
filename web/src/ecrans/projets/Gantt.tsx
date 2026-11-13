@@ -25,7 +25,9 @@ function BarreSprint({ s, per, jour }: { s: SprintDatee; per: PeriodePlanning; j
   const titre = `Sprint ${numero}${s.nom ? ' · ' + s.nom : ''} : ${formatCourt(s.debut)} → ${formatCourt(s.fin)}`;
   return (
     <div className={'gantt-sprint' + (s.debut <= jour && jour <= s.fin ? ' en-cours' : '')} style={{ left: `${gauche}%`, width: `${largeur}%` }} title={titre}>
-      S{numero}{s.nom ? ` · ${s.nom}` : ''}
+      {/* Deux lignes : n° et version, puis les dates (porteur, 2026-11-13 : « trop petit, on ne voit pas le nom du sprint ni la date ») */}
+      <b>S{numero}{s.nom ? ` · ${s.nom}` : ''}</b>
+      <span>{formatCourt(s.debut)} → {formatCourt(s.fin)}</span>
     </div>
   );
 }

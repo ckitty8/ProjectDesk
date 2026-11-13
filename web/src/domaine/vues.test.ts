@@ -112,6 +112,15 @@ describe('modèle du calendrier', () => {
     const m = modeleParEquipe(contexte(), d, '2026-11-01', '2026-11-30', racine ?? EQUIPES[0]!);
     expect(m.filter(e => e.genre === 'unite').map(e => e.niveau)).toEqual(expect.arrayContaining([0, 1]));
   });
+  it('une personne rattachée à l\'équipe y a sa ligne (congés) si son équipe d\'origine n\'est pas affichée', () => {
+    const ctx = contexte({ rattachements: [{ equipeId: 'ia', ressourceId: 'r-thomas' }] });
+    const seule = { ...d, equipes: EQUIPES.filter(e => e.id === 'ia') };
+    expect(modeleParEquipe(ctx, seule, '2026-11-01', '2026-11-30', ia ?? EQUIPES[0]!).some(e => e.genre === 'personne' && e.ressource.id === 'r-thomas')).toBe(true);
+    // Son équipe d'origine est affichée aussi : pas de double ligne
+    const tout = modeleParEquipe(ctx, d, '2026-11-01', '2026-11-30', racine ?? EQUIPES[0]!);
+    const lignes = tout.filter(e => e.genre === 'personne' && e.ressource.id === 'r-thomas');
+    expect(lignes.length).toBe(1);
+  });
   it('une unité vide n\'apparaît pas', () => {
     const vide = { id: 'vide', nom: 'Vide', parentId: null };
     expect(modeleParEquipe(contexte(), { ...d, equipes: [...EQUIPES, vide] }, '2026-11-01', '2026-11-30', vide)).toEqual([]);

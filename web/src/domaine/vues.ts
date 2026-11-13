@@ -165,7 +165,11 @@ export function modeleParEquipe(ctx: ContexteDroits, d: DonneesVues, debut: Iso,
   const idsResponsables = responsablesDe(ctx, equipe.id).map(r => r.id);
   const estResponsable = (r: Ressource) => idsResponsables.includes(r.id);
   const projets = d.projets.filter(p => p.equipeId === equipe.id && membresPresents(d, p.id, debut, fin).length);
-  const personnes = ressourcesPresentes(d, debut, fin).filter(r => r.equipeId === equipe.id)
+  // Une personne rattachée à cette équipe y a aussi sa ligne si son équipe d'origine n'est pas affichée : elle peut y saisir ses congés
+  // (porteur, 2026-11-13 : « Christelle est dans plusieurs équipes mais ne peut saisir ses congés que depuis AMOA »)
+  const rattachees = new Set(ctx.rattachements.filter(x => x.equipeId === equipe.id).map(x => x.ressourceId));
+  const personnes = ressourcesPresentes(d, debut, fin)
+    .filter(r => r.equipeId === equipe.id || (rattachees.has(r.id) && !d.equipes.some(e => e.id === r.equipeId)))
     .sort((a, b) => Number(estResponsable(b)) - Number(estResponsable(a)));
   const contenu: ElementCalendrier[] = [
     ...personnes.map((ressource): ElementCalendrier => ({ genre: 'personne', ressource, niveau: niveau + 1, responsable: estResponsable(ressource),
