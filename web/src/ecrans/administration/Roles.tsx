@@ -79,7 +79,7 @@ export function useActionsRoles() {
 
   // Profil (poste, référentiel « poste ») et équipe d'une personne : listes de sa ligne (porteur, 2026-11-12 : « en tant qu'administrateur je dois pouvoir
   // configurer tous les rôles, équipes, profils »). Même droit que la fiche (règle RLS de la table ressources), enregistré aussitôt.
-  async function changerFiche(r: Ressource, champs: { poste?: string | null; equipeId?: string }, message: string) {
+  async function changerFiche(r: Ressource, champs: { poste?: string | null; equipeId?: string; email?: string | null }, message: string) {
     if (await executer(() => modifier('ressources', { id: 'eq.' + r.id }, champs), 'ressources')) notifier(message);
   }
 
@@ -104,7 +104,7 @@ interface PropsLigneRole {
 
 /** Une personne : nom et prénom modifiables, équipe, projets, compte, profil, rôle d'accès (liste) et case « Administrateur » */
 function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
-  const { ctx, donnees } = useSession();
+  const { ctx, donnees, notifier } = useSession();
   if (!ctx || !donnees) return null;
   const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
   const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
@@ -117,6 +117,13 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
   const profilsProposes = [...new Set([...valeursDe(donnees.valeurs, 'poste').map(v => v.libelle), ...(r.poste ? [r.poste] : [])])];
   const autresEquipes = rolesParEquipe(ctx, r).filter(x => !x.principale);
   const equipesProposees = optionsUnites(donnees.equipes).filter(o => o.valeur !== r.equipeId && !autresEquipes.some(x => x.equipeId === o.valeur));
+  // Email : rogné, en minuscules, vide = retiré ; une adresse invalide est refusée et l'ancienne valeur est remise
+  async function enregistrerEmail(r: Ressource, champ: HTMLInputElement) {
+    const saisi = champ.value.trim().toLowerCase();
+    if (saisi === (r.email ?? '').toLowerCase()) { champ.value = r.email ?? ''; return; }
+    if (saisi && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saisi)) { champ.value = r.email ?? ''; return notifier('Adresse email invalide', 'erreur'); }
+    await actions.changerFiche(r, { email: saisi || null }, 'Email enregistré');
+  }
   const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
   const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
   return (
@@ -125,7 +132,13 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
         <span className="ligne-flex">
           <Avatar nom={r.nom} />
           <ChampsNom key={r.id + r.nom + (r.prenom ?? '') + (r.nomFamille ?? '')} r={r} modifiable={peutModifierFiche(ctx, r)} enregistrer={(p, n) => actions.renommer(r, p, n)} />
-        </span><div className="discret texte-12">{r.email || 'email à renseigner sur la fiche'}</div></td>
+        </span></td>
+      {/* Email modifiable ici (porteur, 2026-11-19 : « je dois voir les adresses mails ») : il relie la personne à son compte et applique son rôle prévu */}
+      <td>
+        <input key={r.id + (r.email ?? '')} className="champ champ-email" type="email" aria-label={`Email de ${r.nom}`} placeholder="email à renseigner"
+          defaultValue={r.email ?? ''} disabled={!modifiable} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+          onBlur={e => void enregistrerEmail(r, e.target)} />
+      </td>
       <td>
         {modifiable
           ? (
@@ -231,12 +244,12 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Prénom · Nom</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
+                <th>Prénom · Nom</th><th>Email</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
                 <th>Rôle par équipe <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {personnes.length === 0 ? <tr><td colSpan={8}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
+              {personnes.length === 0 ? <tr><td colSpan={9}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
                 : personnes.map(r => <LigneRole key={r.id} r={r} nommer={nommer} verrou={verrou} actions={actions} />)}
             </tbody>
           </table>
