@@ -105,6 +105,7 @@ interface PropsLigneRole {
 /** Une personne : nom et prénom modifiables, équipe, projets, compte, profil, rôle d'accès (liste) et case « Administrateur » */
 function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
   const { ctx, donnees, notifier } = useSession();
+  const [ajoutEquipe, setAjoutEquipe] = useState(false);   // « + équipe » ouvre la liste des équipes proposées
   if (!ctx || !donnees) return null;
   const eq = donnees.equipes.find(e => e.id === r.equipeId), prevu = rolePrevu(ctx, r), choisi = roleChoisi(ctx, r);
   const options = ROLES_ATTRIBUABLES.map(cle => ({ valeur: cle, libelle: ROLES_ACCES[cle].libelle }));
@@ -124,7 +125,6 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
     if (saisi && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saisi)) { champ.value = r.email ?? ''; return notifier('Adresse email invalide', 'erreur'); }
     await actions.changerFiche(r, { email: saisi || null }, 'Email enregistré');
   }
-  const effet = prevu ? 'rôle prévu : appliqué à sa connexion (email vérifié)' : r.userId ? 'appliqué' : '';
   const effetAdmin = adminPrevu ? 'administrateur prévu : appliqué à sa connexion (email vérifié)' : '';
   return (
     <tr>
@@ -169,25 +169,31 @@ function LigneRole({ r, nommer, verrou, actions }: PropsLigneRole) {
         <select className="champ champ-mini" aria-label={`Rôle de ${r.nom}`} value={choisi} disabled={verrou} onChange={e => void actions.affecter(r, e.target.value)}>
           {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
         </select>
-        {effet && <div className="discret texte-12">{effet}</div>}
-        {/* Autres équipes de la personne, chacune avec son rôle (porteur, 2026-11-13 : « un rôle différent par équipe ») */}
+        {prevu && <span className="badge-prevu" title="Rôle prévu : appliqué à sa connexion (email vérifié)">prévu</span>}
+      </td>
+      {/* Autres équipes (maquette personnes-et-roles/, porteur 2026-11-19) : une pastille par équipe, rôle modifiable dans la pastille, ✕ pour retirer ;
+          un seul bouton « + équipe » par personne */}
+      <td>
         {autresEquipes.map(x => (
-          <div key={x.equipeId} className="ligne-flex projet-role">
-            <Pastille couleur={trouverEquipe(ctx, x.equipeId)?.couleur ?? COULEURS.pale} />
-            <span>{trouverEquipe(ctx, x.equipeId)?.nom}</span>
-            <select className="champ champ-mini" aria-label={`Rôle de ${r.nom} dans ${trouverEquipe(ctx, x.equipeId)?.nom}`} value={x.role} disabled={verrou}
+          <span key={x.equipeId} className="pastille-equipe">
+            <b>{trouverEquipe(ctx, x.equipeId)?.nom}</b>
+            <select aria-label={`Rôle de ${r.nom} dans ${trouverEquipe(ctx, x.equipeId)?.nom}`} value={x.role} disabled={verrou}
               onChange={e => void actions.affecterEquipe(r, x.equipeId, e.target.value)}>
               {options.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
             </select>
-            {!verrou && <button type="button" className="lien-btn" onClick={() => void actions.retirerDeEquipe(r, x.equipeId)}>Retirer</button>}
-          </div>
+            {!verrou && <button type="button" className="retirer" aria-label={`Retirer ${r.nom} de ${trouverEquipe(ctx, x.equipeId)?.nom}`}
+              onClick={() => void actions.retirerDeEquipe(r, x.equipeId)}>✕</button>}
+          </span>
         ))}
-        {!verrou && ctx.estAdmin && equipesProposees.length > 0 && (
-          <select className="champ champ-mini" aria-label={`Ajouter ${r.nom} à une équipe`} value="" onChange={e => e.target.value && void actions.affecterEquipe(r, e.target.value, 'membre')}>
-            <option value="">+ Ajouter à une équipe</option>
-            {equipesProposees.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
-          </select>
-        )}
+        {!verrou && ctx.estAdmin && equipesProposees.length > 0 && (ajoutEquipe
+          ? (
+            <select className="champ champ-mini" aria-label={`Ajouter ${r.nom} à une équipe`} value="" autoFocus onBlur={() => setAjoutEquipe(false)}
+              onChange={e => { if (e.target.value) void actions.affecterEquipe(r, e.target.value, 'membre'); setAjoutEquipe(false); }}>
+              <option value="">— équipe —</option>
+              {equipesProposees.map(o => <option key={o.valeur} value={o.valeur}>{o.libelle}</option>)}
+            </select>
+          )
+          : <button type="button" className="plus-equipe" onClick={() => setAjoutEquipe(true)}>+ équipe</button>)}
       </td>
       <td>
         <label className="ligne-flex">
@@ -244,12 +250,12 @@ export function Roles() {
           <table className="tableau tableau-roles-acces">
             <thead>
               <tr>
-                <th>Prénom · Nom</th><th>Email</th><th>Équipe</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
-                <th>Rôle par équipe <Aide texte={AIDES.roleAcces} /></th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
+                <th>Prénom · Nom</th><th>Email</th><th>Équipe principale</th><th>Projet(s)</th><th>Compte</th><th>Profil</th>
+                <th>Rôle (équipe principale) <Aide texte={AIDES.roleAcces} /></th><th>Autres équipes</th><th title="Statut d’administrateur : se cumule avec le rôle">Admin</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {personnes.length === 0 ? <tr><td colSpan={9}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
+              {personnes.length === 0 ? <tr><td colSpan={10}><Vide texte="Personne ne correspond aux filtres." /></td></tr>
                 : personnes.map(r => <LigneRole key={r.id} r={r} nommer={nommer} verrou={verrou} actions={actions} />)}
             </tbody>
           </table>
